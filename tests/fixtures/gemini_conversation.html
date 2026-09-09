@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><title>Plan de voyage Japon - Gemini</title></head>
+<body>
+  <mat-drawer-container>
+    <chat-header><chat-title><div data-test-id="conversation-title">Plan de voyage Japon</div></chat-title></chat-header>
+    <chat-window>
+      <chat-conversation>
+        <user-query>
+          <div class="user-query-content">
+            <div class="content">
+              <rich-textarea><div class="ql-editor"><p>Je veux 10 jours au Japon a l'automne, premiere fois : quel itineraire ?</p></div></rich-textarea>
+            </div>
+          </div>
+        </user-query>
+        <model-response id="model-response-1">
+          <message-content class="model-response-text">
+            <div class="markdown">
+              <p>Tokyo 3j, Hakone 1j, Kyoto 3j, Nara 1j, Osaka 2j.</p>
+              <ul><li>Tokyo : Shibuya, Asakusa, Akihabara.</li><li>Kyoto : Fushimi Inari a l'aube.</li></ul>
+            </div>
+          </message-content>
+          <div data-test-id="response-footer"><span>Answered by Gemini 2.5 Pro</span></div>
+        </model-response>
+        <user-query>
+          <div class="user-query-content">
+            <div class="content"><rich-textarea><div class="ql-editor"><p>Et le budget passes JR ?</p></div></rich-textarea></div>
+          </div>
+        </user-query>
+        <model-response id="model-response-2">
+          <message-content class="model-response-text">
+            <div class="markdown"><p>Le JR Pass 7j ne se rentre plus : achetez les trajons secs (environ 350 EUR).</p></div>
+          </message-content>
+        </model-response>
+      </chat-conversation>
+    </chat-window>
+  </mat-drawer-container>
+</body>
+</html>

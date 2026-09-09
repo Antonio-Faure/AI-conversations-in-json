@@ -1,0 +1,42 @@
+# AI Conversations in JSON — configuration
+# Chaque cle peut etre omise : les valeurs par defaut sont dans
+# src/orchestrator.py (DEFAULT_CONFIG) et fusionnees ici.
+
+output_dir: exports            # sortie: exports/<date>/<service>/<id>.json
+profile_dir: profiles          # profils Playwright persistants (cookies) par service
+state_file: .state/state.json  # suivi incrementiel (conversations deja exportees)
+log_file: logs/aicv.jsonl      # logs structures (JSON lines) + console lisible
+
+headless: true                 # false pour debugger ou pour la premiere connexion
+timeout_ms: 45000              # navigation + actions Playwright
+slow_mo_ms: 0
+
+# scroll infini (chargement complet des fils de discussion)
+scroll:
+  max_rounds: 60
+  pause_ms: 700
+  stable_rounds: 3
+# scroll de la sidebar (liste complete des conversations)
+sidebar:
+  max_rounds: 25
+  pause_ms: 500
+
+# Planification quotidienne (le scheduler reste externe, cron/systemd):
+#   30 3 * * * cd /chemin/du/depot && .venv/bin/python run.py --all
+schedule:
+  enabled: true
+  time: "03:30"
+
+services:
+  chatgpt:
+    enabled: true
+    url: https://chatgpt.com/
+  claude:
+    enabled: true
+    url: https://claude.ai/chats
+  gemini:
+    enabled: true
+    url: https://gemini.google.com/app
+  perplexity:
+    enabled: true
+    url: https://www.perplexity.ai/

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Refactor module paiement | ChatGPT</title>
+</head>
+<body>
+  <nav aria-label="Chat history"></nav>
+  <main class="relative">
+    <header>
+      <div data-testid="model-switcher-dropdown-button" aria-haspopup="true">GPT-5</div>
+      <div data-testid="history-title">Refactor module paiement</div>
+    </header>
+    <div role="list" id="messages-div-conversation">
+      <div data-message-id="aa11bb22-0001-4334-9556-778899aabbcc" data-message-author-role="user" data-message-send-status="sent" class="group relative">
+        <div class="flex justify-end"><div class="markdown"><p>Peux-tu me proposer une structure pour refactorer mon module de paiement ?</p></div></div>
+        <div class="mt-1"><time datetime="2026-09-01T10:30:00Z"></time></div>
+      </div>
+      <div data-message-id="aa11bb22-0002-4334-9556-778899aabbcc" data-message-author-role="assistant" data-message-model-slug="gpt-5" class="group relative">
+        <div class="markdown"><p>Oui. Je te suggère trois couches :</p>
+          <ol><li><strong>Domain</strong> : entités Paiement, Refund.</li><li><strong>Application</strong> : use cases.</li><li><strong>Infrastructure</strong> : adapters Stripe.</li></ol></div>
+        <div class="actions"><button aria-label="Copy">Copier</button><button aria-label="Regenerate">Correction</button></div>
+      </div>
+      <div data-message-id="aa11bb22-0003-4334-9556-778899aabbcc" data-message-author-role="user" class="group relative">
+        <div class="markdown"><p>Et pour la partie tests ?</p></div>
+      </div>
+      <div data-message-id="aa11bb22-0004-4334-9556-778899aabbcc" data-message-author-role="assistant" data-message-model-slug="gpt-5">
+        <div class="markdown">
+          <p>Tests unitaires sur le domain, integration sur les adapters avec <code>pytest-mock</code>.</p>
+          <pre><code class="language-python">def test_refund():
+    assert refund().status == "ok"
+</code></pre>
+          <style>.x{color:red}</style>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
