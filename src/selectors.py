@@ -162,3 +162,8 @@ def playwright_js_to_iife(script: str) -> str:
     if body.startswith("{") and body.endswith("}"):
         return body[1:-1].strip()
     return f"return {body};" if body else ""
+
+
+def wrap_playwright_body(body: str) -> str:
+    """Enveloppe un corps JS `return ...` en fleche Playwright `() => { ... }`."""
+    return "() => {\n" + body + "\n}"

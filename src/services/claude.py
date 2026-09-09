@@ -29,6 +29,8 @@ class ClaudeService(BaseService):
         "button:has-text('Log in')",
         "input[type='password']",
     )
+    #: ecran vide Claude : transcript jamais charge (taches / conversations vides)
+    empty_chat_selectors = ("[data-testid='empty-chat-screen']",)
 
     def build_parser(self) -> ClaudeParser:
         return ClaudeParser()

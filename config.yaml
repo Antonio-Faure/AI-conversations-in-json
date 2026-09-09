@@ -10,6 +10,7 @@ log_file: logs/aicv.jsonl      # logs structures (JSON lines) + console lisible
 headless: true                 # false pour debugger ou pour la premiere connexion
 timeout_ms: 45000              # navigation + actions Playwright
 slow_mo_ms: 0
+pacing_ms: 1200                # pause entre conversations (anti rate-limite ChatGPT)
 
 # Moteur navigateur : auto | playwright | botasaurus
 #   auto       = Playwright, avec bascule Botasaurus si challenge anti-bot
@@ -44,6 +45,7 @@ services:
   chatgpt:
     enabled: true
     url: https://chatgpt.com/
+    pacing_ms: 1500            # ChatGPT rate-limite vite : on ralentit
   claude:
     enabled: true
     url: https://claude.ai/chats
@@ -54,3 +56,4 @@ services:
   perplexity:
     enabled: true
     url: https://www.perplexity.ai/
+    engine: botasaurus         # Cloudflare bloque Playwright + decouverte API GraphQL

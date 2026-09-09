@@ -322,6 +322,11 @@ class Orchestrator:
                 result.failed.append(ref.id)
             elif status == "stop":
                 break
+            pacing = int(
+                svc_config.get("pacing_ms", self.config.get("pacing_ms", 0)) or 0
+            )
+            if pacing > 0:
+                session.wait_ms(pacing)
         self._close(session)
         return result
 

@@ -85,6 +85,8 @@ class ChatGPTService(BaseService):
         "button:has-text('Log in')",
         "input[type='password']",
     )
+    #: ecran d'accueil vide ("Ready when you are.") : conversation non chargeable
+    empty_chat_selectors = ("text=/ready when you are/i",)
 
     def build_parser(self) -> ChatGPTParser:
         return ChatGPTParser()

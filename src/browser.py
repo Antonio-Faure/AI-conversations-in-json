@@ -18,6 +18,7 @@ from playwright.sync_api import (
     sync_playwright,
 )
 
+from .selectors import wrap_playwright_body
 from .utils.logging import get_logger, log_fields
 
 log = get_logger("browser")
@@ -218,6 +219,10 @@ class BrowserSession:
         except PlaywrightError as exc:
             log.debug("evaluate failed: %s", exc)
             return None
+
+    def eval_body(self, body: str) -> Any:
+        """Execute un corps JS `return ...` (facade commune aux 2 moteurs)."""
+        return self.evaluate(wrap_playwright_body(body))
 
     def click_if_present(self, selector: str, timeout_ms: int = 2500) -> bool:
         try:

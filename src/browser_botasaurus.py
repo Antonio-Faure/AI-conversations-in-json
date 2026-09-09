@@ -238,6 +238,10 @@ class BotasaurusSession:
         args = [arg] if arg is not None else None
         return self._run_js(playwright_js_to_iife(script), args=args)
 
+    def eval_body(self, body: str) -> Any:
+        """Execute un corps JS `return ...` (facade commune aux 2 moteurs)."""
+        return self._run_js(body)
+
     def is_element_present(self, selector: str) -> bool:
         """Presence immediate d'un element (facade commune aux deux moteurs)."""
         return self._present(translate_selector(selector), wait_s=0.0)

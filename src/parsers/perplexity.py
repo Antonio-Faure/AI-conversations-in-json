@@ -125,6 +125,13 @@ class PerplexityParser(BaseParser):
             m = CONV_ID_RE.search(html)
             conv_id = m.group(1) if m else "unknown"
 
+        if not title:
+            # repli : premier message user tronque (mieux que le nom du service)
+            first_user = next(
+                (m["content"] for m in messages if m["role"] == "user"), None
+            )
+            title = (first_user or "").strip().splitlines()[0][:80] if first_user else None
+
         conv = Conversation(
             service=self.service_name,
             conversation_id=str(conv_id),
