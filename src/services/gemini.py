@@ -47,7 +47,7 @@ class GeminiService(BaseService):
         """Ouvre la liste complete (sinon seul le groupe 'Recent' est visible)."""
         for sel in self.expand_selectors:
             if self.session.click_if_present(sel):
-                self.session.page.wait_for_timeout(1200)
+                self.session.wait_ms(1200)
                 return
 
     def conversation_url(self, ref: ConversationRef) -> str:

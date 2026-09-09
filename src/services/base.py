@@ -96,8 +96,8 @@ class BaseService(ABC):
                        extra={"service": self.name})
             return
         # certaines pages se resorbent apres un rechargement
-        self.session.page.reload(wait_until="domcontentloaded")
-        self.session.page.wait_for_timeout(2500)
+        self.session.reload()
+        self.session.wait_ms(2500)
         marker = self.session.looks_blocked()
         if not marker:
             return

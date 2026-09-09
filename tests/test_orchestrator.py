@@ -15,10 +15,11 @@ from src.orchestrator import (
     ServiceResult,
     deep_merge,
     load_config,
+    resolve_engine,
 )
 from src.parsers.base import ParseError
 from src.schema import Conversation, ConversationRef, Message
-from src.services.base import ServiceNotLoggedIn
+from src.services.base import BlockedError, ServiceNotLoggedIn
 from src.utils.file_utils import today_str, validate_date_arg
 
 
@@ -40,6 +41,7 @@ class FakeSession:
     def __init__(self, profile_dir, service, config):
         self.profile_dir = profile_dir
         self.service = service
+        self.config = config
         self.closed = False
 
     def close(self):
@@ -91,6 +93,39 @@ class AuthLostService(FakeService):
 
     def list_conversations(self, limit=None):
         raise ServiceNotLoggedIn("session expiree")
+
+
+class BlockedDiscoveryService(FakeService):
+    """Echoue en decouverte au 1er appel, reussit ensuite (simulation bascule)."""
+
+    name = "blockdisc"
+    calls = 0
+
+    def list_conversations(self, limit=None):
+        BlockedDiscoveryService.calls += 1
+        if BlockedDiscoveryService.calls == 1:
+            raise BlockedError("challenge cloudflare")
+        return super().list_conversations(limit=limit)
+
+
+class BlockedOnceConversation(FakeService):
+    """Echoue sur la 1re conversation au 1er passage, reussit apres bascule."""
+
+    name = "blockconv"
+    calls = 0
+
+    def export_conversation(self, ref):
+        if ref.id == "c1" and BlockedOnceConversation.calls == 0:
+            BlockedOnceConversation.calls += 1
+            raise BlockedError("challenge cloudflare")
+        return make_conversation(service=self.name, conv_id=ref.id)
+
+
+class AlwaysBlockedDiscovery(FakeService):
+    name = "hardblock"
+
+    def list_conversations(self, limit=None):
+        raise BlockedError("challenge cloudflare")
 
 
 @pytest.fixture()
@@ -267,6 +302,70 @@ class TestRunPipeline:
         )
         summary = orch.run(all_services=True)
         assert set(summary.services) == {"fake", "other"}
+
+
+class TestEngine:
+    def test_resolve_engine_par_defaut_auto(self):
+        assert resolve_engine("fake", DEFAULT_CONFIG) == "auto"
+
+    def test_resolve_engine_global(self):
+        config = deep_merge(DEFAULT_CONFIG, {"engine": "botasaurus"})
+        assert resolve_engine("fake", config) == "botasaurus"
+
+    def test_resolve_engine_override_service(self):
+        config = deep_merge(
+            DEFAULT_CONFIG,
+            {"engine": "playwright", "services": {"claude": {"engine": "botasaurus"}}},
+        )
+        assert resolve_engine("claude", config) == "botasaurus"
+        assert resolve_engine("chatgpt", config) == "playwright"
+
+    def test_resolve_engine_invalide_retombe_auto(self):
+        config = deep_merge(DEFAULT_CONFIG, {"engine": "nimportequoi"})
+        assert resolve_engine("fake", config) == "auto"
+
+    def test_auto_bascule_botasaurus_sur_discovery_bloquee(self, workdir):
+        orch, sessions = make_orchestrator(workdir, {"blockdisc": BlockedDiscoveryService})
+        summary = orch.run(services=["blockdisc"], force=True)
+        result = summary.services["blockdisc"]
+        # 2e tentative avec le moteur botasaurus -> decouverte OK
+        assert len(result.exported) == 3
+        assert result.failed == []
+        assert len(sessions) == 2
+        assert sessions[0].config.get("_engine") == "playwright"
+        assert sessions[1].config.get("_engine") == "botasaurus"
+        assert all(s.closed for s in sessions)
+
+    def test_auto_bascule_botasaurus_sur_conversation_bloquee(self, workdir):
+        orch, sessions = make_orchestrator(workdir, {"blockconv": BlockedOnceConversation})
+        summary = orch.run(services=["blockconv"], force=True)
+        result = summary.services["blockconv"]
+        # c1 reussit apres bascule, les suivantes aussi
+        assert len(result.exported) == 3
+        assert result.failed == []
+        assert len(sessions) == 2
+        assert sessions[1].config.get("_engine") == "botasaurus"
+
+    def test_bloquage_persistant_skip_service(self, workdir):
+        orch, sessions = make_orchestrator(workdir, {"hardblock": AlwaysBlockedDiscovery})
+        summary = orch.run(services=["hardblock"])
+        result = summary.services["hardblock"]
+        # 2 sessions maximum (playwright puis botasaurus), puis skip
+        assert result.skipped
+        assert "challenge" in result.skip_reason
+        assert len(sessions) == 2
+
+    def test_engine_botasaurus_direct_sans_fallback(self, workdir):
+        config_extra = {"engine": "botasaurus"}
+        orch, sessions = make_orchestrator(
+            workdir, {"hardblock": AlwaysBlockedDiscovery}, config_extra
+        )
+        summary = orch.run(services=["hardblock"])
+        result = summary.services["hardblock"]
+        # moteur impose : aucune bascule, une seule session, directement botasaurus
+        assert result.skipped
+        assert len(sessions) == 1
+        assert sessions[0].config.get("_engine") == "botasaurus"
 
 
 class TestRunSummary:

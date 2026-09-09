@@ -176,6 +176,20 @@ class BrowserSession:
                 page.wait_for_timeout(1000 * (attempt + 1))
         raise RuntimeError(f"navigation impossible vers {url}: {last_error}")
 
+    def reload(self) -> None:
+        """Recharge la page courante (facade commune aux deux moteurs)."""
+        try:
+            self.page.reload(wait_until="domcontentloaded")
+        except PlaywrightError as exc:
+            log.debug("reload failed: %s", exc)
+
+    def wait_ms(self, ms: int) -> None:
+        """Attente passive (facade commune aux deux moteurs)."""
+        try:
+            self.page.wait_for_timeout(ms)
+        except PlaywrightError:
+            pass
+
     def wait_for_any(
         self,
         selectors: Sequence[str],

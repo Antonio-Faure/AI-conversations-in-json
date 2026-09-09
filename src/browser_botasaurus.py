@@ -1,0 +1,406 @@
+"""Moteur Botasaurus (botasaurus_driver, CDP pur) : meme facade que BrowserSession.
+
+Meme contrat que src/browser.py (goto, html, evaluate, wait_for_any, scroll,
+looks_blocked, try_solve_cloudflare, ...) mais pilote un Chrome patche via
+botasaurus_driver, capable de contourner Cloudflare/Turnstile :
+
+    session = BotasaurusSession(profile_dir=..., headless=True)
+    with session:
+        session.goto("https://claude.ai/chats", bypass_cloudflare=True)
+
+Contrairement a Playwright, pas d'objet `page` : tout passe par la facade
+(les services ne doivent pas accéder à session.page).
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any, List, Optional, Sequence
+
+from .browser import ScrollResult
+from .selectors import (
+    Sel,
+    js_click_body,
+    js_presence_body,
+    js_scroll_body,
+    playwright_js_to_iife,
+    translate_selector,
+)
+from .utils.logging import get_logger, log_fields
+
+log = get_logger("browser_bota")
+
+DEFAULT_WINDOW_SIZE = (1440, 900)
+
+
+def find_chrome_binary() -> Optional[str]:
+    """Cherche un binaire Chrome utilisable (surcharge via AICV_CHROME_PATH).
+
+    botasaurus telecharge le sien si rien n'est trouve ; ici on reutilise en
+    priorite le Chromium installe par Playwright pour eviter un second download.
+    """
+    env = os.environ.get("AICV_CHROME_PATH")
+    if env and Path(env).is_file():
+        return env
+    home = Path.home() / ".cache" / "ms-playwright"
+    patterns = (
+        "chromium-*/chrome-linux64/chrome",
+        "chromium-*/chrome-linux/chrome",
+        "chromium_headless_shell-*/chrome-linux64/headless_shell",
+        "chromium_headless_shell-*/chrome-linux/headless_shell",
+    )
+    for pattern in patterns:
+        for p in sorted(home.glob(pattern)):
+            if p.is_file():
+                return str(p)
+    return None
+
+
+class BotasaurusSession:
+    """Facade navigateur basee sur botasaurus_driver (anti-Cloudflare)."""
+
+    engine = "botasaurus"
+
+    def __init__(
+        self,
+        profile_dir: Optional[Path | str] = None,
+        headless: bool = False,
+        timeout_ms: int = 45000,
+        chrome_executable_path: Optional[str] = None,
+        service: Optional[str] = None,
+    ):
+        self.profile_dir = Path(profile_dir or "profiles")
+        self.headless = headless
+        self.timeout_ms = int(timeout_ms)
+        self.chrome_path = chrome_executable_path or None
+        self.service = service
+        self._driver = None
+
+    # -- cycle de vie ---------------------------------------------------------
+
+    def start(self) -> "BotasaurusSession":
+        if self._driver is not None:
+            return self
+        from botasaurus_driver import Driver
+
+        self.profile_dir.mkdir(parents=True, exist_ok=True)
+        chrome = self.chrome_path or find_chrome_binary()
+        kwargs: dict[str, Any] = {
+            "headless": self.headless,
+            "profile": str(self.profile_dir),
+            "window_size": DEFAULT_WINDOW_SIZE,
+        }
+        if chrome:
+            kwargs["chrome_executable_path"] = chrome
+        else:
+            log_fields(
+                log, 30,
+                "aucun chrome detecte : botasaurus utilisera son propre binaire",
+            )
+        self._driver = Driver(**kwargs)
+        log_fields(
+            log, 20, "botasaurus started",
+            extra={"profile": str(self.profile_dir), "headless": self.headless,
+                   "chrome": chrome or "bundled"},
+        )
+        return self
+
+    def close(self) -> None:
+        if self._driver is not None:
+            try:
+                self._driver.close()
+            except Exception:  # noqa: BLE001
+                pass
+            self._driver = None
+
+    def __enter__(self) -> "BotasaurusSession":
+        return self.start()
+
+    def __exit__(self, *exc: Any) -> None:
+        self.close()
+
+    # -- helpers internes ------------------------------------------------------
+
+    @property
+    def driver(self):
+        self.start()
+        assert self._driver is not None
+        return self._driver
+
+    def _timeout_s(self) -> int:
+        return max(30, self.timeout_ms // 1000)
+
+    def _run_js(self, body: str, args: Optional[list] = None) -> Any:
+        try:
+            return self.driver.run_js(body, args=args)
+        except Exception as exc:  # noqa: BLE001
+            log.debug("run_js failed: %s", exc)
+            return None
+
+    def _present(self, sel: Sel, wait_s: float = 0.0) -> bool:
+        d = self.driver
+        body = js_presence_body(sel)
+        if body is None:
+            try:
+                return bool(d.is_element_present(sel.css, wait=wait_s or None))
+            except Exception:  # noqa: BLE001
+                return False
+        deadline = time.monotonic() + max(0.0, wait_s)
+        while True:
+            if self._run_js(body):
+                return True
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(0.3)
+
+    # -- navigation ------------------------------------------------------------
+
+    def goto(self, url: str, wait_until: str = "domcontentloaded",
+             bypass_cloudflare: bool = True) -> Any:
+        """Ouvre `url` ; bypass_cloudflare laisse botasaurus gerer le challenge."""
+        d = self.driver
+        last_error: Optional[Exception] = None
+        for attempt in range(3):
+            try:
+                return d.get(
+                    url,
+                    bypass_cloudflare=bypass_cloudflare,
+                    timeout=self._timeout_s(),
+                )
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                log_fields(
+                    log, 30, "navigation retry",
+                    extra={"url": url, "attempt": attempt + 1, "error": str(exc)},
+                )
+                time.sleep(1 + attempt)
+        raise RuntimeError(f"navigation impossible vers {url}: {last_error}")
+
+    def reload(self) -> None:
+        try:
+            self.driver.reload()
+        except Exception as exc:  # noqa: BLE001
+            log.debug("reload failed: %s", exc)
+
+    def wait_ms(self, ms: int) -> None:
+        time.sleep(max(0, ms) / 1000)
+
+    def wait_for_any(
+        self,
+        selectors: Sequence[str],
+        timeout_ms: Optional[int] = None,
+    ) -> Optional[str]:
+        """Attend le premier selecteur visible parmi `selectors`. Retourne celui-ci."""
+        per = max(1500, (timeout_ms or self.timeout_ms) // max(1, len(selectors)))
+        for raw in selectors:
+            sel = translate_selector(raw)
+            if self._present(sel, wait_s=per / 1000):
+                return raw
+        return None
+
+    # -- lecture DOM -----------------------------------------------------------
+
+    def html(self) -> str:
+        return self.driver.page_html or ""
+
+    def url(self) -> str:
+        return self.driver.current_url or ""
+
+    def title(self) -> str:
+        try:
+            return self.driver.title or ""
+        except Exception:  # noqa: BLE001
+            return ""
+
+    def evaluate(self, script: str, arg: Any = None) -> Any:
+        args = [arg] if arg is not None else None
+        return self._run_js(playwright_js_to_iife(script), args=args)
+
+    def click_if_present(self, selector: str, timeout_ms: int = 2500) -> bool:
+        sel = translate_selector(selector)
+        body = js_click_body(sel)
+        if body is None:
+            try:
+                self.driver.click(sel.css, wait=max(1, timeout_ms // 1000))
+                return True
+            except Exception:  # noqa: BLE001
+                return False
+        return bool(self._run_js(body))
+
+    def press_if_present(self, key: str) -> None:
+        log.debug("press_if_present(%s) non supporte par le moteur botasaurus", key)
+
+    # -- scroll ------------------------------------------------------------------
+
+    def scroll_page_until_stable(
+        self,
+        max_rounds: int = 60,
+        pause_ms: int = 700,
+        stable_rounds: int = 3,
+    ) -> ScrollResult:
+        last_height = -1
+        stable = 0
+        rounds = 0
+        for i in range(max_rounds):
+            rounds = i + 1
+            self._run_js("window.scrollTo(0, document.body.scrollHeight)")
+            self.wait_ms(pause_ms)
+            height = self._run_js(
+                "return Math.max(document.body.scrollHeight, "
+                "document.documentElement.scrollHeight)"
+            )
+            at_bottom = self._run_js(
+                "return (window.innerHeight + window.scrollY) >= "
+                "document.body.scrollHeight - 8"
+            )
+            height = int(height or 0)
+            if height == last_height:
+                stable += 1
+            else:
+                stable = 0
+            last_height = height
+            if at_bottom and stable >= stable_rounds:
+                return ScrollResult(True, rounds, height)
+        return ScrollResult(False, rounds, max(0, last_height))
+
+    def scroll_element_until_stable(
+        self,
+        selectors: Sequence[str],
+        max_rounds: int = 25,
+        pause_ms: int = 500,
+        stable_rounds: int = 2,
+    ) -> ScrollResult:
+        body = None
+        for raw in selectors:
+            candidate = js_scroll_body(translate_selector(raw))
+            if candidate is not None:
+                body = candidate
+                break
+        if body is None:
+            return ScrollResult(True, 0, 0)
+        last_height = -1
+        stable = 0
+        height = 0
+        for i in range(max_rounds):
+            res = self._run_js(body)
+            self.wait_ms(pause_ms)
+            if not res:
+                return ScrollResult(True, i + 1, 0)  # conteneur absent : rien a scroller
+            height, reached = int(res[0] or 0), bool(res[1])
+            if height == last_height:
+                stable += 1
+            else:
+                stable = 0
+            last_height = height
+            if reached and stable >= stable_rounds:
+                return ScrollResult(True, i + 1, height)
+        return ScrollResult(False, max_rounds, height)
+
+    # -- diagnostics ---------------------------------------------------------------
+
+    def screenshot(self, path: Path | str) -> Optional[Path]:
+        try:
+            target = Path(path)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            self.driver.save_screenshot(str(target))
+            return target
+        except Exception as exc:  # noqa: BLE001
+            log.debug("screenshot failed: %s", exc)
+            return None
+
+    def looks_logged_out(
+        self, login_url_parts: List[str], login_selectors: List[str]
+    ) -> bool:
+        url = (self.url() or "").lower()
+        if any(part in url for part in login_url_parts):
+            return True
+        for raw in login_selectors:
+            if self._present(translate_selector(raw), wait_s=0.0):
+                return True
+        return False
+
+    def looks_blocked(self) -> Optional[str]:
+        """Detecte un challenge anti-bot (Cloudflare Turnstile, case a cocher)."""
+        try:
+            if self.driver.is_bot_detected_by_cloudflare():
+                return "cloudflare-driver"
+        except Exception:  # noqa: BLE001
+            pass
+        body = (self.evaluate("return document.body ? document.body.innerText : '';") or "")
+        text = str(body).lower()
+        if "verify you are human" in text:
+            return "verify-human"
+        if "performing security verification" in text:
+            return "security-verification"
+        if "just a moment" in text:
+            return "just-a-moment"
+        tl = self.title().lower()
+        if "just a moment" in tl or "attention! verified by cloudflare" in tl:
+            return "cloudflare-title"
+        iframe = self.evaluate(
+            "return !!document.querySelector("
+            "\"iframe[src*='challenges.cloudflare.com'], "
+            "iframe[src*='cloudflare-tds'], #challenge-stage\");"
+        )
+        if iframe:
+            return "cloudflare"
+        return None
+
+    def try_solve_cloudflare(self, wait_ms: int = 6000) -> bool:
+        """Laisse botasaurus resoudre le challenge. Retourne True si passe."""
+        try:
+            self.driver.detect_and_bypass_cloudflare()
+        except Exception as exc:  # noqa: BLE001
+            log.debug("detect_and_bypass_cloudflare: %s", exc)
+        self.wait_ms(wait_ms)
+        return self.looks_blocked() is None
+
+    def interactive_login(self, service_name: str, login_url: str) -> None:
+        """Ouvre un navigateur visible pour connexion manuelle (profil persistant)."""
+        self.headless = False
+        self.start()
+        if login_url:
+            self.goto(login_url)
+        log.info(
+            "Navigateur ouvert pour connexion %s — connectez-vous puis "
+            "fermez le processus quand termine (Ctrl+C).",
+            service_name,
+        )
+        login_selectors = [
+            "a[href*='login' i]",
+            "button:has-text('Log in')",
+            "button:has-text('Sign in')",
+            "input[type='password']",
+        ]
+        try:
+            while True:
+                self.wait_ms(3000)
+                url = self.url().lower()
+                still_login = any(
+                    part in url
+                    for part in ("login", "signin", "sign-in", "auth", "accounts")
+                )
+                if not still_login and not any(
+                    self._present(translate_selector(s), wait_s=0.0)
+                    for s in login_selectors
+                ):
+                    break
+        except KeyboardInterrupt:
+            pass
+        cookies = []
+        try:
+            cookies = self.driver.get_cookies() or []
+        except Exception:  # noqa: BLE001
+            pass
+        log_fields(
+            log, 20, "login termine",
+            extra={"service": service_name, "cookies": len(cookies)},
+        )
+
+
+def dumps(obj: Any) -> str:
+    """Utilitaire : JSON lisible pour logs de debug."""
+    return json.dumps(obj, ensure_ascii=False, default=str)

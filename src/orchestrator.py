@@ -46,6 +46,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "screenshot_dir": "logs",  # captures de debug (0 conversation, DOM inattendu)
     "headless": False,
     "timeout_ms": 45000,
+    # moteur navigateur : auto|playwright|botasaurus
+    # auto = playwright, avec bascule botasaurus si challenge anti-bot
+    "engine": "auto",
+    "botasaurus": {"chrome_executable_path": ""},  # auto-detecte si vide
     "scroll": {"max_rounds": 60, "pause_ms": 700, "stable_rounds": 3},
     "sidebar": {"max_rounds": 25, "pause_ms": 500},
     "services": {
@@ -56,6 +60,17 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     },
     "schedule": {"enabled": True, "time": "03:30"},
 }
+
+
+def resolve_engine(service_name: str, config: Dict[str, Any]) -> str:
+    """Moteur d'un service : override par service, sinon config globale.
+
+    auto -> playwright (la bascule botasaurus est geree par l'orchestrateur
+    en cas de BlockedError). Retourne toujours auto|playwright|botasaurus.
+    """
+    svc = (config.get("services") or {}).get(service_name) or {}
+    engine = str(svc.get("engine") or config.get("engine") or "auto").lower()
+    return engine if engine in ("auto", "playwright", "botasaurus") else "auto"
 
 
 def deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
@@ -91,11 +106,26 @@ def default_registry() -> Dict[str, type]:
 def default_browser_factory(
     profile_dir: Path, service: str, config: Dict[str, Any]
 ) -> BrowserSession:
-    return BrowserSession(
+    """Cree la session du moteur demande (playwright par defaut).
+
+    La cle `_engine` (posee par l'orchestrateur lors d'une bascule) prime sur
+    `engine` ; `auto` est resolu en playwright ici.
+    """
+    engine = str(config.get("_engine") or config.get("engine") or "auto").lower()
+    common = dict(
         profile_dir=profile_dir / slugify(service, 40),
         headless=bool(config.get("headless", False)),
         timeout_ms=int(config.get("timeout_ms", 45000)),
     )
+    if engine == "botasaurus":
+        from .browser_botasaurus import BotasaurusSession
+
+        bota_cfg = config.get("botasaurus") or {}
+        return BotasaurusSession(
+            chrome_executable_path=bota_cfg.get("chrome_executable_path") or None,
+            **common,
+        )
+    return BrowserSession(**common)
 
 
 @dataclass
@@ -176,6 +206,24 @@ class Orchestrator:
 
     # -- pipeline --------------------------------------------------------------
 
+    def _start_service(
+        self,
+        service_name: str,
+        cls: type,
+        svc_config: Dict[str, Any],
+        engine: str,
+    ) -> tuple:
+        """Session + service pour un moteur donne ('' = config courante)."""
+        factory_config = self.config
+        if engine:
+            factory_config = dict(self.config)
+            factory_config["_engine"] = engine
+        session = self.browser_factory(self.profile_dir, service_name, factory_config)
+        service: BaseService = cls(session, self.config)
+        if svc_config.get("url"):
+            service.home_url = svc_config["url"]
+        return session, service
+
     def run_service(
         self,
         service_name: str,
@@ -197,56 +245,112 @@ class Orchestrator:
             result.skip_reason = "disabled"
             return result
 
-        session = self.browser_factory(self.profile_dir, service_name, self.config)
-        service: BaseService = cls(session, self.config)
-        if svc_config.get("url"):
-            service.home_url = svc_config["url"]
+        engine = resolve_engine(service_name, self.config)
+        attempt_engine = "playwright" if engine == "auto" else engine
+        session, service = self._start_service(service_name, cls, svc_config, attempt_engine)
 
-        try:
-            refs = service.list_conversations(limit=limit)
-        except ServiceNotLoggedIn as exc:
-            log.warning(str(exc))
-            result.skipped = True
-            result.skip_reason = str(exc)
-            self._close(session)
-            return result
-        except BlockedError as exc:
-            log.warning(str(exc))
-            result.skipped = True
-            result.skip_reason = str(exc)
-            self._close(session)
-            return result
-        except Exception as exc:
-            log.exception(f"{service_name}: echec de decouverte")
-            result.failed.append(f"discovery: {exc}")
-            self._close(session)
-            return result
+        # -- decouverte (bascule botasaurus une fois si auto + bloque) ---------
+        refs = None
+        while True:
+            try:
+                refs = service.list_conversations(limit=limit)
+                break
+            except ServiceNotLoggedIn as exc:
+                log.warning(str(exc))
+                result.skipped = True
+                result.skip_reason = str(exc)
+                self._close(session)
+                return result
+            except BlockedError as exc:
+                if engine == "auto" and attempt_engine != "botasaurus":
+                    log_fields(
+                        log, 30,
+                        f"{service_name}: bloque par anti-bot -> nouvelle tentative "
+                        f"avec le moteur botasaurus",
+                        extra={"service": service_name, "error": str(exc)},
+                    )
+                    attempt_engine = "botasaurus"
+                    self._close(session)
+                    session, service = self._start_service(
+                        service_name, cls, svc_config, attempt_engine
+                    )
+                    continue
+                log.warning(str(exc))
+                result.skipped = True
+                result.skip_reason = str(exc)
+                self._close(session)
+                return result
+            except Exception as exc:
+                log.exception(f"{service_name}: echec de decouverte")
+                result.failed.append(f"discovery: {exc}")
+                self._close(session)
+                return result
 
         log_fields(
             log,
             20,
             f"{service_name}: {len(refs)} conversation(s) a traiter",
-            extra={"service": service_name, "date": date_str},
+            extra={"service": service_name, "date": date_str, "engine": attempt_engine},
         )
         for ref in refs:
-            try:
-                self._process_conversation(
-                    service, result, ref, date_str, force, filter_date
+            status = self._process_ref(service, result, ref, date_str, force, filter_date)
+            if status == "blocked" and engine == "auto" and attempt_engine != "botasaurus":
+                # bascule botasaurus : session neuve, on retente cette conv
+                log_fields(
+                    log, 30,
+                    f"{service_name}: bloque sur {ref.id} -> bascule botasaurus",
+                    extra={"service": service_name, "conversation_id": ref.id},
                 )
-            except (ParseError, SchemaError) as exc:
-                log_fields(log, logging.ERROR, f"{service_name}: parse/validate echoue",
-                           extra={"conversation_id": ref.id, "error": str(exc)})
+                attempt_engine = "botasaurus"
+                self._close(session)
+                session, service = self._start_service(
+                    service_name, cls, svc_config, attempt_engine
+                )
+                status = self._process_ref(service, result, ref, date_str, force, filter_date)
+            if status == "blocked":
                 result.failed.append(ref.id)
-            except ServiceNotLoggedIn as exc:
-                log_fields(log, logging.ERROR, f"{service_name}: session perdue",
-                           extra={"conversation_id": ref.id, "error": str(exc)})
-                result.failed.append(ref.id)
+            elif status == "stop":
                 break
-            except Exception:
-                log.exception(f"{service_name}: erreur inattendue sur {ref.id}")
-                result.failed.append(ref.id)
         self._close(session)
         return result
+
+    def _process_ref(
+        self,
+        service: BaseService,
+        result: ServiceResult,
+        ref: ConversationRef,
+        date_str: str,
+        force: bool,
+        filter_date: bool,
+    ) -> Optional[str]:
+        """Traite une conversation. Retourne 'blocked', 'stop' ou None."""
+        try:
+            self._process_conversation(service, result, ref, date_str, force, filter_date)
+            return None
+        except BlockedError as exc:
+            log_fields(
+                log, logging.ERROR, f"{service.name}: challenge anti-bot",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            return "blocked"
+        except ServiceNotLoggedIn as exc:
+            log_fields(
+                log, logging.ERROR, f"{service.name}: session perdue",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            result.failed.append(ref.id)
+            return "stop"
+        except (ParseError, SchemaError) as exc:
+            log_fields(
+                log, logging.ERROR, f"{service.name}: parse/validate echoue",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            result.failed.append(ref.id)
+            return None
+        except Exception:
+            log.exception(f"{service.name}: erreur inattendue sur {ref.id}")
+            result.failed.append(ref.id)
+            return None
 
     def _process_conversation(
         self,

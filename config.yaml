@@ -11,6 +11,15 @@ headless: true                 # false pour debugger ou pour la premiere connexi
 timeout_ms: 45000              # navigation + actions Playwright
 slow_mo_ms: 0
 
+# Moteur navigateur : auto | playwright | botasaurus
+#   auto       = Playwright, avec bascule Botasaurus si challenge anti-bot
+#   playwright = Playwright seul
+#   botasaurus = Botasaurus seul (Chrome patche, contournement Cloudflare)
+# Surcharge possible par service : services.<nom>.engine
+engine: auto
+botasaurus:
+  chrome_executable_path: ""   # vide = auto-detection (Chromium Playwright, $AICV_CHROME_PATH)
+
 # scroll infini (chargement complet des fils de discussion)
 scroll:
   max_rounds: 60
@@ -34,6 +43,7 @@ services:
   claude:
     enabled: true
     url: https://claude.ai/chats
+    engine: botasaurus         # Cloudflare bloque Playwright sur claude.ai
   gemini:
     enabled: true
     url: https://gemini.google.com/app

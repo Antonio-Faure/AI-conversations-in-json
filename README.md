@@ -1,7 +1,8 @@
 # AI Conversations in JSON
 
 Export automatisé (quotidien) de vos conversations IA — **ChatGPT, Claude,
-Gemini, Perplexity** — dans un **format JSON standardisé**, via **Playwright**.
+Gemini, Perplexity** — dans un **format JSON standardisé**, via **Playwright**
+ou **Botasaurus** (contournement Cloudflare).
 
 Chaque plateforme a son propre scraper (navigation, scroll infini) et son
 propre parser DOM, mais toutes convergent vers le même schéma de sortie.
@@ -121,6 +122,27 @@ Un fichier par conversation : `exports/<AAAA-MM-JJ>/<service>/<id>.json`
   `had_thinking` ; Perplexity : `sources`)
 - le markdown est préservé en texte brut, blocs `<pre>` convertis en fences \`\`\`
 
+## Moteurs navigateur
+
+Deux moteurs partagent la même façade (`goto`, `html`, `evaluate`, scroll,
+détection/contournement anti-bot…) — les services ne voient pas la différence :
+
+| moteur | rôle |
+|---|---|
+| `playwright` | Chromium piloté par Playwright (par défaut) |
+| `botasaurus` | Chrome patché + `bypass_cloudflare` (contourne Cloudflare/Turnstile) |
+
+```yaml
+engine: auto        # auto = Playwright, bascule Botasaurus si challenge détecté
+services:
+  claude:
+    engine: botasaurus   # surcharge par service (Cloudflare bloque claude.ai)
+```
+
+En `auto`, un `BlockedError` relance automatiquement le service avec
+Botasaurus (une fois). Le chemin du Chrome Botasaurus est auto-détecté
+(Chromium Playwright, ou `$AICV_CHROME_PATH`) : `botasaurus.chrome_executable_path`.
+
 ## Configuration
 
 Tout est dans [`config.yaml`](config.yaml) : services activés + URL, répertoires
@@ -136,7 +158,9 @@ paramètres de scroll. Les valeurs omises reprennent `DEFAULT_CONFIG`
 ├── requirements.txt
 ├── src/
 │   ├── orchestrator.py        # workflow principal (pipeline par service)
-│   ├── browser.py             # wrapper Playwright (profil persistant, scroll)
+│   ├── browser.py             # moteur Playwright (profil persistant, scroll)
+│   ├── browser_botasaurus.py  # moteur Botasaurus (anti-Cloudflare, même façade)
+│   ├── selectors.py           # traduction sélecteurs Playwright -> CSS (botasaurus)
 │   ├── schema.py              # schéma JSON standardisé (dataclasses + validation)
 │   ├── services/              # scraping par plateforme (sélecteurs, pipeline)
 │   │   ├── base.py            #   BaseService : découverte + scrape + parse
