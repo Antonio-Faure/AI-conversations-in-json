@@ -14,7 +14,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from ..schema import Conversation
-from .base import BaseParser, ParseError
+from .base import BaseParser, ParseError, clean_ui_title
 
 CONV_ID_RE = re.compile(r"/search/([A-Za-z0-9_-]{10,})")
 MODEL_RE = re.compile(
@@ -35,17 +35,22 @@ class PerplexityParser(BaseParser):
     conversation_id_pattern = CONV_ID_RE
 
     message_selectors = (
+        "[class*='user-bubble']",
+        "[class*='final-text']",
         "[data-testid='user-query-text']",
         "[data-testid='answer-text']",
         "[data-testid='answer']",
     )
 
+    #: 2026: bulles Tailwind sans data-testid (user-bubble / final-text)
     USER_SELECTORS = (
+        "div[class*='user-bubble']",
         "[data-testid='user-query-text']",
         "[data-testid='user-query'] .query",
         "div.user-query",
     )
     ASSISTANT_SELECTORS = (
+        "div[class*='final-text']",
         "[data-testid='answer-text']",
         "[data-testid='answer-body']",
         "[data-testid='answer'] .answer",
@@ -56,6 +61,7 @@ class PerplexityParser(BaseParser):
         "a.source-pill",
         "[data-testid='citation-source'] a",
         ".source-name",
+        "span.citation",  # 2026: citations inline "domaine+1"
     )
     TITLE_SELECTORS = (
         "h1[data-testid='user-query']",
@@ -109,7 +115,8 @@ class PerplexityParser(BaseParser):
                 "perplexity: aucun message extrait — session invalide ou DOM modifie"
             )
 
-        title = self.extract_title(soup, *self.TITLE_SELECTORS) or extra.get("title_hint")
+        title = self.extract_title(soup, *self.TITLE_SELECTORS)
+        title = clean_ui_title(title) or clean_ui_title(extra.get("title_hint"))
         if title and len(title) > 120:
             title = None
 

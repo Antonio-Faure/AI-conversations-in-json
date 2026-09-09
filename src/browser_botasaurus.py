@@ -70,12 +70,14 @@ class BotasaurusSession:
         headless: bool = False,
         timeout_ms: int = 45000,
         chrome_executable_path: Optional[str] = None,
+        enable_xvfb: bool = False,
         service: Optional[str] = None,
     ):
         self.profile_dir = Path(profile_dir or "profiles")
         self.headless = headless
         self.timeout_ms = int(timeout_ms)
         self.chrome_path = chrome_executable_path or None
+        self.enable_xvfb = bool(enable_xvfb)
         self.service = service
         self._driver = None
 
@@ -100,10 +102,28 @@ class BotasaurusSession:
                 log, 30,
                 "aucun chrome detecte : botasaurus utilisera son propre binaire",
             )
-        self._driver = Driver(**kwargs)
+        # Xvfb : Chrome "headful" dans un affichage virtuel -> indetectable
+        # comme headless (Cloudflare blockait le headless pur sur perplexity).
+        if self.enable_xvfb and self.headless:
+            kwargs["headless"] = False
+            kwargs["enable_xvfb_virtual_display"] = True
+        try:
+            self._driver = Driver(**kwargs)
+        except Exception as exc:  # noqa: BLE001
+            if kwargs.get("enable_xvfb_virtual_display"):
+                log_fields(
+                    log, 30,
+                    f"Xvfb indisponible ({exc}) -> nouvelle tentative en headless pur",
+                )
+                kwargs["headless"] = True
+                kwargs.pop("enable_xvfb_virtual_display", None)
+                self._driver = Driver(**kwargs)
+            else:
+                raise
         log_fields(
             log, 20, "botasaurus started",
             extra={"profile": str(self.profile_dir), "headless": self.headless,
+                   "xvfb": self.enable_xvfb and self.headless,
                    "chrome": chrome or "bundled"},
         )
         return self

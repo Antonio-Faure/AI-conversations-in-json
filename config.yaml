@@ -19,6 +19,9 @@ slow_mo_ms: 0
 engine: auto
 botasaurus:
   chrome_executable_path: ""   # vide = auto-detection (Chromium Playwright, $AICV_CHROME_PATH)
+  enable_xvfb: true            # Chrome headful dans affichage virtuel Xvfb :
+                               # contourne les challenges Cloudflare qui bloquent
+                               # le headless pur (perplexity). Requiert le paquet xvfb.
 
 # scroll infini (chargement complet des fils de discussion)
 scroll:

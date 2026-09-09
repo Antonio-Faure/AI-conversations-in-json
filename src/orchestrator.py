@@ -49,7 +49,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     # moteur navigateur : auto|playwright|botasaurus
     # auto = playwright, avec bascule botasaurus si challenge anti-bot
     "engine": "auto",
-    "botasaurus": {"chrome_executable_path": ""},  # auto-detecte si vide
+    "botasaurus": {
+        "chrome_executable_path": "",  # auto-detecte si vide
+        "enable_xvfb": True,           # Chrome headful dans Xvfb (anti-headless-detect)
+    },
     "scroll": {"max_rounds": 60, "pause_ms": 700, "stable_rounds": 3},
     "sidebar": {"max_rounds": 25, "pause_ms": 500},
     "services": {
@@ -123,6 +126,7 @@ def default_browser_factory(
         bota_cfg = config.get("botasaurus") or {}
         return BotasaurusSession(
             chrome_executable_path=bota_cfg.get("chrome_executable_path") or None,
+            enable_xvfb=bool(bota_cfg.get("enable_xvfb", False)),
             **common,
         )
     return BrowserSession(**common)

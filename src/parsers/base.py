@@ -37,6 +37,20 @@ LOGIN_URL_PARTS = (
 )
 
 DROP_TAGS = ("script", "style", "noscript", "iframe", "button", "svg", "textarea")
+
+#: caracteres de controle de direction (RTL/LTR) injectes par certaines UIs
+DIRECTION_MARKS_RE = re.compile(r"[\u200e\u200f\u202a-\u202e\u2066-\u2069]")
+
+
+def clean_ui_title(title: Optional[str]) -> Optional[str]:
+    """Titre utilisable : sans marques de direction, nbsp, ni libelle generique."""
+    if not title:
+        return None
+    title = DIRECTION_MARKS_RE.sub("", title).replace("\u00a0", " ").strip()
+    title = re.sub(r"\s+", " ", title)
+    if not title or title.lower() in ("google gemini", "gemini", "perplexity", "chatgpt"):
+        return None
+    return title
 ACTION_SELECTORS = (
     "button",
     "[role='button']",
@@ -46,6 +60,9 @@ ACTION_SELECTORS = (
     "[aria-label*='Copy' i]",
     "[aria-label*='Regenerate' i]",
     "[aria-label*='like' i]",
+    # UI invisible hors hover (timestamps de bulle, labels decoratifs)
+    "span[class*='opacity-0']",
+    "[aria-hidden='true']",
 )
 
 

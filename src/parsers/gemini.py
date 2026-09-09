@@ -16,9 +16,10 @@ import re
 from typing import Any, Dict, List, Optional
 
 from ..schema import Conversation
-from .base import BaseParser, ParseError
+from .base import BaseParser, ParseError, clean_ui_title
 
-CONV_ID_RE = re.compile(r"/app/([a-zA-Z0-9_-]{20,})")
+# IDs Gemini observes : 16 caracteres hexa (/app/892fb59332022e2a)
+CONV_ID_RE = re.compile(r"/app/([a-zA-Z0-9_-]{8,})")
 MODEL_TEXT_RE = re.compile(
     r"(Answered by\s+|Model:?\s+|)(Gemini(?:\s+Ultra|\s+\d[\d.]*\s*\w*)?(?:\s+(?:Pro|Flash|Live|Thinking|Deep Research))?)",
     re.IGNORECASE,
@@ -115,6 +116,7 @@ class GeminiParser(BaseParser):
             )
 
         title = self.extract_title(soup, *self.TITLE_SELECTORS) or extra.get("title_hint")
+        title = clean_ui_title(title) or clean_ui_title(extra.get("title_hint"))
         if title:
             title = re.sub(r"\s+[—-]\s*Gemini\s*$", "", title)
 
