@@ -63,6 +63,9 @@ ACTION_SELECTORS = (
     # UI invisible hors hover (timestamps de bulle, labels decoratifs)
     "span[class*='opacity-0']",
     "[aria-hidden='true']",
+    # marqueurs de citation inline (sources extraites a part -> metadata)
+    "span.citation",
+    ".citation-nbsp",
 )
 
 
@@ -181,11 +184,45 @@ class BaseParser(ABC):
                 )
             code_text = (code or pre).get_text().rstrip()
             pre.replace_with(NavigableString(f"\n```{lang}\n{code_text}\n```\n"))
+        # images distantes -> markdown (blob:/data: inutiles en export, ignores)
+        for img in node.find_all("img"):
+            src = img.get("src") or ""
+            if src.startswith(("http://", "https://")):
+                alt = (img.get("alt") or "image").strip() or "image"
+                img.replace_with(NavigableString(f"![{alt}]({src})"))
+            else:
+                img.decompose()
+        # liens -> markdown [texte](url) ; ancres/relatifs = texte seul
+        for a in node.find_all("a"):
+            href = (a.get("href") or "").strip()
+            text = a.get_text(" ", strip=True)
+            if href.startswith(("http://", "https://", "mailto:")):
+                if text.startswith("![") and text.endswith(")"):
+                    label = text  # lien autour d'une image : markdown deja pret
+                else:
+                    label = cls._md_escape_label(text) or href
+                a.replace_with(
+                    NavigableString(f"[{label}]({cls._md_escape_href(href)})")
+                )
+            elif text:
+                a.replace_with(NavigableString(text))
+            else:
+                a.unwrap()
         for br in node.find_all("br"):
             br.replace_with(NavigableString("\n"))
         for block in node.find_all(["p", "div", "li", "h1", "h2", "h3", "h4", "tr"]):
             block.insert_before(NavigableString("\n"))
             block.insert_after(NavigableString("\n"))
+
+    @staticmethod
+    def _md_escape_label(label: str) -> str:
+        """Libelle de lien markdown : crochets echappes, pas de retour ligne."""
+        return label.replace("\n", " ").replace("[", "\\[").replace("]", "\\]")
+
+    @staticmethod
+    def _md_escape_href(href: str) -> str:
+        """URL de lien markdown : parentheses encodees (sinon lien casse)."""
+        return href.replace("(", "%28").replace(")", "%29")
 
     @staticmethod
     def _normalize_text(text: str) -> str:

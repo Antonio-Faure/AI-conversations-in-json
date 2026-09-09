@@ -14,7 +14,6 @@ Contrairement a Playwright, pas d'objet `page` : tout passe par la facade
 
 from __future__ import annotations
 
-import json
 import os
 import time
 from pathlib import Path
@@ -419,8 +418,3 @@ class BotasaurusSession:
             log, 20, "login termine",
             extra={"service": service_name, "cookies": len(cookies)},
         )
-
-
-def dumps(obj: Any) -> str:
-    """Utilitaire : JSON lisible pour logs de debug."""
-    return json.dumps(obj, ensure_ascii=False, default=str)

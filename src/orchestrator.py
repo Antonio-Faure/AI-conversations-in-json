@@ -108,11 +108,12 @@ def default_registry() -> Dict[str, type]:
 
 def default_browser_factory(
     profile_dir: Path, service: str, config: Dict[str, Any]
-) -> BrowserSession:
+) -> Any:
     """Cree la session du moteur demande (playwright par defaut).
 
     La cle `_engine` (posee par l'orchestrateur lors d'une bascule) prime sur
-    `engine` ; `auto` est resolu en playwright ici.
+    `engine` ; `auto` est resolu en playwright ici. Retourne BrowserSession
+    (moteur playwright) ou BotasaurusSession (moteur botasaurus).
     """
     engine = str(config.get("_engine") or config.get("engine") or "auto").lower()
     common = dict(
@@ -217,7 +218,10 @@ class Orchestrator:
         svc_config: Dict[str, Any],
         engine: str,
     ) -> tuple:
-        """Session + service pour un moteur donne ('' = config courante)."""
+        """Session + service pour un moteur donne ('' = config courante).
+
+        Retourne (session, service) ; engine pose `_engine` pour la factory
+        (session playwright si vide/auto)."""
         factory_config = self.config
         if engine:
             factory_config = dict(self.config)

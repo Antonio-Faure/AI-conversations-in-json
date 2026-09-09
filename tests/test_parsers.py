@@ -163,6 +163,66 @@ class TestPerplexityParser:
         assert conv.started_at == "2026-09-05T08:00:00Z"
 
 
+class TestTextOfMarkdown:
+    """Conversion des noeuds riches en markdown (liens, images, code)."""
+
+    parser = ChatGPTParser()  # text_of est herite de BaseParser
+
+    def test_lien_distant_en_markdown(self):
+        html = '<p>Voir <a href="https://example.com/doc">la doc</a> pour plus.</p>'
+        text = self.parser.text_of(self.parser.make_soup(html).p)
+        assert "[la doc](https://example.com/doc)" in text
+        assert "pour plus" in text
+
+    def test_lien_sans_texte_garde_l_url(self):
+        html = '<a href="https://example.com">https://example.com</a>'
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "[https://example.com](https://example.com)" in text
+
+    def test_lien_ancre_reduit_au_texte(self):
+        html = '<a href="#section-2">Section 2</a>'
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "Section 2" in text and "]" not in text
+
+    def test_lien_label_avec_crochets(self):
+        html = '<a href="https://x.io/a">Notes [1]</a>'
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "[Notes \\[1\\]](https://x.io/a)" in text
+
+    def test_href_avec_parentheses_encodees(self):
+        html = '<a href="https://x.io/f(a,b)">fichier</a>'
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "](https://x.io/f%28a,b%29)" in text
+
+    def test_image_distante_en_markdown(self):
+        html = '<img src="https://img.example.com/p.png" alt="photo">'
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "![photo](https://img.example.com/p.png)" in text
+
+    def test_image_blob_ignoree(self):
+        html = '<img src="blob:https://chatgpt.com/xyz" alt="aperçu">'
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "blob:" not in text and "aperçu" not in text
+
+    def test_image_dans_lien(self):
+        html = '<a href="https://x.io"><img src="https://x.io/i.png" alt="logo"></a>'
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "[![logo](https://x.io/i.png)](https://x.io)" in text
+
+    def test_bouton_avec_lien_exclu(self):
+        html = '<button><a href="https://x.io">Copier</a></button>'
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "x.io" not in text
+
+    def test_marqueur_citation_exclu_du_texte(self):
+        html = (
+            "<p>pip est la méthode courante."
+            '<span class="citation inline"><span>reddit</span><span>+1</span></span></p>'
+        )
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "courante." in text and "reddit" not in text and "+1" not in text
+
+
 class TestTousLesParsers:
     @pytest.mark.parametrize("service", sorted(PARSER_CLASSES))
     def test_export_valide_et_serialisable(self, service, fixture_html):

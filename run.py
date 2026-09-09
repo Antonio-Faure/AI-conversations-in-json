@@ -32,7 +32,7 @@ log = logging.getLogger("aicv")
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run.py",
-        description="Export quotidien des conversations IA (Playwright) en JSON standardise.",
+        description="Export quotidien des conversations IA (Playwright/Botasaurus) en JSON standardise.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     target = parser.add_mutually_exclusive_group()

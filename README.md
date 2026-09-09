@@ -50,8 +50,14 @@ Il faut donc se connecter une première fois dans un navigateur visible :
 .venv/bin/python run.py --login perplexity
 ```
 
-Un navigateur s'ouvre : connectez-vous normalement, puis fermez la fenêtre.
+Un navigateur s'ouvre : connectez-vous normalement, le script détecte la fin
+de la connexion (navigation hors page de login) et ferme tout seul.
 Les cookies sont sauvegardés dans `profiles/<service>/`.
+
+Important : `--login` ouvre **le même moteur que l'export** du service
+(Botasaurus pour Claude). Les cookies anti-bot comme `cf_clearance` sont liés
+à l'User-Agent — une connexion Playwright ne serait pas réutilisable par
+Botasaurus, et inversement.
 
 ## Utilisation
 
@@ -140,8 +146,28 @@ services:
 ```
 
 En `auto`, un `BlockedError` relance automatiquement le service avec
-Botasaurus (une fois). Le chemin du Chrome Botasaurus est auto-détecté
-(Chromium Playwright, ou `$AICV_CHROME_PATH`) : `botasaurus.chrome_executable_path`.
+Botasaurus (une fois) — que ce soit à la découverte ou sur une conversation
+en cours. Le chemin du Chrome Botasaurus est auto-détecté (Chromium
+Playwright, ou `$AICV_CHROME_PATH`) : `botasaurus.chrome_executable_path`.
+
+### Xvfb (recommandé)
+
+Cloudflare détecte (et bloque) le headless sur certains services
+(Perplexity). L'option `botasaurus.enable_xvfb: true` lance alors un Chrome
+**headful dans un affichage virtuel Xvfb** (paquet `xvfb`) : invisible en
+SSH, indétectable comme headless. Si Xvfb manque, repli automatique sur le
+headless pur.
+
+### Validation
+
+Le pipeline complet a été validé sur les 4 services avec sessions réelles :
+découverte de la sidebar, export headless des conversations, contournement
+Cloudflare (Claude direct, Perplexity via bascule auto), parsing et écriture
+JSON. Un audit de qualité des exports est disponible :
+
+```bash
+.venv/bin/python scripts/audit_exports.py exports   # liens, fences, artefacts DOM restants
+```
 
 ## Configuration
 
@@ -156,8 +182,10 @@ paramètres de scroll. Les valeurs omises reprennent `DEFAULT_CONFIG`
 ├── run.py                     # point d'entrée CLI
 ├── config.yaml                # configuration (services, chemins, schedule)
 ├── requirements.txt
+├── scripts/
+│   └── audit_exports.py       # audit qualité des JSON (liens, code, artefacts)
 ├── src/
-│   ├── orchestrator.py        # workflow principal (pipeline par service)
+│   ├── orchestrator.py        # workflow principal (pipeline + bascule moteurs)
 │   ├── browser.py             # moteur Playwright (profil persistant, scroll)
 │   ├── browser_botasaurus.py  # moteur Botasaurus (anti-Cloudflare, même façade)
 │   ├── selectors.py           # traduction sélecteurs Playwright -> CSS (botasaurus)
@@ -173,8 +201,8 @@ paramètres de scroll. Les valeurs omises reprennent `DEFAULT_CONFIG`
 │       ├── logging.py         # logging structuré (console + JSON lines)
 │       └── file_utils.py      # exports atomiques, dates, état incrémentiel
 ├── tests/                     # pytest : schéma, parsers (fixtures HTML),
-│   └── fixtures/              # orchestrator (services factices), CLI
-├── profiles/                  # profils Playwright (ignorés git)
+│   └── fixtures/              # moteurs (traducteur sélecteurs), orchestrator, CLI
+├── profiles/                  # profils navigateurs (ignorés git)
 ├── .state/state.json          # incrémental (ignoré git)
 ├── logs/                      # aicv.jsonl (ignoré git)
 └── exports/                   # sorties (ignorées git)
@@ -195,15 +223,24 @@ et sessions factices injectés ; le CLI est testé sans lancer Chromium.
 | Symptôme | Cause / solution |
 |---|---|
 | `session expirée` / service `SKIP` | relancer `run.py --login <service>` |
+| `bloque par un challenge anti-bot` | le cookie `cf_clearance` a expiré → refaire `--login <service>` ; vérifier que `enable_xvfb: true` |
 | `aucun message reconnu` | DOM de la plateforme changé → mettre à jour les sélecteurs dans `src/parsers/<service>.py` (chaînes de fallback) |
 | `Executable doesn't exist` | `.venv/bin/python -m playwright install chromium` |
 | Export vide | vérifier `profiles/` (session), et lancer `--headful --verbose` pour observer |
+| `Xvfb indisponible` dans les logs | `.venv/bin/pip install` non requis — installer le paquet système `xvfb` |
 
 ## Limites connues
 
 - ChatGPT : timestamps absents du DOM → récupérés depuis les props internes
   React (best effort) ; sans eux, `started_at`/`last_message_at` sont `null`.
 - Claude : l'heure relative ("9:15 PM") n'est pas ré-analysable ; seuls les
-  éléments `<time datetime>` sont normalisés.
-- Gemini : historique complet derrière « Show all » (cliqué automatiquement
-  si présent) ; le lazy-loading du fil ne remonte pas toujours très loin.
+  éléments `<time datetime>` sont normalisés → timestamps souvent `null`.
+- Gemini : la sidebar démarre parfois repliée (ouverte automatiquement) ;
+  l'historique complet est derrière « Show all » / « Tout afficher » (cliqué
+  automatiquement si présent) ; le lazy-loading du fil ne remonte pas
+  toujours très loin.
+- Perplexity : Cloudflare refuse le headless pur → le moteur Botasaurus est
+  sollicité (bascule auto ou `engine: botasaurus`), idéalement avec Xvfb ;
+  timestamps et modèle non exposés au DOM (`null`).
+- Les DOM des plateformes changent souvent : les parsers ont des chaînes de
+  fallback, mais une rupture DOM demande une mise à jour des sélecteurs.

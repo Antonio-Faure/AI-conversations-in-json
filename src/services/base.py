@@ -164,9 +164,22 @@ class BaseService(ABC):
             raise ServiceNotLoggedIn(f"{self.name}: session perdue sur {url}")
         matched = self.session.wait_for_any(list(self.parser.message_selectors))
         if matched is None:
+            # seconde chance : SPA lente / rendu differe -> rechargement
+            log_fields(
+                log, 30,
+                f"{self.name}: aucun message vu sur {url}, rechargement...",
+            )
+            self.session.reload()
+            self.session.wait_ms(3000)
+            matched = self.session.wait_for_any(list(self.parser.message_selectors))
+        if matched is None:
+            shot = self.session.screenshot(
+                Path(self.config.get("screenshot_dir", ".")) / f"debug_{self.name}_conv.png"
+            )
             raise ParseError(
                 f"{self.name}: aucun message reconnu sur {url} "
                 f"(DOM change ? selecteurs: {self.parser.message_selectors})"
+                + (f" [capture: {shot}]" if shot else "")
             )
         scroll_cfg = self.config.get("scroll", {})
         self.session.scroll_page_until_stable(
