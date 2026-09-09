@@ -52,6 +52,17 @@ class PerplexityService(BaseService):
     def build_parser(self) -> PerplexityParser:
         return PerplexityParser()
 
+    def after_sidebar_open(self) -> None:
+        """Ferme la banniere de consentement si elle revient."""
+        for sel in (
+            "button:has-text('Tout autoriser')",
+            "button:has-text('Uniquement nécessaires')",
+            "[data-testid='consent-dialog'] button",
+        ):
+            if self.session.click_if_present(sel, timeout_ms=1200):
+                self.session.wait_ms(600)
+                return
+
     def conversation_url(self, ref: ConversationRef) -> str:
         return ref.url or f"https://www.perplexity.ai/search/{ref.id}"
 
