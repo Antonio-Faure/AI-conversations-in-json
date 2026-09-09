@@ -93,3 +93,31 @@ class TestMain:
         out = run_cli._resolve_paths(dict(config))
         assert out["output_dir"] == str(ROOT / "exports")
         assert str(out["state_file"]).endswith(".state/state.json")
+
+
+class TestLoginSession:
+    """Le login utilise le meme moteur que l'export (cookies lies a l'UA)."""
+
+    def test_claude_login_en_botasaurus(self):
+        from src.browser_botasaurus import BotasaurusSession
+
+        config = run_cli._resolve_paths(run_cli.load_config())
+        session = run_cli._login_session("claude", config)
+        assert isinstance(session, BotasaurusSession)
+        assert not session.headless  # login toujours en visible
+        assert str(session.profile_dir).endswith("claude")
+
+    def test_chatgpt_login_en_playwright(self):
+        from src.browser import BrowserSession
+
+        config = run_cli._resolve_paths(run_cli.load_config())
+        session = run_cli._login_session("chatgpt", config)
+        assert isinstance(session, BrowserSession)
+        assert not session.headless
+
+    def test_engine_auto_login_en_playwright(self):
+        config = run_cli._resolve_paths(run_cli.load_config())
+        config["engine"] = "auto"
+        config["services"]["claude"] = {"enabled": True, "url": "https://claude.ai/chats"}
+        session = run_cli._login_session("claude", config)
+        assert type(session).__name__ == "BrowserSession"

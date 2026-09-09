@@ -101,19 +101,32 @@ def _resolve_paths(config: dict) -> dict:
     return config
 
 
-def cmd_login(service_name: str, config: dict) -> int:
-    from src.browser import BrowserSession
+def _login_session(service_name: str, config: dict):
+    """Session de login : meme moteur que l'export.
 
+    Les cookies anti-bot (cf_clearance) sont lies a l'User-Agent : se
+    connecter via Playwright puis exporter via Botasaurus invaliderait la
+    session. Le moteur du service est donc respecte ici aussi.
+    """
+    from src.orchestrator import default_browser_factory, resolve_engine
+
+    engine = resolve_engine(service_name, config)
+    if engine == "auto":
+        engine = "playwright"
+    # login = toujours visible, quel que soit headless de la config
+    login_config = dict(config, _engine=engine, headless=False)
+    return default_browser_factory(
+        Path(config["profile_dir"]), service_name, login_config
+    )
+
+
+def cmd_login(service_name: str, config: dict) -> int:
     cls = SERVICE_CLASSES[service_name]
     home_url = getattr(cls, "home_url", "")
     svc_cfg = (config.get("services") or {}).get(service_name) or {}
     url = svc_cfg.get("url") or home_url
     profile_dir = Path(config["profile_dir"]) / service_name
-    session = BrowserSession(
-        profile_dir=profile_dir,
-        headless=False,
-        timeout_ms=int(config.get("timeout_ms", 45000)),
-    )
+    session = _login_session(service_name, config)
     try:
         session.interactive_login(service_name, url)
     finally:
