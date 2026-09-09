@@ -121,13 +121,19 @@ class BaseService(ABC):
         """Ouvre la home, scroll la sidebar, extrait les refs via le parser.
 
         Le lazy-load des sidebars est capricieux (liste partielle/vide) :
-        si 0 ref est extraite, on recharge et retente une fois.
+        si 0 ref est extraite, on recharge et retente (jusqu'a 3 essais).
         """
         refs = self._list_once(limit=limit)
-        if not refs:
-            log_fields(log, 30, f"{self.name}: 0 conversation -> rechargement + nouvelle tentative")
+        for wait_s in (3, 8):
+            if refs:
+                break
+            log_fields(
+                log, 30,
+                f"{self.name}: 0 conversation -> rechargement + nouvelle tentative "
+                f"(attente {wait_s}s)",
+            )
             self.session.reload()
-            self.session.wait_ms(3000)
+            self.session.wait_ms(wait_s * 1000)
             refs = self._list_once(limit=limit)
         if limit:
             refs = refs[:limit]
