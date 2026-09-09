@@ -121,6 +121,35 @@ class TestClaudeParser:
         assert "```bash" in conv.messages[3].content
         assert conv.messages[0].timestamp is None  # pas de time dans le parent direct
 
+    def test_dom_transcript_2026(self):
+        """Nouveau DOM Claude (transcript-row) : reponses via font-claude-response."""
+        html = """<html><body>
+          <div data-testid="chat-header-title">Review dossier</div>
+          <div data-testid='transcript-list'>
+            <div data-testid='transcript-row'>
+              <div data-testid='user-message'><div>Question sur le cache offline</div></div>
+            </div>
+            <div data-testid='transcript-row'>
+              <h2 class="sr-only">Réponse de Claude</h2>
+              <div class="font-claude-response"><div class="prose">
+                <div class="standard-markdown">
+                  <div>A réfléchi pendant 26 s</div>
+                  <p>Rester simple : cache via service worker.</p>
+                </div>
+              </div></div>
+            </div>
+            <div data-testid='transcript-row'>
+              <div data-testid='user-message'><div>Merci, et pour le deploiement ?</div></div>
+            </div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        assert [m.role for m in conv.messages] == ["user", "assistant", "user"]
+        assert "cache via service worker" in conv.messages[1].content
+        assert "Réponse de Claude" not in conv.messages[1].content  # heading sr-only exclu
+        assert "réfléchi" not in conv.messages[1].content  # label thinking exclu
+        assert conv.title == "Review dossier"
+
 
 class TestGeminiParser:
     def test_structure_complete(self, fixture_html):

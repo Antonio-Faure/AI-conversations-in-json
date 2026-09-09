@@ -35,10 +35,12 @@ def audit_dir(root: Path) -> int:
             stats[f"{svc}:liens"] += len(LINK_RE.findall(c))
             stats[f"{svc}:fences"] += len(FENCE_RE.findall(c))
             stats[f"{svc}:images"] += len(IMG_RE.findall(c))
-            if HTML_RE.search(c):
+            # html residuel : hors fences (le code cite contient du HTML legitime)
+            no_fence = re.sub(r"```.*?```", "", c, flags=re.DOTALL)
+            if HTML_RE.search(no_fence):
                 issues[f"{svc}:html_residuel"] += 1
                 print(f"  HTML residuel {f.name} [{m['role']}]: "
-                      f"{HTML_RE.search(c).group(0)!r} dans {c[:80]!r}")
+                      f"{HTML_RE.search(no_fence).group(0)!r} dans {c[:80]!r}")
             if len(c) < 4 and m["role"] == "assistant":
                 issues[f"{svc}:msg_vide"] += 1
     print("\n== Stats ==")

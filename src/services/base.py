@@ -29,6 +29,10 @@ class BlockedError(RuntimeError):
     """Challenge anti-bot (Cloudflare) : passer une fois en --headful pour valider."""
 
 
+class EmptyConversationError(RuntimeError):
+    """La conversation ne charge aucun message (vide, tâche, ou app en echec)."""
+
+
 @dataclass
 class ScrapedPage:
     html: str
@@ -195,6 +199,11 @@ class BaseService(ABC):
             self.session.wait_ms(3000)
             matched = self.session.wait_for_any(list(self.parser.message_selectors))
         if matched is None:
+            if self.session.is_element_present("[data-testid='empty-chat-screen']"):
+                raise EmptyConversationError(
+                    f"{self.name}: conversation sans message chargeable sur {url} "
+                    f"(vide, tache, ou echec de rendu de l'app)"
+                )
             shot = self.session.screenshot(
                 Path(self.config.get("screenshot_dir", ".")) / f"debug_{self.name}_conv.png"
             )

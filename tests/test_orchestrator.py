@@ -19,7 +19,7 @@ from src.orchestrator import (
 )
 from src.parsers.base import ParseError
 from src.schema import Conversation, ConversationRef, Message
-from src.services.base import BlockedError, ServiceNotLoggedIn
+from src.services.base import BlockedError, EmptyConversationError, ServiceNotLoggedIn
 from src.utils.file_utils import today_str, validate_date_arg
 
 
@@ -126,6 +126,15 @@ class AlwaysBlockedDiscovery(FakeService):
 
     def list_conversations(self, limit=None):
         raise BlockedError("challenge cloudflare")
+
+
+class EmptyConversationService(FakeService):
+    """Conversation non chargeable (vide/tache) : skip, pas un echec."""
+
+    name = "emptyconv"
+
+    def export_conversation(self, ref):
+        raise EmptyConversationError(f"{self.name}: conversation sans message")
 
 
 @pytest.fixture()
@@ -366,6 +375,15 @@ class TestEngine:
         assert result.skipped
         assert len(sessions) == 1
         assert sessions[0].config.get("_engine") == "botasaurus"
+
+    def test_conversation_vide_ignoree_pas_un_echec(self, workdir):
+        orch, _ = make_orchestrator(workdir, {"emptyconv": EmptyConversationService})
+        summary = orch.run(services=["emptyconv"], force=True)
+        result = summary.services["emptyconv"]
+        assert result.skipped_items == ["c1", "c2", "c3"]
+        assert result.failed == []
+        assert not summary.has_failures
+        assert result.exported == []
 
 
 class TestRunSummary:

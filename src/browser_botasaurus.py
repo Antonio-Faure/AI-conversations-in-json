@@ -238,6 +238,10 @@ class BotasaurusSession:
         args = [arg] if arg is not None else None
         return self._run_js(playwright_js_to_iife(script), args=args)
 
+    def is_element_present(self, selector: str) -> bool:
+        """Presence immediate d'un element (facade commune aux deux moteurs)."""
+        return self._present(translate_selector(selector), wait_s=0.0)
+
     def click_if_present(self, selector: str, timeout_ms: int = 2500) -> bool:
         sel = translate_selector(selector)
         body = js_click_body(sel)

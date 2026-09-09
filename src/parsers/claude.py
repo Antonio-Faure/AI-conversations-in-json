@@ -1,13 +1,13 @@
 """Parser DOM Claude (claude.ai).
 
-Structure reelle observee (2024-2026):
-  - sidebar : liens <a href="https://claude.ai/chat/<uuid>"> par conversation
-  - messages user : <div data-testid="user-message" ...> (ou [data-test="user-message"])
-  - reponses assistant : <div data-test="collapsible-text" class="font-claude-message">
-    ou <div data-testid="assistant-message-text"> ; blocs reflexion
-    [data-testid="thinking-block"] exclus du texte final.
-  - horodatage : <time datetime="..."> dans le pied de message quand present.
-  - modele : badge <div data-testid="model-badge"> ("Claude 3.7 Sonnet").
+Deux generations de DOM coexistent selon les conversations :
+  - classique : messages user <div data-testid="user-message">, reponses
+    <div data-test="collapsible-text" class="font-claude-message"> ou
+    <div data-testid="assistant-message-text">
+  - transcript (2026, structure [data-testid='transcript-row']) : reponses
+    assistant dans <div class="font-claude-response"> > .prose > .standard-markdown ;
+    les marqueurs assistant classiques y ont disparu (les user restent).
+Blocs reflexion [data-testid="thinking-block"] exclus du texte final.
 """
 
 from __future__ import annotations
@@ -19,6 +19,13 @@ from ..schema import Conversation
 from .base import BaseParser, ParseError
 
 UUID_RE = re.compile(r"/chat/([0-9a-fA-F]{8}-(?:[0-9a-fA-F-]{27}|[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}))")
+
+#: label UI du bloc reflexion replie ("A réfléchi pendant 26 s") — pas du contenu
+THINKING_LABEL_RE = re.compile(
+    r"^\s*(?:a\s+r[eé]fl[eé]chi\s+(?:\S+\s+)?pendant\s+(?:\d+\s*s(?:ec\.?|econdes?)?|quelques\s+secondes)"
+    r"|thought\s+for\s+.*?seconds?)\s*:?\s*$",
+    re.IGNORECASE,
+)
 
 USER_ATTRS = ("data-testid", "data-test", "data-testid", "data-test")
 USER_VALUES = ("user-message", "user-editor", "user-message-content")
@@ -38,6 +45,7 @@ class ClaudeParser(BaseParser):
 
     message_selectors = (
         "div[data-testid='user-message']",
+        "div.font-claude-response",
         "div[data-testid='assistant-message-text']",
         "div[data-test='collapsible-text']",
         "div[data-test='user-message']",
@@ -47,7 +55,7 @@ class ClaudeParser(BaseParser):
     TURN_SELECTOR = ", ".join(
         [f"div[{a}='{v}']" for a, v in zip(USER_ATTRS, USER_VALUES)]
         + [f"div[{a}='{v}']" for a in ("data-testid", "data-test") for v in ASSISTANT_VALUES]
-        + ["div.font-claude-message"]
+        + ["div.font-claude-message", "div.font-claude-response"]
     )
     THINKING_SELECTORS = (
         "[data-testid='thinking-block']",
@@ -98,6 +106,7 @@ class ClaudeParser(BaseParser):
             role = self._role_of(turn)
             node = self._strip_thinking(turn)
             content = self.text_of(node)
+            content = self._drop_thinking_labels(content)
             if not content:
                 continue
             timestamp = self._timestamp_of(turn)
@@ -138,6 +147,15 @@ class ClaudeParser(BaseParser):
         return self.check(conv)
 
     # -- helpers -----------------------------------------------------------
+
+    @staticmethod
+    def _drop_thinking_labels(content: str) -> str:
+        """Retire les labels UI 'A réfléchi pendant N s' du texte extrait."""
+        if not content:
+            return content
+        kept = [l for l in content.splitlines() if not THINKING_LABEL_RE.match(l)]
+        cleaned = "\n".join(kept)
+        return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
 
     @staticmethod
     def _role_of(turn) -> str:

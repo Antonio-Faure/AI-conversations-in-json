@@ -146,7 +146,8 @@ def _print_summary(summary, config: dict) -> None:
         print(
             f"{name:<12} exportees={len(result.exported):<4} "
             f"inchangees={len(result.unchanged):<4} "
-            f"filtrees={len(result.out_of_range):<4} [{state}]"
+            f"filtrees={len(result.out_of_range):<4} "
+            f"ignorees={len(result.skipped_items):<4} [{state}]"
         )
     print(f"Sortie: {Path(config['output_dir']) / summary.date}")
 

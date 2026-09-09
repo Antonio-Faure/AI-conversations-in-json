@@ -23,7 +23,7 @@ import yaml
 from .browser import BrowserSession
 from .parsers.base import ParseError
 from .schema import Conversation, ConversationRef, SchemaError, parse_iso
-from .services.base import BaseService, BlockedError, ServiceNotLoggedIn
+from .services.base import BaseService, BlockedError, EmptyConversationError, ServiceNotLoggedIn
 from .utils.file_utils import (
     export_path,
     load_state,
@@ -141,6 +141,8 @@ class ServiceResult:
     unchanged: List[str] = field(default_factory=list)
     out_of_range: List[str] = field(default_factory=list)
     failed: List[str] = field(default_factory=list)
+    #: conversations ignorables (vides / taches non exportables)
+    skipped_items: List[str] = field(default_factory=list)
     skipped: bool = False
     skip_reason: Optional[str] = None
 
@@ -342,6 +344,14 @@ class Orchestrator:
                 extra={"conversation_id": ref.id, "error": str(exc)},
             )
             return "blocked"
+        except EmptyConversationError as exc:
+            # non exportable (vide/tache) : ignore, ce n'est pas un echec
+            log_fields(
+                log, logging.WARNING, f"{service.name}: conversation ignoree",
+                extra={"conversation_id": ref.id, "reason": str(exc)},
+            )
+            result.skipped_items.append(ref.id)
+            return None
         except ServiceNotLoggedIn as exc:
             log_fields(
                 log, logging.ERROR, f"{service.name}: session perdue",

@@ -226,6 +226,13 @@ class BrowserSession:
         except (PlaywrightTimeoutError, PlaywrightError):
             return False
 
+    def is_element_present(self, selector: str) -> bool:
+        """Presence immediate d'un element (facade commune aux deux moteurs)."""
+        try:
+            return self.page.query_selector(selector) is not None
+        except PlaywrightError:
+            return False
+
     def press_if_present(self, key: str) -> None:
         try:
             self.page.keyboard.press(key)

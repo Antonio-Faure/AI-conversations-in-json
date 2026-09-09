@@ -233,8 +233,10 @@ et sessions factices injectés ; le CLI est testé sans lancer Chromium.
 
 - ChatGPT : timestamps absents du DOM → récupérés depuis les props internes
   React (best effort) ; sans eux, `started_at`/`last_message_at` sont `null`.
-- Claude : l'heure relative ("9:15 PM") n'est pas ré-analysable ; seuls les
-  éléments `<time datetime>` sont normalisés → timestamps souvent `null`.
+- Claude : le DOM a deux générations (classique + « transcript » 2026, gérées
+  toutes deux) ; le badge modèle a disparu du nouveau DOM (`model: null`) ;
+  les conversations qui ne chargent aucun message (tâches, vides) sont
+  **ignorées** sans faire échouer le run (`ignorees=` dans le résumé).
 - Gemini : la sidebar démarre parfois repliée (ouverte automatiquement) ;
   l'historique complet est derrière « Show all » / « Tout afficher » (cliqué
   automatiquement si présent) ; le lazy-loading du fil ne remonte pas
@@ -244,3 +246,7 @@ et sessions factices injectés ; le CLI est testé sans lancer Chromium.
   timestamps et modèle non exposés au DOM (`null`).
 - Les DOM des plateformes changent souvent : les parsers ont des chaînes de
   fallback, mais une rupture DOM demande une mise à jour des sélecteurs.
+- La fiabilité repose sur la **convergence** : listing sidebar et rendu des
+  fils sont parfois floppyeux (listes vides/partielles, SPA lente) — chaque
+  étape retente (reload, 2e listing, 2e rendu), et les échecs résiduels
+  d'une exécution sont repris à la suivante (l'état incrémentiel complète).
