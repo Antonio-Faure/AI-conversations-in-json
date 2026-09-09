@@ -76,9 +76,11 @@ class BaseService(ABC):
     # -- pipeline commun ----------------------------------------------------------
 
     def _scroll_config(self) -> Dict[str, int]:
+        cfg = self.config.get("sidebar", {})
         return {
-            "max_rounds": int(self.config.get("sidebar", {}).get("max_rounds", 25)),
-            "pause_ms": int(self.config.get("sidebar", {}).get("pause_ms", 500)),
+            "max_rounds": int(cfg.get("max_rounds", 25)),
+            "pause_ms": int(cfg.get("pause_ms", 500)),
+            "stable_rounds": int(cfg.get("stable_rounds", 2)),
         }
 
     def after_sidebar_open(self) -> None:
@@ -116,7 +118,22 @@ class BaseService(ABC):
         )
 
     def list_conversations(self, limit: Optional[int] = None) -> List[ConversationRef]:
-        """Ouvre la home, scroll la sidebar, extrait les refs via le parser."""
+        """Ouvre la home, scroll la sidebar, extrait les refs via le parser.
+
+        Le lazy-load des sidebars est capricieux (liste partielle/vide) :
+        si 0 ref est extraite, on recharge et retente une fois.
+        """
+        refs = self._list_once(limit=limit)
+        if not refs:
+            log_fields(log, 30, f"{self.name}: 0 conversation -> rechargement + nouvelle tentative")
+            self.session.reload()
+            self.session.wait_ms(3000)
+            refs = self._list_once(limit=limit)
+        if limit:
+            refs = refs[:limit]
+        return refs
+
+    def _list_once(self, limit: Optional[int] = None) -> List[ConversationRef]:
         self.session.goto(self.home_url)
         self._assert_not_blocked("home")
         if self.session.looks_logged_out(list(self.login_url_parts), list(self.login_selectors)):
@@ -131,6 +148,7 @@ class BaseService(ABC):
             list(self.sidebar_scroll_selectors),
             max_rounds=sidebar_cfg["max_rounds"],
             pause_ms=sidebar_cfg["pause_ms"],
+            stable_rounds=sidebar_cfg["stable_rounds"],
         )
         refs = self.parser.parse_links(self.session.html(), self.home_url)
         if not refs:
@@ -151,8 +169,6 @@ class BaseService(ABC):
             f"{self.name}: conversations trouvees",
             extra={"count": len(refs), "limit": limit},
         )
-        if limit:
-            refs = refs[:limit]
         return refs
 
     def scrape_conversation(self, ref: ConversationRef) -> ScrapedPage:

@@ -54,7 +54,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "enable_xvfb": True,           # Chrome headful dans Xvfb (anti-headless-detect)
     },
     "scroll": {"max_rounds": 60, "pause_ms": 700, "stable_rounds": 3},
-    "sidebar": {"max_rounds": 25, "pause_ms": 500},
+    # sidebar lazy-load : rounds+stabilite generes pour charger l'historique complet
+    "sidebar": {"max_rounds": 40, "pause_ms": 700, "stable_rounds": 4},
     "services": {
         "chatgpt": {"enabled": True, "url": "https://chatgpt.com/"},
         "claude": {"enabled": True, "url": "https://claude.ai/chats"},

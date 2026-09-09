@@ -28,10 +28,11 @@ scroll:
   max_rounds: 60
   pause_ms: 700
   stable_rounds: 3
-# scroll de la sidebar (liste complete des conversations)
+# scroll de la sidebar (liste complete des conversations ; lazy-load exigeant)
 sidebar:
-  max_rounds: 25
-  pause_ms: 500
+  max_rounds: 40
+  pause_ms: 700
+  stable_rounds: 4
 
 # Planification quotidienne (le scheduler reste externe, cron/systemd):
 #   30 3 * * * cd /chemin/du/depot && .venv/bin/python run.py --all
