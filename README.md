@@ -158,15 +158,51 @@ Cloudflare détecte (et bloque) le headless sur certains services
 SSH, indétectable comme headless. Si Xvfb manque, repli automatique sur le
 headless pur.
 
-### Validation
+## Découverte des listes (le point critique)
+
+Les sidebars ne montrent qu'un extrait de l'historique ; chaque service a sa
+propresolution :
+
+| service | découverte | nb. validé |
+|---|---|---|
+| ChatGPT | sidebar scrollée (collecteur incrémentiel) | 168 |
+| Claude | sidebar (les IDs de conversation sont listés en entier) | 21 |
+| Gemini | sidebar repliée (ouverte automatiquement) + scroll de l'`infinite-scroller` | 290+ |
+| Perplexity | **API GraphQL de la library** (persisted query, pagination par curseur) | **347** |
+
+Le collecteur incrémentiel (`_collect_sidebar_refs`) gère les listes
+**virtualisées** (seuls les items visibles sont dans le DOM, les items
+scrollés disparaissent) : il saute au bas de chaque conteneur scrollable et
+accumule les refs à chaque tour jusqu'à stabilisation.
+
+Sur Perplexity, les lignes virtuelles n'ont même pas de `<a>` — d'où la
+découverte par GraphQL (`LibraryRecentThreadsPaginationQuery`, endpoint
+`/rest/perplexity_ask/graphql`). Si la structure change, fallback DOM
+automatique (limité au récent).
+
+## Anti rate-limit
+
+ChatGPT ferme l'accès à l'historique en cas de rafale (« Too many requests »).
+Parades :
+
+- `pacing_ms` : pause entre conversations (chatgpt : 1500 ms)
+- détection du dialog de limite → fermeture (« Got it ») + attentes
+  croissantes (15/30/60 s) avant rechargement
+- `scripts/export_missing.py` : n'exporte que les conversations absentes du
+  disque (utile après un throttling — évite de re-scroller toute la liste)
+
+## Validation
 
 Le pipeline complet a été validé sur les 4 services avec sessions réelles :
-découverte de la sidebar, export headless des conversations, contournement
-Cloudflare (Claude direct, Perplexity via bascule auto), parsing et écriture
-JSON. Un audit de qualité des exports est disponible :
+découverte complète des listes (168 chatgpt / 21 claude / 290 gemini /
+347 perplexity), export headless, contournement Cloudflare (Claude et
+Perplexity via Botasaurus/Xvfb), parsing et écriture JSON — 848 messages
+chatgpt, 76 claude, 134 gemini, 1 345 perplexity sur la session de test,
+liens en markdown et blocs de code en fences vérifiés par :
 
 ```bash
 .venv/bin/python scripts/audit_exports.py exports   # liens, fences, artefacts DOM restants
+.venv/bin/python scripts/export_missing.py <service>  # export des manquantes seulement
 ```
 
 ## Configuration
@@ -242,8 +278,11 @@ et sessions factices injectés ; le CLI est testé sans lancer Chromium.
   automatiquement si présent) ; le lazy-loading du fil ne remonte pas
   toujours très loin.
 - Perplexity : Cloudflare refuse le headless pur → le moteur Botasaurus est
-  sollicité (bascule auto ou `engine: botasaurus`), idéalement avec Xvfb ;
-  timestamps et modèle non exposés au DOM (`null`).
+  sollicité (`engine: botasaurus`), avec Xvfb. Le forfait **gratuit** rate-limite
+  la lecture en rafale des conversations (redirection vers l'accueil) :
+  espace les runs (cron quotidien = OK) ou reprend avec
+  `scripts/export_missing.py` ; les timestamps sont `null` (non exposés) et
+  le modèle vient de l'API de découverte (`displayModel.modelID`).
 - Les DOM des plateformes changent souvent : les parsers ont des chaînes de
   fallback, mais une rupture DOM demande une mise à jour des sélecteurs.
 - La fiabilité repose sur la **convergence** : listing sidebar et rendu des

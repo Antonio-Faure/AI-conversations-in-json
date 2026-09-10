@@ -98,8 +98,10 @@ class PerplexityService(BaseService):
                         url=f"https://www.perplexity.ai/search/{cid}",
                         title=(node.get("name") or None),
                     )
-                    if node.get("modelID"):
-                        self._thread_models[cid] = str(node["modelID"])
+                    display = node.get("displayModel") or {}
+                    model_id = display.get("modelID") or node.get("modelID")
+                    if model_id:
+                        self._thread_models[cid] = str(model_id)
                 info = threads.get("pageInfo") or {}
                 log_fields(
                     log, 20, f"{self.name}: page API {page + 1}",
