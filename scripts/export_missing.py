@@ -66,6 +66,17 @@ def run_service(service_name: str) -> None:
         refs = service.list_conversations(limit=None)
         missing = [r for r in refs if r.id not in done]
         print(f"[{service_name}] decouvertes: {len(refs)} | manquantes: {len(missing)}")
+        # garde-fou throttling : si la 1re conversation redirige (rate limite),
+        # on abandonne l'essai (la boucle appelante retentera plus tard)
+        probe = missing[:1]
+        if probe:
+            try:
+                service.export_conversation(probe[0])
+            except EmptyConversationError:
+                pass
+            except Exception as exc:  # noqa: BLE001
+                print(f"[{service_name}] throttle detecte sur la 1re conv ({exc}) -> essai abandonne")
+                return
         exported = skipped = failed = 0
         for ref in missing:
             try:
