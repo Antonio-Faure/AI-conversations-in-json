@@ -88,9 +88,3 @@ class CookieClient:
             return json.loads(raw)
         except json.JSONDecodeError as exc:
             raise RuntimeError(f"{self.service}: reponse non-JSON sur {url}") from exc
-
-    def get_text(self, url: str, accept: str = "text/html,application/xhtml+xml") -> str:
-        status, raw = self.get(url, accept=accept)
-        if status != 200:
-            raise RuntimeError(f"{self.service}: HTTP {status} sur {url}")
-        return raw.decode("utf-8", errors="replace")

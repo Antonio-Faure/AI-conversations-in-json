@@ -181,6 +181,15 @@ def workdir(tmp_path, monkeypatch):
     return tmp_path
 
 
+@pytest.fixture(autouse=True)
+def _reset_fake_state():
+    """Evite les dependances d'ordre (compteurs/listes de classe)."""
+    FakeService.instances = []
+    BlockedDiscoveryService.calls = 0
+    BlockedOnceConversation.calls = 0
+    yield
+
+
 class TestConfig:
     def test_deep_merge(self):
         base = {"a": 1, "nested": {"x": 1, "y": 2}}

@@ -22,13 +22,6 @@ ACTIVE_SERVICES: tuple[str, ...] = (
     "chatgpt", "claude", "gemini", "perplexity", "grok", "mistral",
 )
 
-SERVICE_REGISTRY = SERVICE_CLASSES
-
-
-def get_service_class(name: str) -> type[BaseService]:
-    """Retourne la classe du service ou leve KeyError."""
-    return SERVICE_CLASSES[name]
-
 
 __all__ = [
     "BaseService",
@@ -42,6 +35,4 @@ __all__ = [
     "MistralService",
     "SERVICE_CLASSES",
     "ACTIVE_SERVICES",
-    "SERVICE_REGISTRY",
-    "get_service_class",
 ]

@@ -27,7 +27,7 @@ THINKING_LABEL_RE = re.compile(
     re.IGNORECASE,
 )
 
-USER_ATTRS = ("data-testid", "data-test", "data-testid", "data-test")
+USER_ATTRS = ("data-testid", "data-test", "data-testid")
 USER_VALUES = ("user-message", "user-editor", "user-message-content")
 ASSISTANT_VALUES = ("assistant-message-text", "collapsible-text")
 
@@ -66,7 +66,6 @@ class ClaudeParser(BaseParser):
         "[role='status']",
         "details",
     )
-    CONTENT_SELECTORS = (".font-claude-message", "div", "p")
     TITLE_SELECTORS = (
         "[data-testid='chat-header-title']",
         "header h1",

@@ -143,9 +143,7 @@ class PerplexityService(BaseService):
             return None
 
     def extract_extras(self, ref: ConversationRef) -> Dict[str, Any]:
-        extra: Dict[str, Any] = {}
-        if ref.title:
-            extra["title_hint"] = ref.title
+        extra = super().extract_extras(ref)
         model = self._thread_models.get(ref.id)
         if model:
             extra["model"] = model

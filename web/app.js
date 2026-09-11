@@ -55,15 +55,6 @@ function tokenize(text) {
   return out;
 }
 
-function highlight(text, terms) {
-  let html = escapeHtml(text);
-  for (const term of terms) {
-    const safe = escapeHtml(term).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    html = html.replace(new RegExp("(" + safe + ")", "gi"), "<mark>$1</mark>");
-  }
-  return html;
-}
-
 /* ---------- markdown + LaTeX ---------- */
 const MATH_PATTERNS = [
   { re: /\$\$([\s\S]+?)\$\$/g, wrap: (m) => "$$" + m + "$$" },

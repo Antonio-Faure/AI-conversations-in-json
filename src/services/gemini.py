@@ -6,8 +6,6 @@ sidebar : on le clique si present avant de scroller.
 
 from __future__ import annotations
 
-from typing import Any, Dict
-
 from ..parsers.gemini import GeminiParser
 from ..schema import ConversationRef
 from .base import BaseService
@@ -65,9 +63,3 @@ class GeminiService(BaseService):
 
     def conversation_url(self, ref: ConversationRef) -> str:
         return ref.url or f"https://gemini.google.com/app/{ref.id}"
-
-    def extract_extras(self, ref: ConversationRef) -> Dict[str, Any]:
-        extra: Dict[str, Any] = {}
-        if ref.title:
-            extra["title_hint"] = ref.title
-        return extra

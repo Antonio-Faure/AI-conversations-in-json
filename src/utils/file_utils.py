@@ -10,15 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-STAMP_FMT = "%Y%m%dT%H%M%SZ"
-
 #: nom reserve du repertoire de sortie d'une plateforme
 CONVERSATION_LIST_NAME = "conversation_list.json"
-
-
-def now_stamp() -> str:
-    """Horodatage UTC compact pour noms de fichiers (20260909T033000Z)."""
-    return datetime.now(timezone.utc).strftime(STAMP_FMT)
 
 
 def now_iso_z() -> str:

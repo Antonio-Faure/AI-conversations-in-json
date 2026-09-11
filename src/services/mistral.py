@@ -125,9 +125,3 @@ class MistralService(BaseService):
     def scrape_conversation(self, ref: ConversationRef):
         self._ensure_mode((ref.raw or {}).get("mode", "work"))
         return super().scrape_conversation(ref)
-
-    def extract_extras(self, ref: ConversationRef) -> Dict[str, Any]:
-        extra: Dict[str, Any] = {}
-        if ref.title:
-            extra["title_hint"] = ref.title
-        return extra

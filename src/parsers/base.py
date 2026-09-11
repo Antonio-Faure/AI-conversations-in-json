@@ -365,6 +365,12 @@ class BaseParser(ABC):
         return conv
 
     @staticmethod
+    def majority(values: List[Any]) -> Optional[Any]:
+        """Valeur la plus frequente (ignoree si vide). None si aucune."""
+        present = [value for value in values if value]
+        return max(set(present), key=present.count) if present else None
+
+    @staticmethod
     def msg(
         role: str,
         content: str,

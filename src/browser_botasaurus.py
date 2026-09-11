@@ -61,8 +61,6 @@ def find_chrome_binary() -> Optional[str]:
 class BotasaurusSession:
     """Facade navigateur basee sur botasaurus_driver (anti-Cloudflare)."""
 
-    engine = "botasaurus"
-
     def __init__(
         self,
         profile_dir: Optional[Path | str] = None,

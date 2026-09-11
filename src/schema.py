@@ -34,7 +34,6 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional
 
 VALID_ROLES = ("user", "assistant", "system", "tool")
-KNOWN_PLATFORMS = ("chatgpt", "claude", "gemini", "perplexity")
 
 #: blocs ```lang ... ``` : cloture en debut de ligne (evite de fermer sur un
 #: ``` present dans le code lui-meme)
@@ -141,9 +140,6 @@ def normalize_messages(messages: List["Message"]) -> List["Message"]:
             previous.message_id = message.message_id
         if message.metadata:
             previous.metadata.update(message.metadata)
-        if not previous.code_blocks and not previous.texte:
-            # message vide absorbe : on garde le precedent
-            pass
     return merged
 
 

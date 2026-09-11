@@ -41,7 +41,7 @@ RATE_LIMIT_MARKERS = ("too many requests", "trop de requ", "temporairement limit
 RATE_LIMIT_DISMISS_SELECTORS = (
     "button:has-text('Got it')",
     "button:has-text('OK')",
-    "button:has-text('J'ai compris')",
+    'button:has-text("J\'ai compris")',
 )
 
 
@@ -55,8 +55,6 @@ class ScrapedPage:
 
 class NoopSession:
     """Session factice pour les services sans navigateur (API HTTP + cookies)."""
-
-    engine = "http"
 
     def wait_ms(self, ms: int) -> None:
         pass
@@ -104,8 +102,11 @@ class BaseService(ABC):
         return ref.url
 
     def extract_extras(self, ref: ConversationRef) -> Dict[str, Any]:
-        """Donnees non-DOM (ex: timestamps reactFiber ChatGPT). Defaut: vide."""
-        return {}
+        """Donnees non-DOM (ex: timestamps reactFiber ChatGPT).
+
+        Defaut : le titre de la sidebar suffit comme indice pour le parser.
+        """
+        return {"title_hint": ref.title} if ref.title else {}
 
     # -- pipeline commun ----------------------------------------------------------
 
@@ -378,9 +379,6 @@ class BaseService(ABC):
         if not conv.conversation_id:
             conv.conversation_id = ref.id
         return conv
-
-    def export_conversation(self, ref: ConversationRef) -> Conversation:
-        return self.parse_page(self.scrape_conversation(ref), ref)
 
     def export_conversation_with_html(self, ref: ConversationRef) -> tuple:
         """Retourne (Conversation, html complet de la page)."""

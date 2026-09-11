@@ -209,3 +209,41 @@ class TestConversationRef:
         assert ref.id == "abc"
         assert ref.url == "https://x/c/abc"
         assert ref.raw == {}
+
+
+class TestNormalizeMessages:
+    def test_fusion_deux_messages_meme_role(self):
+        from src.schema import Message, normalize_messages
+
+        out = normalize_messages([
+            Message("assistant", "partie 1"),
+            Message("assistant", "partie 2"),
+            Message("user", "question"),
+        ])
+        assert [m.role for m in out] == ["assistant", "user"]
+        assert out[0].texte == "partie 1\n\npartie 2"
+
+    def test_doublon_consecutif_supprime(self):
+        from src.schema import Message, normalize_messages
+
+        out = normalize_messages([
+            Message("user", "salut"),
+            Message("user", "salut"),
+        ])
+        assert len(out) == 1
+
+    def test_extension_garde_le_plus_complet(self):
+        from src.schema import Message, normalize_messages
+
+        out = normalize_messages([
+            Message("user", "salut"),
+            Message("user", "salut et bonjour"),
+        ])
+        assert len(out) == 1
+        assert out[0].texte == "salut et bonjour"
+
+    def test_alterne_roles_inchange(self):
+        from src.schema import Message, normalize_messages
+
+        msgs = [Message("user", "a"), Message("assistant", "b")]
+        assert normalize_messages(msgs) == msgs

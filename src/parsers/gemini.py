@@ -51,7 +51,6 @@ class GeminiParser(BaseParser):
         "user-query message-content",
         "user-query rich-textarea .ql-editor",
         "user-query",
-        "div.user-query",
     )
     ASSISTANT_SELECTORS = (
         "model-response message-content .model-response-text",

@@ -56,10 +56,6 @@ class Embedder:
             self._model = SentenceTransformer(self.model_name, device=self.device)
         return self._model
 
-    @property
-    def dim(self) -> int:
-        return DIM
-
     def encode(self, texts: List[str]) -> np.ndarray:
         """Vecteurs float32 normalises (shape N x DIM)."""
         if not texts:

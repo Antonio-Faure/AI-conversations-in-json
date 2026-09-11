@@ -245,26 +245,6 @@ class VectorStore:
 
     # -- acces par rowid (recherche combinee) -----------------------------------
 
-    def messages_by_rowid(self, rowids: List[int]) -> Dict[int, Dict[str, Any]]:
-        if not rowids:
-            return {}
-        found: Dict[int, Dict[str, Any]] = {}
-        chunk = 500
-        for start in range(0, len(rowids), chunk):
-            batch = rowids[start:start + chunk]
-            placeholders = ",".join("?" * len(batch))
-            rows = self.db.execute(
-                f"""
-                SELECT rowid, message_id, conversation_id, platform, role, model,
-                       timestamp, texte, has_code, conversation_file
-                FROM messages WHERE rowid IN ({placeholders})
-                """,
-                batch,
-            ).fetchall()
-            for row in rows:
-                found[row["rowid"]] = dict(row)
-        return found
-
     def vectors_by_rowid(self, rowids: List[int]) -> Dict[int, bytes]:
         if not rowids:
             return {}

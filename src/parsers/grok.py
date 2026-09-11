@@ -63,9 +63,7 @@ class GrokParser(BaseParser):
         if not messages:
             raise ParseError("grok: aucun message exploitable")
 
-        model = None
-        if models:
-            model = max(set(models), key=models.count)
+        model = self.majority(models)
         conv_id = (
             conversation_id
             or conv_meta.get("conversationId")

@@ -16,9 +16,6 @@ from typing import Any, Dict, List, Optional
 from ..schema import Conversation
 from .base import BaseParser, ParseError
 
-USER_ROLE_SELECTOR = "div[data-message-author-role='user']"
-ASSISTANT_ROLE_SELECTOR = "div[data-message-author-role='assistant']"
-
 CONVERSATION_ID_RE = re.compile(r"/c/([0-9a-fA-F-]{16,}|[A-Za-z0-9_-]{16,})")
 
 
@@ -123,9 +120,7 @@ class ChatGPTParser(BaseParser):
             m = CONVERSATION_ID_RE.search(html)
             conv_id = m.group(1) if m else "unknown"
 
-        model = extra.get("model")
-        if not model and models:
-            model = max(set(models), key=models.count)
+        model = extra.get("model") or self.majority(models)
         if not model:
             header = self.select_first(soup, self.MODEL_HEADER_SELECTORS)
             text = self.text_of(header)
