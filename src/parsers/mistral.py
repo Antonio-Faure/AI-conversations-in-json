@@ -93,7 +93,12 @@ class MistralParser(BaseParser):
         if role == "assistant":
             parts = container.select("[data-message-part-type='answer']")
             texts = [cls.text_of(p) for p in parts]
-            return "\n\n".join(t for t in texts if t).strip()
+            text = "\n\n".join(t for t in texts if t).strip()
+            if text:
+                return text
+            # reponses rendues en "canvas"/document (sans partie answer)
+            canvas = container.select_one("div[class*='pt-3'][class*='pb-4']")
+            return cls.text_of(canvas).strip() if canvas is not None else ""
         # user : le corps du message (hors boutons/actions)
         body = container.select_one(".select-text") or container
         return cls.text_of(body)

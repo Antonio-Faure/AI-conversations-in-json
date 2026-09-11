@@ -36,8 +36,9 @@ from typing import Any, Dict, Iterable, List, Optional
 VALID_ROLES = ("user", "assistant", "system", "tool")
 KNOWN_PLATFORMS = ("chatgpt", "claude", "gemini", "perplexity")
 
-#: blocs ```lang ... ``` (le langage est optionnel)
-CODE_FENCE_RE = re.compile(r"```([^\n`]*)\n(.*?)```", re.DOTALL)
+#: blocs ```lang ... ``` : cloture en debut de ligne (evite de fermer sur un
+#: ``` present dans le code lui-meme)
+CODE_FENCE_RE = re.compile(r"```([^\n`]*)\n(.*?)^```[ \t]*$", re.DOTALL | re.MULTILINE)
 
 
 class SchemaError(ValueError):
@@ -103,6 +104,47 @@ def extract_code_blocks(text: Optional[str]) -> List["CodeBlock"]:
             code = code[:-1]
         blocks.append(CodeBlock(language=language, code=code))
     return blocks
+
+
+def normalize_messages(messages: List["Message"]) -> List["Message"]:
+    """Garantit l'alternance user/assistant et supprime les doublons consecutifs.
+
+    - deux messages consecutifs du meme role sont fusionnes (texte, code_blocks,
+      metadonnees ; le premier message_id/modele/timestamp non vide est garde) ;
+    - un message dont le texte est deja contenu dans le precedent est ignore.
+    Applique par les parsers (`BaseParser.check`) et la regeneration d'exports.
+    """
+    merged: List[Message] = []
+    for message in messages:
+        if not merged or merged[-1].role != message.role:
+            merged.append(message)
+            continue
+        previous = merged[-1]
+        text = (message.texte or "").strip()
+        prev_text = (previous.texte or "").strip()
+        if not text:
+            pass
+        elif text == prev_text or text in prev_text:
+            pass
+        elif prev_text and prev_text in text:
+            previous.texte = message.texte
+        else:
+            previous.texte = (previous.texte + "\n\n" + message.texte).strip()
+        for block in message.code_blocks:
+            if block not in previous.code_blocks:
+                previous.code_blocks.append(block)
+        if not previous.timestamp:
+            previous.timestamp = message.timestamp
+        if not previous.model:
+            previous.model = message.model
+        if not previous.message_id:
+            previous.message_id = message.message_id
+        if message.metadata:
+            previous.metadata.update(message.metadata)
+        if not previous.code_blocks and not previous.texte:
+            # message vide absorbe : on garde le precedent
+            pass
+    return merged
 
 
 @dataclass

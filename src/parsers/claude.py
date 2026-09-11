@@ -60,6 +60,10 @@ class ClaudeParser(BaseParser):
     THINKING_SELECTORS = (
         "[data-testid='thinking-block']",
         "[data-test='thinking-toggle']",
+        # statut de tour 2026 : label de reflexion + resume + statuts outils
+        "[data-cds='TurnStatus']",
+        "[data-testid='TurnStatus']",
+        "[role='status']",
         "details",
     )
     CONTENT_SELECTORS = (".font-claude-message", "div", "p")
@@ -131,8 +135,15 @@ class ClaudeParser(BaseParser):
             m = UUID_RE.search(html)
             conv_id = m.group(1) if m else "unknown"
 
-        model_el = soup.select_one("[data-testid='model-badge']")
-        model = self.text_of(model_el) if model_el else None
+        model = None
+        badge = soup.select_one("[data-testid='model-badge']")
+        if badge is not None:
+            model = self.text_of(badge)
+        if not model:
+            selector = soup.select_one("[data-testid='model-selector-dropdown']")
+            if selector is not None:
+                label = selector.get("aria-label") or ""
+                model = label.split(":", 1)[-1].strip() if ":" in label else label.strip()
         if model and len(model) > 60:
             model = None
 

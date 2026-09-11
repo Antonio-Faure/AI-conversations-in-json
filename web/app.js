@@ -64,6 +64,109 @@ function highlight(text, terms) {
   return html;
 }
 
+/* ---------- markdown + LaTeX ---------- */
+const MATH_PATTERNS = [
+  { re: /\$\$([\s\S]+?)\$\$/g, wrap: (m) => "$$" + m + "$$" },
+  { re: /\\\[([\s\S]+?)\\\]/g, wrap: (m) => "\\[" + m + "\\]" },
+  { re: /\\\(([\s\S]+?)\\\)/g, wrap: (m) => "\\(" + m + "\\)" },
+  { re: /\$([^\s$][^$\n]*?[^\s$])\$/g, wrap: (m) => "$" + m + "$" },
+];
+
+function protectMath(text) {
+  const store = [];
+  let out = String(text || "");
+  for (const { re, wrap } of MATH_PATTERNS) {
+    out = out.replace(re, (_, inner) => {
+      const token = "@@M" + store.length + "@@";
+      store.push(wrap(inner));
+      return token;
+    });
+  }
+  return { text: out, store };
+}
+
+function restoreMath(html, store) {
+  return html.replace(/@@M(\d+)@@/g, (_, i) => escapeHtml(store[Number(i)] || ""));
+}
+
+function stripFences(text) {
+  return String(text || "").replace(/```[\s\S]*?```/g, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function renderMarkdown(text) {
+  const { text: protectedText, store } = protectMath(text);
+  let html;
+  try {
+    html = (typeof marked !== "undefined")
+      ? marked.parse(protectedText, { gfm: true, breaks: true })
+      : escapeHtml(protectedText).replace(/\n/g, "<br>");
+  } catch (err) {
+    html = escapeHtml(protectedText).replace(/\n/g, "<br>");
+  }
+  if (typeof DOMPurify !== "undefined") {
+    html = DOMPurify.sanitize(html, { ADD_ATTR: ["target", "rel"] });
+  }
+  return restoreMath(html, store);
+}
+
+function highlightDom(root, terms) {
+  if (!terms || !terms.length) return;
+  const lowered = terms.map((t) => t.toLowerCase());
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let node;
+  while ((node = walker.nextNode())) nodes.push(node);
+  for (const textNode of nodes) {
+    if (!textNode.nodeValue.trim()) continue;
+    const parent = textNode.parentElement;
+    if (!parent || parent.closest("mark,.katex,pre,code,a,script,style")) continue;
+    const value = textNode.nodeValue;
+    const low = value.toLowerCase();
+    let hit = -1, len = 0;
+    for (let i = 0; i < lowered.length; i++) {
+      const pos = low.indexOf(lowered[i]);
+      if (pos !== -1 && (hit === -1 || pos < hit)) { hit = pos; len = lowered[i].length; }
+    }
+    if (hit === -1) continue;
+    const before = value.slice(0, hit);
+    const match = value.slice(hit, hit + len);
+    const after = value.slice(hit + len);
+    const mark = document.createElement("mark");
+    mark.textContent = match;
+    const frag = document.createDocumentFragment();
+    if (before) frag.appendChild(document.createTextNode(before));
+    frag.appendChild(mark);
+    if (after) frag.appendChild(document.createTextNode(after));
+    parent.replaceChild(frag, textNode);
+  }
+}
+
+function hardenLinks(root) {
+  root.querySelectorAll("a[href]").forEach((a) => {
+    a.setAttribute("target", "_blank");
+    a.setAttribute("rel", "noopener noreferrer");
+  });
+}
+
+function enhance(root, terms) {
+  if (typeof renderMathInElement === "function") {
+    try {
+      renderMathInElement(root, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "\\[", right: "\\]", display: true },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "$", right: "$", display: false },
+        ],
+        throwOnError: false,
+        ignoredTags: ["pre", "code", "script", "style"],
+      });
+    } catch (err) { /* KaTeX indisponible : on laisse le TeX brut */ }
+  }
+  highlightDom(root, terms);
+  hardenLinks(root);
+}
+
 function platformName(p) { return PLATFORM_LABEL[p] || p || "?"; }
 function roleLabel(r) { return r === "user" ? "Utilisateur" : (r === "assistant" ? "Assistant" : (r || "?")); }
 function formatTs(ts) { return ts ? String(ts).replace("T", " ").replace("Z", "").slice(0, 16) : "—"; }
@@ -178,13 +281,14 @@ function renderResults() {
         ${r.model ? `<span>${escapeHtml(r.model)}</span>` : ""}
         <span>conv ${escapeHtml((r.conversation_id || "").slice(0, 8))}</span>
       </div>
-      <div class="rc-snippet"><span class="clip">${highlight(r.texte, state.terms)}</span></div>
+      <div class="rc-snippet"><div class="clip">${renderMarkdown(stripFences(r.texte))}</div></div>
     </div>`).join("") + `</div>`;
   main.querySelectorAll(".result-card").forEach((card) =>
     card.addEventListener("click", () => {
       const r = state.results[Number(card.dataset.i)];
       openConversation(r.platform, r.conversation_id, r.message_id);
     }));
+  enhance(main, state.terms);
 }
 
 function renderSidebar() {
@@ -263,11 +367,12 @@ function renderConversation() {
     ${messages.map((m, i) => renderMessage(m, i)).join("")}
   </div>`;
   $("backTop").addEventListener("click", backToResults);
+  enhance($("main"), state.terms);
 }
 
 function renderMessage(m, i) {
   const matched = state.matchedMid && m.message_id === state.matchedMid;
-  const body = highlight(m.texte || "", state.terms);
+  const body = renderMarkdown(stripFences(m.texte || ""));
   const code = (m.code_blocks || []).map((b) =>
     `<div class="code-block"><div class="code-head"><span>${escapeHtml(b.language || "code")}</span>
       <button class="copy-btn" data-copy="${i}">copier</button></div>

@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from ..schema import Conversation
+from ..utils.cleanup import clean_grok_text
 from .base import BaseParser, ParseError
 
 ROLE_MAP = {"human": "user", "user": "user", "assistant": "assistant",
@@ -39,9 +40,10 @@ class GrokParser(BaseParser):
         messages: List[Any] = []
         models: List[str] = []
         for resp in responses:
-            text = (resp.get("message") or "").strip()
-            if not text:
+            text = clean_grok_text(resp.get("message") or "")
+            if not text.strip():
                 continue
+            text = text.strip()
             sender = str(resp.get("sender") or "assistant").lower()
             role = ROLE_MAP.get(sender, "assistant")
             model = resp.get("model") or None

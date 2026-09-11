@@ -240,6 +240,36 @@ Le HTML n'existant pas dans l'ancien schéma, il est produit au prochain run.
 .venv/bin/python scripts/audit_exports.py exports   # liens, fences, artefacts DOM
 ```
 
+## Qualité des données (nettoyage)
+
+Correctifs appliqués aux parseurs et à la régénération :
+
+- **Alternance garantie** : jamais deux messages `user` ou deux `assistant`
+  consécutifs — `normalize_messages` (src/schema.py) fusionne les tours éclatés
+  et supprime les doublons, pour les 6 chatbots.
+- **LaTeX préservé** : KaTeX (`annotation x-tex`), Gemini `data-math` et
+  ChatGPT `data-math-source` sont convertis en `\(...\)` / `\[...\]` / `$$...$$`
+  au lieu d'être perdus.
+- **Indentation du code** préservée (les fences ne sont plus `strip`ées) ;
+  la langue des blocs Mistral est récupérée depuis l'en-tête.
+- **Grok nettoyé** : suppression des balises `<grok:render>`, `<argument>`,
+  `xaiArtifact`, `<br>` (`src/utils/cleanup.py`).
+- **Gemini** : « Vous avez dit » et la duplication des messages utilisateur
+  supprimés (libellés lecteur d'écran exclus).
+- **Claude** : labels de réflexion/statut de tour retirés, modèle lu depuis
+  `model-selector-dropdown`.
+
+Régénération **sans re-crawler** depuis les HTML sauvegardés :
+
+```bash
+.venv/bin/python scripts/reparse_exports.py                 # toutes plateformes
+.venv/bin/python scripts/reparse_exports.py --platform gemini --no-backup
+```
+
+Les métadonnées absentes du HTML (timestamps/modele) sont fusionnées depuis
+l'ancien JSON (`.json.bak` conservé). Re-lancer ensuite
+`scripts/rag_index.py --force` (les vecteurs inchangés sont repris du cache).
+
 ## RAG (recherche sémantique des messages)
 
 Indexation **un vecteur par message** et recherche par **similarité cosinus**.
@@ -289,6 +319,9 @@ les conversations des 6 chatbots.
 - **Filtres** : par chatbot (chips), par modèle, par plage de dates.
 - **Résultats** : cartes avec score global + détail (`sém` / `mots`), extrait
   surligné (termes de la requête), plateforme, rôle, date, modèle.
+- **Rendu riche** : markdown (gras, listes, tableaux, liens `target=_blank`),
+  **LaTeX via KaTeX**, blocs de code séparés avec bouton copier
+  (`marked` + `DOMPurify` + `KaTeX`, CDN).
 - **Clic sur un message** → ouvre la conversation complète, positionnée et
   surlignée sur ce message ; bouton retour.
 - **Sidebar** : conversations présentes dans les résultats (nb de messages
@@ -332,6 +365,7 @@ omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │   ├── capture_cookies.py     # capture les cookies (navigateur visible)
 │   ├── rag_index.py           # indexe les messages (BGE-M3 -> sqlite-vec)
 │   ├── rag_search.py          # recherche cosinus dans le RAG
+│   ├── reparse_exports.py     # régénère les JSON depuis les HTML (sans re-crawl)
 │   ├── serve_web.py           # serveur local + API pour la page de recherche
 │   └── audit_exports.py       # audit qualité des JSON exportés
 ├── src/
@@ -358,6 +392,7 @@ omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │   │   └── search.py          #   recherche combinée (cosinus + mots-clés)
 │   └── utils/
 │       ├── html_render.py     # HTML autonome (services sans page récupérable)
+│       ├── cleanup.py         # nettoyage texte par plateforme (Grok...)
 │       ├── logging.py         # logging console (pas de fichier)
 │       └── file_utils.py      # exports atomiques, noms, conversation_list
 ├── web/                       # page de recherche (index.html, app.js, style.css)

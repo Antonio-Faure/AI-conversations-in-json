@@ -15,7 +15,13 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
-from ..schema import Conversation, ConversationRef, Message, SchemaError
+from ..schema import (
+    Conversation,
+    ConversationRef,
+    Message,
+    SchemaError,
+    normalize_messages,
+)
 from ..utils.logging import get_logger, log_fields
 
 log = get_logger("parsers")
@@ -63,6 +69,9 @@ ACTION_SELECTORS = (
     # UI invisible hors hover (timestamps de bulle, labels decoratifs)
     "span[class*='opacity-0']",
     "[aria-hidden='true']",
+    # libelles lecteur d'ecran (ex: Gemini "Vous avez dit ...")
+    ".cdk-visually-hidden",
+    "[class*='screen-reader']",
     # marqueurs de citation inline (sources extraites a part -> metadata)
     "span.citation",
     ".citation-nbsp",
@@ -168,22 +177,68 @@ class BaseParser(ABC):
 
     @classmethod
     def _clean_tree(cls, node: Tag) -> None:
+        # LaTeX : conserver la source TeX avant toute suppression (KaTeX rendu,
+        # Gemini data-math, ChatGPT data-math-source)
+        for katex in node.select("span.katex"):
+            annotation = katex.find("annotation", attrs={"encoding": "application/x-tex"})
+            if annotation is None:
+                continue
+            tex = annotation.get_text().strip()
+            if not tex:
+                continue
+            display = katex.find_parent(class_="katex-display") is not None
+            katex.replace_with(
+                NavigableString(f"\n$${tex}$$\n" if display else f" ${tex} ")
+            )
+        for el in node.select("[data-math], [data-math-source]"):
+            tex = (el.get("data-math") or el.get("data-math-source") or "").strip()
+            if not tex:
+                continue
+            classes = " ".join(el.get("class") or [])
+            display = (
+                el.name == "div"
+                or "math-block" in classes
+                or el.get("data-math-display") == "block"
+            )
+            el.replace_with(
+                NavigableString(f"\n\\[{tex}\\]\n" if display else f" \\({tex}\\) ")
+            )
+        # citations inline (Perplexity) : conserver le lien avant suppression
+        for citation in node.select("span.citation"):
+            url = citation.get("data-pplx-citation-url") or ""
+            label = citation.get_text(" ", strip=True)
+            if url and label:
+                citation.replace_with(NavigableString(f" [{label}]({url}) "))
+
         for tag in node.find_all(DROP_TAGS):
             tag.decompose()
         for sel in ACTION_SELECTORS:
             for tag in node.select(sel):
                 tag.decompose()
         for pre in node.find_all("pre"):
+            # Mistral : le bloc est encapsule avec un en-tete (langue) a retirer
+            root = pre.find_parent(
+                class_=lambda value: bool(value) and "markdown-fenced-code-root" in value
+            ) or pre
             code = pre.find("code")
             lang = ""
-            if code is not None:
-                classes = code.get("class") or []
-                lang = next(
-                    (c.split("-", 1)[1] for c in classes if c.startswith("language-")),
-                    "",
-                )
+            for element in (code, pre):
+                if element is None:
+                    continue
+                for cls_name in element.get("class") or []:
+                    if cls_name.startswith("language-"):
+                        lang = cls_name.split("-", 1)[1]
+                        break
+                if not lang:
+                    lang = element.get("data-language") or element.get("data-lang") or ""
+                if lang:
+                    break
+            if not lang and root is not pre:
+                label = root.select_one("span[class*='text-subtle'], span.font-medium")
+                if label is not None:
+                    lang = label.get_text(" ", strip=True).splitlines()[0].strip()
             code_text = (code or pre).get_text().rstrip()
-            pre.replace_with(NavigableString(f"\n```{lang}\n{code_text}\n```\n"))
+            root.replace_with(NavigableString(f"\n```{lang}\n{code_text}\n```\n"))
         # images distantes -> markdown (blob:/data: inutiles en export, ignores)
         for img in node.find_all("img"):
             src = img.get("src") or ""
@@ -226,9 +281,19 @@ class BaseParser(ABC):
 
     @staticmethod
     def _normalize_text(text: str) -> str:
-        text = text.replace("\u00a0", " ")
+        text = text.replace("\u00a0", " ").replace("\u202f", " ")
         text = ZERO_WIDTH_RE.sub("", text)
-        lines = [SPACE_RE.sub(" ", line).strip() for line in text.splitlines()]
+        lines = []
+        in_fence = False
+        for line in text.splitlines():
+            if line.lstrip().startswith("```"):
+                in_fence = not in_fence
+                lines.append(line.rstrip())
+            elif in_fence:
+                # preserver l'indentation du code
+                lines.append(line.rstrip())
+            else:
+                lines.append(SPACE_RE.sub(" ", line).strip())
         text = "\n".join(lines)
         text = NEWLINES_RE.sub("\n\n", text)
         return text.strip()
@@ -290,7 +355,8 @@ class BaseParser(ABC):
 
     @staticmethod
     def check(conv: Conversation) -> Conversation:
-        """Valide et remonte une erreur exploitable pour les fixtures/services."""
+        """Normalise (alternance des roles) puis valide la conversation."""
+        conv.messages = normalize_messages(conv.messages)
         try:
             conv.derive_timestamps()
             conv.validate()

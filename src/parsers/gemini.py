@@ -136,6 +136,8 @@ class GeminiParser(BaseParser):
         return self.check(conv)
 
     CONTENT_OF_USER = (
+        # parent de tous les .query-text-line (requete multi-ligne)
+        "user-query .query-text",
         ".user-query-content .content",
         ".content",
         "rich-textarea .ql-editor",

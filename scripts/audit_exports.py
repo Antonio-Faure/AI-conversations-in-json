@@ -16,7 +16,10 @@ from pathlib import Path
 
 LINK_RE = re.compile(r"\[[^\]]+\]\((?:https?://|/)[^)]*\)|https?://[^\s)>]+")
 IMG_RE = re.compile(r"!\[[^\]]*\]\([^)]+\)|data:image/")
-HTML_RE = re.compile(r"</?(?:div|span|p|a|button|svg|li|ul|table)[\s>/]")
+HTML_RE = re.compile(
+    r"</?(?:div|span|p|a|button|svg|li|ul|table)[\s>/]"
+    r"|</?xai[A-Za-z]*|grok:render|</?argument\b"
+)
 FENCE_RE = re.compile(r"^```", re.MULTILINE)
 
 
