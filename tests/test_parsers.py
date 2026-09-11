@@ -8,6 +8,7 @@ from src.parsers import (
     ChatGPTParser,
     ClaudeParser,
     GeminiParser,
+    GrokParser,
     PARSER_CLASSES,
     PerplexityParser,
 )
@@ -62,20 +63,36 @@ class TestChatGPTParser:
             fixture_html("chatgpt_conversation.html"), conversation_id="cid-42"
         )
         assert isinstance(conv, Conversation)
-        assert conv.service == "chatgpt"
+        assert conv.platform == "chatgpt"
         assert conv.conversation_id == "cid-42"
         assert conv.title == "Refactor module paiement"
         assert conv.model == "gpt-5"
         assert [m.role for m in conv.messages] == ["user", "assistant", "user", "assistant"]
 
+    def test_message_id_et_model_par_message(self, fixture_html):
+        conv = ChatGPTParser().parse(
+            fixture_html("chatgpt_conversation.html"), conversation_id="cid-42"
+        )
+        assert conv.messages[0].message_id == "aa11bb22-0001-4334-9556-778899aabbcc"
+        assert conv.messages[0].model is None
+        assert conv.messages[1].model == "gpt-5"
+        assert conv.messages[1].message_id == "aa11bb22-0002-4334-9556-778899aabbcc"
+
+    def test_code_blocks_structures(self, fixture_html):
+        conv = ChatGPTParser().parse(fixture_html("chatgpt_conversation.html"), conversation_id="c")
+        assert conv.messages[3].has_code
+        block = conv.messages[3].code_blocks[0]
+        assert block.language == "python"
+        assert "test_refund" in block.code
+
     def test_markdown_et_nettoyage(self, fixture_html):
         conv = ChatGPTParser().parse(fixture_html("chatgpt_conversation.html"), conversation_id="c")
         first = conv.messages[0]
-        assert "refactorer mon module de paiement" in first.content
-        assert "\n" in conv.messages[1].content  # liste separee en lignes
-        assert "Copier" not in conv.messages[1].content  # boutons exclus
-        assert "color:red" not in conv.messages[3].content  # style exclu
-        assert "```python" in conv.messages[3].content  # bloc code fence
+        assert "refactorer mon module de paiement" in first.texte
+        assert "\n" in conv.messages[1].texte  # liste separee en lignes
+        assert "Copier" not in conv.messages[1].texte  # boutons exclus
+        assert "color:red" not in conv.messages[3].texte  # style exclu
+        assert "```python" in conv.messages[3].texte  # bloc code fence
 
     def test_timestamps_via_meta_react(self, fixture_html):
         extra = {
@@ -89,7 +106,7 @@ class TestChatGPTParser:
         )
         assert conv.messages[0].timestamp == "2026-01-04T10:30:00Z"
         assert conv.started_at == "2026-01-04T10:30:00Z"
-        assert conv.messages[1].metadata["model"] == "gpt-5"
+        assert conv.messages[1].model == "gpt-5"
 
     def test_sans_messages_erreur(self, fixture_html):
         with pytest.raises(ParseError):
@@ -102,7 +119,7 @@ class TestClaudeParser:
             fixture_html("claude_conversation.html"),
             conversation_id="6f1c2d3e-4a5b-6c7d-8e9f-0a1b2c3d4e5f",
         )
-        assert conv.service == "claude"
+        assert conv.platform == "claude"
         assert conv.title == "Préparer un entretien technique"
         assert conv.model == "Claude Sonnet 4"
         assert [m.role for m in conv.messages] == ["user", "assistant", "user", "assistant"]
@@ -110,7 +127,7 @@ class TestClaudeParser:
     def test_thinking_exclu_et_signale(self, fixture_html):
         conv = ClaudeParser().parse(fixture_html("claude_conversation.html"), conversation_id="c")
         assistant = conv.messages[1]
-        assert "organiser 7 jours" not in assistant.content  # reflexion retiree
+        assert "organiser 7 jours" not in assistant.texte  # reflexion retiree
         assert assistant.metadata.get("had_thinking") is True
 
     def test_timestamps_et_code(self, fixture_html):
@@ -118,7 +135,7 @@ class TestClaudeParser:
         assert conv.messages[1].timestamp == "2026-09-03T14:05:00Z"
         assert conv.started_at == "2026-09-03T14:05:00Z"
         assert conv.last_message_at == "2026-09-03T14:12:30Z"
-        assert "```bash" in conv.messages[3].content
+        assert "```bash" in conv.messages[3].texte
         assert conv.messages[0].timestamp is None  # pas de time dans le parent direct
 
     def test_dom_transcript_2026(self):
@@ -145,9 +162,9 @@ class TestClaudeParser:
         </body></html>"""
         conv = ClaudeParser().parse(html, conversation_id="abc")
         assert [m.role for m in conv.messages] == ["user", "assistant", "user"]
-        assert "cache via service worker" in conv.messages[1].content
-        assert "Réponse de Claude" not in conv.messages[1].content  # heading sr-only exclu
-        assert "réfléchi" not in conv.messages[1].content  # label thinking exclu
+        assert "cache via service worker" in conv.messages[1].texte
+        assert "Réponse de Claude" not in conv.messages[1].texte  # heading sr-only exclu
+        assert "réfléchi" not in conv.messages[1].texte  # label thinking exclu
         assert conv.title == "Review dossier"
 
 
@@ -156,16 +173,16 @@ class TestGeminiParser:
         conv = GeminiParser().parse(
             fixture_html("gemini_conversation.html"), conversation_id="cid-gemini"
         )
-        assert conv.service == "gemini"
+        assert conv.platform == "gemini"
         assert conv.title == "Plan de voyage Japon"
         assert conv.model == "Gemini 2.5 Pro"
         assert [m.role for m in conv.messages] == ["user", "assistant", "user", "assistant"]
 
     def test_contenu_et_ordre(self, fixture_html):
         conv = GeminiParser().parse(fixture_html("gemini_conversation.html"), conversation_id="c")
-        assert "10 jours au Japon" in conv.messages[0].content
-        assert "Tokyo 3j" in conv.messages[1].content
-        assert "JR Pass" in conv.messages[3].content
+        assert "10 jours au Japon" in conv.messages[0].texte
+        assert "Tokyo 3j" in conv.messages[1].texte
+        assert "JR Pass" in conv.messages[3].texte
 
 
 class TestPerplexityParser:
@@ -173,7 +190,7 @@ class TestPerplexityParser:
         conv = PerplexityParser().parse(
             fixture_html("perplexity_conversation.html"), conversation_id="cid-perp"
         )
-        assert conv.service == "perplexity"
+        assert conv.platform == "perplexity"
         assert conv.title.startswith("Où en sont les voitures")
         assert conv.model == "sonar-pro"
         assert [m.role for m in conv.messages] == ["user", "assistant", "user", "assistant"]
@@ -252,8 +269,42 @@ class TestTextOfMarkdown:
         assert "courante." in text and "reddit" not in text and "+1" not in text
 
 
+class TestGrokParser:
+    """Grok n'a pas de DOM : le parser travaille sur les donnees de l'API."""
+
+    PAYLOAD = {
+        "conversation": {
+            "conversationId": "grok-1",
+            "title": "Test Grok",
+            "createTime": "2026-09-01T10:00:00.000Z",
+            "modifyTime": "2026-09-01T10:05:00.000Z",
+        },
+        "responses": [
+            {"responseId": "r1", "sender": "human", "message": "Salut",
+             "createTime": "2026-09-01T10:00:00.000Z", "model": ""},
+            {"responseId": "r2", "sender": "assistant",
+             "message": "Bonjour !\n```python\nprint(1)\n```",
+             "createTime": "2026-09-01T10:00:05.000Z", "model": "grok-3"},
+        ],
+    }
+
+    def test_structure(self):
+        conv = GrokParser().parse("", conversation_id="grok-1", extra=self.PAYLOAD)
+        assert conv.platform == "grok"
+        assert conv.title == "Test Grok"
+        assert conv.model == "grok-3"
+        assert [m.role for m in conv.messages] == ["user", "assistant"]
+        assert conv.messages[0].message_id == "r1"
+        assert conv.messages[1].has_code
+        assert conv.messages[1].code_blocks[0].language == "python"
+
+    def test_sans_reponses_erreur(self):
+        with pytest.raises(ParseError):
+            GrokParser().parse("", conversation_id="x", extra={"responses": []})
+
+
 class TestTousLesParsers:
-    @pytest.mark.parametrize("service", sorted(PARSER_CLASSES))
+    @pytest.mark.parametrize("service", sorted(set(PARSER_CLASSES) - {"grok"}))
     def test_export_valide_et_serialisable(self, service, fixture_html):
         parser = PARSER_CLASSES[service]()
         conv = parser.parse(
@@ -261,8 +312,8 @@ class TestTousLesParsers:
         )
         conv.validate()
         data = conv.to_dict()
-        assert data["service"] == service
-        assert all(m["metadata"] is not None for m in data["messages"])
+        assert data["platform"] == service
+        assert all("code_blocks" in m for m in data["messages"])
         import json
 
         json.loads(json.dumps(data))  # roundtrip sans exception

@@ -299,5 +299,21 @@ class BaseParser(ABC):
         return conv
 
     @staticmethod
-    def msg(role: str, content: str, timestamp: Any = None, metadata: Optional[Dict] = None) -> Message:
-        return Message(role=role, content=content, timestamp=timestamp, metadata=metadata or {})
+    def msg(
+        role: str,
+        content: str,
+        timestamp: Any = None,
+        metadata: Optional[Dict] = None,
+        *,
+        message_id: str = "",
+        model: Optional[str] = None,
+    ) -> Message:
+        """Construit un message standardise (texte + code_blocks derives)."""
+        return Message(
+            role=role,
+            texte=content,
+            timestamp=timestamp,
+            metadata=metadata or {},
+            message_id=message_id,
+            model=model,
+        )

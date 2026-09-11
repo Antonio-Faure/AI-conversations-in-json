@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formules de Physique-Chimie</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--font-display:'Crimson Pro',serif;--font-body:'DM Sans',sans-serif;--transition:0.3s cubic-bezier(0.4,0,0.2,1)}
+html[data-force-chrome]{--primary:#30191E;--secondary:#4F3439;--tertiary:#6B4C51;--text:#f8f9fa;--text-muted:rgba(255,255,255,0.6);--accent:#e94560;--accent-dim:#d63951;--bg-card:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.1);--bg-hover:rgba(255,255,255,0.1);--shadow:0 8px 32px rgba(0,0,0,0.5);--glow:0 0 20px rgba(233,69,96,0.3);--focus-ring:rgba(233,69,96,0.2);--btn-shadow:0 5px 20px rgba(233,69,96,0.35)}
+html[data-theme="light"]:not([data-force-chrome]){--primary:#f8fafc;--secondary:#f1f5f9;--tertiary:#e2e8f0;--text:#0f172a;--text-muted:rgba(0,0,0,0.4);--accent:#0d9488;--accent-dim:#0f766e;--bg-card:rgba(255,255,255,0.95);--border:rgba(0,0,0,0.06);--bg-hover:rgba(0,0,0,0.03);--shadow:0 4px 24px rgba(0,0,0,0.06);--glow:0 0 16px rgba(13,148,136,0.15);--focus-ring:rgba(13,148,136,0.15);--btn-shadow:0 5px 20px rgba(13,148,136,0.25)}
+html[data-theme="dark"]:not([data-force-chrome]){--primary:#0d1117;--secondary:#111820;--tertiary:#161b22;--text:#e2e8f0;--text-muted:rgba(255,255,255,0.45);--accent:#4facde;--accent-dim:#3a8ab5;--bg-card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.06);--bg-hover:rgba(255,255,255,0.07);--shadow:0 8px 32px rgba(0,0,0,0.4);--glow:0 0 20px rgba(79,172,222,0.2);--focus-ring:rgba(79,172,222,0.2);--btn-shadow:0 5px 20px rgba(79,172,222,0.25)}
+body{font-family:var(--font-body);background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 50%,var(--tertiary) 100%);min-height:100vh;color:var(--text);transition:background var(--transition),color var(--transition)}
+.container{max-width:1600px;margin:0 auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:50px;animation:fadeInDown 0.8s ease-out}
+.header-left{text-align:left}
+.header-right{display:flex;align-items:center;gap:.75rem;flex-shrink:0;padding-top:.25rem}
+h1{font-family:var(--font-display);font-size:3.5rem;font-weight:700;margin-bottom:15px;background:linear-gradient(45deg,var(--text),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{font-size:1.1rem;color:var(--text-muted);font-weight:300}
+.theme-toggle{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;user-select:none}
+.theme-toggle-label{font-size:.75rem;color:var(--text-muted);font-weight:500}
+.toggle-track{width:42px;height:22px;background:var(--bg-hover);border:1px solid var(--border);border-radius:99px;position:relative;transition:background var(--transition)}
+.toggle-track.active{background:var(--accent)}
+.toggle-thumb{width:16px;height:16px;background:var(--text);border-radius:50%;position:absolute;top:2px;left:3px;transition:transform var(--transition);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.toggle-track.active .toggle-thumb{transform:translateX(20px)}
+html[data-force-chrome] .theme-toggle{display:none}
+.filters-section{background:var(--bg-card);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:20px;padding:30px;margin-bottom:40px;animation:fadeInUp .8s ease-out .2s backwards}
+.filters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-bottom:24px}
+.filter-label{display:block;font-size:.85rem;font-weight:600;margin-bottom:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px}
+.search-input{width:100%;padding:14px 18px;background:var(--bg-hover);border:2px solid var(--border);border-radius:12px;color:var(--text);font-size:.95rem;font-family:var(--font-body);transition:all .3s ease}
+.search-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--focus-ring);background:var(--bg-card)}
+.search-input::placeholder{color:var(--text-muted);opacity:.6}
+.chapter-list{background:var(--bg-hover);border:2px solid var(--border);border-radius:12px;padding:12px;max-height:250px;overflow-y:auto}
+.chapter-item{display:flex;align-items:center;padding:8px 10px;margin:3px 0;background:var(--bg-card);border-radius:8px;cursor:pointer;transition:background .2s ease}
+.chapter-item:hover{background:var(--bg-hover)}
+.chapter-item input[type="checkbox"]{width:18px;height:18px;margin-right:10px;cursor:pointer;accent-color:var(--accent)}
+.chapter-item label{flex:1;cursor:pointer;font-size:.9rem;color:var(--text);margin:0}
+.btn{padding:.75rem 1.5rem;background:var(--accent);color:white;border:none;border-radius:12px;font-weight:600;cursor:pointer;transition:all .3s ease;font-family:var(--font-body)}
+.btn:hover{background:var(--accent-dim);transform:translateY(-2px);box-shadow:var(--btn-shadow)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
+.filter-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.reset-btn{width:100%;padding:10px 16px;background:var(--bg-hover);border:2px solid var(--border);border-radius:10px;color:var(--text);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .3s ease;text-transform:uppercase;letter-spacing:1px;margin-top:10px;font-family:var(--font-body)}
+.reset-btn:hover{background:var(--accent);border-color:var(--accent);color:white;transform:translateY(-2px)}
+.csv-fallback{grid-column:1/-1;display:flex;justify-content:center;align-items:center;padding:20px}
+.upload-btn{display:inline-block;background:var(--accent);color:white;padding:15px 40px;border-radius:12px;font-weight:700;cursor:pointer;transition:all .3s ease;font-size:1.1rem;font-family:var(--font-body)}
+.upload-btn:hover{background:var(--accent-dim);transform:translateY(-2px);box-shadow:var(--btn-shadow)}
+.loading{text-align:center;padding:4rem 2rem;color:var(--text-muted)}
+.loading-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stats{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;padding-top:24px;border-top:1px solid var(--border)}
+.stat-item{text-align:center}
+.stat-value{font-family:var(--font-display);font-size:2.2rem;font-weight:700;color:var(--accent);display:block}
+.stat-label{font-size:.8rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+.results-section{animation:fadeInUp .8s ease-out .4s backwards}
+.results-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.card{position:relative;background:var(--bg-card);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:16px;padding:24px;animation:fadeSlideIn .4s ease;transition:all .3s ease}
+.card.bac{border-color:#d4a017;box-shadow:0 0 8px rgba(212,160,23,0.3),0 0 20px rgba(212,160,23,0.15),var(--shadow)}
+.card.bac:hover{border-color:#d4a017;box-shadow:0 0 12px rgba(212,160,23,0.5),0 0 30px rgba(212,160,23,0.25),var(--shadow)}
+.bac-tag{display:inline-block;font-size:.7rem;font-weight:800;color:#7a5c00;background:linear-gradient(135deg,#f5d742,#d4a017);padding:2px 10px;border-radius:5px;letter-spacing:1px;text-transform:uppercase;margin-left:8px;vertical-align:middle;line-height:1.5;box-shadow:0 1px 4px rgba(212,160,23,0.4)}
+html[data-theme="dark"] .bac-tag{color:#1a1a1a;background:linear-gradient(135deg,#ffd700,#b8860b);box-shadow:0 1px 6px rgba(255,215,0,0.5)}
+html[data-force-chrome] .bac-tag{color:#1a0808;background:linear-gradient(135deg,#f5d742,#d4a017);box-shadow:0 1px 4px rgba(212,160,23,0.4)}
+.fav-btn{position:absolute;top:12px;right:12px;cursor:pointer;font-size:1.3rem;color:var(--text-muted);background:none;border:none;padding:4px;line-height:1;transition:color .2s,transform .2s;z-index:1}
+.fav-btn:hover{color:var(--accent);transform:scale(1.2)}
+.fav-btn.active{color:#f5b342}
+.fav-toggle{cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:6px 14px;border-radius:8px;background:var(--bg-hover);border:1px solid var(--border);transition:all .2s;font-family:var(--font-body)}
+.fav-toggle.active{background:var(--accent);color:white;border-color:var(--accent)}
+.revision-mode .formula-details{display:none}
+.revision-mode .card.revealed .formula-details{display:grid}
+.revision-mode .card{cursor:pointer}
+.card:hover{transform:translateY(-5px);border-color:var(--accent);box-shadow:var(--shadow),var(--glow)}
+.card-title{font-family:var(--font-display);font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.4}
+.card-chapter{display:inline-block;background:var(--bg-hover);color:var(--text-muted);padding:4px 10px;border-radius:6px;font-size:.8rem;margin-bottom:12px}
+.formula-box{background:var(--bg-hover);border:1px solid var(--border);border-radius:10px;padding:16px;margin:12px 0;font-family:'Times New Roman',serif;font-size:1.2rem;text-align:center;color:var(--text);overflow-x:auto;line-height:1.6}
+.formula-details{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px;font-size:.85rem}
+.detail-label{color:var(--text-muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px}
+.detail-value{color:var(--text);line-height:1.5}
+.no-results{text-align:center;padding:60px 20px;background:var(--bg-card);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:16px;font-size:1.1rem;color:var(--text-muted);grid-column:1/-1}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:560px){h1{font-size:2.2rem}.filters-grid,.results-grid{grid-template-columns:1fr}.stats{gap:16px}header{flex-direction:column;gap:16px}.filters-section{padding:20px}.container{padding:12px}.card{padding:16px}.card-title{font-size:1.05rem}.formula-box{padding:12px;font-size:1rem}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<div class="header-left">
+<h1>Formules PC</h1>
+<p class="subtitle">Formules du programme BAC — les formules avec un halo doré sont dans le formulaire officiel</p>
+</div>
+<div class="header-right">
+<label class="theme-toggle" id="themeToggle" title="Basculer clair/nuit">
+<span class="theme-toggle-label" id="themeLabel">Nuit</span>
+<div class="toggle-track" id="toggleTrack">
+<div class="toggle-thumb"></div>
+</div>
+</label>
+</div>
+</header>
+<div class="filters-section">
+<div class="filters-grid" id="filtersGrid">
+<div class="csv-fallback" id="csvFallback" style="display:none">
+<label for="csvFile" class="upload-btn">📁 Charger un fichier CSV</label>
+<input type="file" id="csvFile" accept=".csv" style="display:none">
+</div>
+<div class="filter-group">
+<label class="filter-label" for="searchName">🔍 Rechercher</label>
+<input type="text" id="searchName" class="search-input" placeholder="Nom ou formule…">
+<div class="filter-actions">
+<button class="fav-toggle" id="favToggle">⭐ Favoris <span id="favCount">0</span></button>
+<button class="fav-toggle" id="bacToggle">🎯 BAC</button>
+<button class="fav-toggle" id="revToggle">📝 Mode révision</button>
+</div>
+</div>
+<div class="filter-group">
+<label class="filter-label">📂 Chapitres</label>
+<input type="text" id="chapterSearch" class="search-input" placeholder="Filtrer les chapitres…" style="margin-bottom:8px">
+<div class="chapter-list" id="chapterList"></div>
+<button class="reset-btn" id="resetChapters">Réinitialiser</button>
+</div>
+</div>
+<div class="loading" id="loadingIndicator">
+<div class="loading-spinner"></div>
+<p>Chargement des formules…</p>
+</div>
+<div class="stats" id="statsBar">
+<div class="stat-item">
+<span class="stat-value" id="totalFormulas">0</span>
+<span class="stat-label">Formules</span>
+</div>
+<div class="stat-item">
+<span class="stat-value" id="bacCount">0</span>
+<span class="stat-label">BAC 📋</span>
+</div>
+<div class="stat-item">
+<span class="stat-value" id="filteredFormulas">0</span>
+<span class="stat-label">Affichées</span>
+</div>
+</div>
+</div>
+<div class="results-section">
+<div class="results-grid" id="resultsGrid">
+<div class="loading">
+<div class="loading-spinner"></div>
+<p>Chargement…</p>
+</div>
+</div>
+</div>
+</div>
+<script>
+const isChrome=/Chrome/.test(navigator.userAgent)&&/Google Inc/.test(navigator.vendor);
+if(isChrome){document.documentElement.setAttribute('data-force-chrome','')}else{const saved=localStorage.getItem('formules-pc-theme')||'light';document.documentElement.setAttribute('data-theme',saved);updateToggleUI(saved)}
+function updateToggleUI(theme){const track=document.getElementById('toggleTrack');const label=document.getElementById('themeLabel');if(!track||!label)return;if(theme==='dark'){track.classList.add('active');label.textContent='Jour'}else{track.classList.remove('active');label.textContent='Nuit'}}
+document.addEventListener('DOMContentLoaded',()=>{const toggle=document.getElementById('themeToggle');if(toggle){toggle.addEventListener('click',()=>{if(isChrome)return;const current=document.documentElement.getAttribute('data-theme');const next=current==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',next);localStorage.setItem('formules-pc-theme',next);updateToggleUI(next)})}})
+let formulas=[];let allFormulas=[];let favorites=new Set(JSON.parse(localStorage.getItem('formules-pc-fav')||'[]'));let favOnly=false;let bacOnly=false;const matchedFormulas=new Set(['La mole|Quantité de matière (solide/liquide)','La mole|Masse volumique','La mole|Quantité de matière (gaz)','La mole|Concentration en quantité de matière','La mole|Dilution','La mole|Facteur de dilution','Lumière : ondes et particules|Énergie d\'un photon','Interactions, forces et champs|Force gravitationnelle','Interactions, forces et champs|Force électrostatique (champ)','Aspect énergétique des phénomènes mécaniques|Énergie cinétique','Aspect énergétique des phénomènes mécaniques|Travail d\'une force constante','Aspect énergétique des phénomènes mécaniques|Théorème de l\'énergie cinétique','Aspect énergétique des phénomènes mécaniques|Énergie mécanique','Aspect énergétique des phénomènes mécaniques|Travail du poids','Énergie des systèmes électriques|Puissance électrique','Énergie des systèmes électriques|Intensité du courant','Description d\'un fluide au repos|Masse volumique','Les lentilles convergentes|Vergence','Les ondes mécaniques|Fréquence','Les ondes mécaniques|Relation longueur d\'onde-fréquence','Les ondes mécaniques|Relation longueur d\'onde-période','Dosage par étalonnage|Loi de Beer-Lambert','Dosage par titrage|Équivalence','Bilan d\'énergie d\'un système|Conservation énergie mécanique','Phénomènes ondulatoires|Intensité sonore','Phénomènes ondulatoires|Niveau d\'intensité sonore','Phénomènes ondulatoires|Angle de diffraction (fente rectangulaire)','Phénomènes ondulatoires|Interférences (spatial)','Phénomènes ondulatoires|Interfrange (fentes d\'Young)','Phénomènes ondulatoires|Effet Doppler','Mécanique newtonienne|Vecteur vitesse','Mécanique newtonienne|Vecteur accélération','Mécanique newtonienne|Vecteur position','Mouvement dans un champ uniforme|2e loi de Newton (champ pesanteur)','Mouvement dans un champ uniforme|2e loi de Newton (champ électrique)','Mouvement dans un champ uniforme|Énergie potentielle de pesanteur','Mouvement dans un champ uniforme|Force électrique','Mouvement dans un champ uniforme|Expression du poids','Mouvement dans un champ de gravitation|Force gravitationnelle vectorielle','Mouvement dans un champ de gravitation|Période de révolution','Mouvement dans un champ de gravitation|Accélération dans le repère de Frenet','Premier principe de la thermodynamique|1er principe de la thermodynamique','Premier principe de la thermodynamique|Capacité thermique','Stratégies de synthèse multi-étapes|Rendement d\'une synthèse','Sens d\'évolution spontanée d\'un système chimique|Taux d\'avancement final','Sens d\'évolution spontanée d\'un système chimique|Quotient de réaction','Sens d\'évolution spontanée d\'un système chimique|Activité d\'un soluté','Sens d\'évolution spontanée d\'un système chimique|Constante d\'équilibre','Sens d\'évolution spontanée d\'un système chimique|Concentration de référence','Les acides et les bases|Définition du pH','Les acides et les bases|Concentration ions oxonium','Les acides et les bases|Produit ionique de l\'eau','Les acides et les bases|Constante d\'acidité','Les acides et les bases|pKa','Les acides et les bases|Activité de l\'eau','Les acides et les bases|Auto-ionisation de l\'eau','Forcer l\'évolution d\'un système chimique|Quantité de charge électrique','Forcer l\'évolution d\'un système chimique|Charge et quantité d\'électrons','Forcer l\'évolution d\'un système chimique|Constante de Faraday','Les différents types de dosage|Conductivité- Conductance','Les différents types de dosage|Loi de Kohlrausch','Les différents types de dosage|Relation d\'équivalence','Les différents types de dosage|Loi de Beer-Lambert détaillée','Les différents types de dosage|Densité d\'un liquide','Les différents types de dosage|Titre massique','Suivi temporel d\'une transformation chimique|Vitesse volumique d\'apparition','Suivi temporel d\'une transformation chimique|Vitesse volumique de disparition','Suivi temporel d\'une transformation chimique|Loi de vitesse d\'ordre 1','Suivi temporel d\'une transformation chimique|Temps de demi-réaction','Transformations nucléaires|Loi de décroissance radioactive','Transformations nucléaires|Loi de décroissance intégrée','Transformations nucléaires|Demi-vie','Écoulement d\'un fluide|Poussée d\'Archimède','Écoulement d\'un fluide|Débit volumique','Dynamique du dipôle RC|Intensité instantanée','Dynamique du dipôle RC|Relation charge-tension du condensateur','Dynamique du dipôle RC|Constante de temps RC','Dynamique du dipôle RC|Loi d\'Ohm','Dynamique du dipôle RC|Loi des mailles RC','Lunette astronomique|Grossissement','Lunette astronomique|Lunette afocale','Décrire la lumière par un flux de photons|Effet photoélectrique','Décrire la lumière par un flux de photons|Rendement cellule photovoltaïque','Décrire la lumière par un flux de photons|Énergie cinétique du photoélectron'])
+function favKey(f){return f.chapitre+'|'+f.nom}
+function toggleFavorite(key){if(favorites.has(key)){favorites.delete(key)}else{favorites.add(key)};localStorage.setItem('formules-pc-fav',JSON.stringify([...favorites]));filterFormulas()}
+document.getElementById('csvFile').addEventListener('change',function(e){const file=e.target.files[0];if(!file)return;handleCSVFile(file)})
+function handleCSVFile(file){const reader=new FileReader();reader.onload=function(event){parseCSV(event.target.result);document.getElementById('csvFallback').style.display='none'};reader.readAsText(file)}
+function parseCSV(csvData){const lines=csvData.split('\n').filter(l=>l.trim());for(let i=1;i<lines.length;i++){const values=lines[i].split(';');if(values.length<3)continue;allFormulas.push({chapitre:(values[0]||'').trim(),nom:(values[1]||'').trim(),formule:(values[2]||'').trim(),notations:(values[3]||'').trim(),unites:(values[4]||'').trim()})}formulas=[...allFormulas];buildChapterCheckboxes();document.getElementById('loadingIndicator').style.display='none';filterFormulas();updateStats(allFormulas.length,formulas.length);updateFavUI()}
+function buildChapterCheckboxes(){const chapters=[...new Set(allFormulas.map(f=>f.chapitre).filter(Boolean))].sort();const container=document.getElementById('chapterList');container.innerHTML='';chapters.forEach(ch=>{const div=document.createElement('div');div.className='chapter-item';div.dataset.chapter=ch;const cb=document.createElement('input');cb.type='checkbox';cb.id='ch-'+ch.replace(/\s+/g,'-').replace(/[^\w-]/g,'');cb.value=ch;const label=document.createElement('label');label.htmlFor=cb.id;label.textContent=ch;div.appendChild(cb);div.appendChild(label);container.appendChild(div);cb.addEventListener('change',onChapterChange);div.addEventListener('click',function(e){if(e.target!==cb){cb.checked=!cb.checked;onChapterChange()}})})}
+document.getElementById('searchName').addEventListener('input',filterFormulas);document.getElementById('chapterSearch').addEventListener('input',filterChapterList);document.getElementById('resetChapters').addEventListener('click',resetChapters)
+document.getElementById('favToggle').addEventListener('click',()=>{favOnly=!favOnly;filterFormulas();updateFavUI()})
+document.getElementById('bacToggle').addEventListener('click',()=>{bacOnly=!bacOnly;filterFormulas();document.getElementById('bacToggle').classList.toggle('active',bacOnly)})
+document.getElementById('revToggle').addEventListener('click',()=>{document.body.classList.toggle('revision-mode');document.getElementById('revToggle').classList.toggle('active')})
+function updateFavUI(){document.getElementById('favToggle').classList.toggle('active',favOnly);document.getElementById('favCount').textContent=favorites.size}
+function onChapterChange(){document.getElementById('chapterSearch').value='';filterFormulas()}
+function filterChapterList(){const q=document.getElementById('chapterSearch').value.toLowerCase();document.querySelectorAll('.chapter-item').forEach(item=>{item.style.display=item.dataset.chapter.toLowerCase().includes(q)?'flex':'none'})}
+function resetChapters(){document.querySelectorAll('.chapter-item input[type="checkbox"]').forEach(cb=>cb.checked=false);document.getElementById('chapterSearch').value='';filterFormulas()}
+function getSelectedChapters(){return Array.from(document.querySelectorAll('.chapter-item input[type="checkbox"]:checked')).map(cb=>cb.value)}
+function filterFormulas(){const q=document.getElementById('searchName').value.toLowerCase();const selected=getSelectedChapters();formulas=allFormulas.filter(f=>{const matchSearch=!q||f.nom.toLowerCase().includes(q)||f.formule.toLowerCase().includes(q)||f.chapitre.toLowerCase().includes(q);const matchChapter=selected.length===0||selected.includes(f.chapitre);const matchFav=!favOnly||favorites.has(favKey(f));const matchBac=!bacOnly||matchedFormulas.has(favKey(f));return matchSearch&&matchChapter&&matchFav&&matchBac}).sort((a,b)=>{const fa=favorites.has(favKey(a))?1:0;const fb=favorites.has(favKey(b))?1:0;return fb-fa});displayFormulas(formulas);updateStats(allFormulas.length,formulas.length);updateFavUI()}
+function displayFormulas(list){const grid=document.getElementById('resultsGrid');if(list.length===0){grid.innerHTML='<div class="no-results">Aucune formule trouvée</div>';return}grid.innerHTML=list.map(f=>{const k=favKey(f);const isFav=favorites.has(k);const isBac=matchedFormulas.has(k);const notations=f.notations?f.notations.replace(/;/g,', '):'';const unites=f.unites?f.unites.replace(/;/g,', '):'';return'<div class="card'+(isBac?' bac':'')+'"><button class="fav-btn'+(isFav?' active':'')+'" data-key="'+k+'">'+(isFav?'⭐':'☆')+'</button>'+(f.nom?'<h3 class="card-title">'+f.nom+(isBac?' <span class="bac-tag">BAC</span>':'')+'</h3>':'')+(f.chapitre?'<span class="card-chapter">'+f.chapitre+'</span>':'')+(f.formule?'<div class="formula-box">'+f.formule+'</div>':'')+((notations||unites)?'<div class="formula-details">'+(notations?'<div><span class="detail-label">Notations</span><div class="detail-value">'+notations+'</div></div>':'')+(unites?'<div><span class="detail-label">Unités</span><div class="detail-value">'+unites+'</div></div>':'')+'</div>':'')+'</div>'}).join('');if(typeof renderMathInElement==='function'){renderMathInElement(grid,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})};grid.querySelectorAll('.fav-btn').forEach(btn=>{btn.addEventListener('click',function(e){e.stopPropagation();toggleFavorite(this.dataset.key)})});grid.querySelectorAll('.card').forEach(c=>{c.addEventListener('click',function(e){if(e.target.closest('.fav-btn'))return;if(document.body.classList.contains('revision-mode')){this.classList.toggle('revealed')}})})}
+function updateStats(total,filtered){document.getElementById('totalFormulas').textContent=total;document.getElementById('filteredFormulas').textContent=filtered;const bacTotal=allFormulas.filter(f=>matchedFormulas.has(favKey(f))).length;document.getElementById('bacCount').textContent=bacTotal}
+fetch('formules.csv').then(response=>{if(!response.ok)throw new Error('Erreur '+response.status);return response.text()}).then(csvData=>{parseCSV(csvData)}).catch(()=>{document.getElementById('loadingIndicator').style.display='none';document.getElementById('csvFallback').style.display='flex'})
+</script>
+</body>
+</html>

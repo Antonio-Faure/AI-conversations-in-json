@@ -3,3 +3,9 @@ botasaurus>=4.0
 PyYAML>=6.0
 beautifulsoup4>=4.12
 pytest>=8.0
+
+# RAG (embeddings locaux). Installer torch CPU pour eviter le wheel CUDA :
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch
+torch>=2.2
+sentence-transformers>=3.0
+sqlite-vec>=0.1.6

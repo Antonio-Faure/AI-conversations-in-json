@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Point d'entree CLI: exporter les conversations IA en JSON standardise.
+"""Point d'entree CLI : export des conversations IA en JSON + HTML.
+
+ChatGPT et Claude. Sortie : exports/<platform>/<nom>.{json,html} plus
+exports/<platform>/conversation_list.json (inventaire).
+
+Modes:
+    --monthly (ou --full) : liste TOUTES les conversations et les scrape toutes
+    --daily               : scrape les inconnues + les 20 plus recentes
 
 Exemples:
-    python run.py --all                          # tous les services actifs
-    python run.py --service chatgpt              # un seul service
-    python run.py --all --date 2026-09-09        # dossier de sortie exports/2026-09-09/
-    python run.py --service claude --limit 20    # debug: 20 conversations max
-    python run.py --all --force                  # ignorer l'etat incrementiel
-    python run.py --login chatgpt                # connexion interactive (profil persistant)
+    python run.py --daily                 # routine quotidienne
+    python run.py --monthly               # rafraichissement complet
+    python run.py --daily --headful -v    # debug visible
+    python run.py --login claude          # connexion interactive (profil persistant)
 """
 
 from __future__ import annotations
@@ -21,10 +26,12 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.cookies import COOKIE_SERVICES, capture_cookies  # noqa: E402
 from src.orchestrator import Orchestrator, load_config  # noqa: E402
-from src.services import SERVICE_CLASSES  # noqa: E402
-from src.utils.file_utils import validate_date_arg  # noqa: E402
+from src.services import ACTIVE_SERVICES, SERVICE_CLASSES  # noqa: E402
 from src.utils.logging import setup_logging  # noqa: E402
+
+LOGIN_CHOICES = sorted(set(ACTIVE_SERVICES) | set(COOKIE_SERVICES))
 
 log = logging.getLogger("aicv")
 
@@ -32,58 +39,52 @@ log = logging.getLogger("aicv")
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run.py",
-        description="Export quotidien des conversations IA (Playwright/Botasaurus) en JSON standardise.",
+        description="Export des conversations IA (ChatGPT, Claude, Gemini, Perplexity) en JSON standardise + HTML.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    target = parser.add_mutually_exclusive_group()
-    target.add_argument(
-        "--service",
-        "-s",
-        action="append",
-        choices=sorted(SERVICE_CLASSES),
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--monthly",
+        "--full",
+        dest="monthly",
+        action="store_true",
+        help="lister TOUTES les conversations et tout scraper",
+    )
+    mode.add_argument(
+        "--daily",
+        dest="daily",
+        action="store_true",
+        help="scraper les conversations inconnues + les 20 plus recentes",
+    )
+    parser.add_argument(
+        "--service", "-s", action="append", choices=sorted(ACTIVE_SERVICES),
         metavar="NAME",
-        help="service a exporter (option repetable)",
+        help="ne scraper que ce(s) service(s) (option repetable ; defaut: tous les actifs)",
     )
-    target.add_argument(
-        "--all", "-a", action="store_true", help="tous les services de la config"
-    )
+    parser.add_argument("--config", "-c", default=ROOT / "config.yaml", type=Path,
+                        help="fichier de configuration YAML")
+    parser.add_argument("--limit", type=int, help="max de conversations (debug)")
     parser.add_argument(
-        "--date",
-        "-d",
-        metavar="YYYY-MM-DD",
-        help="filtrer sur une date de derniere conversation + dossier de sortie",
+        "--parallel", type=int, metavar="N",
+        help="scraper N services (domaines differents) en parallele (defaut: config)",
     )
-    parser.add_argument(
-        "--config",
-        "-c",
-        default=ROOT / "config.yaml",
-        type=Path,
-        help="fichier de configuration YAML",
-    )
-    parser.add_argument("--output-dir", type=Path, help="surcharge config.output_dir")
-    parser.add_argument("--limit", type=int, help="max de conversations par service (debug)")
-    parser.add_argument("--force", action="store_true", help="re-exporter meme si inchange")
-    parser.add_argument(
-        "--headful", action="store_true", help="navigateur visible (debug / login manuel)"
-    )
-    parser.add_argument(
-        "--headless", action="store_true", help="forcer headless (surcharge config)"
-    )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="logs DEBUG sur console"
-    )
+    parser.add_argument("--headful", action="store_true",
+                        help="navigateur visible (debug / login manuel)")
+    parser.add_argument("--headless", action="store_true",
+                        help="forcer headless (surcharge config)")
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        help="logs DEBUG sur console")
     parser.add_argument(
         "--login",
-        choices=sorted(SERVICE_CLASSES),
+        choices=LOGIN_CHOICES,
         metavar="SERVICE",
-        help="Ouvre un navigateur visible pour connecter le profil persistant, puis quitte",
+        help="ouvre un navigateur visible : profil du service (4 scrapers) ou "
+             "capture des cookies (grok, mistral), puis quitte",
     )
     return parser
 
 
 def _apply_cli_overrides(config: dict, args: argparse.Namespace) -> dict:
-    if args.output_dir:
-        config["output_dir"] = str(args.output_dir)
     if args.headless:
         config["headless"] = True
     elif args.headful:
@@ -93,7 +94,7 @@ def _apply_cli_overrides(config: dict, args: argparse.Namespace) -> dict:
 
 def _resolve_paths(config: dict) -> dict:
     """Chemins relatifs = relatifs au depot, peu importe le cwd d'execution."""
-    for key in ("output_dir", "profile_dir", "state_file", "log_file", "screenshot_dir"):
+    for key in ("output_dir", "profile_dir", "cookies_dir"):
         value = config.get(key)
         if value:
             path = Path(value)
@@ -102,29 +103,20 @@ def _resolve_paths(config: dict) -> dict:
 
 
 def _login_session(service_name: str, config: dict):
-    """Session de login : meme moteur que l'export.
-
-    Les cookies anti-bot (cf_clearance) sont lies a l'User-Agent : se
-    connecter via Playwright puis exporter via Botasaurus invaliderait la
-    session. Le moteur du service est donc respecte ici aussi.
-    """
+    """Session de login : meme moteur que l'export (cookies lies a l'UA)."""
     from src.orchestrator import default_browser_factory, resolve_engine
 
     engine = resolve_engine(service_name, config)
     if engine == "auto":
         engine = "playwright"
-    # login = toujours visible, quel que soit headless de la config
     login_config = dict(config, _engine=engine, headless=False)
-    return default_browser_factory(
-        Path(config["profile_dir"]), service_name, login_config
-    )
+    return default_browser_factory(Path(config["profile_dir"]), service_name, login_config)
 
 
 def cmd_login(service_name: str, config: dict) -> int:
     cls = SERVICE_CLASSES[service_name]
-    home_url = getattr(cls, "home_url", "")
-    svc_cfg = (config.get("services") or {}).get(service_name) or {}
-    url = svc_cfg.get("url") or home_url
+    url = ((config.get("services") or {}).get(service_name) or {}).get("url") \
+        or getattr(cls, "home_url", "")
     profile_dir = Path(config["profile_dir"]) / service_name
     session = _login_session(service_name, config)
     try:
@@ -137,53 +129,42 @@ def cmd_login(service_name: str, config: dict) -> int:
 
 
 def _print_summary(summary, config: dict) -> None:
-    print(f"\n=== Resume ({summary.date}) ===")
+    print(f"\n=== Resume (mode: {summary.mode}) ===")
     for name, result in summary.services.items():
-        if result.skipped:
-            state = f"SKIP ({result.skip_reason})"
+        if result.skipped_reason:
+            state = f"SKIP ({result.skipped_reason})"
         else:
             state = "OK" if not result.failed else f"ECHECS: {', '.join(result.failed[:5])}"
         print(
-            f"{name:<12} exportees={len(result.exported):<4} "
-            f"inchangees={len(result.unchanged):<4} "
-            f"filtrees={len(result.out_of_range):<4} "
-            f"ignorees={len(result.skipped_items):<4} [{state}]"
+            f"{name:<12} decouvertes={result.discovered:<4} "
+            f"cibles={result.targets:<4} ecrites={len(result.exported):<4} "
+            f"patch={len(result.patched):<4} inchanges={len(result.unchanged):<4} "
+            f"ignorees={len(result.skipped):<4} [{state}]"
         )
-    print(f"Sortie: {Path(config['output_dir']) / summary.date}")
+    print(f"Sortie: {Path(config['output_dir'])}")
 
 
 def main(argv=None) -> int:
     args = build_arg_parser().parse_args(argv)
     config = _resolve_paths(_apply_cli_overrides(load_config(args.config), args))
 
-    setup_logging(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        log_file=Path(config["log_file"]) if config.get("log_file") else None,
-        console=True,
-    )
+    setup_logging(level=logging.DEBUG if args.verbose else logging.INFO, console=True)
 
     if args.login:
+        if args.login in COOKIE_SERVICES:
+            return capture_cookies(args.login, ROOT / "cookies", config)
         return cmd_login(args.login, config)
 
-    if not args.all and not args.service:
-        log.error("choisir --all ou au moins un --service (voir --help)")
+    if not args.monthly and not args.daily:
+        log.error("choisir --monthly (ou --full) ou --daily (voir --help)")
         return 2
-
-    if args.date:
-        try:
-            validate_date_arg(args.date)
-        except ValueError as exc:
-            log.error(str(exc))
-            return 2
+    mode = "monthly" if args.monthly else "daily"
 
     orchestrator = Orchestrator(config)
+    parallel = args.parallel if args.parallel is not None else int(config.get("parallel", 1))
     try:
         summary = orchestrator.run(
-            services=args.service,
-            date=args.date,
-            all_services=args.all,
-            limit=args.limit,
-            force=args.force,
+            mode=mode, limit=args.limit, services=args.service, parallel=parallel
         )
     except KeyboardInterrupt:
         log.warning("interrompu")

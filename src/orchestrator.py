@@ -1,51 +1,81 @@
-"""Workflow principal : pipeline de scraping par service vers exports/.
+"""Workflow principal : scraping d'un chatbot vers exports/<platform>/.
 
-Orchestration:
-  1. charge config.yaml (avec defaults fusionnes)
-  2. pour chaque service demande : session navigateur (profil persistant)
-  3. decouverte des conversations via la sidebar + parser
-  4. scraping + parsing de chaque conversation -> Conversation standardisee
-  5. ecriture exports/<date>/<service>/<id>.json (atomique) + etat incrementatif
+Architecture:
+  exports/
+    chatgpt/
+      conversation_list.json      # inventaire de toutes les conversations
+      <nom conversation>.json     # messages standardises
+      <nom conversation>.html     # page complete (brut)
 
-Les tests injectent `registry` (classes factices) et `browser_factory` pour
-exercer le pipeline sans navigateur.
+Deux modes:
+  - monthly (--full) : liste TOUTES les conversations et les scrape toutes
+  - daily            : scrape les conversations inconnues + les 20 plus recentes
+                       (union), puis met a jour conversation_list.json
+
+Les fichiers existants sont ecrases (la conversation a pu evoluer).
+Aucun log fichier, aucun dossier par session : seule la sortie de conversation
+est conservee.
 """
 
 from __future__ import annotations
 
 import logging
+import random
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
+from urllib.parse import urlparse
 
 import yaml
 
+from .fingerprint import get_fingerprint
+
 from .browser import BrowserSession
 from .parsers.base import ParseError
-from .schema import Conversation, ConversationRef, SchemaError, parse_iso
-from .services.base import BaseService, BlockedError, EmptyConversationError, ServiceNotLoggedIn
+from .schema import ConversationRef, SchemaError
+from .services.base import (
+    BaseService,
+    BlockedError,
+    EmptyConversationError,
+    NoopSession,
+    ServiceNotLoggedIn,
+)
 from .utils.file_utils import (
-    export_path,
-    load_state,
+    conversation_list_path,
+    conversation_paths,
+    load_conversation_list,
+    merge_conversation_json,
     now_iso_z,
-    record_state,
-    save_state,
+    read_json,
+    save_conversation_list,
     slugify,
-    validate_date_arg,
+    unique_filename,
     write_json_atomic,
+    write_text_atomic,
 )
 from .utils.logging import get_logger, log_fields
 
 log = get_logger("orchestrator")
 
+MODES = ("daily", "monthly")
+DAILY_RECENT = 20
+
 DEFAULT_CONFIG: Dict[str, Any] = {
-    "output_dir": "exports",
-    "profile_dir": ".profiles",
-    "state_file": ".state/state.json",
-    "log_file": "logs/aicv.jsonl",
-    "screenshot_dir": "logs",  # captures de debug (0 conversation, DOM inattendu)
-    "headless": False,
+    # chemins absolus (depot de reference)
+    "output_dir": "/home/odin/Documents/code/AI-conversations-in-json/exports",
+    "profile_dir": "/home/odin/Documents/code/AI-conversations-in-json/profiles",
+    "cookies_dir": "/home/odin/Documents/code/AI-conversations-in-json/cookies",
+    "rag_db": "/home/odin/Documents/code/AI-conversations-in-json/rag/messages.db",
+    "rag_model": "BAAI/bge-m3",
+    # pas de logs sur disque : console uniquement
+    "screenshot_dir": "",
+    "headless": True,
     "timeout_ms": 45000,
+    "parallel": 1,
+    "pacing_ms": 0,
     # moteur navigateur : auto|playwright|botasaurus
     # auto = playwright, avec bascule botasaurus si challenge anti-bot
     "engine": "auto",
@@ -58,11 +88,14 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "sidebar": {"max_rounds": 40, "pause_ms": 700, "stable_rounds": 4},
     "services": {
         "chatgpt": {"enabled": True, "url": "https://chatgpt.com/"},
-        "claude": {"enabled": True, "url": "https://claude.ai/chats"},
+        # Claude : Cloudflare bloque Playwright -> moteur botasaurus
+        "claude": {"enabled": True, "url": "https://claude.ai/chats", "engine": "botasaurus"},
         "gemini": {"enabled": True, "url": "https://gemini.google.com/app"},
-        "perplexity": {"enabled": True, "url": "https://www.perplexity.ai/"},
+        "perplexity": {"enabled": True, "url": "https://www.perplexity.ai/", "engine": "botasaurus"},
+        # Grok : API HTTP + cookies (pas de navigateur)
+        "grok": {"enabled": True, "url": "https://grok.com/"},
+        "mistral": {"enabled": True, "url": "https://chat.mistral.ai/work", "engine": "botasaurus"},
     },
-    "schedule": {"enabled": True, "time": "03:30"},
 }
 
 
@@ -113,14 +146,17 @@ def default_browser_factory(
     """Cree la session du moteur demande (playwright par defaut).
 
     La cle `_engine` (posee par l'orchestrateur lors d'une bascule) prime sur
-    `engine` ; `auto` est resolu en playwright ici. Retourne BrowserSession
-    (moteur playwright) ou BotasaurusSession (moteur botasaurus).
+    `engine` ; `auto` est resolu en playwright ici.
     """
     engine = str(config.get("_engine") or config.get("engine") or "auto").lower()
+    service_profile = profile_dir / slugify(service, 40)
+    # fingerprint stable et isole par profil (UA, fenetre, langue)
+    fingerprint = get_fingerprint(service, service_profile)
     common = dict(
-        profile_dir=profile_dir / slugify(service, 40),
+        profile_dir=service_profile,
         headless=bool(config.get("headless", False)),
         timeout_ms=int(config.get("timeout_ms", 45000)),
+        fingerprint=fingerprint,
     )
     if engine == "botasaurus":
         from .browser_botasaurus import BotasaurusSession
@@ -137,23 +173,23 @@ def default_browser_factory(
 @dataclass
 class ServiceResult:
     service: str
+    discovered: int = 0
+    targets: int = 0
     exported: List[Path] = field(default_factory=list)
     unchanged: List[str] = field(default_factory=list)
-    out_of_range: List[str] = field(default_factory=list)
+    patched: List[str] = field(default_factory=list)
     failed: List[str] = field(default_factory=list)
-    #: conversations ignorables (vides / taches non exportables)
-    skipped_items: List[str] = field(default_factory=list)
-    skipped: bool = False
-    skip_reason: Optional[str] = None
+    skipped: List[str] = field(default_factory=list)
+    skipped_reason: Optional[str] = None
 
     @property
     def ok(self) -> bool:
-        return not self.failed and not self.skipped
+        return not self.failed and self.skipped_reason is None
 
 
 @dataclass
 class RunSummary:
-    date: str
+    mode: str
     services: Dict[str, ServiceResult] = field(default_factory=dict)
 
     @property
@@ -162,7 +198,7 @@ class RunSummary:
 
     @property
     def has_failures(self) -> bool:
-        return any(r.failed or (r.skipped and r.skip_reason != "disabled")
+        return any(r.failed or (r.skipped_reason and r.skipped_reason != "disabled")
                    for r in self.services.values())
 
 
@@ -177,14 +213,16 @@ class Orchestrator:
         self.registry = registry if registry is not None else default_registry()
         self.browser_factory = browser_factory or default_browser_factory
         self.output_dir = Path(config.get("output_dir", "exports"))
-        self.profile_dir = Path(config.get("profile_dir", ".profiles"))
-        self.state_file = Path(config.get("state_file", ".state/state.json"))
-        self.state = load_state(self.state_file)
+        self.profile_dir = Path(config.get("profile_dir", "profiles"))
 
     # -- helpers ------------------------------------------------------------
 
-    def _service_names(self, requested: Optional[List[str]], all_services: bool = False) -> List[str]:
-        configured = self.config.get("services", {})
+    def _service_names(self, requested: Optional[List[str]] = None) -> List[str]:
+        """Services a executer.
+
+        Si `requested` est fourni (--service) : uniquement ceux-la.
+        Sinon : tous les services actifs de la config (enabled != false).
+        """
         if requested:
             unknown = [s for s in requested if s not in self.registry]
             if unknown:
@@ -192,157 +230,92 @@ class Orchestrator:
                     f"service(s) inconnu(s): {', '.join(unknown)} "
                     f"(disponibles: {', '.join(sorted(self.registry))})"
                 )
-            return list(requested)
-        if all_services:
-            return sorted(self.registry)
-        return [
-            s
-            for s in self.registry
-            if s in configured and configured.get(s, {}).get("enabled", True)
-        ]
+            return sorted(set(requested))
+        configured = self.config.get("services", {})
+        return sorted(
+            name
+            for name in self.registry
+            if configured.get(name, {}).get("enabled", True)
+        )
 
-    def _state_entry(self, service: str, conv_id: str) -> Optional[Dict[str, Any]]:
-        return self.state.get("services", {}).get(service, {}).get(conv_id)
-
-    def _export_date(self, conv: Conversation, fallback: str) -> str:
-        anchor = conv.last_message_at or conv.started_at
-        dt = parse_iso(anchor)
-        return dt.strftime("%Y-%m-%d") if dt else fallback
-
-    def _matches_date(self, conv: Conversation, date_str: str) -> bool:
-        return self._export_date(conv, date_str) == date_str
-
-    # -- pipeline --------------------------------------------------------------
-
-    def _start_service(
-        self,
-        service_name: str,
-        cls: type,
-        svc_config: Dict[str, Any],
-        engine: str,
-    ) -> tuple:
-        """Session + service pour un moteur donne ('' = config courante).
-
-        Retourne (session, service) ; engine pose `_engine` pour la factory
-        (session playwright si vide/auto)."""
+    def _new_session(self, name: str, cls: type, svc_config: Dict[str, Any], engine: str) -> tuple:
         factory_config = self.config
         if engine:
             factory_config = dict(self.config)
             factory_config["_engine"] = engine
-        session = self.browser_factory(self.profile_dir, service_name, factory_config)
+        if getattr(cls, "uses_browser", True):
+            session = self.browser_factory(self.profile_dir, name, factory_config)
+        else:
+            # service API HTTP + cookies : aucun navigateur a ouvrir
+            session = NoopSession()
         service: BaseService = cls(session, self.config)
         if svc_config.get("url"):
             service.home_url = svc_config["url"]
         return session, service
 
-    def run_service(
-        self,
-        service_name: str,
-        date_str: str,
-        limit: Optional[int] = None,
-        force: bool = False,
-        ignore_enabled: bool = False,
-        filter_date: bool = False,
-    ) -> ServiceResult:
-        result = ServiceResult(service=service_name)
-        svc_config = self.config.get("services", {}).get(service_name, {})
-        cls = self.registry.get(service_name)
-        if cls is None:
-            result.skipped = True
-            result.skip_reason = "unknown service"
-            return result
-        if not ignore_enabled and not svc_config.get("enabled", True):
-            result.skipped = True
-            result.skip_reason = "disabled"
-            return result
+    @staticmethod
+    def _close(session: Any) -> None:
+        try:
+            session.close()
+        except Exception:
+            pass
 
-        engine = resolve_engine(service_name, self.config)
-        attempt_engine = "playwright" if engine == "auto" else engine
-        session, service = self._start_service(service_name, cls, svc_config, attempt_engine)
+    # -- pipeline -----------------------------------------------------------
 
-        # -- decouverte (bascule botasaurus une fois si auto + bloque) ---------
-        refs = None
+    def _discover(self, result: ServiceResult, name: str, session, service, engine: str,
+                  attempt_engine: str, svc_config: Dict[str, Any]):
+        """Decouverte ; bascule botasaurus une fois si auto + bloque.
+
+        Retourne (session, service, refs, attempt_engine) ou None si le service
+        doit etre arrete. La session concernee est fermee en interne sur echec.
+        """
         while True:
             try:
-                refs = service.list_conversations(limit=limit)
-                break
+                refs = service.list_conversations()
+                result.discovered = len(refs)
+                return session, service, refs, attempt_engine
             except ServiceNotLoggedIn as exc:
                 log.warning(str(exc))
-                result.skipped = True
-                result.skip_reason = str(exc)
+                result.skipped_reason = str(exc)
                 self._close(session)
-                return result
+                return None
             except BlockedError as exc:
                 if engine == "auto" and attempt_engine != "botasaurus":
                     log_fields(
                         log, 30,
-                        f"{service_name}: bloque par anti-bot -> nouvelle tentative "
-                        f"avec le moteur botasaurus",
-                        extra={"service": service_name, "error": str(exc)},
+                        f"{name}: bloque par anti-bot -> tentative avec botasaurus",
+                        extra={"service": name, "error": str(exc)},
                     )
                     attempt_engine = "botasaurus"
                     self._close(session)
-                    session, service = self._start_service(
-                        service_name, cls, svc_config, attempt_engine
+                    session, service = self._new_session(
+                        name, self.registry[name], svc_config, attempt_engine
                     )
                     continue
                 log.warning(str(exc))
-                result.skipped = True
-                result.skip_reason = str(exc)
+                result.skipped_reason = str(exc)
                 self._close(session)
-                return result
-            except Exception as exc:
-                log.exception(f"{service_name}: echec de decouverte")
+                return None
+            except Exception as exc:  # noqa: BLE001
+                log.exception(f"{name}: echec de decouverte")
                 result.failed.append(f"discovery: {exc}")
                 self._close(session)
-                return result
+                return None
 
-        log_fields(
-            log,
-            20,
-            f"{service_name}: {len(refs)} conversation(s) a traiter",
-            extra={"service": service_name, "date": date_str, "engine": attempt_engine},
-        )
-        for ref in refs:
-            status = self._process_ref(service, result, ref, date_str, force, filter_date)
-            if status == "blocked" and engine == "auto" and attempt_engine != "botasaurus":
-                # bascule botasaurus : session neuve, on retente cette conv
-                log_fields(
-                    log, 30,
-                    f"{service_name}: bloque sur {ref.id} -> bascule botasaurus",
-                    extra={"service": service_name, "conversation_id": ref.id},
-                )
-                attempt_engine = "botasaurus"
-                self._close(session)
-                session, service = self._start_service(
-                    service_name, cls, svc_config, attempt_engine
-                )
-                status = self._process_ref(service, result, ref, date_str, force, filter_date)
-            if status == "blocked":
-                result.failed.append(ref.id)
-            elif status == "stop":
-                break
-            pacing = int(
-                svc_config.get("pacing_ms", self.config.get("pacing_ms", 0)) or 0
-            )
-            if pacing > 0:
-                session.wait_ms(pacing)
-        self._close(session)
-        return result
-
-    def _process_ref(
+    def _scrape_one(
         self,
         service: BaseService,
         result: ServiceResult,
         ref: ConversationRef,
-        date_str: str,
-        force: bool,
-        filter_date: bool,
+        index: Dict[str, Dict[str, Any]],
+        used: Dict[str, str],
     ) -> Optional[str]:
-        """Traite une conversation. Retourne 'blocked', 'stop' ou None."""
+        """Scrape une conversation, ecrit JSON + HTML, met a jour l'inventaire.
+
+        Retourne 'blocked', 'stop' ou None.
+        """
         try:
-            self._process_conversation(service, result, ref, date_str, force, filter_date)
-            return None
+            conv, html = service.export_conversation_with_html(ref)
         except BlockedError as exc:
             log_fields(
                 log, logging.ERROR, f"{service.name}: challenge anti-bot",
@@ -350,12 +323,11 @@ class Orchestrator:
             )
             return "blocked"
         except EmptyConversationError as exc:
-            # non exportable (vide/tache) : ignore, ce n'est pas un echec
             log_fields(
                 log, logging.WARNING, f"{service.name}: conversation ignoree",
                 extra={"conversation_id": ref.id, "reason": str(exc)},
             )
-            result.skipped_items.append(ref.id)
+            result.skipped.append(ref.id)
             return None
         except ServiceNotLoggedIn as exc:
             log_fields(
@@ -376,99 +348,245 @@ class Orchestrator:
             result.failed.append(ref.id)
             return None
 
-    def _process_conversation(
-        self,
-        service: BaseService,
-        result: ServiceResult,
-        ref: ConversationRef,
-        date_str: str,
-        force: bool,
-        filter_date: bool,
-    ) -> None:
-        conv = service.export_conversation(ref)
         conv.exported_at = now_iso_z()
+        conv.platform = service.name
+        entry = index.get(ref.id) or {}
+        title = conv.title or entry.get("title") or ref.title or ""
+        stem = entry.get("file") or unique_filename(title, ref.id, used)
+        used.setdefault(stem, ref.id)
 
-        conv_date = self._export_date(conv, date_str)
-        if filter_date and conv_date != date_str:
-            result.out_of_range.append(ref.id)
-            return
-
-        entry = self._state_entry(service.name, conv.conversation_id)
-        if (
-            entry
-            and not force
-            and entry.get("message_count") == len(conv.messages)
-            and entry.get("last_message_at") in (None, conv.last_message_at)
-        ):
-            log_fields(log, logging.DEBUG, f"{service.name}: inchange",
-                       extra={"conversation_id": conv.conversation_id})
+        json_path, html_path = conversation_paths(self.output_dir, service.name, stem)
+        # JSON intelligent : identique -> pas d'ecriture ; nouveaux messages -> patch
+        payload = conv.to_dict(validate=False)
+        existing = read_json(json_path, default=None)
+        merged, status, appended = merge_conversation_json(existing, payload)
+        if status == "unchanged":
             result.unchanged.append(ref.id)
-            return
+        else:
+            write_json_atomic(json_path, merged)
+            result.exported.append(json_path)
+            if status == "patched":
+                result.patched.append(ref.id)
+        # HTML : toujours ecrase (rendu, aucune donnee perdue)
+        write_text_atomic(html_path, html)
 
-        path = export_path(self.output_dir, conv_date, service.name, conv.conversation_id)
-        write_json_atomic(path, conv.to_dict(validate=False))
-        record_state(
-            self.state,
-            service.name,
-            conv.conversation_id,
-            title=conv.title,
-            message_count=len(conv.messages),
-            path=path,
-            last_message_at=conv.last_message_at,
-        )
-        save_state(self.state_file, self.state)
+        index[ref.id] = {
+            "conversation_id": ref.id,
+            "title": title,
+            "message_count": len(conv.messages),
+            "last_message_at": conv.last_message_at,
+            "has_code": conv.has_code,
+            "scraped": True,
+            "file": stem,
+            "scraped_at": now_iso_z(),
+        }
         log_fields(
-            log,
-            20,
-            f"{service.name}: exportee",
+            log, 20, f"{service.name}: {status}",
             extra={
-                "conversation_id": conv.conversation_id,
+                "conversation_id": ref.id,
                 "messages": len(conv.messages),
-                "path": str(path),
+                "appended": appended,
+                "file": stem,
             },
         )
-        result.exported.append(path)
+        return None
+
+    def _select_targets(
+        self,
+        refs: List[ConversationRef],
+        index: Dict[str, Dict[str, Any]],
+        mode: str,
+        limit: Optional[int],
+    ) -> List[ConversationRef]:
+        if mode == "monthly":
+            targets = list(refs)
+        else:
+            # inconnues (jamais scrapees) + 20 plus recentes (ordre sidebar)
+            unknown = [
+                ref for ref in refs if not (index.get(ref.id) or {}).get("scraped")
+            ]
+            selected = {ref.id for ref in unknown}
+            selected.update(ref.id for ref in refs[:DAILY_RECENT])
+            targets = [ref for ref in refs if ref.id in selected]
+        if limit:
+            targets = targets[:limit]
+        return targets
+
+    def run_service(
+        self, name: str, mode: str, limit: Optional[int] = None
+    ) -> ServiceResult:
+        result = ServiceResult(service=name)
+        svc_config = self.config.get("services", {}).get(name, {})
+        cls = self.registry.get(name)
+        if cls is None:
+            result.skipped_reason = "unknown service"
+            return result
+        if not svc_config.get("enabled", True):
+            result.skipped_reason = "disabled"
+            return result
+
+        engine = resolve_engine(name, self.config)
+        attempt_engine = "playwright" if engine == "auto" else engine
+        session, service = self._new_session(name, cls, svc_config, attempt_engine)
+
+        try:
+            discovered = self._discover(
+                result, name, session, service, engine, attempt_engine, svc_config
+            )
+            if discovered is None:
+                return result
+            session, service, refs, attempt_engine = discovered
+
+            list_path = conversation_list_path(self.output_dir, name)
+            index = load_conversation_list(list_path)
+            self._refresh_inventory(index, refs)
+
+            used: Dict[str, str] = {}
+            for cid, entry in index.items():
+                if entry.get("file"):
+                    used[entry["file"]] = cid
+
+            targets = self._select_targets(refs, index, mode, limit)
+            result.targets = len(targets)
+            log_fields(
+                log, 20,
+                f"{name}: {len(refs)} decouvertes, {len(targets)} a scraper ({mode})",
+                extra={"service": name, "mode": mode},
+            )
+
+            for ref in targets:
+                status = self._scrape_one(service, result, ref, index, used)
+                if (
+                    status == "blocked"
+                    and engine == "auto"
+                    and attempt_engine != "botasaurus"
+                ):
+                    log_fields(
+                        log, 30,
+                        f"{name}: bloque sur {ref.id} -> bascule botasaurus",
+                        extra={"service": name, "conversation_id": ref.id},
+                    )
+                    attempt_engine = "botasaurus"
+                    self._close(service.session)
+                    session, service = self._new_session(
+                        name, cls, svc_config, attempt_engine
+                    )
+                    status = self._scrape_one(service, result, ref, index, used)
+                if status == "blocked":
+                    result.failed.append(ref.id)
+                elif status == "stop":
+                    break
+                # sauvegarde incrementale : l'inventaire survit a une interruption
+                save_conversation_list(list_path, name, index)
+                pacing = int(
+                    svc_config.get("pacing_ms", self.config.get("pacing_ms", 0)) or 0
+                )
+                pacing = self._jitter_pacing(name, pacing)
+                if pacing > 0:
+                    service.session.wait_ms(pacing)
+        finally:
+            self._close(session)
+
+        save_conversation_list(list_path, name, index)
+        return result
 
     @staticmethod
-    def _close(session: Any) -> None:
-        try:
-            session.close()
-        except Exception:
-            pass
+    def _refresh_inventory(
+        index: Dict[str, Dict[str, Any]], refs: List[ConversationRef]
+    ) -> None:
+        """Ajoute les nouvelles conversations ; rafraichit le titre des non scrapees."""
+        for ref in refs:
+            raw = ref.raw or {}
+            entry = index.get(ref.id)
+            if entry is None:
+                index[ref.id] = {
+                    "conversation_id": ref.id,
+                    "title": ref.title or "",
+                    "message_count": None,
+                    "last_message_at": raw.get("last_message_at"),
+                    "has_code": None,
+                    "scraped": False,
+                    "file": None,
+                    "scraped_at": None,
+                }
+            elif not entry.get("scraped"):
+                if ref.title:
+                    entry["title"] = ref.title
+                if raw.get("last_message_at"):
+                    entry["last_message_at"] = raw["last_message_at"]
+
+    # -- parallelisme (profils isoles) ----------------------------------------
+
+    @staticmethod
+    def _jitter_pacing(service: str, base_ms: int) -> int:
+        """Delai variable par tete : deux chatbots ne frappent pas au meme rythme."""
+        if base_ms <= 0:
+            return 0
+        rng = random.Random(f"{service}:{int(time.time() // 20)}")
+        # +0..base (borne mini 300 ms) : rythmes independants entre services
+        return base_ms + rng.randint(0, max(300, base_ms))
+
+    def _domain_of(self, name: str) -> str:
+        url = (self.config.get("services", {}).get(name) or {}).get("url") or ""
+        return (urlparse(url).netloc or name).lower()
+
+    def _group_by_domain(self, names: List[str]) -> List[List[str]]:
+        """Groupes de services par domaine (un groupe = execution sequentielle)."""
+        groups: Dict[str, List[str]] = {}
+        order: List[str] = []
+        for name in names:
+            domain = self._domain_of(name)
+            if domain not in groups:
+                groups[domain] = []
+                order.append(domain)
+            groups[domain].append(name)
+        return [groups[d] for d in order]
 
     def run(
         self,
-        services: Optional[List[str]] = None,
-        date: Optional[str] = None,
-        all_services: bool = False,
+        mode: str = "daily",
         limit: Optional[int] = None,
-        force: bool = False,
-        filter_date: Optional[bool] = None,
+        services: Optional[List[str]] = None,
+        parallel: int = 1,
     ) -> RunSummary:
-        from .utils.file_utils import today_str
+        if mode not in MODES:
+            raise ValueError(f"mode invalide {mode!r} (attendu: {', '.join(MODES)})")
+        names = self._service_names(services)
+        groups = self._group_by_domain(names)
+        summary = RunSummary(mode=mode)
+        lock = threading.Lock()
 
-        date_str = validate_date_arg(date) if date else today_str()
-        run_all = all_services or (services is None)
-        names = self._service_names(services, all_services=run_all)
-        # un --date explicite filtre sur cette date ; sinon on exporte tout
-        # (comportement quotidien : chaque conv part dans son propre jour).
-        do_filter = filter_date if filter_date is not None else bool(date)
-        summary = RunSummary(date=date_str)
-        log_fields(log, 20, "run start",
-                   extra={"services": names, "date": date_str, "force": force,
-                          "filter_date": do_filter})
-        for name in names:
-            summary.services[name] = self.run_service(
-                name, date_str, limit=limit, force=force, filter_date=do_filter
-            )
+        def run_group(group: List[str]) -> None:
+            # sequentiel DANS un groupe ; les groupes (domaines) tournent en parallele
+            for name in group:
+                result = self.run_service(name, mode, limit=limit)
+                with lock:
+                    summary.services[name] = result
+
+        workers = max(1, min(int(parallel or 1), len(groups)))
         log_fields(
-            log,
-            20,
-            "run done",
+            log, 20, "run start",
+            extra={"services": names, "mode": mode, "limit": limit,
+                   "groups": groups, "parallel": workers},
+        )
+        if workers == 1:
+            for group in groups:
+                run_group(group)
+        else:
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                list(executor.map(run_group, groups))
+        log_fields(
+            log, 20, "run done",
             extra={
+                "mode": mode,
                 "exported": summary.total_exported,
-                "services": {n: {"exported": len(r.exported), "failed": len(r.failed),
-                                 "skipped": r.skip_reason} for n, r in summary.services.items()},
+                "services": {
+                    n: {"discovered": r.discovered, "targets": r.targets,
+                        "exported": len(r.exported), "unchanged": len(r.unchanged),
+                        "patched": len(r.patched), "failed": len(r.failed),
+                        "skipped": r.skipped_reason}
+                    for n, r in summary.services.items()
+                },
             },
         )
         return summary

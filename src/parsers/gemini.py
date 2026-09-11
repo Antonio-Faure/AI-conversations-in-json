@@ -126,7 +126,7 @@ class GeminiParser(BaseParser):
             conv_id = m.group(1) if m else "unknown"
 
         conv = Conversation(
-            service=self.service_name,
+            platform=self.service_name,
             conversation_id=str(conv_id),
             title=title or "Gemini conversation",
             messages=messages,

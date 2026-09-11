@@ -6,6 +6,7 @@ sessions conservees entre les executions dans `<profile_dir>/<service>/`).
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
@@ -69,6 +70,7 @@ class BrowserSession:
         channel: Optional[str] = None,
         service: Optional[str] = None,
         user_data_dir: Optional[Path | str] = None,
+        fingerprint: Optional[Dict[str, Any]] = None,
     ):
         if user_data_dir is not None:
             self.profile_dir = Path(user_data_dir)
@@ -78,9 +80,11 @@ class BrowserSession:
             self.profile_dir = Path("profiles")
         self.headless = headless
         self.timeout_ms = int(nav_timeout_ms or timeout_ms)
+        self._explicit_viewport = viewport is not None
         self.viewport = viewport or DEFAULT_VIEWPORT
         self.channel = channel
         self.service = service
+        self.fingerprint = fingerprint or {}
         self._pw = None
         self._context: Optional[BrowserContext] = None
         self._page: Optional[Page] = None
@@ -92,11 +96,16 @@ class BrowserSession:
             return self
         self.profile_dir.mkdir(parents=True, exist_ok=True)
         self._pw = sync_playwright().start()
+        fp = self.fingerprint or {}
+        if not self._explicit_viewport and fp.get("window_width"):
+            viewport = {"width": int(fp["window_width"]), "height": int(fp["window_height"])}
+        else:
+            viewport = self.viewport
         launch_kwargs: Dict[str, Any] = {
             "user_data_dir": str(self.profile_dir),
             "headless": self.headless,
-            "viewport": self.viewport,
-            "locale": "en-US",
+            "viewport": viewport,
+            "locale": fp.get("lang") or "en-US",
             "ignore_default_args": ["--enable-automation"],
             "args": ["--disable-blink-features=AutomationControlled"],
         }
@@ -105,11 +114,14 @@ class BrowserSession:
         # UA identique en headful et headless : indispensable pour que les
         # cookies Cloudflare (cf_clearance, lie a l'UA) survivent entre la
         # connexion (--login) et l'export headless quotidien.
-        try:
-            chrome_major = self._pw.chromium.version.split(".")[0]
-            launch_kwargs["user_agent"] = USER_AGENT_TEMPLATE.format(major=chrome_major)
-        except Exception:  # noqa: BLE001
-            launch_kwargs["user_agent"] = USER_AGENT
+        if fp.get("user_agent"):
+            launch_kwargs["user_agent"] = fp["user_agent"]
+        else:
+            try:
+                chrome_major = self._pw.chromium.version.split(".")[0]
+                launch_kwargs["user_agent"] = USER_AGENT_TEMPLATE.format(major=chrome_major)
+            except Exception:  # noqa: BLE001
+                launch_kwargs["user_agent"] = USER_AGENT
         self._context = self._pw.chromium.launch_persistent_context(**launch_kwargs)
         self._context.set_default_timeout(self.timeout_ms)
         self._context.set_default_navigation_timeout(self.timeout_ms)
@@ -117,6 +129,20 @@ class BrowserSession:
             self._context.add_init_script(STEALTH_JS)
         except Exception:  # noqa: BLE001
             log.debug("stealth init script skipped", exc_info=True)
+        if fp:
+            try:
+                self._context.add_init_script(
+                    "Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>%d});"
+                    "Object.defineProperty(navigator,'deviceMemory',{get:()=>%d});"
+                    "Object.defineProperty(navigator,'languages',{get:()=>%s});"
+                    % (
+                        int(fp.get("hardware_concurrency", 8)),
+                        int(fp.get("device_memory", 8)),
+                        json.dumps(fp.get("languages") or [fp.get("lang") or "en-US"]),
+                    )
+                )
+            except Exception:  # noqa: BLE001
+                log.debug("fingerprint init script skipped", exc_info=True)
         log_fields(
             log,
             20,
@@ -212,6 +238,12 @@ class BrowserSession:
 
     def url(self) -> str:
         return self.page.url
+
+    def cookies(self) -> List[Dict[str, Any]]:
+        """Cookies du contexte (y compris httpOnly) pour la capture d'auth."""
+        self.start()
+        assert self._context is not None
+        return list(self._context.cookies())
 
     def evaluate(self, script: str, arg: Any = None) -> Any:
         try:

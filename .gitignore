@@ -29,9 +29,14 @@ Thumbs.db
 .env
 .env.local
 
+# Cookies d'authentification (secrets locaux, jamais versionnes)
+cookies/*.json
+!cookies/README.md
+
 # Runtime (donnees locales, jamais versionnees)
 exports/*
 !exports/.gitkeep
+/rag/
 profiles/
 profiles-test/
 .state/

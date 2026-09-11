@@ -53,9 +53,23 @@ class ScrapedPage:
     extra: Dict[str, Any] = field(default_factory=dict)
 
 
+class NoopSession:
+    """Session factice pour les services sans navigateur (API HTTP + cookies)."""
+
+    engine = "http"
+
+    def wait_ms(self, ms: int) -> None:
+        pass
+
+    def close(self) -> None:
+        pass
+
+
 class BaseService(ABC):
     """Pipeline commun : list_conversations -> scrape_conversation -> parse."""
 
+    #: False pour les services sans navigateur (API HTTP + cookies, ex: Grok)
+    uses_browser: bool = True
     name: str = ""
     home_url: str = ""
     #: page de decouverte (liste des conversations) si differente de home_url
@@ -136,6 +150,16 @@ class BaseService(ABC):
             self.session.wait_ms(wait_s * 1000)
         return limited
 
+    def _screenshot(self, name: str) -> Optional[Path]:
+        """Capture de debug optionnelle (desactivee si screenshot_dir est vide)."""
+        directory = self.config.get("screenshot_dir")
+        if not directory:
+            return None
+        try:
+            return self.session.screenshot(Path(directory) / name)
+        except Exception:  # noqa: BLE001
+            return None
+
     def _assert_not_blocked(self, where: str) -> None:
         """Détecte un challenge anti-bot, tente un auto-click, puis leve BlockedError."""
         marker = self.session.looks_blocked()
@@ -153,13 +177,7 @@ class BaseService(ABC):
         marker = self.session.looks_blocked()
         if not marker:
             return
-        shot = None
-        try:
-            shot = self.session.screenshot(
-                Path(self.config.get("screenshot_dir", ".")) / f"blocked_{self.name}.png"
-            )
-        except Exception:  # noqa: BLE001
-            pass
+        shot = self._screenshot(f"blocked_{self.name}.png")
         raise BlockedError(
             f"{self.name}: bloque par un challenge anti-bot ({marker}) sur {where}. "
             f"Solution: lancer une fois `python run.py --login {self.name}` (mode "
@@ -215,7 +233,7 @@ class BaseService(ABC):
             # le challenge Cloudflare peut apparaitre apres le goto : on
             # re-verifie avant de conclure a un DOM vide
             self._assert_not_blocked("home (post-listing)")
-            shot = self.session.screenshot(Path(self.config.get("screenshot_dir", ".")) / f"debug_{self.name}_home.png")
+            shot = self._screenshot(f"debug_{self.name}_home.png")
             log_fields(
                 log,
                 30,
@@ -333,9 +351,7 @@ class BaseService(ABC):
                         f"{self.name}: conversation sans message chargeable sur {url} "
                         f"(vide, tache, ou echec de rendu de l'app)"
                     )
-            shot = self.session.screenshot(
-                Path(self.config.get("screenshot_dir", ".")) / f"debug_{self.name}_conv.png"
-            )
+            shot = self._screenshot(f"debug_{self.name}_conv.png")
             raise ParseError(
                 f"{self.name}: aucun message reconnu sur {url} "
                 f"(DOM change ? selecteurs: {self.parser.message_selectors})"
@@ -354,12 +370,19 @@ class BaseService(ABC):
             extra=self.extract_extras(ref),
         )
 
-    def export_conversation(self, ref: ConversationRef) -> Conversation:
-        page = self.scrape_conversation(ref)
+    def parse_page(self, page: ScrapedPage, ref: ConversationRef) -> Conversation:
         conv = self.parser.parse(
             page.html, conversation_id=page.conversation_id, extra=page.extra
         )
-        conv.service = self.name
+        conv.platform = self.name
         if not conv.conversation_id:
             conv.conversation_id = ref.id
         return conv
+
+    def export_conversation(self, ref: ConversationRef) -> Conversation:
+        return self.parse_page(self.scrape_conversation(ref), ref)
+
+    def export_conversation_with_html(self, ref: ConversationRef) -> tuple:
+        """Retourne (Conversation, html complet de la page)."""
+        page = self.scrape_conversation(ref)
+        return self.parse_page(page, ref), page.html

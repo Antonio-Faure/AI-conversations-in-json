@@ -1,17 +1,26 @@
 """Schema JSON standardise pour les conversations IA.
 
-Format commun a toutes les plateformes (ChatGPT, Claude, Gemini, Perplexity):
+Format de sortie (un fichier par conversation) :
 
 {
-  "service": "chatgpt",
   "conversation_id": "abc123",
+  "platform": "chatgpt",
   "title": "...",
-  "started_at": "2025-01-15T10:30:00Z",
-  "last_message_at": "...",
   "model": "gpt-4",
+  "started_at": "2025-01-15T10:30:00Z",
+  "last_message_at": "2025-01-15T11:45:00Z",
   "exported_at": "...",
   "messages": [
-    {"role": "user", "content": "...", "timestamp": "...", "metadata": {}}
+    {
+      "conversation_id": "abc123",
+      "message_id": "uuid",
+      "role": "user" | "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-4",
+      "timestamp": "...",
+      "texte": "...",
+      "code_blocks": [{"language": "python", "code": "..."}]
+    }
   ]
 }
 """
@@ -19,12 +28,16 @@ Format commun a toutes les plateformes (ChatGPT, Claude, Gemini, Perplexity):
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional
 
 VALID_ROLES = ("user", "assistant", "system", "tool")
-KNOWN_SERVICES = ("chatgpt", "claude", "gemini", "perplexity")
+KNOWN_PLATFORMS = ("chatgpt", "claude", "gemini", "perplexity")
+
+#: blocs ```lang ... ``` (le langage est optionnel)
+CODE_FENCE_RE = re.compile(r"```([^\n`]*)\n(.*?)```", re.DOTALL)
 
 
 class SchemaError(ValueError):
@@ -80,37 +93,98 @@ def normalize_timestamp(value: Any) -> Optional[str]:
     return to_iso_z(dt) if dt else None
 
 
+def extract_code_blocks(text: Optional[str]) -> List["CodeBlock"]:
+    """Extrait les blocs ```lang ... ``` du markdown, dans l'ordre du texte."""
+    blocks: List[CodeBlock] = []
+    for match in CODE_FENCE_RE.finditer(text or ""):
+        language = (match.group(1) or "").strip()
+        code = match.group(2)
+        if code.endswith("\n"):
+            code = code[:-1]
+        blocks.append(CodeBlock(language=language, code=code))
+    return blocks
+
+
+@dataclass
+class CodeBlock:
+    """Bloc de code structure extrait d'un message."""
+
+    language: str = ""
+    code: str = ""
+
+    def __post_init__(self) -> None:
+        self.language = "" if self.language is None else str(self.language).strip()
+        self.code = "" if self.code is None else str(self.code)
+
+    def to_dict(self) -> Dict[str, str]:
+        return {"language": self.language, "code": self.code}
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "CodeBlock":
+        return cls(language=data.get("language", ""), code=data.get("code", ""))
+
+
 @dataclass
 class Message:
+    """Message standardise : role, texte, code_blocks, metadonnees d'identification."""
+
     role: str
-    content: str
+    texte: str = ""
+    conversation_id: str = ""
+    message_id: str = ""
+    platform: str = ""
+    model: Optional[str] = None
     timestamp: Optional[str] = None
+    code_blocks: List[CodeBlock] = field(default_factory=list)
+    #: extras internes (tokens, sources, had_thinking...) non exportes
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        self.content = "" if self.content is None else str(self.content)
+        self.texte = "" if self.texte is None else str(self.texte)
         self.timestamp = normalize_timestamp(self.timestamp)
+        self.model = str(self.model) if self.model else None
+        self.message_id = "" if self.message_id is None else str(self.message_id)
+        self.conversation_id = (
+            "" if self.conversation_id is None else str(self.conversation_id)
+        )
+        self.platform = "" if self.platform is None else str(self.platform)
+        converted: List[CodeBlock] = []
+        for block in self.code_blocks or []:
+            converted.append(
+                block if isinstance(block, CodeBlock) else CodeBlock.from_dict(block)
+            )
+        # le texte conserve le markdown complet ; code_blocks en est la vue structuree
+        self.code_blocks = converted or extract_code_blocks(self.texte)
         if self.metadata is None:
             self.metadata = {}
+
+    @property
+    def has_code(self) -> bool:
+        return bool(self.code_blocks)
 
     def validate(self) -> None:
         if self.role not in VALID_ROLES:
             raise SchemaError(
                 f"role invalide {self.role!r} (attendu: {', '.join(VALID_ROLES)})"
             )
-        if not isinstance(self.content, str):
-            raise SchemaError("content doit etre une chaine")
+        if not isinstance(self.texte, str):
+            raise SchemaError("texte doit etre une chaine")
         if not isinstance(self.metadata, dict):
             raise SchemaError("metadata doit etre un objet")
         if self.timestamp is not None and parse_iso(self.timestamp) is None:
             raise SchemaError(f"timestamp invalide: {self.timestamp!r}")
 
     def to_dict(self) -> Dict[str, Any]:
+        """Representation standardisee (8 champs, sans metadata interne)."""
         return {
+            "conversation_id": self.conversation_id,
+            "message_id": self.message_id,
             "role": self.role,
-            "content": self.content,
+            "platform": self.platform,
+            "model": self.model,
             "timestamp": self.timestamp,
-            "metadata": self.metadata,
+            "texte": self.texte,
+            "code_blocks": [b.to_dict() for b in self.code_blocks],
         }
 
     @classmethod
@@ -118,8 +192,15 @@ class Message:
         try:
             msg = cls(
                 role=data["role"],
-                content=data.get("content", ""),
+                texte=data.get("texte", data.get("content", "")),
+                conversation_id=data.get("conversation_id", ""),
+                message_id=data.get("message_id", ""),
+                platform=data.get("platform", ""),
+                model=data.get("model") or (data.get("metadata") or {}).get("model"),
                 timestamp=normalize_timestamp(data.get("timestamp")),
+                code_blocks=[
+                    CodeBlock.from_dict(b) for b in (data.get("code_blocks") or [])
+                ],
                 metadata=dict(data.get("metadata") or {}),
             )
         except KeyError as exc:
@@ -130,19 +211,24 @@ class Message:
 
 @dataclass
 class Conversation:
-    service: str
     conversation_id: str
-    title: str
+    platform: str
+    title: str = ""
     messages: List[Message] = field(default_factory=list)
+    model: Optional[str] = None
     started_at: Optional[str] = None
     last_message_at: Optional[str] = None
-    model: Optional[str] = None
     exported_at: Optional[str] = None
 
     def __post_init__(self) -> None:
         self.messages = [
             m if isinstance(m, Message) else Message.from_dict(m) for m in self.messages
         ]
+        for msg in self.messages:
+            if not msg.conversation_id:
+                msg.conversation_id = self.conversation_id
+            if not msg.platform:
+                msg.platform = self.platform
         self.started_at = normalize_timestamp(self.started_at)
         self.last_message_at = normalize_timestamp(self.last_message_at)
         self.exported_at = normalize_timestamp(self.exported_at)
@@ -159,8 +245,8 @@ class Conversation:
             self.exported_at = to_iso_z(utc_now())
 
     def validate(self) -> None:
-        if not self.service or not isinstance(self.service, str):
-            raise SchemaError("service requis (chaine non vide)")
+        if not self.platform or not isinstance(self.platform, str):
+            raise SchemaError("platform requis (chaine non vide)")
         if not self.conversation_id:
             raise SchemaError("conversation_id requis")
         if not isinstance(self.title, str):
@@ -175,16 +261,20 @@ class Conversation:
         if not self.started_at and self.messages and self.messages[0].timestamp:
             raise SchemaError("started_at incoherent avec le premier message")
 
+    @property
+    def has_code(self) -> bool:
+        return any(m.has_code for m in self.messages)
+
     def to_dict(self, validate: bool = True) -> Dict[str, Any]:
         if validate:
             self.validate()
         return {
-            "service": self.service,
             "conversation_id": self.conversation_id,
+            "platform": self.platform,
             "title": self.title,
+            "model": self.model,
             "started_at": self.started_at,
             "last_message_at": self.last_message_at,
-            "model": self.model,
             "exported_at": self.exported_at,
             "messages": [m.to_dict() for m in self.messages],
         }
@@ -196,13 +286,13 @@ class Conversation:
     def from_dict(cls, data: Dict[str, Any], validate: bool = True) -> "Conversation":
         try:
             conv = cls(
-                service=data["service"],
                 conversation_id=data["conversation_id"],
+                platform=data.get("platform", data.get("service", "")),
                 title=data.get("title", ""),
                 messages=[Message.from_dict(m) for m in data.get("messages", [])],
+                model=data.get("model"),
                 started_at=normalize_timestamp(data.get("started_at")),
                 last_message_at=normalize_timestamp(data.get("last_message_at")),
-                model=data.get("model"),
                 exported_at=normalize_timestamp(data.get("exported_at")),
             )
         except KeyError as exc:
@@ -238,7 +328,7 @@ class ConversationRef:
 
 
 def build_conversation(
-    service: str,
+    platform: str,
     conversation_id: str,
     title: str,
     messages: Iterable[Message],
@@ -246,7 +336,7 @@ def build_conversation(
 ) -> Conversation:
     """Fabrique une conversation valide avec timestamps derives et exported_at."""
     conv = Conversation(
-        service=service,
+        platform=platform,
         conversation_id=conversation_id,
         title=title or "",
         messages=list(messages),

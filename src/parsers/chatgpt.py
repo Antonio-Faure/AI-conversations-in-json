@@ -89,21 +89,25 @@ class ChatGPTParser(BaseParser):
             mid = turn.get("data-message-id")
             meta: Dict[str, Any] = {}
             timestamp = None
+            slug = turn.get("data-message-model-slug")
             if mid and mid in message_meta:
                 mm = message_meta[mid]
                 timestamp = mm.get("time")
-                slug = mm.get("model") or turn.get("data-message-model-slug")
-                if slug:
-                    meta["model"] = slug
-            else:
-                slug = turn.get("data-message-model-slug")
-                if slug:
-                    meta["model"] = slug
+                slug = mm.get("model") or slug
             if role == "assistant":
-                meta.setdefault("tokens", None)
-                if meta.get("model"):
-                    models.append(meta["model"])
-            messages.append(self.msg(role, content, timestamp, meta))
+                meta["tokens"] = None
+                if slug:
+                    models.append(slug)
+            messages.append(
+                self.msg(
+                    role,
+                    content,
+                    timestamp,
+                    meta,
+                    message_id=str(mid or ""),
+                    model=slug,
+                )
+            )
 
         # le <title> du DOM reste "ChatGPT" tant que la page n'a pas hydrate :
         # le titre de la sidebar (title_hint, via ref) est fiable, on le
@@ -134,7 +138,7 @@ class ChatGPTParser(BaseParser):
             )
 
         conv = Conversation(
-            service=self.service_name,
+            platform=self.service_name,
             conversation_id=str(conv_id),
             title=title or "ChatGPT conversation",
             messages=messages,

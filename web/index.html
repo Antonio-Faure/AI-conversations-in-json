@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recherche — Conversations IA</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔎</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="header-left">
+      <h1>Conversations IA</h1>
+      <p class="subtitle">Recherche textuelle + sémantique dans les messages de ChatGPT, Claude, Gemini, Perplexity, Grok et Mistral</p>
+    </div>
+    <div class="header-right">
+      <label class="theme-toggle" id="themeToggle" title="Basculer clair/nuit">
+        <span class="theme-toggle-label" id="themeLabel">Nuit</span>
+        <div class="toggle-track" id="toggleTrack"><div class="toggle-thumb"></div></div>
+      </label>
+    </div>
+  </header>
+
+  <div class="search-panel">
+    <div class="search-row">
+      <input type="text" id="q" class="search-input" placeholder="Rechercher un message, une idée, un bout de code…" autocomplete="off">
+      <button id="searchBtn" class="btn">Rechercher</button>
+      <button id="paramsToggle" class="params-toggle" type="button">⚙️ Paramètres</button>
+    </div>
+    <div class="search-params collapsed" id="searchParams">
+      <div>
+        <label class="filter-label">Chatbots</label>
+        <div class="chip-list" id="platformChips"></div>
+      </div>
+      <div>
+        <label class="filter-label">Pondération sémantique : <span id="alphaVal">0.6</span></label>
+        <input type="range" id="alpha" min="0" max="1" step="0.05" value="0.6">
+        <div class="rc-meta" style="margin-top:4px"><span>mots-clés</span><span style="margin-left:auto">sémantique</span></div>
+      </div>
+      <div>
+        <label class="filter-label">Modèle</label>
+        <select id="modelFilter" class="search-input"><option value="">Tous les modèles</option></select>
+      </div>
+      <div>
+        <label class="filter-label">Plage de dates</label>
+        <div class="row-inputs"><input type="date" id="dateFrom"><input type="date" id="dateTo"></div>
+      </div>
+      <div>
+        <label class="filter-label">Nombre de résultats : <span id="kVal">30</span></label>
+        <input type="range" id="k" min="5" max="100" step="5" value="30">
+      </div>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <h2>Navigation</h2>
+      <p class="side-item" style="cursor:default;color:var(--text-muted)">Lance une recherche pour voir les conversations.</p>
+    </aside>
+    <main class="main" id="main">
+      <div class="no-results">Recherche textuelle exacte et sémantique (embeddings) combinées.</div>
+    </main>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

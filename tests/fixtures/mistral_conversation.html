@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>Test Mistral</title>
+</head>
+<body>
+  <main>
+    <div data-message-author-role="user" data-message-id="m-1" data-message-version="0">
+      <div class="select-text">
+        <span class="whitespace-pre-wrap">Peux-tu me montrer un exemple ?</span>
+      </div>
+      <div class="flex flex-row items-center gap-2">
+        <button>Copier</button>
+      </div>
+    </div>
+    <div data-message-author-role="assistant" data-message-id="m-2" data-message-version="0">
+      <div data-message-part-type="reasoning">
+        <p>Reflexion interne qui ne doit pas apparaitre.</p>
+      </div>
+      <div data-message-part-type="answer">
+        <div class="markdown-container-style max-w-none">
+          <p>Bien sur, voici un exemple :</p>
+          <ul><li>Premier point</li><li>Second point</li></ul>
+          <pre><code class="language-python">def f():
+    return 1</code></pre>
+        </div>
+      </div>
+    </div>
+    <div data-message-author-role="user" data-message-id="m-3" data-message-version="0">
+      <div class="select-text"><span class="whitespace-pre-wrap">Merci !</span></div>
+    </div>
+  </main>
+</body>
+</html>

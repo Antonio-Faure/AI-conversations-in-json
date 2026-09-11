@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Any, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from .browser import ScrollResult
 from .selectors import (
@@ -71,6 +71,7 @@ class BotasaurusSession:
         chrome_executable_path: Optional[str] = None,
         enable_xvfb: bool = False,
         service: Optional[str] = None,
+        fingerprint: Optional[Dict[str, Any]] = None,
     ):
         self.profile_dir = Path(profile_dir or "profiles")
         self.headless = headless
@@ -78,6 +79,7 @@ class BotasaurusSession:
         self.chrome_path = chrome_executable_path or None
         self.enable_xvfb = bool(enable_xvfb)
         self.service = service
+        self.fingerprint = fingerprint or {}
         self._driver = None
 
     # -- cycle de vie ---------------------------------------------------------
@@ -89,11 +91,21 @@ class BotasaurusSession:
 
         self.profile_dir.mkdir(parents=True, exist_ok=True)
         chrome = self.chrome_path or find_chrome_binary()
+        fp = self.fingerprint or {}
+        window_size = (
+            (int(fp["window_width"]), int(fp["window_height"]))
+            if fp.get("window_width")
+            else DEFAULT_WINDOW_SIZE
+        )
         kwargs: dict[str, Any] = {
             "headless": self.headless,
             "profile": str(self.profile_dir),
-            "window_size": DEFAULT_WINDOW_SIZE,
+            "window_size": window_size,
         }
+        if fp.get("user_agent"):
+            kwargs["user_agent"] = fp["user_agent"]
+        if fp.get("lang"):
+            kwargs["lang"] = fp["lang"]
         if chrome:
             kwargs["chrome_executable_path"] = chrome
         else:
@@ -131,6 +143,13 @@ class BotasaurusSession:
         if self._driver is not None:
             try:
                 self._driver.close()
+            except Exception:  # noqa: BLE001
+                pass
+            # ferme reellement le navigateur si l'API l'expose
+            try:
+                quit_fn = getattr(self._driver, "quit", None)
+                if callable(quit_fn):
+                    quit_fn()
             except Exception:  # noqa: BLE001
                 pass
             self._driver = None
@@ -227,6 +246,13 @@ class BotasaurusSession:
 
     def url(self) -> str:
         return self.driver.current_url or ""
+
+    def cookies(self) -> List[Dict[str, Any]]:
+        """Cookies du navigateur (pour la capture d'auth)."""
+        try:
+            return list(self.driver.get_cookies() or [])
+        except Exception:  # noqa: BLE001
+            return []
 
     def title(self) -> str:
         try:

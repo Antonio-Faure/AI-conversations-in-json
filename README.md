@@ -1,137 +1,188 @@
 # AI Conversations in JSON
 
-Export automatisé (quotidien) de vos conversations IA — **ChatGPT, Claude,
-Gemini, Perplexity** — dans un **format JSON standardisé**, via **Playwright**
-ou **Botasaurus** (contournement Cloudflare).
+Export automatisé des conversations IA dans un **format JSON standardisé** +
+le **HTML complet** de chaque conversation. Plateformes actives : **ChatGPT**,
+**Claude**, **Gemini**, **Perplexity**, **Grok** (xAI) et **Mistral**.
 
-Chaque plateforme a son propre scraper (navigation, scroll infini) et son
-propre parser DOM, mais toutes convergent vers le même schéma de sortie.
+Chaque conversation produit :
+
+```
+exports/<platform>/<nom de la conversation>.json   # messages standardisés
+exports/<platform>/<nom de la conversation>.html   # page complète (brut)
+```
+
+Plus un inventaire par chatbot :
+
+```
+exports/<platform>/conversation_list.json
+```
 
 ## Fonctionnement
 
 ```
 run.py (CLI)
   └── Orchestrator (src/orchestrator.py)
-        └── par service : BrowserSession (profil persistant, cookies)
-              1. ouvre la home -> sidebar -> liste des conversations (parser)
-              2. pour chaque conversation : navigation + scroll infini
-              3. extraction HTML (+ données React pour les timestamps ChatGPT)
-              4. parsing -> Conversation standardisée + validation
-              5. écriture atomique exports/<date>/<service>/<id>.json
-        └── état incrémentiel (.state/state.json) : les conversations inchangées
-            ne sont pas ré-écrites (sauf --force)
+        └── ChatGPT par défaut (registry services, autres désactivés)
+              1. ouvre la home -> sidebar -> liste des conversations
+              2. sélectionne les cibles selon le mode (daily / monthly)
+              3. pour chacune : navigation + scroll -> HTML complet
+              4. parsing -> Conversation standardisée (+ code_blocks)
+              5. écriture atomique de <nom>.json et <nom>.html
+              6. mise à jour de conversation_list.json
 ```
 
-- **Sessions conservées** : profils Playwright persistants dans `profiles/<service>/`
-  (cookies de connexion gardés entre les exécutions).
-- **Scroll infini** : la sidebar et le fil de discussion sont scrollés jusqu'à
-  stabilisation (chargement complet de l'historique).
-- **Isolation des pannes** : une conversation ou un service en échec
-  n'arrête pas le reste ; le résumé final liste les échecs.
-- **Logging structuré** : console lisible + `logs/aicv.jsonl` en JSON lines.
+- **Écriture JSON intelligente** : si le contenu est identique, le fichier
+  n'est **pas** réécrit ; si de nouveaux messages suivent, ils sont **patchés**
+  (ajoutés sans écraser l'existant) ; sinon réécriture complète. Le HTML est
+  toujours écrasé (rendu, aucune donnée perdue).
+- **Pas de logs sur disque, pas de dossiers par session** : seul l'export final
+  est conservé (console uniquement).
+- **Profils persistants** : cookies de connexion dans `profiles/<service>/`.
+- **Scroll infini** : sidebar et fil de discussion scrollés jusqu'à stabilisation.
+- **Anti-Cloudflare** : moteur Playwright par défaut, bascule Botasaurus
+  automatique si un challenge est détecté.
 
 ## Installation
 
 ```bash
 python3 -m venv .venv
+# torch CPU (evite le wheel CUDA lourd) puis le reste
+.venv/bin/pip install --index-url https://download.pytorch.org/whl/cpu torch
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m playwright install chromium   # binaire navigateur
 ```
 
-## Première connexion (obligatoire, une fois par service)
+Le modèle d'embeddings `BAAI/bge-m3` (~2,3 Go) est téléchargé automatiquement
+au premier usage du RAG.
 
-L'export est headless et réutilise les cookies du profil persistant.
-Il faut donc se connecter une première fois dans un navigateur visible :
+## Première connexion (obligatoire, une fois par service)
 
 ```bash
 .venv/bin/python run.py --login chatgpt
 .venv/bin/python run.py --login claude
-.venv/bin/python run.py --login gemini
-.venv/bin/python run.py --login perplexity
 ```
 
-Un navigateur s'ouvre : connectez-vous normalement, le script détecte la fin
-de la connexion (navigation hors page de login) et ferme tout seul.
-Les cookies sont sauvegardés dans `profiles/<service>/`.
+Un navigateur s'ouvre : connectez-vous, le script détecte la fin de la
+connexion et ferme tout seul. Les cookies sont sauvegardés dans
+`profiles/<service>/` et réutilisés par les exports headless.
 
-Important : `--login` ouvre **le même moteur que l'export** du service
-(Botasaurus pour Claude). Les cookies anti-bot comme `cf_clearance` sont liés
-à l'User-Agent — une connexion Playwright ne serait pas réutilisable par
-Botasaurus, et inversement.
+Le login accepte aussi `gemini`, `perplexity`, `grok` et `mistral`.
+Pour Grok et Mistral (pas de profil scraper dédié), la commande **capture les
+cookies** : elle ouvre un navigateur visible, détecte la connexion
+automatiquement (cookie de session) et écrit `cookies/<service>.json`.
+Grok utilise Firefox natif (Chromium est bloqué par Cloudflare), Mistral le
+moteur botasaurus. Vérification : `scripts/check_cookies.py`.
+
+Important : le login utilise **le même moteur que l'export** du service
+(Botasaurus pour Claude et Perplexity). Les cookies anti-bot comme
+`cf_clearance` sont liés à l'User-Agent — une connexion Playwright ne serait
+pas réutilisable par Botasaurus, et inversement.
 
 ## Utilisation
 
 ```bash
-# tout exporter (services enabled dans config.yaml)
-.venv/bin/python run.py --all
+# routine quotidienne : inconnues + 20 dernières conversations (tous les services)
+.venv/bin/python run.py --daily
 
-# un seul service
-.venv/bin/python run.py --service chatgpt
+# rafraîchissement complet : liste TOUTES les conversations et les scrape
+.venv/bin/python run.py --monthly     # --full est un alias
 
-# plusieurs services
-.venv/bin/python run.py -s chatgpt -s claude
-
-# conversations de la journée uniquement, dans exports/<date>/
-.venv/bin/python run.py --all --date 2026-09-09
+# ne scraper qu'un service (option répétable) : gain de temps
+.venv/bin/python run.py --daily --service claude
+.venv/bin/python run.py --monthly -s gemini -s perplexity
 
 # debug : navigateur visible, 5 conversations max, logs verbeux
-.venv/bin/python run.py --service gemini --headful --limit 5 --verbose
-
-# ré-exporter même si rien n'a changé
-.venv/bin/python run.py --all --force
+.venv/bin/python run.py --daily --service chatgpt --headful --limit 5 --verbose
 ```
 
 Codes de sortie : `0` OK, `1` au moins un échec, `2` erreur d'usage/config.
 
-## Planification quotidienne (cron)
+### Modes
 
-```cron
-30 3 * * * cd /chemin/du/depot && .venv/bin/python run.py --all >> logs/cron.log 2>&1
-```
+| Mode | Découverte | Scrape |
+|---|---|---|
+| `--daily` | liste les conversations | **inconnues** (jamais scrapées) ∪ **20 plus récentes** |
+| `--monthly` / `--full` | liste TOUTES les conversations | **toutes** (rafraîchissement complet) |
 
-## Format JSON standardisé
+Le HTML manquant (ex. après migration) est produit dès qu'une conversation
+repasse en `daily` (si elle fait partie des 20 récentes) ou en `monthly`.
 
-Un fichier par conversation : `exports/<AAAA-MM-JJ>/<service>/<id>.json`
+## Format JSON d'une conversation
+
+`exports/<platform>/<nom>.json` :
 
 ```json
 {
-  "service": "chatgpt",
   "conversation_id": "abc123",
+  "platform": "chatgpt",
   "title": "Titre de la conversation",
+  "model": "gpt-4",
   "started_at": "2025-01-15T10:30:00Z",
   "last_message_at": "2025-01-15T11:45:00Z",
-  "model": "gpt-4",
-  "exported_at": "2025-06-09T00:00:00Z",
+  "exported_at": "2026-09-10T00:00:00Z",
   "messages": [
     {
+      "conversation_id": "abc123",
+      "message_id": "uuid-du-message",
       "role": "user",
-      "content": "Texte du message",
+      "platform": "chatgpt",
+      "model": null,
       "timestamp": "2025-01-15T10:30:00Z",
-      "metadata": {}
+      "texte": "Texte complet du message (markdown, fences de code incluses)",
+      "code_blocks": []
     },
     {
+      "conversation_id": "abc123",
+      "message_id": "uuid-reponse",
       "role": "assistant",
-      "content": "Réponse de l'IA",
+      "platform": "chatgpt",
+      "model": "gpt-4",
       "timestamp": "2025-01-15T10:30:05Z",
-      "metadata": {
-        "model": "gpt-4",
-        "tokens": null
-      }
+      "texte": "Voici un exemple :\n```python\nprint(1)\n```",
+      "code_blocks": [
+        {"language": "python", "code": "print(1)"}
+      ]
     }
   ]
 }
 ```
 
 - `role` ∈ `user | assistant | system | tool`
-- timestamps ISO-8601 UTC (`...Z`) ou `null` quand la plateforme ne les expose pas
-- `metadata` : libre par service (ChatGPT : modèle par message ; Claude :
-  `had_thinking` ; Perplexity : `sources`)
-- le markdown est préservé en texte brut, blocs `<pre>` convertis en fences \`\`\`
+- `texte` : markdown complet (le code en fences y figure **aussi**) ;
+  `code_blocks` en est la vue structurée `{language, code}`.
+- timestamps ISO-8601 UTC (`...Z`) ou `null` quand la plateforme ne les expose pas.
+- Le fichier `.html` contient le DOM complet de la page de conversation.
+
+## conversation_list.json
+
+Un inventaire par dossier chatbot, régénéré à chaque run :
+
+```json
+{
+  "platform": "chatgpt",
+  "updated_at": "2026-09-10T00:00:00Z",
+  "count": 168,
+  "conversations": [
+    {
+      "conversation_id": "abc123",
+      "title": "Titre de la conversation",
+      "message_count": 12,
+      "last_message_at": "2025-01-15T11:45:00Z",
+      "has_code": true,
+      "scraped": true,
+      "file": "titre-de-la-conversation",
+      "scraped_at": "2026-09-10T00:00:00Z"
+    }
+  ]
+}
+```
+
+Les conversations découvertes mais pas encore scrapées ont `scraped: false`
+et des champs `message_count`/`last_message_at`/`has_code` à `null`.
 
 ## Moteurs navigateur
 
-Deux moteurs partagent la même façade (`goto`, `html`, `evaluate`, scroll,
-détection/contournement anti-bot…) — les services ne voient pas la différence :
+Deux moteurs partagent la même façade ; les services ne voient pas la différence :
 
 | moteur | rôle |
 |---|---|
@@ -140,115 +191,186 @@ détection/contournement anti-bot…) — les services ne voient pas la différe
 
 ```yaml
 engine: auto        # auto = Playwright, bascule Botasaurus si challenge détecté
-services:
-  claude:
-    engine: botasaurus   # surcharge par service (Cloudflare bloque claude.ai)
 ```
 
-En `auto`, un `BlockedError` relance automatiquement le service avec
-Botasaurus (une fois) — que ce soit à la découverte ou sur une conversation
-en cours. Le chemin du Chrome Botasaurus est auto-détecté (Chromium
-Playwright, ou `$AICV_CHROME_PATH`) : `botasaurus.chrome_executable_path`.
+En `auto`, un `BlockedError` relance automatiquement le service avec Botasaurus
+(une fois) — à la découverte comme sur une conversation. `enable_xvfb: true`
+lance Chrome headful dans un affichage virtuel (paquet système `xvfb`).
 
-### Xvfb (recommandé)
+## Parallélisme (profils isolés)
 
-Cloudflare détecte (et bloque) le headless sur certains services
-(Perplexity). L'option `botasaurus.enable_xvfb: true` lance alors un Chrome
-**headful dans un affichage virtuel Xvfb** (paquet `xvfb`) : invisible en
-SSH, indétectable comme headless. Si Xvfb manque, repli automatique sur le
-headless pur.
-
-## Découverte des listes (le point critique)
-
-Les sidebars ne montrent qu'un extrait de l'historique ; chaque service a sa
-propresolution :
-
-| service | découverte | nb. validé |
-|---|---|---|
-| ChatGPT | sidebar scrollée (collecteur incrémentiel) | 168 |
-| Claude | sidebar (les IDs de conversation sont listés en entier) | 21 |
-| Gemini | sidebar repliée (ouverte automatiquement) + scroll de l'`infinite-scroller` | 290+ |
-| Perplexity | **API GraphQL de la library** (persisted query, pagination par curseur) | **347** |
-
-Le collecteur incrémentiel (`_collect_sidebar_refs`) gère les listes
-**virtualisées** (seuls les items visibles sont dans le DOM, les items
-scrollés disparaissent) : il saute au bas de chaque conteneur scrollable et
-accumule les refs à chaque tour jusqu'à stabilisation.
-
-Sur Perplexity, les lignes virtuelles n'ont même pas de `<a>` — d'où la
-découverte par GraphQL (`LibraryRecentThreadsPaginationQuery`, endpoint
-`/rest/perplexity_ask/graphql`). Si la structure change, fallback DOM
-automatique (limité au récent).
-
-## Anti rate-limit
-
-ChatGPT ferme l'accès à l'historique en cas de rafale (« Too many requests »).
-Parades :
-
-- `pacing_ms` : pause entre conversations (chatgpt : 1500 ms)
-- détection du dialog de limite → fermeture (« Got it ») + attentes
-  croissantes (15/30/60 s) avant rechargement
-- `scripts/export_missing.py` : n'exporte que les conversations absentes du
-  disque (utile après un throttling — évite de re-scroller toute la liste)
-
-## Validation
-
-Le pipeline complet a été validé sur les 4 services avec sessions réelles :
-découverte complète des listes (168 chatgpt / 21 claude / 290 gemini /
-347 perplexity), export headless, contournement Cloudflare (Claude et
-Perplexity via Botasaurus/Xvfb), parsing et écriture JSON — 848 messages
-chatgpt, 76 claude, 134 gemini, 1 345 perplexity sur la session de test,
-liens en markdown et blocs de code en fences vérifiés par :
+Scraping simultané de plusieurs chatbots (domaines différents) :
 
 ```bash
-.venv/bin/python scripts/audit_exports.py exports   # liens, fences, artefacts DOM restants
-.venv/bin/python scripts/export_missing.py <service>  # export des manquantes seulement
+.venv/bin/python run.py --monthly -s claude -s mistral --parallel 2
+.venv/bin/python run.py --daily   -s grok -s chatgpt --parallel 2   # défaut via config
 ```
+
+- **Profils isolés** : chaque service a son profil persistant
+  `profiles/<service>/` (cookies, localStorage, cache). Aucun partage.
+- **Fingerprints randomisés et stables par profil** : User-Agent, taille de
+  fenêtre, langue et `hardwareConcurrency`/`deviceMemory` sont dérivés du nom du
+  service et **persistés** dans `profiles/<service>/fingerprint.json` (stables
+  entre les runs pour ne pas invalider `cf_clearance`, différents d'un chatbot à
+  l'autre).
+- **Parallélisme par domaine uniquement** : les services partageant un même
+  domaine sont regroupés et exécutés **séquentiellement** ; seuls les groupes de
+  domaines différents tournent en parallèle (`--parallel N`).
+- **Séquentiel dans chaque tête** : aucune concurrence sur un même chatbot.
+- **Rythmes indépendants** : `pacing_ms` est jitté par service (`_jitter_pacing`),
+  donc deux têtes ne frappent pas au même rythme.
+- Les cookies restent par service (`cookies/<service>.json` +
+  `profiles/<service>/`), jamais partagés.
+
+## Migration des anciens exports
+
+Un script convertit l'ancien format (`exports/<date>/chatgpt/<id>.json` +
+`.state/state.json`) vers le nouveau et génère `conversation_list.json` :
+
+```bash
+.venv/bin/python scripts/migrate_exports.py
+```
+
+Les anciens fichiers ne sont pas supprimés (les retirer après vérification).
+Le HTML n'existant pas dans l'ancien schéma, il est produit au prochain run.
+
+## Audit
+
+```bash
+.venv/bin/python scripts/audit_exports.py exports   # liens, fences, artefacts DOM
+```
+
+## RAG (recherche sémantique des messages)
+
+Indexation **un vecteur par message** et recherche par **similarité cosinus**.
+
+- **Embeddings locaux BGE-M3** (`BAAI/bge-m3`, 1024 dim, FR/EN, offline/gratuit),
+  vecteurs normalisés.
+- **Stockage SQLite + sqlite-vec** : `rag/messages.db`
+  (`messages` = texte + métadonnées, `vec_messages` = vecteurs `distance_metric=cosine`).
+- **Granularité message**, aucune déduplication, aucun résumé.
+- Indexation **incrémentale** : une conversation dont `exported_at` n'a pas changé
+  est ignorée (sauf `--force`).
+- **Cache de vecteurs par message** : chaque message porte une empreinte
+  `sha256(modele+texte)`. Avant de calculer un embedding, le vecteur est
+  recherché dans SQLite ; s'il existe il est réutilisé, sinon calculé puis
+  stocké. Après un patch, seuls les **nouveaux** messages sont recalculés.
+
+```bash
+# indexer (tous les services)
+.venv/bin/python scripts/rag_index.py
+
+# indexer un service / forcer / limiter (debug)
+.venv/bin/python scripts/rag_index.py --platform grok
+.venv/bin/python scripts/rag_index.py --force
+.venv/bin/python scripts/rag_index.py --limit 10
+
+# rechercher (top-k cosinus, filtres optionnels)
+.venv/bin/python scripts/rag_search.py "améliorer mes vidéos YouTube" -k 10
+.venv/bin/python scripts/rag_search.py "kubernetes" --platform gemini --role assistant
+```
+
+Chaque résultat affiche `cos=<similarité> [<platform>/<role>] <timestamp> conv=<id>`
+puis un extrait du message.
+
+## Page web de recherche
+
+Interface locale (dark theme, responsive, Crimson Pro + DM Sans) pour explorer
+les conversations des 6 chatbots.
+
+```bash
+.venv/bin/python scripts/serve_web.py          # http://127.0.0.1:8765
+.venv/bin/python scripts/serve_web.py --host 0.0.0.0 --port 9000
+```
+
+- **Double recherche combinée** : mots-clés exacts (LIKE + bonus phrase) **et**
+  similarité cosinus (BGE-M3 + sqlite-vec), exécutées ensemble puis fusionnées
+  par score : `score = alpha*sémantique + (1-alpha)*mots_clés` (curseur `alpha`).
+- **Filtres** : par chatbot (chips), par modèle, par plage de dates.
+- **Résultats** : cartes avec score global + détail (`sém` / `mots`), extrait
+  surligné (termes de la requête), plateforme, rôle, date, modèle.
+- **Clic sur un message** → ouvre la conversation complète, positionnée et
+  surlignée sur ce message ; bouton retour.
+- **Sidebar** : conversations présentes dans les résultats (nb de messages
+  trouvés) et, en vue conversation, ancres vers chaque message.
+- Barre de recherche **sticky et repliable** (`⚙️ Paramètres`).
+
+L'API locale (même serveur) : `/api/search`, `/api/conversation`,
+`/api/conversations`, `/api/filters`, `/api/stats`. Le modèle d'embeddings se
+charge au premier appel (quelques secondes).
+
+## Optimisations écriture & compute
+
+| règle | mise en œuvre |
+|---|---|
+| JSON identique → pas d'écriture | `merge_conversation_json` compare hors `exported_at` |
+| Nouveaux messages → patch | si les anciens messages sont un préfixe, seuls les nouveaux sont ajoutés |
+| HTML | toujours écrasé (rendu) |
+| Embeddings déjà calculés | cache par empreinte de message (`get_cached_vectors`) |
+| Pas de surcharge CPU | torch limité à `cpu-1` threads (`AICV_TORCH_THREADS` pour forcer) |
+
+Le résumé CLI distingue `ecrites=` (écrites/patchées), `patch=`, `inchanges=`
+(non réécrites). L'indexation RAG affiche `vecteurs : N reutilises, M recalcules`.
 
 ## Configuration
 
-Tout est dans [`config.yaml`](config.yaml) : services activés + URL, répertoires
-(`output_dir`, `profile_dir`, `state_file`, `log_file`), headless, timeouts,
-paramètres de scroll. Les valeurs omises reprennent `DEFAULT_CONFIG`
-(`src/orchestrator.py`).
+Tout est dans [`config.yaml`](config.yaml) : chemins **absolus**, services
+(les 6 `enabled: true`), headless, timeouts, scroll, `parallel`, `cookies_dir`,
+`rag_db`/`rag_model`. Claude,
+Perplexity et Mistral forcent `engine: botasaurus` (Cloudflare bloque
+Playwright) ; Grok utilise l'API HTTP + cookies (aucun navigateur). Les valeurs
+omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 
 ## Architecture
 
 ```
-├── run.py                     # point d'entrée CLI
-├── config.yaml                # configuration (services, chemins, schedule)
-├── requirements.txt
+├── run.py                     # CLI (--daily / --monthly|--full / --service / --parallel / --login)
+├── config.yaml                # configuration (chemins absolus, services)
 ├── scripts/
-│   └── audit_exports.py       # audit qualité des JSON (liens, code, artefacts)
+│   ├── migrate_exports.py     # migration ancien format -> exports/<platform>/
+│   ├── check_cookies.py       # vérifie l'auth par cookies (Grok, Mistral)
+│   ├── capture_cookies.py     # capture les cookies (navigateur visible)
+│   ├── rag_index.py           # indexe les messages (BGE-M3 -> sqlite-vec)
+│   ├── rag_search.py          # recherche cosinus dans le RAG
+│   ├── serve_web.py           # serveur local + API pour la page de recherche
+│   └── audit_exports.py       # audit qualité des JSON exportés
 ├── src/
-│   ├── orchestrator.py        # workflow principal (pipeline + bascule moteurs)
+│   ├── orchestrator.py        # workflow (modes, services, inventaire, JSON+HTML)
 │   ├── browser.py             # moteur Playwright (profil persistant, scroll)
 │   ├── browser_botasaurus.py  # moteur Botasaurus (anti-Cloudflare, même façade)
+│   ├── http_client.py         # client HTTP + cookies (services sans navigateur)
+│   ├── cookies.py             # capture cookies (browser / firefox)
+│   ├── fingerprint.py         # fingerprints stables et isolés par profil
 │   ├── selectors.py           # traduction sélecteurs Playwright -> CSS (botasaurus)
-│   ├── schema.py              # schéma JSON standardisé (dataclasses + validation)
-│   ├── services/              # scraping par plateforme (sélecteurs, pipeline)
-│   │   ├── base.py            #   BaseService : découverte + scrape + parse
-│   │   ├── chatgpt.py         #   + extraction des timestamps via props React
-│   │   ├── claude.py / gemini.py / perplexity.py
+│   ├── schema.py              # schéma JSON standardisé + code_blocks
+│   ├── services/              # chatgpt, claude, gemini, perplexity, grok, mistral
+│   │   ├── base.py            # BaseService : découverte + scrape + parse
+│   │   ├── grok.py            # API REST + cookies (uses_browser=False)
+│   │   └── mistral.py         # botasaurus + cookies ; modes /chat + /work
 │   ├── parsers/               # parsing DOM (BeautifulSoup, testable sans navigateur)
-│   │   ├── base.py            #   BaseParser : parse(), parse_links(), text_of()
-│   │   └── <service>.py       #   sélecteurs CSS réels par plateforme
+│   │   ├── base.py            # BaseParser : parse(), parse_links(), text_of()
+│   │   ├── mistral.py         # data-message-author-role + parties answer/reasoning
+│   │   └── grok.py            # construit depuis les données de l'API
+│   ├── rag/                   # RAG messages : BGE-M3 + SQLite/sqlite-vec
+│   │   ├── embeddings.py      #   Embedder BGE-M3 (lazy, normalisé)
+│   │   ├── store.py           #   VectorStore (messages + vec_messages)
+│   │   ├── indexer.py         #   indexation incrémentale par lots
+│   │   └── search.py          #   recherche combinée (cosinus + mots-clés)
 │   └── utils/
-│       ├── logging.py         # logging structuré (console + JSON lines)
-│       └── file_utils.py      # exports atomiques, dates, état incrémentiel
-├── tests/                     # pytest : schéma, parsers (fixtures HTML),
-│   └── fixtures/              # moteurs (traducteur sélecteurs), orchestrator, CLI
+│       ├── html_render.py     # HTML autonome (services sans page récupérable)
+│       ├── logging.py         # logging console (pas de fichier)
+│       └── file_utils.py      # exports atomiques, noms, conversation_list
+├── web/                       # page de recherche (index.html, app.js, style.css)
+├── cookies/                   # cookies d'auth (ignorés git)
+├── rag/                       # base vectorielle messages.db (ignorée git)
 ├── profiles/                  # profils navigateurs (ignorés git)
-├── .state/state.json          # incrémental (ignoré git)
-├── logs/                      # aicv.jsonl (ignoré git)
 └── exports/                   # sorties (ignorées git)
 ```
 
 ## Tests
 
-Les parsers sont testés **sans navigateur** sur des fixtures HTML reproduisant
-le DOM réel de chaque plateforme ; l'orchestrateur est testé avec des services
-et sessions factices injectés ; le CLI est testé sans lancer Chromium.
+Les parsers sont testés **sans navigateur** sur des fixtures HTML ; l'orchestrateur
+avec des services et sessions factices ; le CLI sans lancer Chromium.
 
 ```bash
 .venv/bin/python -m pytest
@@ -258,34 +380,30 @@ et sessions factices injectés ; le CLI est testé sans lancer Chromium.
 
 | Symptôme | Cause / solution |
 |---|---|
-| `session expirée` / service `SKIP` | relancer `run.py --login <service>` |
-| `bloque par un challenge anti-bot` | le cookie `cf_clearance` a expiré → refaire `--login <service>` ; vérifier que `enable_xvfb: true` |
-| `aucun message reconnu` | DOM de la plateforme changé → mettre à jour les sélecteurs dans `src/parsers/<service>.py` (chaînes de fallback) |
+| `session expirée` / `SKIP` | relancer `run.py --login <service>` |
+| `bloque par un challenge anti-bot` | cookie `cf_clearance` expiré → `--login <service>` ; vérifier `enable_xvfb: true` |
+| `aucun message reconnu` | DOM de la plateforme changé → mettre à jour `src/parsers/<platform>.py` |
 | `Executable doesn't exist` | `.venv/bin/python -m playwright install chromium` |
-| Export vide | vérifier `profiles/` (session), et lancer `--headful --verbose` pour observer |
-| `Xvfb indisponible` dans les logs | `.venv/bin/pip install` non requis — installer le paquet système `xvfb` |
+| Export vide | vérifier `profiles/<platform>/` et lancer `--headful --verbose` |
+| Perplexity : conversations vides en rafale | rate-limit du forfait gratuit → espacer les runs (`--daily`) |
+| Grok / Mistral : `cookies absents` | lancer `run.py --login grok` (ou `mistral`) puis `scripts/check_cookies.py` |
 
 ## Limites connues
 
-- ChatGPT : timestamps absents du DOM → récupérés depuis les props internes
-  React (best effort) ; sans eux, `started_at`/`last_message_at` sont `null`.
-- Claude : le DOM a deux générations (classique + « transcript » 2026, gérées
-  toutes deux) ; le badge modèle a disparu du nouveau DOM (`model: null`) ;
-  les conversations qui ne chargent aucun message (tâches, vides) sont
-  **ignorées** sans faire échouer le run (`ignorees=` dans le résumé).
-- Gemini : la sidebar démarre parfois repliée (ouverte automatiquement) ;
-  l'historique complet est derrière « Show all » / « Tout afficher » (cliqué
-  automatiquement si présent) ; le lazy-loading du fil ne remonte pas
-  toujours très loin.
-- Perplexity : Cloudflare refuse le headless pur → le moteur Botasaurus est
-  sollicité (`engine: botasaurus`), avec Xvfb. Le forfait **gratuit** rate-limite
-  la lecture en rafale des conversations (redirection vers l'accueil) :
-  espace les runs (cron quotidien = OK) ou reprend avec
-  `scripts/export_missing.py` ; les timestamps sont `null` (non exposés) et
-  le modèle vient de l'API de découverte (`displayModel.modelID`).
+- ChatGPT : timestamps absents du DOM → récupérés depuis les props internes React
+  (best effort) ; sinon `started_at`/`last_message_at` sont `null`.
+- Grok : Cloudflare bloque le Chromium automatisé → scraping via l'**API REST +
+  cookies** (`uses_browser=False`), et le HTML est **généré** depuis les données
+  (la page officielle est un shell SPA vide). Modèle : `grok-3`.
+- Mistral : **deux modes scrapés** — `/chat` (chatbot) et `/work` (agentique) ;
+  la conversation n'est rendue qu'après activation du mode via l'app switcher
+  (`_ensure_mode`), puis navigation classique. Timestamps non exposés (`null`).
+  Cookies dans `profiles/mistral` (profil persistant) et `cookies/mistral.json`.
+- Perplexity : le forfait **gratuit** rate-limite la lecture en rafale
+  (redirection vers l'accueil → conversations vides). `--daily` les reprend
+  progressivement ; le modèle vient de l'API de découverte (`displayModel.modelID`).
+- Le nom de fichier vient du titre (slugifié) : une collision de titres est
+  désambiguïsée par un suffixe d'id. Un changement de titre conserve le fichier
+  existant (le nom est mémorisé dans `conversation_list.json`).
 - Les DOM des plateformes changent souvent : les parsers ont des chaînes de
   fallback, mais une rupture DOM demande une mise à jour des sélecteurs.
-- La fiabilité repose sur la **convergence** : listing sidebar et rendu des
-  fils sont parfois floppyeux (listes vides/partielles, SPA lente) — chaque
-  étape retente (reload, 2e listing, 2e rendu), et les échecs résiduels
-  d'une exécution sont repris à la suivante (l'état incrémentiel complète).

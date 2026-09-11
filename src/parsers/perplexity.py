@@ -128,12 +128,12 @@ class PerplexityParser(BaseParser):
         if not title:
             # repli : premier message user tronque (mieux que le nom du service)
             first_user = next(
-                (m["content"] for m in messages if m["role"] == "user"), None
+                (m.texte for m in messages if m.role == "user"), None
             )
             title = (first_user or "").strip().splitlines()[0][:80] if first_user else None
 
         conv = Conversation(
-            service=self.service_name,
+            platform=self.service_name,
             conversation_id=str(conv_id),
             title=title or "Perplexity conversation",
             messages=messages,

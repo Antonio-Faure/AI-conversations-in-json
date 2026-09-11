@@ -137,7 +137,7 @@ class ClaudeParser(BaseParser):
             model = None
 
         conv = Conversation(
-            service=self.service_name,
+            platform=self.service_name,
             conversation_id=str(conv_id),
             title=title or "Claude conversation",
             messages=messages,
