@@ -16,28 +16,43 @@ class GrokDriver(ChatDriver):
         "button[aria-label*='Nouveau']",
     )
     input_selectors = (
+        "div.ProseMirror[contenteditable='true']",
         "div[contenteditable='true']",
-        "textarea",
         "form [contenteditable='true']",
+        "textarea",
     )
     send_selectors = (
+        "button[data-testid='chat-submit']",
         "button[type='submit']",
-        "button[aria-label*='Submit']",
-        "button[aria-label*='Send']",
         "button[aria-label*='Envoyer']",
+        "button[aria-label*='Send']",
+        "button[aria-label*='Submit']",
     )
     file_input_selectors = ("input[type='file']",)
+    # Le bouton d'envoi devient un bouton "stop" pendant la generation.
     stop_selectors = (
-        "button[aria-label*='Stop']",
+        "button[data-testid='chat-stop']",
+        "button[aria-label*='Arrêter']",
         "button[aria-label*='Arreter']",
-        "button[aria-label*='Arretez']",
+        "button[aria-label*='Stop']",
+        "button[aria-label*='Cancel']",
+        "button[aria-label*='Annuler']",
     )
     assistant_selectors = ("div.message-bubble", "[data-testid*='message']")
+    # Grok affiche en francais "Limite levée dans X heures ... / passez a
+    # SuperGrok". Marqueurs volontairement specifiques : un simple "limite"
+    # matcherait les messages de test de l'etalon (ex. "limite quand x -> 0").
     rate_limit_markers = (
+        "limite levée",
+        "atteignez ou passez",
+        "passez à supergrok",
+        "upgrade to supergrok",
+        "reach or upgrade",
         "rate limit",
         "too many requests",
         "try again later",
-        "reessayez plus tard",
         "réessayez plus tard",
+        "reessayez plus tard",
+        "trop de requêtes",
         "limite atteinte",
     )

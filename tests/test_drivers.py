@@ -141,3 +141,37 @@ def test_selecteurs_non_vides():
     for name in ("gemini", "grok"):
         cls = get_driver(name)
         assert cls.input_selectors and cls.send_selectors and cls.file_input_selectors
+
+
+class TextSession(FakeSession):
+    """Session factice dont le texte de page est pilote."""
+
+    def __init__(self, text):
+        super().__init__()
+        self.text = text
+
+    def eval_body(self, body):
+        return self.text
+
+
+def test_grok_selecteurs_cles():
+    cls = get_driver("grok")
+    assert "button[data-testid='chat-submit']" in cls.send_selectors
+    assert "div.ProseMirror[contenteditable='true']" in cls.input_selectors
+    assert "input[type='file']" in cls.file_input_selectors
+
+
+def test_grok_detecte_rate_limit_francais():
+    cls = get_driver("grok")
+    # message reellement affiche par l'UI quand le quota est epuise
+    driver = cls(
+        TextSession(
+            "Limite levée dans 12 heures 36 minutes\n"
+            "Atteignez ou passez à SuperGrok pour bénéficier de limites "
+            "beaucoup plus élevées"
+        )
+    )
+    assert driver.is_rate_limited() is True
+    # un message de test contenant juste « limite » ne doit pas declencher
+    driver2 = cls(TextSession("... limite quand x tend vers 0 de sin(x)/x ..."))
+    assert driver2.is_rate_limited() is False
