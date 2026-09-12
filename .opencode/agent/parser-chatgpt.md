@@ -1,7 +1,7 @@
 ---
 description: Corrige le parseur ChatGPT (boucle etalon + screenshots). A utiliser pour reparer le scraping/parsing de chatgpt uniquement.
 mode: subagent
-model: opencode-go/deepseek-v4-flash-vision-exp
+model: opencode-go/deepseek-v4.1-flash
 temperature: 0.1
 steps: 200
 permission:
