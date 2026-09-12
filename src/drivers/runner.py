@@ -126,6 +126,16 @@ class EtalonRunner:
 
     # -- execution -------------------------------------------------------------
 
+    def _refresh_target_url(self) -> None:
+        """Recapture l'URL apres envoi (un nouveau chat n'obtient son id qu'apres
+        le 1er message : au depart l'URL peut etre `/` ou `/new`)."""
+        try:
+            url = self.driver.session.url()
+        except Exception:  # noqa: BLE001
+            return
+        if url and url != self.state.target_url:
+            self.state.target_url = url
+
     def _open_target(self) -> bool:
         if self.state.target_url:
             self.driver.open_conversation(self.state.target_url)
@@ -174,6 +184,7 @@ class EtalonRunner:
                     self.state.status = STATUS_ERROR
                     break
                 self.driver.wait_for_response()
+                self._refresh_target_url()
                 self.state.next_index = index + 1
                 self.state.sent.append(
                     {"index": index, "at": now_iso_z(), "attachments": [

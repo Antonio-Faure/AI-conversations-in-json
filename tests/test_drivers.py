@@ -186,6 +186,22 @@ def test_gemini_attach_sans_fichier_ok():
     assert driver.attach([]) is True
 
 
+def test_target_url_recapture_apres_envoi(tmp_path):
+    """Un nouveau chat n'a son id qu'apres le 1er message : l'URL doit suivre."""
+
+    class LateSession(FakeSession):
+        def type_into(self, selectors, text):
+            result = super().type_into(selectors, text)
+            self.url_value = "https://fake.test/c/xyz"
+            return result
+
+    driver = FakeDriver(LateSession())
+    status = make_runner(tmp_path, driver, [{"text": "m1"}]).run()
+    assert status == "done"
+    state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
+    assert state["target_url"] == "https://fake.test/c/xyz"
+
+
 def test_registry_drivers():
     assert get_driver("gemini").name == "gemini"
     assert get_driver("grok").name == "grok"
