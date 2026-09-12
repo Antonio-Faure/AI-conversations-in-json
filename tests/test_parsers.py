@@ -198,6 +198,35 @@ class TestClaudeParser:
         assert "réfléchi" not in conv.messages[1].texte  # label thinking exclu
         assert conv.title == "Review dossier"
 
+    def test_dom_transcript_2026_user_cds(self):
+        """DOM transcript 2026 reel : tours user balises par data-cds=UserMessage."""
+        html = """<html><body>
+          <div data-testid="chat-header-title">Etalonnage</div>
+          <div data-testid='transcript-list'>
+            <div data-testid='transcript-row' data-perf-row='human'>
+              <div data-cds='UserMessage'><div>Question courte</div></div>
+            </div>
+            <div data-testid='transcript-row' data-perf-row='assistant'>
+              <div class="font-claude-response"><div class="prose">
+                <div class="standard-markdown"><p>Reponse simple.</p></div>
+              </div></div>
+            </div>
+            <div data-testid='transcript-row' data-perf-row='human'>
+              <div data-cds='UserMessage'><div>Deuxieme question</div></div>
+            </div>
+            <div data-testid='transcript-row' data-perf-row='assistant'>
+              <div class="font-claude-response"><div class="prose">
+                <div class="standard-markdown"><p>Deuxieme reponse.</p></div>
+              </div></div>
+            </div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        assert [m.role for m in conv.messages] == ["user", "assistant", "user", "assistant"]
+        assert conv.messages[0].texte == "Question courte"
+        assert conv.messages[2].texte == "Deuxieme question"
+        assert "Deuxieme reponse" in conv.messages[3].texte
+
 
 class TestGeminiParser:
     def test_structure_complete(self, fixture_html):
