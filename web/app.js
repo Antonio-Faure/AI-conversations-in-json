@@ -8,11 +8,13 @@ const PLATFORM_LABEL = {
 
 const state = {
   platforms: new Set(),
-  results: [],
+  groups: [],
   conversation: null,
+  conversationUrl: null,
   matchedMid: null,
   terms: [],
   stats: null,
+  view: "default",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -169,11 +171,75 @@ window.addEventListener("DOMContentLoaded", () => {
     $("searchParams").classList.toggle("collapsed"));
   $("searchBtn").addEventListener("click", search);
   $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+  $("randomBtn").addEventListener("click", openRandomConversation);
   $("alpha").addEventListener("input", () => $("alphaVal").textContent = $("alpha").value);
   $("k").addEventListener("input", () => $("kVal").textContent = $("k").value);
   loadFilters();
   loadStats();
+  loadDefaultConversations();
 });
+
+async function openRandomConversation() {
+  try {
+    const data = await (await fetch("/api/random")).json();
+    if (data.error) throw new Error(data.error);
+    openConversation(data.platform, data.conversation_id, null);
+  } catch (err) {
+    $("main").innerHTML = `<div class="no-results">Erreur: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function loadDefaultConversations() {
+  state.view = "default";
+  state.groups = [];
+  state.conversation = null;
+  $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Chargement…</p></div>`;
+  try {
+    const data = await (await fetch("/api/conversations")).json();
+    const items = (data.conversations || []).slice(0, 100);
+    renderConversationList(items, "Dernières conversations");
+    renderDefaultSidebar(items);
+  } catch (err) { console.error(err); }
+}
+
+function renderConversationList(items, heading) {
+  const main = $("main");
+  if (!items.length) {
+    main.innerHTML = `<div class="no-results">Aucune conversation.</div>`;
+    return;
+  }
+  main.innerHTML = `<h2 class="section-title">${escapeHtml(heading)}</h2>` + `<div class="conv-list">` +
+    items.map((c, i) => `
+      <div class="conv-card" data-i="${i}">
+        <div class="rc-head">
+          <span class="badge platform">${escapeHtml(platformName(c.platform))}</span>
+          <span class="badge small">${c.message_count ?? "?"} messages</span>
+          ${c.has_code ? '<span class="badge small">code</span>' : ""}
+        </div>
+        <div class="conv-title">${escapeHtml(c.title || c.conversation_id)}</div>
+        <div class="rc-meta">
+          <span>${escapeHtml(formatTs(c.last_message_at))}</span>
+          ${c.url ? `<a href="${escapeHtml(c.url)}" target="_blank" rel="noopener noreferrer" class="conv-link" data-stop="1">Ouvrir sur ${escapeHtml(platformName(c.platform))} ↗</a>` : ""}
+        </div>
+      </div>`).join("") + `</div>`;
+  main.querySelectorAll(".conv-card").forEach((card) =>
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("[data-stop]")) return;
+      const c = items[Number(card.dataset.i)];
+      openConversation(c.platform, c.conversation_id, null);
+    }));
+}
+
+function renderDefaultSidebar(items) {
+  const sidebar = $("sidebar");
+  sidebar.innerHTML = `<h2>Conversations récentes</h2>` + items.slice(0, 40).map((c) => `
+    <div class="side-item" data-platform="${escapeHtml(c.platform)}" data-id="${escapeHtml(c.conversation_id)}">
+      <span>${escapeHtml((c.title || c.conversation_id).slice(0, 42))}</span>
+      <span class="muted">${escapeHtml(platformName(c.platform))} · ${escapeHtml(formatTs(c.last_message_at))}</span>
+    </div>`).join("");
+  sidebar.querySelectorAll(".side-item[data-id]").forEach((item) =>
+    item.addEventListener("click", () => openConversation(item.dataset.platform, item.dataset.id, null)));
+}
 
 async function loadFilters() {
   try {
@@ -242,42 +308,53 @@ async function search() {
   if (!query) return;
   state.terms = tokenize(query);
   state.conversation = null;
+  state.view = "groups";
   $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Recherche…</p></div>`;
   try {
     const data = await (await fetch("/api/search?" + buildQuery().toString())).json();
-    state.results = data.results || [];
-    renderResults();
+    state.groups = data.groups || [];
+    renderGroups();
     renderSidebar();
   } catch (err) {
     $("main").innerHTML = `<div class="no-results">Erreur: ${escapeHtml(err.message)}</div>`;
   }
 }
 
-function renderResults() {
+function renderGroups() {
   const main = $("main");
-  if (!state.results.length) {
+  if (!state.groups.length) {
     main.innerHTML = `<div class="no-results">Aucun message trouvé.</div>`;
     return;
   }
-  main.innerHTML = `<div class="results-grid">` + state.results.map((r, i) => `
-    <div class="result-card" data-i="${i}">
+  main.innerHTML = `<h2 class="section-title">${state.groups.length} conversation(s) — ${state.groups.reduce((a, g) => a + g.hit_count, 0)} message(s)</h2>` +
+    `<div class="results-grid">` + state.groups.map((g, gi) => `
+    <div class="group-card ${g.hit_count > 1 ? "multi" : "single"}" data-g="${gi}">
       <div class="rc-head">
-        <span class="badge platform">${escapeHtml(platformName(r.platform))}</span>
-        <span class="badge role-${r.role === "user" ? "user" : "assistant"}">${escapeHtml(roleLabel(r.role))}</span>
-        <span class="badge score">score ${scorePct(r.score)}</span>
-        <span class="badge small">sém ${scorePct(r.semantic_score)} · mots ${scorePct(r.keyword_score)}</span>
+        <span class="badge platform">${escapeHtml(platformName(g.platform))}</span>
+        <span class="badge score">${g.hit_count > 1 ? g.hit_count + " extraits" : "1 extrait"}</span>
+        <span class="badge small">meilleur score ${scorePct(g.best_score)}</span>
+        ${g.url ? `<a class="conv-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener noreferrer" data-stop="1">Ouvrir ↗</a>` : ""}
       </div>
-      <div class="rc-meta">
-        <span>${escapeHtml(formatTs(r.timestamp))}</span>
-        ${r.model ? `<span>${escapeHtml(r.model)}</span>` : ""}
-        <span>conv ${escapeHtml((r.conversation_id || "").slice(0, 8))}</span>
+      <div class="conv-title" data-open="${gi}">${escapeHtml(g.title || g.conversation_id)}</div>
+      <div class="group-hits">
+        ${g.messages.map((r, mi) => `
+          <div class="hit" data-open="${gi}" data-m="${mi}">
+            <div class="rc-meta">
+              <span class="badge role-${r.role === "user" ? "user" : "assistant"}">${escapeHtml(roleLabel(r.role))}</span>
+              <span>${escapeHtml(formatTs(r.timestamp))}</span>
+              <span>score ${scorePct(r.score)} · sém ${scorePct(r.semantic_score)} · mots ${scorePct(r.keyword_score)}</span>
+            </div>
+            <div class="rc-snippet"><div class="clip">${renderMarkdown(stripFences(r.texte))}</div></div>
+          </div>`).join("")}
       </div>
-      <div class="rc-snippet"><div class="clip">${renderMarkdown(stripFences(r.texte))}</div></div>
     </div>`).join("") + `</div>`;
-  main.querySelectorAll(".result-card").forEach((card) =>
-    card.addEventListener("click", () => {
-      const r = state.results[Number(card.dataset.i)];
-      openConversation(r.platform, r.conversation_id, r.message_id);
+  main.querySelectorAll("[data-open]").forEach((el) =>
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("[data-stop]")) return;
+      const group = state.groups[Number(el.dataset.open)];
+      const index = el.dataset.m !== undefined ? Number(el.dataset.m) : 0;
+      const hit = group.messages[index] || group.messages[0];
+      openConversation(group.platform, group.conversation_id, hit && hit.message_id);
     }));
   enhance(main, state.terms);
 }
@@ -287,7 +364,7 @@ function renderSidebar() {
   if (state.conversation) {
     const conv = state.conversation;
     sidebar.innerHTML = `<h2>${escapeHtml(conv.title || conv.conversation_id)}</h2>
-      <div class="side-item" id="backToResults">← Résultats</div>
+      <div class="side-item" id="backToResults">← Retour</div>
       <div class="side-sep"></div>
       <h2>Messages</h2>` + (conv.messages || []).map((m, i) =>
         `<div class="anchor" data-mid="${escapeHtml(m.message_id || "")}" data-i="${i}">
@@ -298,26 +375,27 @@ function renderSidebar() {
       a.addEventListener("click", () => scrollToMessage(a.dataset.mid, Number(a.dataset.i))));
     return;
   }
-  const seen = new Map();
-  for (const r of state.results) {
-    const key = r.platform + "/" + r.conversation_id;
-    if (!seen.has(key)) seen.set(key, { ...r, hits: 0 });
-    seen.get(key).hits++;
-  }
-  sidebar.innerHTML = `<h2>Conversations (${seen.size})</h2>` + [...seen.values()].map((c) => `
-    <div class="side-item" data-platform="${escapeHtml(c.platform)}" data-id="${escapeHtml(c.conversation_id)}" data-mid="${escapeHtml(c.message_id || "")}">
-      <span>${escapeHtml((c.conversation_id || "").slice(0, 8))} · ${escapeHtml(platformName(c.platform))}</span>
-      <span class="muted">${c.hits} message(s) trouvé(s)</span>
+  sidebar.innerHTML = `<h2>Conversations (${state.groups.length})</h2>` + state.groups.map((g, gi) => `
+    <div class="side-item" data-g="${gi}">
+      <span>${escapeHtml((g.title || g.conversation_id).slice(0, 42))}</span>
+      <span class="muted">${escapeHtml(platformName(g.platform))} · ${g.hit_count} message(s)</span>
     </div>`).join("");
-  sidebar.querySelectorAll(".side-item[data-id]").forEach((item) =>
-    item.addEventListener("click", () =>
-      openConversation(item.dataset.platform, item.dataset.id, item.dataset.mid)));
+  sidebar.querySelectorAll(".side-item[data-g]").forEach((item) =>
+    item.addEventListener("click", () => {
+      const group = state.groups[Number(item.dataset.g)];
+      const hit = group.messages[0];
+      openConversation(group.platform, group.conversation_id, hit && hit.message_id);
+    }));
 }
 
 function backToResults() {
   state.conversation = null;
-  renderResults();
-  renderSidebar();
+  if (state.view === "groups" && state.groups.length) {
+    renderGroups();
+    renderSidebar();
+  } else {
+    loadDefaultConversations();
+  }
 }
 
 async function openConversation(platform, conversationId, matchedMid) {
@@ -327,6 +405,7 @@ async function openConversation(platform, conversationId, matchedMid) {
     const data = await (await fetch("/api/conversation?" + params.toString())).json();
     if (data.error) throw new Error(data.error);
     state.conversation = data.conversation;
+    state.conversationUrl = data.url || data.conversation.url || null;
     state.matchedMid = matchedMid || null;
     renderConversation();
     renderSidebar();
@@ -351,9 +430,10 @@ function renderConversation() {
           ${conv.model ? `<span>${escapeHtml(conv.model)}</span>` : ""}
           <span>${messages.length} messages</span>
           <span>${escapeHtml(formatTs(conv.started_at))} → ${escapeHtml(formatTs(conv.last_message_at))}</span>
+          ${state.conversationUrl ? `<a class="conv-link" href="${escapeHtml(state.conversationUrl)}" target="_blank" rel="noopener noreferrer">Ouvrir sur ${escapeHtml(platformName(conv.platform))} ↗</a>` : ""}
         </div>
       </div>
-      <button class="btn ghost" id="backTop">← Résultats</button>
+      <button class="btn ghost" id="backTop">← Retour</button>
     </div>
     ${messages.map((m, i) => renderMessage(m, i)).join("")}
   </div>`;

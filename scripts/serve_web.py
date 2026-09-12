@@ -31,6 +31,7 @@ if str(ROOT) not in sys.path:
 from src.orchestrator import load_config  # noqa: E402
 from src.rag.search import combined_search  # noqa: E402
 from src.rag.store import VectorStore  # noqa: E402
+from src.utils.urls import conversation_url  # noqa: E402
 
 WEB_DIR = ROOT / "web"
 CONTENT_TYPES = {
@@ -167,6 +168,8 @@ class Handler(BaseHTTPRequestHandler):
                 platform = (params.get("platform") or [""])[0]
                 cid = (params.get("id") or [""])[0]
                 self._send_json(self._conversation(platform, cid))
+            elif path == "/api/random":
+                self._send_json(self._random())
             else:
                 self._send_json({"error": "unknown endpoint"}, 404)
 
@@ -212,7 +215,7 @@ class Handler(BaseHTTPRequestHandler):
     def _search(self, params):
         query = (params.get("q") or [""])[0].strip()
         if not query:
-            return {"query": query, "count": 0, "results": []}
+            return {"query": query, "count": 0, "group_count": 0, "groups": []}
         k = int((params.get("k") or ["30"])[0])
         alpha = float((params.get("alpha") or ["0.6"])[0])
         platforms_raw = (params.get("platforms") or [""])[0]
@@ -232,7 +235,54 @@ class Handler(BaseHTTPRequestHandler):
             date_from=date_from,
             date_to=date_to,
         )
-        return {"query": query, "count": len(results), "results": results}
+        return self._group_results(query, results)
+
+    def _group_results(self, query: str, results):
+        """Regroupe les messages par conversation (multi-hits d'abord)."""
+        groups: dict = {}
+        for item in results:
+            key = (item["platform"], item["conversation_id"])
+            group = groups.get(key)
+            if group is None:
+                group = {
+                    "platform": item["platform"],
+                    "conversation_id": item["conversation_id"],
+                    "url": conversation_url(item["platform"], item["conversation_id"]),
+                    "title": "",
+                    "messages": [],
+                    "best_score": 0.0,
+                }
+                groups[key] = group
+            group["messages"].append(item)
+            group["best_score"] = max(group["best_score"], item["score"])
+        meta = self.state.store().conversation_meta(list(groups.keys()))
+        for key, group in groups.items():
+            info = meta.get(key) or {}
+            group["title"] = info.get("title") or ""
+            if info.get("url"):
+                group["url"] = info["url"]
+            group["messages"].sort(key=lambda m: m["score"], reverse=True)
+            group["hit_count"] = len(group["messages"])
+            group["best_score"] = round(group["best_score"], 4)
+        # conversations avec plusieurs messages pertinents d'abord, puis isoles
+        ordered = sorted(
+            groups.values(),
+            key=lambda g: (0 if g["hit_count"] >= 2 else 1, -g["best_score"]),
+        )
+        return {
+            "query": query,
+            "count": len(results),
+            "group_count": len(ordered),
+            "groups": ordered,
+        }
+
+    def _random(self):
+        row = self.state.store().random_conversation()
+        if not row:
+            return {"error": "aucune conversation"}
+        if not row.get("url"):
+            row["url"] = conversation_url(row["platform"], row["conversation_id"])
+        return row
 
     def _conversations(self, platform: str):
         platforms = [platform] if platform else sorted(
@@ -250,11 +300,14 @@ class Handler(BaseHTTPRequestHandler):
             except (OSError, json.JSONDecodeError):
                 continue
             for entry in data.get("conversations") or []:
+                conversation_id = entry.get("conversation_id")
                 items.append(
                     {
                         "platform": name,
-                        "conversation_id": entry.get("conversation_id"),
+                        "conversation_id": conversation_id,
                         "title": entry.get("title") or "",
+                        "url": entry.get("url")
+                        or conversation_url(name, conversation_id),
                         "message_count": entry.get("message_count"),
                         "last_message_at": entry.get("last_message_at"),
                         "has_code": entry.get("has_code"),
@@ -278,14 +331,44 @@ class Handler(BaseHTTPRequestHandler):
             "platform": platform,
             "conversation_id": conversation_id,
             "file": str(path),
+            "url": data.get("url") or conversation_url(platform, conversation_id),
             "conversation": data,
         }
+
+
+def _open_browser(url: str) -> None:
+    """Ouvre l'URL dans Chrome si dispo, sinon le navigateur par defaut."""
+    import shutil
+    import subprocess
+    import webbrowser
+
+    for name in (
+        "google-chrome", "google-chrome-stable", "chromium",
+        "chromium-browser", "brave-browser", "microsoft-edge",
+    ):
+        path = shutil.which(name)
+        if path:
+            try:
+                subprocess.Popen(
+                    [path, url],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                return
+            except Exception:  # noqa: BLE001
+                pass
+    try:
+        webbrowser.open(url)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--no-open", action="store_true",
+                        help="ne pas ouvrir le navigateur au demarrage")
     parser.add_argument("--db", type=Path)
     parser.add_argument("--exports", type=Path)
     parser.add_argument("--model")
@@ -303,7 +386,11 @@ def main() -> int:
         args.model or config.get("rag_model"),
     )
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    print(f"[web] http://{args.host}:{args.port}  (Ctrl+C pour arreter)")
+    display_host = "127.0.0.1" if args.host in ("0.0.0.0", "::") else args.host
+    url = f"http://{display_host}:{args.port}"
+    print(f"[web] {url}  (Ctrl+C pour arreter)")
+    if not args.no_open:
+        threading.Timer(1.0, _open_browser, args=(url,)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:

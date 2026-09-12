@@ -153,7 +153,7 @@ class TestConversation:
     def test_json_standard_formate_plan(self, conversation):
         data = conversation.to_dict()
         assert list(data.keys()) == [
-            "conversation_id", "platform", "title", "model",
+            "conversation_id", "platform", "title", "url", "model",
             "started_at", "last_message_at", "exported_at", "messages",
         ]
         assert data["platform"] == "chatgpt"

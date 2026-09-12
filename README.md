@@ -116,6 +116,7 @@ repasse en `daily` (si elle fait partie des 20 récentes) ou en `monthly`.
   "conversation_id": "abc123",
   "platform": "chatgpt",
   "title": "Titre de la conversation",
+  "url": "https://chatgpt.com/c/abc123",
   "model": "gpt-4",
   "started_at": "2025-01-15T10:30:00Z",
   "last_message_at": "2025-01-15T11:45:00Z",
@@ -166,6 +167,7 @@ Un inventaire par dossier chatbot, régénéré à chaque run :
     {
       "conversation_id": "abc123",
       "title": "Titre de la conversation",
+      "url": "https://chatgpt.com/c/abc123",
       "message_count": 12,
       "last_message_at": "2025-01-15T11:45:00Z",
       "has_code": true,
@@ -259,6 +261,11 @@ Correctifs appliqués aux parseurs et à la régénération :
 - **Claude** : labels de réflexion/statut de tour retirés, modèle lu depuis
   `model-selector-dropdown`.
 
+- **URL de chaque conversation** : renseignée au crawl dans le JSON + l'inventaire
+  (reconstruite par plateforme, ou lue depuis le `<link rel="canonical">` du HTML
+  pour Mistral → distingue `/chat` de `/work`). Backfill sur l'existant :
+  `.venv/bin/python scripts/backfill_urls.py`.
+
 Régénération **sans re-crawler** depuis les HTML sauvegardés :
 
 ```bash
@@ -309,28 +316,35 @@ Interface locale (dark theme, responsive, Crimson Pro + DM Sans) pour explorer
 les conversations des 6 chatbots.
 
 ```bash
-.venv/bin/python scripts/serve_web.py          # http://127.0.0.1:8765
-.venv/bin/python scripts/serve_web.py --host 0.0.0.0 --port 9000
+.venv/bin/python scripts/serve_web.py          # ouvre Chrome sur http://127.0.0.1:8765
+.venv/bin/python scripts/serve_web.py --host 0.0.0.0 --port 9000 --no-open
 ```
+
+Au démarrage, le serveur **ouvre le navigateur** (Chrome si installé, sinon le
+navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
 
 - **Double recherche combinée** : mots-clés exacts (LIKE + bonus phrase) **et**
   similarité cosinus (BGE-M3 + sqlite-vec), exécutées ensemble puis fusionnées
   par score : `score = alpha*sémantique + (1-alpha)*mots_clés` (curseur `alpha`).
 - **Filtres** : par chatbot (chips), par modèle, par plage de dates.
-- **Résultats** : cartes avec score global + détail (`sém` / `mots`), extrait
-  surligné (termes de la requête), plateforme, rôle, date, modèle.
+- **Résultats groupés par conversation** : les conversations ayant **plusieurs**
+  messages pertinents sont affichées en premier (regroupées), les messages
+  isolés ensuite (probablement moins pertinents).
+- **Sans recherche** : la page présente les **dernières conversations**.
+- **Lien cliquable** `Ouvrir ↗` vers la conversation d'origine (site d'origine),
+  dans les résultats et dans la vue conversation.
 - **Rendu riche** : markdown (gras, listes, tableaux, liens `target=_blank`),
   **LaTeX via KaTeX**, blocs de code séparés avec bouton copier
   (`marked` + `DOMPurify` + `KaTeX`, CDN).
 - **Clic sur un message** → ouvre la conversation complète, positionnée et
   surlignée sur ce message ; bouton retour.
-- **Sidebar** : conversations présentes dans les résultats (nb de messages
-  trouvés) et, en vue conversation, ancres vers chaque message.
-- Barre de recherche **sticky et repliable** (`⚙️ Paramètres`).
+- **🎲 Aléatoire** : ouvre une conversation au hasard (pour le jeu de correction).
+- **Sidebar** : conversations des résultats et, en vue conversation, ancres vers
+  chaque message. Barre de recherche **sticky et repliable** (`⚙️ Paramètres`).
 
 L'API locale (même serveur) : `/api/search`, `/api/conversation`,
-`/api/conversations`, `/api/filters`, `/api/stats`. Le modèle d'embeddings se
-charge au premier appel (quelques secondes).
+`/api/conversations`, `/api/random`, `/api/filters`, `/api/stats`. Le modèle
+d'embeddings se charge au premier appel (quelques secondes).
 
 ## Optimisations écriture & compute
 
@@ -366,7 +380,8 @@ omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │   ├── rag_index.py           # indexe les messages (BGE-M3 -> sqlite-vec)
 │   ├── rag_search.py          # recherche cosinus dans le RAG
 │   ├── reparse_exports.py     # régénère les JSON depuis les HTML (sans re-crawl)
-│   ├── serve_web.py           # serveur local + API pour la page de recherche
+│   ├── backfill_urls.py       # ajoute le champ url (JSON + inventaire)
+│   ├── serve_web.py           # serveur local + API + ouverture navigateur
 │   └── audit_exports.py       # audit qualité des JSON exportés
 ├── src/
 │   ├── orchestrator.py        # workflow (modes, services, inventaire, JSON+HTML)

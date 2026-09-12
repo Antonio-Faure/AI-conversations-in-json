@@ -302,6 +302,30 @@ class Orchestrator:
                 self._close(session)
                 return None
 
+    @staticmethod
+    def _boost_refs(
+        service: BaseService, refs: List[ConversationRef], target: int
+    ) -> List[ConversationRef]:
+        """Union de plusieurs decouvertes tant que la liste progresse.
+
+        Les sidebars virtualisees (ChatGPT) renvoient parfois une liste
+        partielle ; on relance la decouverte et on fusionne par id.
+        """
+        if not target or len(refs) >= target:
+            return refs
+        merged = {ref.id: ref for ref in refs}
+        for _ in range(3):
+            try:
+                more = service.list_conversations()
+            except Exception:  # noqa: BLE001
+                break
+            before = len(merged)
+            for ref in more:
+                merged.setdefault(ref.id, ref)
+            if len(merged) == before or len(merged) >= target:
+                break
+        return list(merged.values())
+
     def _scrape_one(
         self,
         service: BaseService,
@@ -350,6 +374,11 @@ class Orchestrator:
 
         conv.exported_at = now_iso_z()
         conv.platform = service.name
+        if not conv.url:
+            try:
+                conv.url = service.conversation_url(ref)
+            except Exception:  # noqa: BLE001
+                conv.url = ref.url
         entry = index.get(ref.id) or {}
         title = conv.title or entry.get("title") or ref.title or ""
         stem = entry.get("file") or unique_filename(title, ref.id, used)
@@ -373,6 +402,7 @@ class Orchestrator:
         index[ref.id] = {
             "conversation_id": ref.id,
             "title": title,
+            "url": conv.url,
             "message_count": len(conv.messages),
             "last_message_at": conv.last_message_at,
             "has_code": conv.has_code,
@@ -429,6 +459,10 @@ class Orchestrator:
         attempt_engine = "playwright" if engine == "auto" else engine
         session, service = self._new_session(name, cls, svc_config, attempt_engine)
 
+        list_path = conversation_list_path(self.output_dir, name)
+        index = load_conversation_list(list_path)
+        known = sum(1 for entry in index.values() if entry.get("scraped"))
+
         try:
             discovered = self._discover(
                 result, name, session, service, engine, attempt_engine, svc_config
@@ -436,9 +470,10 @@ class Orchestrator:
             if discovered is None:
                 return result
             session, service, refs, attempt_engine = discovered
-
-            list_path = conversation_list_path(self.output_dir, name)
-            index = load_conversation_list(list_path)
+            # union de plusieurs passes si la liste semble incomplete (sidebars
+            # virtualisees/lazy : ChatGPT)
+            refs = self._boost_refs(service, refs, known)
+            result.discovered = len(refs)
             self._refresh_inventory(index, refs)
 
             used: Dict[str, str] = {}
@@ -502,6 +537,7 @@ class Orchestrator:
                 index[ref.id] = {
                     "conversation_id": ref.id,
                     "title": ref.title or "",
+                    "url": ref.url or "",
                     "message_count": None,
                     "last_message_at": raw.get("last_message_at"),
                     "has_code": None,
@@ -512,6 +548,8 @@ class Orchestrator:
             elif not entry.get("scraped"):
                 if ref.title:
                     entry["title"] = ref.title
+                if ref.url:
+                    entry["url"] = ref.url
                 if raw.get("last_message_at"):
                     entry["last_message_at"] = raw["last_message_at"]
 

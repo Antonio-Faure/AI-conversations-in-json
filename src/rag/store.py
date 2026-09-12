@@ -56,6 +56,7 @@ class VectorStore:
                 platform TEXT NOT NULL,
                 conversation_id TEXT NOT NULL,
                 title TEXT,
+                url TEXT,
                 exported_at TEXT,
                 message_count INTEGER,
                 indexed_at TEXT,
@@ -72,6 +73,11 @@ class VectorStore:
         self.db.execute(
             "CREATE INDEX IF NOT EXISTS idx_messages_fp ON messages(fingerprint)"
         )
+        conv_columns = {
+            row["name"] for row in self.db.execute("PRAGMA table_info(conversations)")
+        }
+        if "url" not in conv_columns:
+            self.db.execute("ALTER TABLE conversations ADD COLUMN url TEXT")
         self.db.commit()
 
     # -- cache de vecteurs (fingerprint -> vecteur deja calcule) ---------------
@@ -155,6 +161,7 @@ class VectorStore:
         vectors,
         conversation_file: Optional[str] = None,
         fingerprints: Optional[List[str]] = None,
+        url: Optional[str] = None,
     ) -> int:
         """Remplace tous les messages d'une conversation (texte + vecteur).
 
@@ -193,13 +200,14 @@ class VectorStore:
         self.db.execute(
             """
             INSERT INTO conversations
-                (platform, conversation_id, title, exported_at, message_count, indexed_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (platform, conversation_id, title, url, exported_at, message_count, indexed_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(platform, conversation_id) DO UPDATE SET
-                title=excluded.title, exported_at=excluded.exported_at,
+                title=excluded.title, url=COALESCE(excluded.url, conversations.url),
+                exported_at=excluded.exported_at,
                 message_count=excluded.message_count, indexed_at=excluded.indexed_at
             """,
-            (platform, conversation_id, title, exported_at, count, now_iso_z()),
+            (platform, conversation_id, title, url, exported_at, count, now_iso_z()),
         )
         self.db.commit()
         return count
@@ -284,6 +292,32 @@ class VectorStore:
             "SELECT MIN(timestamp) AS lo, MAX(timestamp) AS hi FROM messages WHERE timestamp != ''"
         ).fetchone()
         return (row["lo"], row["hi"]) if row else (None, None)
+
+    def conversation_meta(self, pairs) -> Dict[tuple, Dict[str, Any]]:
+        """Titre + URL par (platform, conversation_id)."""
+        found: Dict[tuple, Dict[str, Any]] = {}
+        for platform, conversation_id in pairs:
+            row = self.db.execute(
+                "SELECT title, url FROM conversations WHERE platform=? AND conversation_id=?",
+                (platform, conversation_id),
+            ).fetchone()
+            if row:
+                found[(platform, conversation_id)] = {
+                    "title": row["title"],
+                    "url": row["url"],
+                }
+        return found
+
+    def random_conversation(self) -> Optional[Dict[str, Any]]:
+        row = self.db.execute(
+            """
+            SELECT platform, conversation_id, title, url
+            FROM conversations
+            WHERE message_count > 0
+            ORDER BY RANDOM() LIMIT 1
+            """
+        ).fetchone()
+        return dict(row) if row else None
 
     # -- stats -----------------------------------------------------------------
 

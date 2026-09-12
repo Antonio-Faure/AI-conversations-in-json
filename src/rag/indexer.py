@@ -74,6 +74,7 @@ def _flush(
             conv_vectors,
             conversation_file=str(conv["file"]),
             fingerprints=conv_fingerprints,
+            url=conv.get("url"),
         )
         stats["conversations_indexed"] += 1
         stats["messages"] += written
@@ -130,6 +131,7 @@ def index_exports(
                 "platform": platform,
                 "conversation_id": conversation_id,
                 "title": data.get("title") or "",
+                "url": data.get("url"),
                 "exported_at": exported_at,
                 "messages": messages,
                 "texts": [m["texte"] for m in messages],

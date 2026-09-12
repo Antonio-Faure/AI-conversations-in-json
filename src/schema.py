@@ -257,6 +257,8 @@ class Conversation:
     started_at: Optional[str] = None
     last_message_at: Optional[str] = None
     exported_at: Optional[str] = None
+    #: lien vers la conversation d'origine (renseigne au crawl / backfill)
+    url: Optional[str] = None
 
     def __post_init__(self) -> None:
         self.messages = [
@@ -270,6 +272,7 @@ class Conversation:
         self.started_at = normalize_timestamp(self.started_at)
         self.last_message_at = normalize_timestamp(self.last_message_at)
         self.exported_at = normalize_timestamp(self.exported_at)
+        self.url = str(self.url) if self.url else None
 
     def derive_timestamps(self) -> None:
         """started_at / last_message_at depuis les messages quand absents."""
@@ -310,6 +313,7 @@ class Conversation:
             "conversation_id": self.conversation_id,
             "platform": self.platform,
             "title": self.title,
+            "url": self.url,
             "model": self.model,
             "started_at": self.started_at,
             "last_message_at": self.last_message_at,
@@ -332,6 +336,7 @@ class Conversation:
                 started_at=normalize_timestamp(data.get("started_at")),
                 last_message_at=normalize_timestamp(data.get("last_message_at")),
                 exported_at=normalize_timestamp(data.get("exported_at")),
+                url=data.get("url"),
             )
         except KeyError as exc:
             raise SchemaError(f"conversation incomplete: champ {exc} manquant") from exc

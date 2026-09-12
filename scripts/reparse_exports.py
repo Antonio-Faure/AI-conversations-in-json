@@ -31,6 +31,17 @@ from src.orchestrator import load_config  # noqa: E402
 from src.parsers import PARSER_CLASSES  # noqa: E402
 from src.schema import Conversation, Message, extract_code_blocks, normalize_messages  # noqa: E402
 from src.utils.cleanup import clean_text  # noqa: E402
+from src.utils.urls import canonical_url_from_html, conversation_url  # noqa: E402
+
+
+def _url_for(platform: str, conversation_id: str, html_path: Path) -> str:
+    if html_path.exists():
+        canonical = canonical_url_from_html(
+            html_path.read_text(encoding="utf-8", errors="replace")
+        )
+        if canonical and conversation_id in canonical:
+            return canonical
+    return conversation_url(platform, conversation_id)
 
 DOM_PLATFORMS = ("chatgpt", "claude", "gemini", "mistral", "perplexity")
 
@@ -72,7 +83,10 @@ def _reparse(platform: str, old: Dict[str, Any], html_path: Path) -> Conversatio
         conversation_id=str(old.get("conversation_id") or ""),
         extra={"title_hint": old.get("title")},
     )
-    return _merge_old_metadata(conv, old)
+    conv = _merge_old_metadata(conv, old)
+    if not conv.url:
+        conv.url = _url_for(platform, conv.conversation_id, html_path)
+    return conv
 
 
 def _clean_json(platform: str, old: Dict[str, Any]) -> Conversation:
@@ -90,6 +104,7 @@ def _clean_json(platform: str, old: Dict[str, Any]) -> Conversation:
         started_at=old.get("started_at"),
         last_message_at=old.get("last_message_at"),
         exported_at=old.get("exported_at"),
+        url=old.get("url"),
     )
 
 
