@@ -290,6 +290,29 @@ def test_chatgpt_send_sans_champ_echoue():
     assert session.typed == []
 
 
+def test_perplexity_rate_limit_sans_faux_positif():
+    cls = get_driver("perplexity")
+    # page normale : le mot « limite » dans un apercu de conversation ne doit
+    # pas etre pris pour un quota epuise (bug constate en etalonnage).
+    driver = cls(
+        TextSession("Dresse une documentation… Ne te limite pas au texte et au Markdown.")
+    )
+    assert driver.is_rate_limited() is False
+    # message reel de quota epuise
+    driver2 = cls(TextSession("You've reached your limit of Pro searches. Try again later."))
+    assert driver2.is_rate_limited() is True
+    driver3 = cls(TextSession("Limite de recherches atteinte. Réessayez plus tard."))
+    assert driver3.is_rate_limited() is True
+    # message reel du forfait gratuit Perplexity
+    driver4 = cls(
+        TextSession(
+            "Vos recherches gratuites seront réinitialisées dans quelques heures. "
+            "Passez à la version supérieure pour continuer."
+        )
+    )
+    assert driver4.is_rate_limited() is True
+
+
 def test_grok_detecte_rate_limit_francais():
     cls = get_driver("grok")
     # message reellement affiche par l'UI quand le quota est epuise
