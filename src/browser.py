@@ -246,13 +246,32 @@ class BrowserSession:
         return list(self._context.cookies())
 
     def fetch(self, url: str) -> Optional[Tuple[bytes, Optional[str]]]:
-        """Telecharge une URL (image signee) avec les cookies de la page."""
+        """Telecharge une URL (image signee) avec les cookies de la page.
+
+        Passe par `context.request` (partage les cookies, non soumis au CORS) ;
+        repli sur un `fetch` dans la page si l'API echoue.
+        """
         from .utils.images import build_fetch_body, decode_fetch_result
 
+        self.start()
+        if self._context is not None:
+            kwargs: Dict[str, Any] = {"timeout": self.timeout_ms}
+            try:
+                referer = self.page.url
+            except PlaywrightError:
+                referer = ""
+            if referer:
+                kwargs["headers"] = {"Referer": referer}
+            try:
+                response = self._context.request.get(url, **kwargs)
+                if response.ok:
+                    return response.body(), (response.headers or {}).get("content-type")
+            except PlaywrightError as exc:
+                log.debug("fetch (context.request) failed: %s", exc)
         try:
             result = self.page.evaluate("() => { %s }" % build_fetch_body(url))
         except PlaywrightError as exc:
-            log.debug("fetch failed: %s", exc)
+            log.debug("fetch (page) failed: %s", exc)
             return None
         return decode_fetch_result(result)
 

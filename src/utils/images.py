@@ -216,10 +216,17 @@ def build_fetch_body(url: str) -> str:
 def download_service_images(conv, service, images_dir: Path) -> Dict[str, int]:
     """Telecharge les images d'une conversation via la session du service.
 
-    Utilise `session.fetch` (cookies authentifies) si disponible, sinon un
-    telechargement HTTP simple (URL publiques).
+    `session.fetch` (cookies authentifies) d'abord, puis repli HTTP simple pour
+    les URL publiques/pre-signees (S3, blobs) ou cross-origin (CORS).
     """
     session = getattr(service, "session", None)
     fetch = getattr(session, "fetch", None)
-    loader: ImageLoader = fetch if callable(fetch) else http_loader
+
+    def loader(url: str) -> Optional[Tuple[bytes, Optional[str]]]:
+        if callable(fetch):
+            result = fetch(url)
+            if result:
+                return result
+        return http_loader(url)
+
     return download_conversation_images(conv, loader, images_dir)
