@@ -130,6 +130,62 @@ def test_echec_upload(tmp_path):
     assert "upload" in (state["last_error"] or "")
 
 
+class MenuSession(FakeSession):
+    """Session ou le champ fichier n'existe qu'apres ouverture du menu outils."""
+
+    def __init__(self):
+        super().__init__()
+        self.file_input_visible = False
+        self.uploaded = []
+
+    def is_element_present(self, selector):
+        return self.file_input_visible and selector == "input[type='file']"
+
+    def click_any(self, selectors, timeout_ms=0):
+        for selector in selectors:
+            if "Importation" in selector or "Tools" in selector:
+                self.file_input_visible = True
+                return selector
+        return super().click_any(selectors, timeout_ms)
+
+    def upload_any(self, selectors, paths):
+        if not self.file_input_visible:
+            return None
+        self.uploaded.append(list(paths))
+        return selectors[0] if selectors else None
+
+
+class NoMenuSession(FakeSession):
+    """Session sans menu outils : le champ fichier reste introuvable."""
+
+    def is_element_present(self, selector):
+        return False
+
+    def click_any(self, selectors, timeout_ms=0):
+        return None
+
+
+def test_gemini_attach_ouvre_le_menu_outils(tmp_path):
+    driver = get_driver("gemini")(MenuSession())
+    target = tmp_path / "audio.mp3"
+    target.write_bytes(b"x")
+    assert driver.attach([target]) is True
+    assert driver.session.file_input_visible is True
+    assert driver.session.uploaded == [[target]]
+
+
+def test_gemini_attach_sans_menu_echoue(tmp_path):
+    driver = get_driver("gemini")(NoMenuSession())
+    target = tmp_path / "audio.mp3"
+    target.write_bytes(b"x")
+    assert driver.attach([target]) is False
+
+
+def test_gemini_attach_sans_fichier_ok():
+    driver = get_driver("gemini")(MenuSession())
+    assert driver.attach([]) is True
+
+
 def test_registry_drivers():
     assert get_driver("gemini").name == "gemini"
     assert get_driver("grok").name == "grok"
