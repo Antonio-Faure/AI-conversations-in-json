@@ -106,6 +106,16 @@ correspondants), `--screenshots` (un PNG par tour, centré, dans
 - Les agents/skill ne sont chargés qu'au **démarrage** d'opencode : redémarrer
   après modification de `.opencode/`.
 
+## Envoi de messages (conversation d'étalonnage)
+
+- Drivers d'envoi : `src/drivers/<bot>.py` (saisie, upload, attente, rate-limit)
+  au-dessus de la façade `session` (`click_any`/`type_into`/`upload_any`/`press`).
+- Runner resumable : `src/drivers/runner.py` + `scripts/etalon_run.py`
+  (`queue.json` + `state.json` + `BILAN.md`, arrêt sur rate-limit).
+- Médias de test : `scripts/make_media.py` (`src/utils/media.py`, ffmpeg).
+- Skill `etalon-runner` et agents `.opencode/agent/runner-<bot>.md` (gemini, grok).
+- Dossiers runtime hors dépôt : `/home/odin/Documents/code/aicv-run/<bot>/`.
+
 ## Pièges connus
 
 - DOM des plateformes volatil → chaînes de sélecteurs de repli ; mettre à jour
