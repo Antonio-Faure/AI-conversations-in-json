@@ -6,7 +6,8 @@ Deux generations de DOM coexistent selon les conversations :
     <div data-testid="assistant-message-text">
   - transcript (2026, structure [data-testid='transcript-row']) : reponses
     assistant dans <div class="font-claude-response"> > .prose > .standard-markdown ;
-    les marqueurs assistant classiques y ont disparu (les user restent).
+    les marqueurs assistant classiques y ont disparu. Les tours user y sont
+    balises par [data-cds='UserMessage'] (et non plus [data-testid='user-message']).
 Blocs reflexion [data-testid="thinking-block"] exclus du texte final.
 """
 
@@ -30,6 +31,8 @@ THINKING_LABEL_RE = re.compile(
 USER_ATTRS = ("data-testid", "data-test", "data-testid")
 USER_VALUES = ("user-message", "user-editor", "user-message-content")
 ASSISTANT_VALUES = ("assistant-message-text", "collapsible-text")
+#: balise des tours user dans le DOM transcript 2026
+USER_CDS = "UserMessage"
 
 
 class ClaudeParser(BaseParser):
@@ -54,6 +57,7 @@ class ClaudeParser(BaseParser):
     #: selecteur combine des deux roles (ordre de document preserve par bs4)
     TURN_SELECTOR = ", ".join(
         [f"div[{a}='{v}']" for a, v in zip(USER_ATTRS, USER_VALUES)]
+        + [f"div[data-cds='{USER_CDS}']"]
         + [f"div[{a}='{v}']" for a in ("data-testid", "data-test") for v in ASSISTANT_VALUES]
         + ["div.font-claude-message", "div.font-claude-response"]
     )
@@ -169,8 +173,12 @@ class ClaudeParser(BaseParser):
 
     @staticmethod
     def _role_of(turn) -> str:
-        attrs = (turn.get("data-testid") or "", turn.get("data-test") or "")
-        if any(v in attrs for v in USER_VALUES):
+        attrs = (
+            turn.get("data-testid") or "",
+            turn.get("data-test") or "",
+            turn.get("data-cds") or "",
+        )
+        if any(v in attrs for v in USER_VALUES) or USER_CDS in attrs:
             return "user"
         if any(v in attrs for v in ASSISTANT_VALUES):
             return "assistant"
