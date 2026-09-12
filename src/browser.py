@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from playwright.sync_api import (
     BrowserContext,
@@ -244,6 +244,17 @@ class BrowserSession:
         self.start()
         assert self._context is not None
         return list(self._context.cookies())
+
+    def fetch(self, url: str) -> Optional[Tuple[bytes, Optional[str]]]:
+        """Telecharge une URL (image signee) avec les cookies de la page."""
+        from .utils.images import build_fetch_body, decode_fetch_result
+
+        try:
+            result = self.page.evaluate("() => { %s }" % build_fetch_body(url))
+        except PlaywrightError as exc:
+            log.debug("fetch failed: %s", exc)
+            return None
+        return decode_fetch_result(result)
 
     def evaluate(self, script: str, arg: Any = None) -> Any:
         try:

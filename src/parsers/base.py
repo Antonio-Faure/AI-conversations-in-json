@@ -203,6 +203,22 @@ class BaseParser(ABC):
             el.replace_with(
                 NavigableString(f"\n\\[{tex}\\]\n" if display else f" \\({tex}\\) ")
             )
+        # images de contenu piegees dans un bouton d'apercu : les remonter en
+        # markdown avant que le bouton ne soit supprime (DROP_TAGS)
+        for button in node.find_all("button"):
+            content_images = [
+                img for img in button.find_all("img")
+                if (img.get("src") or "").startswith(("http://", "https://"))
+                and (img.get("aria-hidden") or "").lower() != "true"
+                and cls._img_is_content(img)
+            ]
+            if content_images:
+                markdown = "\n".join(
+                    f"![{(img.get('alt') or 'image').strip() or 'image'}]({img.get('src').strip()})"
+                    for img in content_images
+                )
+                button.replace_with(NavigableString(f"\n{markdown}\n"))
+
         # citations inline (Perplexity) : conserver le lien avant suppression
         for citation in node.select("span.citation"):
             url = citation.get("data-pplx-citation-url") or ""
@@ -363,6 +379,45 @@ class BaseParser(ABC):
         except SchemaError as exc:
             raise ParseError(str(exc)) from exc
         return conv
+
+    @staticmethod
+    def _img_is_content(img: Tag) -> bool:
+        """Image de contenu (pas une icone) : dimension >= 64px si connue."""
+        for attr in ("width", "height"):
+            try:
+                value = int(str(img.get(attr) or "0").replace("px", ""))
+            except ValueError:
+                value = 0
+            if value >= 64:
+                return True
+        # dimensions inconnues : on suppose une image de contenu
+        return not (img.get("width") or img.get("height"))
+
+    @staticmethod
+    def attachments_markdown(el: Tag, url_filter=None) -> str:
+        """Images distantes d'un tour en markdown (y compris dans un bouton).
+
+        Les visuels de contenu (pieces jointes, images generees) sont souvent
+        places dans un `<button>` (apercu) qui serait sinon supprime.
+        """
+        found: List[str] = []
+        seen = set()
+        for img in el.find_all("img"):
+            if (img.get("aria-hidden") or "").lower() == "true":
+                continue
+            if img.find_parent(attrs={"aria-hidden": "true"}) is not None:
+                continue
+            src = (img.get("src") or "").strip()
+            if not src.startswith(("http://", "https://")):
+                continue
+            if url_filter and not url_filter(src):
+                continue
+            alt = (img.get("alt") or "image").strip() or "image"
+            markdown = f"![{alt}]({src})"
+            if markdown not in seen:
+                seen.add(markdown)
+                found.append(markdown)
+        return "\n\n".join(found)
 
     @staticmethod
     def majority(values: List[Any]) -> Optional[Any]:

@@ -112,6 +112,36 @@ class TestChatGPTParser:
         with pytest.raises(ParseError):
             ChatGPTParser().parse("<html><body><main></main></body></html>")
 
+    def test_images_et_tour_image_genere(self):
+        html = """<html><body><main>
+          <div data-testid='conversation-turn-1'>
+            <div data-message-author-role='user' data-message-id='u1'>
+              <button><img alt='photo.png' width='1024'
+                 src='https://chatgpt.com/backend-api/estuary/content?id=1'></button>
+              <div class='markdown'><p>Regarde cette image</p></div>
+            </div>
+          </div>
+          <div data-testid='conversation-turn-2'>
+            <div data-message-author-role='assistant' data-message-id='a1'>
+              <div class='markdown'><p>Bien recu</p></div></div>
+          </div>
+          <div data-testid='conversation-turn-3'>
+            <div data-testid='image-gen-overlay-actions'></div>
+            <img alt='Generated image: chat' width='1024'
+                 src='https://chatgpt.com/backend-api/estuary/content?id=2'>
+          </div>
+          <div data-testid='conversation-turn-4'>
+            <div data-message-author-role='user' data-message-id='u2'>
+              <div class='markdown'><p>Merci</p></div></div>
+          </div>
+        </main></body></html>"""
+        conv = ChatGPTParser().parse(html, conversation_id="c")
+        # le tour image (assistant) est conserve -> pas de fusion des users
+        assert [m.role for m in conv.messages] == ["user", "assistant", "user"]
+        assert "![photo.png]" in conv.messages[0].texte
+        assert "Generated image" in conv.messages[1].texte
+        assert "Bien recu" in conv.messages[1].texte
+
 
 class TestClaudeParser:
     def test_structure_complete(self, fixture_html):

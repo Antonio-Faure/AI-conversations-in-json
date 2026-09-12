@@ -258,6 +258,12 @@ class BotasaurusSession:
         except Exception:  # noqa: BLE001
             return ""
 
+    def fetch(self, url: str):
+        """Telecharge une URL (image signee) avec les cookies du navigateur."""
+        from .utils.images import build_fetch_body, decode_fetch_result
+
+        return decode_fetch_result(self._run_js(build_fetch_body(url)))
+
     def evaluate(self, script: str, arg: Any = None) -> Any:
         args = [arg] if arg is not None else None
         return self._run_js(playwright_js_to_iife(script), args=args)

@@ -150,6 +150,9 @@ def main() -> int:
                     old_meta = json.loads(meta_path.read_text(encoding="utf-8"))
                 except (OSError, json.JSONDecodeError):
                     old_meta = old
+            # l'URL peut n'exister que dans le JSON courant (backfill posterieur)
+            if not old_meta.get("url") and old.get("url"):
+                old_meta["url"] = old["url"]
             try:
                 if platform in DOM_PLATFORMS and json_path.stem in html_stems:
                     conv = _reparse(platform, old_meta, json_path.with_suffix(".html"))

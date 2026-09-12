@@ -21,6 +21,8 @@ const $ = (id) => document.getElementById(id);
 
 /* ---------- theme ---------- */
 (function initTheme() {
+  // Chrome : palette bordeaux imposee, pas de bascule clair/nuit
+  if (document.documentElement.hasAttribute("data-force-chrome")) return;
   const saved = localStorage.getItem("aicv-theme") || "dark";
   document.documentElement.setAttribute("data-theme", saved);
   window.addEventListener("DOMContentLoaded", () => {
@@ -100,6 +102,14 @@ function renderMarkdown(text) {
     html = DOMPurify.sanitize(html, { ADD_ATTR: ["target", "rel"] });
   }
   return restoreMath(html, store);
+}
+
+function resolveLocalImages(html, platform) {
+  if (!html || !platform) return html;
+  return html.replace(
+    /(<img\b[^>]*?\bsrc=)["']images\//g,
+    `$1"/media/${platform}/`
+  );
 }
 
 function highlightDom(root, terms) {
@@ -344,7 +354,7 @@ function renderGroups() {
               <span>${escapeHtml(formatTs(r.timestamp))}</span>
               <span>score ${scorePct(r.score)} · sém ${scorePct(r.semantic_score)} · mots ${scorePct(r.keyword_score)}</span>
             </div>
-            <div class="rc-snippet"><div class="clip">${renderMarkdown(stripFences(r.texte))}</div></div>
+            <div class="rc-snippet"><div class="clip">${resolveLocalImages(renderMarkdown(stripFences(r.texte)), r.platform)}</div></div>
           </div>`).join("")}
       </div>
     </div>`).join("") + `</div>`;
@@ -443,7 +453,10 @@ function renderConversation() {
 
 function renderMessage(m, i) {
   const matched = state.matchedMid && m.message_id === state.matchedMid;
-  const body = renderMarkdown(stripFences(m.texte || ""));
+  const body = resolveLocalImages(
+    renderMarkdown(stripFences(m.texte || "")),
+    state.conversation && state.conversation.platform
+  );
   const code = (m.code_blocks || []).map((b) =>
     `<div class="code-block"><div class="code-head"><span>${escapeHtml(b.language || "code")}</span>
       <button class="copy-btn" data-copy="${i}">copier</button></div>

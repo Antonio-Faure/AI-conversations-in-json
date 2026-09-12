@@ -72,15 +72,17 @@ class ChatGPTParser(BaseParser):
         soup = self.make_soup(html)
         message_meta: Dict[str, Dict[str, Any]] = extra.get("messages") or {}
 
-        turns = self.select_all_any(soup, self.TURN_SELECTORS)
-        turns = [t for t in turns if t.get("style") != "display: none;"]
+        turns = self._collect_turns(soup)
         messages: List[Any] = []
         models: List[str] = []
 
-        for turn in turns:
-            role = self._role_of(turn)
+        for turn, role in turns:
             content_el = self.select_first(turn, self.CONTENT_SELECTORS)
             content = self.text_of(content_el)
+            # pieces jointes / images generees (souvent hors du .markdown)
+            attachments = self.attachments_markdown(turn, url_filter=self._is_content_image)
+            if attachments and attachments not in content:
+                content = f"{content}\n\n{attachments}".strip() if content else attachments
             if not content:
                 continue
             mid = turn.get("data-message-id")
@@ -142,6 +144,46 @@ class ChatGPTParser(BaseParser):
         )
         self.log_parse(conv, model=model, title=title)
         return self.check(conv)
+
+    @staticmethod
+    def _is_content_image(src: str) -> bool:
+        return ("estuary" in src) or ("oaiusercontent" in src)
+
+    def _is_image_turn(self, turn) -> bool:
+        """Tour assistant sans role explicite mais portant une image generee."""
+        if turn.select_one("[data-testid='image-gen-overlay-actions']") is not None:
+            return True
+        for img in turn.find_all("img"):
+            if (img.get("aria-hidden") or "").lower() == "true":
+                continue
+            if (img.get("alt") or "").startswith("Generated image"):
+                return True
+            if self._is_content_image(img.get("src") or ""):
+                return True
+        return False
+
+    def _collect_turns(self, soup):
+        """Tours dans l'ordre du document, images generees incluses.
+
+        ChatGPT rend parfois un tour image (assistant) sans
+        `data-message-author-role` : il faut le conserver pour ne pas fusionner
+        deux messages utilisateur consecutifs.
+        """
+        positions: Dict[Any, int] = {}
+        for element in soup.descendants:
+            positions.setdefault(id(element), len(positions))
+        turns = []
+        for el in soup.select("[data-message-author-role]"):
+            if el.get("style") == "display: none;":
+                continue
+            turns.append((positions.get(id(el), 0), el, self._role_of(el)))
+        for el in soup.select("[data-testid^='conversation-turn']"):
+            if el.select_one("[data-message-author-role]") is not None:
+                continue
+            if self._is_image_turn(el):
+                turns.append((positions.get(id(el), 0), el, "assistant"))
+        turns.sort(key=lambda item: item[0])
+        return [(turn, role) for _, turn, role in turns]
 
     @staticmethod
     def _role_of(turn) -> str:

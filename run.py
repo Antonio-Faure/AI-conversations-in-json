@@ -65,6 +65,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
                         help="fichier de configuration YAML")
     parser.add_argument("--limit", type=int, help="max de conversations (debug)")
     parser.add_argument(
+        "--match", metavar="TEXTE",
+        help="ne scraper que les conversations dont le titre (ou l'id) contient "
+             "ce texte, insensible a la casse (ex: --match 'Conversation etalon')",
+    )
+    parser.add_argument(
         "--parallel", type=int, metavar="N",
         help="scraper N services (domaines differents) en parallele (defaut: config)",
     )
@@ -164,7 +169,8 @@ def main(argv=None) -> int:
     parallel = args.parallel if args.parallel is not None else int(config.get("parallel", 1))
     try:
         summary = orchestrator.run(
-            mode=mode, limit=args.limit, services=args.service, parallel=parallel
+            mode=mode, limit=args.limit, services=args.service,
+            parallel=parallel, match=args.match,
         )
     except KeyboardInterrupt:
         log.warning("interrompu")

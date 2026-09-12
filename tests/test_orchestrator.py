@@ -13,6 +13,7 @@ from src.orchestrator import (
     Orchestrator,
     RunSummary,
     ServiceResult,
+    _fold,
     deep_merge,
     load_config,
     resolve_engine,
@@ -247,6 +248,22 @@ class TestRunPipeline:
         assert entry["scraped"] is True
         assert entry["message_count"] == 2
         assert entry["file"] == "conversation-1"
+
+    def test_fold_insensible_accent_casse(self):
+        assert _fold("Conversation Étalon") == "conversation etalon"
+
+    def test_match_filtre_par_titre(self, workdir):
+        orch, _ = make_orchestrator(workdir, {"fake": FakeService})
+        result = orch.run(mode="monthly", match="conversation 2").services["fake"]
+        assert result.targets == 1
+        assert len(result.exported) == 1
+        assert result.exported[0].stem == "conversation-2"
+
+    def test_match_sans_resultat(self, workdir):
+        orch, _ = make_orchestrator(workdir, {"fake": FakeService})
+        result = orch.run(mode="monthly", match="introuvable").services["fake"]
+        assert result.targets == 0
+        assert result.exported == []
 
     def test_daily_sans_inventaire_scrape_tout(self, workdir):
         orch, _ = make_orchestrator(workdir, {"fake": FakeService})

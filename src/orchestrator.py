@@ -23,6 +23,7 @@ import logging
 import random
 import threading
 import time
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -56,9 +57,16 @@ from .utils.file_utils import (
     write_json_atomic,
     write_text_atomic,
 )
+from .utils.images import IMAGES_SUBDIR, download_service_images
 from .utils.logging import get_logger, log_fields
 
 log = get_logger("orchestrator")
+
+
+def _fold(value: str) -> str:
+    """Minuscule sans accents (comparaison de titres)."""
+    decomposed = unicodedata.normalize("NFKD", value or "")
+    return "".join(c for c in decomposed if not unicodedata.combining(c)).lower()
 
 MODES = ("daily", "monthly")
 DAILY_RECENT = 20
@@ -385,6 +393,11 @@ class Orchestrator:
         used.setdefault(stem, ref.id)
 
         json_path, html_path = conversation_paths(self.output_dir, service.name, stem)
+        # images : telechargement local pendant que la session est encore ouverte
+        try:
+            download_service_images(conv, service, json_path.parent / IMAGES_SUBDIR)
+        except Exception:  # noqa: BLE001
+            log.debug("telechargement des images ignore", exc_info=True)
         # JSON intelligent : identique -> pas d'ecriture ; nouveaux messages -> patch
         payload = conv.to_dict(validate=False)
         existing = read_json(json_path, default=None)
@@ -443,7 +456,11 @@ class Orchestrator:
         return targets
 
     def run_service(
-        self, name: str, mode: str, limit: Optional[int] = None
+        self,
+        name: str,
+        mode: str,
+        limit: Optional[int] = None,
+        match: Optional[str] = None,
     ) -> ServiceResult:
         result = ServiceResult(service=name)
         svc_config = self.config.get("services", {}).get(name, {})
@@ -482,6 +499,12 @@ class Orchestrator:
                     used[entry["file"]] = cid
 
             targets = self._select_targets(refs, index, mode, limit)
+            if match:
+                needle = _fold(match)
+                targets = [
+                    ref for ref in targets
+                    if needle in _fold(ref.title or "") or needle in _fold(ref.id)
+                ]
             result.targets = len(targets)
             log_fields(
                 log, 20,
@@ -586,6 +609,7 @@ class Orchestrator:
         limit: Optional[int] = None,
         services: Optional[List[str]] = None,
         parallel: int = 1,
+        match: Optional[str] = None,
     ) -> RunSummary:
         if mode not in MODES:
             raise ValueError(f"mode invalide {mode!r} (attendu: {', '.join(MODES)})")
@@ -597,7 +621,7 @@ class Orchestrator:
         def run_group(group: List[str]) -> None:
             # sequentiel DANS un groupe ; les groupes (domaines) tournent en parallele
             for name in group:
-                result = self.run_service(name, mode, limit=limit)
+                result = self.run_service(name, mode, limit=limit, match=match)
                 with lock:
                     summary.services[name] = result
 

@@ -41,6 +41,12 @@ class TestArgParser:
         )
         assert (args.limit, args.headful, args.verbose) == (5, True, True)
 
+    def test_match_option(self):
+        args = run_cli.build_arg_parser().parse_args(
+            ["--daily", "--match", "Conversation etalon"]
+        )
+        assert args.match == "Conversation etalon"
+
     def test_service_repetable(self):
         args = run_cli.build_arg_parser().parse_args(
             ["--daily", "--service", "chatgpt", "-s", "claude"]
@@ -83,7 +89,7 @@ class TestMain:
             def __init__(self, config, **kwargs):
                 calls["config"] = config
 
-            def run(self, mode, limit=None, services=None, parallel=None):
+            def run(self, mode, limit=None, services=None, parallel=None, match=None):
                 calls["run"] = {"mode": mode, "limit": limit, "services": services}
                 summary = RunSummary(mode=mode)
                 summary.services["chatgpt"] = ServiceResult(
@@ -101,6 +107,21 @@ class TestMain:
         out = capsys.readouterr().out
         assert "chatgpt" in out and "ecrites=1" in out
 
+    def test_match_transmis(self, monkeypatch):
+        calls = {}
+
+        class StubOrchestrator:
+            def __init__(self, config, **kwargs):
+                pass
+
+            def run(self, mode, limit=None, services=None, parallel=None, match=None):
+                calls["match"] = match
+                return RunSummary(mode=mode)
+
+        monkeypatch.setattr(run_cli, "Orchestrator", StubOrchestrator)
+        assert run_cli.main(["--daily", "--match", "Conversation etalon"]) == 0
+        assert calls["match"] == "Conversation etalon"
+
     def test_monthly(self, monkeypatch):
         calls = {}
 
@@ -108,7 +129,7 @@ class TestMain:
             def __init__(self, config, **kwargs):
                 pass
 
-            def run(self, mode, limit=None, services=None, parallel=None):
+            def run(self, mode, limit=None, services=None, parallel=None, match=None):
                 calls["mode"] = mode
                 return RunSummary(mode=mode)
 
@@ -121,7 +142,7 @@ class TestMain:
             def __init__(self, config, **kwargs):
                 pass
 
-            def run(self, mode, limit=None, services=None, parallel=None):
+            def run(self, mode, limit=None, services=None, parallel=None, match=None):
                 summary = RunSummary(mode=mode)
                 summary.services["chatgpt"] = ServiceResult(
                     service="chatgpt", failed=["c1"]

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -41,7 +42,17 @@ CONTENT_TYPES = {
     ".json": "application/json; charset=utf-8",
     ".svg": "image/svg+xml",
     ".ico": "image/x-icon",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+    ".avif": "image/avif",
+    ".bmp": "image/bmp",
+    ".img": "application/octet-stream",
 }
+
+MEDIA_RE = re.compile(r"^/media/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)$")
 
 
 class AppState:
@@ -133,6 +144,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path.startswith("/api/"):
                 self._handle_api(path, parse_qs(parsed.query))
+            elif path.startswith("/media/"):
+                self._serve_media(path)
             elif path in ("/", "/index.html"):
                 self._send_file(WEB_DIR / "index.html")
             else:
@@ -141,6 +154,20 @@ class Handler(BaseHTTPRequestHandler):
             pass
         except Exception as exc:  # noqa: BLE001
             self._send_json({"error": str(exc)}, 500)
+
+    def _serve_media(self, path: str) -> None:
+        """Sert une image telechargee : exports/<platform>/images/<fichier>."""
+        match = MEDIA_RE.match(path)
+        if not match:
+            self._send_json({"error": "forbidden"}, 403)
+            return
+        platform, filename = match.groups()
+        root = (self.state.exports_dir / platform / "images").resolve()
+        candidate = (root / filename).resolve()
+        if root not in candidate.parents or not candidate.is_file():
+            self._send_json({"error": "not found"}, 404)
+            return
+        self._send_file(candidate)
 
     def _serve_static(self, path: str) -> None:
         relative = path.lstrip("/")
