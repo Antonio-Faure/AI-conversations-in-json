@@ -13,6 +13,7 @@ rate-limit et reprend au prochain lancement.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -28,7 +29,8 @@ from src.orchestrator import (  # noqa: E402
     resolve_engine,
 )
 
-RUN_ROOT = ROOT.parent / "aicv-run"
+# dossier runtime hors depot (independant du worktree d'ou l'on execute)
+RUN_ROOT = Path(os.environ.get("AICV_RUN_DIR") or "/home/odin/Documents/code/aicv-run")
 
 
 def _resolve_paths(config: dict) -> dict:

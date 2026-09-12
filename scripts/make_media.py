@@ -10,6 +10,7 @@ Les fichiers sont ecrits dans `<run_dir>/attachments/` (dossier runtime du bot).
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -19,7 +20,8 @@ if str(ROOT) not in sys.path:
 
 from src.utils.media import generate_media  # noqa: E402
 
-RUN_ROOT = ROOT.parent / "aicv-run"
+# dossier runtime hors depot (independant du worktree d'ou l'on execute)
+RUN_ROOT = Path(os.environ.get("AICV_RUN_DIR") or "/home/odin/Documents/code/aicv-run")
 
 
 def main() -> int:
