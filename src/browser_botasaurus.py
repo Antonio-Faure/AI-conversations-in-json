@@ -290,6 +290,55 @@ class BotasaurusSession:
     def press_if_present(self, key: str) -> None:
         log.debug("press_if_present(%s) non supporte par le moteur botasaurus", key)
 
+    # -- interaction (drivers) ------------------------------------------------
+
+    def click_any(self, selectors: Sequence[str], timeout_ms: int = 4000) -> Optional[str]:
+        for raw in selectors:
+            try:
+                sel = translate_selector(raw)
+                if self._present(sel, wait_s=timeout_ms / 1000):
+                    self.driver.click(sel.css, wait=max(1, timeout_ms // 1000))
+                    return raw
+            except Exception:  # noqa: BLE001
+                continue
+        return None
+
+    def type_into(self, selectors: Sequence[str], text: str) -> Optional[str]:
+        for raw in selectors:
+            try:
+                sel = translate_selector(raw)
+                if not self._present(sel, wait_s=1.0):
+                    continue
+                self.driver.click(sel.css, wait=2)
+                try:
+                    self.driver.clear(sel.css, wait=1)
+                except Exception:  # noqa: BLE001
+                    pass
+                self.driver.type(sel.css, text, wait=2)
+                return raw
+            except Exception:  # noqa: BLE001
+                continue
+        return None
+
+    def upload_any(self, selectors: Sequence[str], paths: Sequence[Path | str]) -> Optional[str]:
+        files = [str(path) for path in paths]
+        for raw in selectors:
+            try:
+                sel = translate_selector(raw)
+                if not self._present(sel, wait_s=1.0):
+                    continue
+                if len(files) == 1:
+                    self.driver.upload_file(sel.css, files[0], wait=5)
+                else:
+                    self.driver.upload_multiple_files(sel.css, files, wait=5)
+                return raw
+            except Exception:  # noqa: BLE001
+                continue
+        return None
+
+    def press(self, key: str) -> None:
+        log.debug("press(%s) non supporte directement par botasaurus", key)
+
     # -- scroll ------------------------------------------------------------------
 
     def scroll_page_until_stable(

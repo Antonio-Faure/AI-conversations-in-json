@@ -287,6 +287,49 @@ class BrowserSession:
         except PlaywrightError:
             pass
 
+    # -- interaction (drivers) ------------------------------------------------
+
+    def click_any(self, selectors: Sequence[str], timeout_ms: int = 4000) -> Optional[str]:
+        """Clique le premier selecteur present ; retourne celui utilise."""
+        for selector in selectors:
+            if self.click_if_present(selector, timeout_ms):
+                return selector
+        return None
+
+    def type_into(self, selectors: Sequence[str], text: str) -> Optional[str]:
+        """Saisit `text` dans le premier champ editable trouve."""
+        for selector in selectors:
+            try:
+                element = self.page.query_selector(selector)
+                if element is None:
+                    continue
+                element.click()
+                self.page.keyboard.press("Control+A")
+                self.page.keyboard.insert_text(text)
+                return selector
+            except (PlaywrightTimeoutError, PlaywrightError):
+                continue
+        return None
+
+    def upload_any(self, selectors: Sequence[str], paths: Sequence[Path | str]) -> Optional[str]:
+        """Joint des fichiers via le premier `<input type=file>` trouve."""
+        files = [str(path) for path in paths]
+        for selector in selectors:
+            try:
+                if self.page.query_selector(selector) is None:
+                    continue
+                self.page.set_input_files(selector, files)
+                return selector
+            except (PlaywrightTimeoutError, PlaywrightError):
+                continue
+        return None
+
+    def press(self, key: str) -> None:
+        try:
+            self.page.keyboard.press(key)
+        except PlaywrightError:
+            pass
+
     # -- scroll ---------------------------------------------------------------
 
     def scroll_page_until_stable(
