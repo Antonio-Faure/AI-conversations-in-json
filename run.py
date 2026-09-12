@@ -75,6 +75,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--headful", action="store_true",
                         help="navigateur visible (debug / login manuel)")
+    parser.add_argument("--screenshots", action="store_true",
+                        help="capture un screenshot par message (tour centre) "
+                             "dans exports/<platform>/screenshots/<conv>/")
     parser.add_argument("--headless", action="store_true",
                         help="forcer headless (surcharge config)")
     parser.add_argument("--verbose", "-v", action="store_true",
@@ -94,6 +97,8 @@ def _apply_cli_overrides(config: dict, args: argparse.Namespace) -> dict:
         config["headless"] = True
     elif args.headful:
         config["headless"] = False
+    if args.screenshots:
+        config["screenshots"] = True
     return config
 
 

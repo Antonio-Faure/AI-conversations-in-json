@@ -41,6 +41,10 @@ class TestArgParser:
         )
         assert (args.limit, args.headful, args.verbose) == (5, True, True)
 
+    def test_screenshots_option(self):
+        args = run_cli.build_arg_parser().parse_args(["--daily", "--screenshots"])
+        assert args.screenshots is True
+
     def test_match_option(self):
         args = run_cli.build_arg_parser().parse_args(
             ["--daily", "--match", "Conversation etalon"]
@@ -121,6 +125,20 @@ class TestMain:
         monkeypatch.setattr(run_cli, "Orchestrator", StubOrchestrator)
         assert run_cli.main(["--daily", "--match", "Conversation etalon"]) == 0
         assert calls["match"] == "Conversation etalon"
+
+    def test_screenshots_active_config(self, monkeypatch):
+        calls = {}
+
+        class StubOrchestrator:
+            def __init__(self, config, **kwargs):
+                calls["config"] = config
+
+            def run(self, mode, limit=None, services=None, parallel=None, match=None):
+                return RunSummary(mode=mode)
+
+        monkeypatch.setattr(run_cli, "Orchestrator", StubOrchestrator)
+        assert run_cli.main(["--daily", "--screenshots"]) == 0
+        assert calls["config"]["screenshots"] is True
 
     def test_monthly(self, monkeypatch):
         calls = {}

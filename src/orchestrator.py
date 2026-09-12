@@ -80,6 +80,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "rag_model": "BAAI/bge-m3",
     # pas de logs sur disque : console uniquement
     "screenshot_dir": "",
+    # capture un screenshot par message (tour centre) dans exports/.../screenshots/
+    "screenshots": False,
     "headless": True,
     "timeout_ms": 45000,
     "parallel": 1,
@@ -411,6 +413,14 @@ class Orchestrator:
                 result.patched.append(ref.id)
         # HTML : toujours ecrase (rendu, aucune donnee perdue)
         write_text_atomic(html_path, html)
+        # screenshots par message (optionnel ; session encore ouverte)
+        if self.config.get("screenshots"):
+            try:
+                service.capture_message_screenshots(
+                    conv, json_path.parent / "screenshots" / stem
+                )
+            except Exception:  # noqa: BLE001
+                log.debug("capture des screenshots ignoree", exc_info=True)
 
         index[ref.id] = {
             "conversation_id": ref.id,

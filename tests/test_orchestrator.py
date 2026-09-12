@@ -87,6 +87,15 @@ class FakeService:
         return self.export_conversation_with_html(ref)[0]
 
 
+class ScreenshotService(FakeService):
+    name = "fake"
+
+    def capture_message_screenshots(self, conv, out_dir):
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "message-01.png").write_bytes(b"x")
+        return 1
+
+
 class ExplodingDiscovery(FakeService):
     name = "boom"
 
@@ -258,6 +267,22 @@ class TestRunPipeline:
         assert result.targets == 1
         assert len(result.exported) == 1
         assert result.exported[0].stem == "conversation-2"
+
+    def test_screenshots_par_message(self, workdir):
+        orch, _ = make_orchestrator(
+            workdir, {"fake": ScreenshotService}, {"screenshots": True}
+        )
+        summary = orch.run(mode="monthly")
+        assert len(summary.services["fake"].exported) == 3
+        shots = sorted(
+            (workdir / "exports" / "fake" / "screenshots").glob("*/message-01.png")
+        )
+        assert len(shots) == 3
+
+    def test_screenshots_desactives_par_defaut(self, workdir):
+        orch, _ = make_orchestrator(workdir, {"fake": ScreenshotService})
+        orch.run(mode="monthly")
+        assert not (workdir / "exports" / "fake" / "screenshots").exists()
 
     def test_match_sans_resultat(self, workdir):
         orch, _ = make_orchestrator(workdir, {"fake": FakeService})
