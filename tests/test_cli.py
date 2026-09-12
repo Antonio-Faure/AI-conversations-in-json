@@ -41,6 +41,10 @@ class TestArgParser:
         )
         assert (args.limit, args.headful, args.verbose) == (5, True, True)
 
+    def test_output_option(self):
+        args = run_cli.build_arg_parser().parse_args(["--daily", "--output", "/tmp/x"])
+        assert str(args.output) == "/tmp/x"
+
     def test_screenshots_option(self):
         args = run_cli.build_arg_parser().parse_args(["--daily", "--screenshots"])
         assert args.screenshots is True

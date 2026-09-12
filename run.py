@@ -63,6 +63,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--config", "-c", default=ROOT / "config.yaml", type=Path,
                         help="fichier de configuration YAML")
+    parser.add_argument("--output", "-o", type=Path, metavar="DIR",
+                        help="dossier de sortie (surcharge output_dir de la config)")
     parser.add_argument("--limit", type=int, help="max de conversations (debug)")
     parser.add_argument(
         "--match", metavar="TEXTE",
@@ -99,6 +101,8 @@ def _apply_cli_overrides(config: dict, args: argparse.Namespace) -> dict:
         config["headless"] = False
     if args.screenshots:
         config["screenshots"] = True
+    if args.output is not None:
+        config["output_dir"] = str(args.output)
     return config
 
 
