@@ -13,6 +13,7 @@ from src.parsers import (
     PerplexityParser,
 )
 from src.parsers.base import ParseError
+from src.parsers.gemini import merge_turn_fragments
 from src.schema import Conversation
 
 
@@ -213,6 +214,118 @@ class TestGeminiParser:
         assert "10 jours au Japon" in conv.messages[0].texte
         assert "Tokyo 3j" in conv.messages[1].texte
         assert "JR Pass" in conv.messages[3].texte
+
+    def test_liste_a_puces_en_markdown(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>Liste</div></user-query>"
+            "<model-response><message-content><ul>"
+            "<li><p>Pomme</p></li><li><p>Banane</p></li><li><p>Orange</p></li>"
+            "</ul></message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        assert "- Pomme" in conv.messages[1].texte
+        assert "- Orange" in conv.messages[1].texte
+
+    def test_liste_numerotee_imbriquee_en_markdown(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>Etapes</div></user-query>"
+            "<model-response><message-content><ol><li><p>Un</p>"
+            "<ul><li><p>Detail</p></li></ul></li><li><p>Deux</p></li>"
+            "</ol></message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        assert "1. Un" in conv.messages[1].texte
+        assert "  - Detail" in conv.messages[1].texte
+        assert "2. Deux" in conv.messages[1].texte
+
+    def test_tableau_en_markdown(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>Tableau</div></user-query>"
+            "<model-response><message-content><table>"
+            "<thead><tr><th>Nom</th><th>Age</th></tr></thead>"
+            "<tbody><tr><td>Alice</td><td>28</td></tr>"
+            "<tr><td>Bob</td><td>34</td></tr></tbody></table>"
+            "</message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        table = conv.messages[1].texte
+        assert "| Nom | Age |" in table
+        assert "| --- | --- |" in table
+        assert "| Alice | 28 |" in table
+        assert "| Bob | 34 |" in table
+
+    def test_piece_jointe_image_en_markdown(self):
+        html = (
+            "<html><body>"
+            "<user-query>"
+            "<div class='file-preview-container'>"
+            "<img class='preview-image' src='https://lh3.googleusercontent.com/gg/ABC'"
+            " alt=\"Aperçu de l'image importée\">"
+            "</div>"
+            "<div class='query-text'>Decris l'image</div>"
+            "</user-query>"
+            "<model-response><message-content>Une image</message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        assert "![Aperçu de l'image importée](https://lh3.googleusercontent.com/gg/ABC)" in (
+            conv.messages[0].texte
+        )
+        assert "Decris l'image" in conv.messages[0].texte
+
+
+def _turn_block(turn_id: str, question: str, answer: str) -> str:
+    return (
+        f'<div class="conversation-container" id="{turn_id}">'
+        f"<user-query><div class='query-text'>{question}</div></user-query>"
+        f"<model-response><message-content>"
+        f"<div class='model-response-text'>{answer}</div>"
+        f"</message-content></model-response>"
+        f"</div>"
+    )
+
+
+class TestGeminiMergeTurns:
+    """Fusion des tours virtualises (Gemini re-rend des fenetres entieres)."""
+
+    def test_dedup_garde_la_derniere_occurrence_complete(self):
+        fragments = [
+            _turn_block("id-a1", "Question A", ""),  # exemplaire incomplet
+            _turn_block("id-a2", "Question A", "Reponse A"),
+            _turn_block("id-b1", "Question B", "Reponse B"),
+        ]
+        conv = GeminiParser().parse(
+            merge_turn_fragments(fragments), conversation_id="c"
+        )
+        assert [m.role for m in conv.messages] == ["user", "assistant"] * 2
+        assert "Question A" in conv.messages[0].texte
+        assert "Reponse A" in conv.messages[1].texte
+        assert "Reponse B" in conv.messages[3].texte
+
+    def test_dedup_choisit_la_reponse_la_plus_tardive(self):
+        fragments = [
+            _turn_block("id-a", "Question A", "Reponse A"),
+            _turn_block("id-b", "Question B", "Reponse B"),
+            _turn_block("id-a2", "Question A", "Reponse A bis"),
+        ]
+        conv = GeminiParser().parse(
+            merge_turn_fragments(fragments), conversation_id="c"
+        )
+        assert len(conv.messages) == 4
+        assert "Reponse B" in conv.messages[1].texte
+        assert "Reponse A bis" in conv.messages[3].texte
+        # A n'apparait qu'une fois
+        assert sum("Question A" in m.texte for m in conv.messages) == 1
+
+    def test_fragments_vides(self):
+        assert merge_turn_fragments([]) == ""
+        assert merge_turn_fragments(["<div>sans tour</div>"]) == ""
 
 
 class TestPerplexityParser:
