@@ -233,6 +233,63 @@ def test_grok_selecteurs_cles():
     assert "input[type='file']" in cls.file_input_selectors
 
 
+class ChatGPTFakeSession(FakeSession):
+    """Session factice ChatGPT : le champ de saisie n'apparait qu'apres N tests."""
+
+    def __init__(self, input_after=1, click_returns=""):
+        super().__init__()
+        self.input_after = input_after
+        self.click_returns = click_returns
+        self.input_calls = 0
+        self.eval_bodies = []
+        self.typed = []
+
+    def is_element_present(self, selector):
+        if selector == "div#prompt-textarea[contenteditable='true']":
+            self.input_calls += 1
+            return self.input_calls >= self.input_after
+        return False
+
+    def eval_body(self, body):
+        self.eval_bodies.append(body)
+        return self.click_returns
+
+    def type_into(self, selectors, text):
+        self.typed.append(text)
+        return selectors[0] if selectors else None
+
+
+def test_chatgpt_new_chat_clique_le_bouton_visible():
+    session = ChatGPTFakeSession(click_returns="clicked")
+    driver = get_driver("chatgpt")(session)
+    assert driver.new_conversation() is True
+    assert session.url() == "https://chatgpt.com/"
+    assert session.typed == []
+    # le JS doit cibler le bouton « nouveau chat » et filtrer la visibilite
+    assert any("create-new-chat-button" in b for b in session.eval_bodies)
+    assert any("getBoundingClientRect" in b for b in session.eval_bodies)
+
+
+def test_chatgpt_new_chat_sans_champ_echoue():
+    session = ChatGPTFakeSession(input_after=10**9)
+    driver = get_driver("chatgpt")(session)
+    assert driver.new_conversation() is False
+
+
+def test_chatgpt_send_attend_le_champ():
+    session = ChatGPTFakeSession(input_after=3)
+    driver = get_driver("chatgpt")(session)
+    assert driver.send("bonjour") is True
+    assert session.typed == ["bonjour"]
+
+
+def test_chatgpt_send_sans_champ_echoue():
+    session = ChatGPTFakeSession(input_after=10**9)
+    driver = get_driver("chatgpt")(session)
+    assert driver.send("bonjour") is False
+    assert session.typed == []
+
+
 def test_grok_detecte_rate_limit_francais():
     cls = get_driver("grok")
     # message reellement affiche par l'UI quand le quota est epuise
