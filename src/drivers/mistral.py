@@ -11,9 +11,12 @@ fiable de reprendre un etalon dans le bon mode.
 from __future__ import annotations
 
 import json
+import logging
 from urllib.parse import urlparse
 
 from .base import ChatDriver
+
+log = logging.getLogger("aicv.drivers.mistral")
 
 
 class MistralDriver(ChatDriver):
@@ -58,6 +61,10 @@ class MistralDriver(ChatDriver):
         "[data-message-author-role='assistant']",
         "[data-message-author-role]",
     )
+    #: Marqueurs de quota epuise. On evite les formulations trop larges
+    #: (« quota ») qui apparaissent dans des reponses normales et declenchent
+    #: un faux rate-limit. La banniere reelle est « Limite de messages
+    #: atteinte », eventuellement suivie de « réinitialisée dans ... ».
     rate_limit_markers = (
         "rate limit",
         "too many requests",
@@ -70,7 +77,6 @@ class MistralDriver(ChatDriver):
         "limite atteinte",
         "réinitialisée dans",
         "reinitialisee dans",
-        "quota",
     )
 
     def __init__(self, session, config=None):
@@ -109,6 +115,21 @@ class MistralDriver(ChatDriver):
             if clicked:
                 self.session.wait_ms(4000)
         self._mode = mode
+
+    def is_rate_limited(self) -> bool:
+        """Detecte un quota epuise et journalise le marqueur exact.
+
+        Le log du marqueur + du contexte permet de diagnostiquer les faux
+        positifs (reponses mentionnant un quota) sans deviner.
+        """
+        text = self.page_text().lower()
+        for marker in self.rate_limit_markers:
+            index = text.find(marker.lower())
+            if index != -1:
+                snippet = text[max(0, index - 100):index + 150].replace("\n", " ")
+                log.warning("mistral: marqueur rate-limit %r -> %r", marker, snippet)
+                return True
+        return False
 
     def open_home(self) -> None:
         self.ensure_mode("work")
@@ -176,17 +197,69 @@ class MistralDriver(ChatDriver):
         except (TypeError, ValueError):
             return -1
 
+    def _input_is_empty(self) -> bool:
+        """True si le champ de saisie est vide (message bien soumis).
+
+        En cas d'echec d'evaluation on renvoie False : mieux vaut considerer
+        l'envoi comme non abouti que compter un message jamais parti.
+        """
+        body = (
+            "const sels = %s;"
+            "for (const s of sels) { const el = document.querySelector(s);"
+            "  if (!el) continue;"
+            "  const v = (el.value !== undefined && el.value !== null)"
+            "    ? el.value : (el.innerText || '');"
+            "  return String(v).trim().length === 0;"
+            "}"
+            "return null;"
+        ) % json.dumps(list(self.input_selectors))
+        try:
+            res = self.session.eval_body(body)
+        except Exception:  # noqa: BLE001
+            return False
+        return res is True or str(res).strip().lower() == "true"
+
+    def _clear_input(self) -> None:
+        """Vide le champ de saisie (brouillon residuel d'un envoi refuse)."""
+        body = (
+            "const el = document.querySelector(\"div[contenteditable='true']\");"
+            "if (!el) return false;"
+            "el.focus();"
+            "const sel = window.getSelection();"
+            "const range = document.createRange();"
+            "range.selectNodeContents(el);"
+            "sel.removeAllRanges(); sel.addRange(range);"
+            "document.execCommand('delete');"
+            "el.dispatchEvent(new Event('input', {bubbles: true}));"
+            "return true;"
+        )
+        try:
+            self.session.eval_body(body)
+        except Exception:  # noqa: BLE001
+            pass
+
     def send(self, text: str) -> bool:
         """Saisit puis envoie via le bouton visible « Envoyer ».
 
         Le compositeur contient aussi un `<button type="submit" hidden>` : le
         clic doit viser le bouton visible, sinon le message reste dans le champ.
+
+        Un envoi refuse (limite atteinte) peut vider le champ un instant puis
+        restaurer le brouillon : on reverifie donc le champ apres une pause pour
+        ne pas compter un message jamais parti comme envoye.
         """
         # capture l'etat assistant AVANT la saisie : une reponse rapide peut
         # deja etre presente quand wait_for_response demarre.
         self._pre_count = self._assistant_count()
         self._pre_len = self._last_assistant_len()
         if text:
+            # purge d'un eventuel brouillon (envoi precedent refuse)
+            if not self._input_is_empty():
+                self._clear_input()
+                self.session.wait_ms(500)
+                if not self._input_is_empty():
+                    log.warning("mistral: champ non vide, envoi annule")
+                    return False
             if self.session.type_into(list(self.input_selectors), text) is None:
                 return False
             self.session.wait_ms(400)
@@ -207,17 +280,19 @@ class MistralDriver(ChatDriver):
                 "{key:'Enter',code:'Enter',bubbles:true,cancelable:true}));"
                 "return true}return false;"
             )
-        self.session.wait_ms(1200)
 
-        # verifier que le champ s'est bien vide (message parti)
-        remaining = self.session.eval_body(
-            "const ce=document.querySelector(\"div[contenteditable='true']\");"
-            "return ce ? (ce.innerText||'').trim().length : 0;"
-        )
-        try:
-            return int(remaining or 0) == 0
-        except (TypeError, ValueError):
-            return True
+        # 1) le champ doit se vider (envoi soumis)
+        cleared = False
+        for _ in range(16):
+            if self._input_is_empty():
+                cleared = True
+                break
+            self.session.wait_ms(500)
+        if not cleared:
+            return False
+        # 2) un envoi refuse (limite) restaure le brouillon juste apres
+        self.session.wait_ms(2500)
+        return self._input_is_empty()
 
     def wait_for_response(self, timeout_ms=None) -> bool:
         """Attend la fin de generation.

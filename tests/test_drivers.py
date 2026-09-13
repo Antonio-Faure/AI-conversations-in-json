@@ -489,25 +489,43 @@ def test_mistral_detecte_limite_messages():
     assert driver.is_rate_limited() is True
 
 
-class MistralSendSession(FakeSession):
-    """Session factice : le bouton « Envoyer » visible est clique."""
+def test_mistral_rate_limit_sans_faux_positif_quota():
+    # une reponse normale peut parler de « quota » : pas un quota epuise.
+    driver = get_driver("mistral")(TextSession("Le quota de tokens de ce modele est de 128k."))
+    assert driver.is_rate_limited() is False
 
-    def __init__(self, remaining="0"):
+
+class MistralSendSession(FakeSession):
+    """Session factice : le bouton « Envoyer » visible est clique.
+
+    `empty` pilote l'etat du champ ; `restored_after` simule un envoi refuse
+    qui vide le champ puis restaure le brouillon (limite atteinte).
+    """
+
+    def __init__(self, empty=True, restored_after=None):
         super().__init__()
         self.typed = []
         self.clicked = []
-        self.remaining = remaining
+        self.empty = empty
+        self.restored_after = restored_after
+        self.empty_calls = 0
 
     def type_into(self, selectors, text):
         self.typed.append(text)
         return selectors[0]
 
     def eval_body(self, body):
+        if "const sels" in body:
+            self.empty_calls += 1
+            if (
+                self.restored_after is not None
+                and self.empty_calls > self.restored_after
+            ):
+                return False
+            return self.empty
         if "button[aria-label='Envoyer']" in body:
             self.clicked.append("envoyer")
             return "true"
-        if "innerText" in body:
-            return self.remaining
         return ""
 
 
@@ -520,7 +538,16 @@ def test_mistral_send_clique_le_bouton_visible():
 
 
 def test_mistral_send_detecte_le_champ_non_vide():
-    session = MistralSendSession(remaining="7")
+    session = MistralSendSession(empty=False)
+    driver = get_driver("mistral")(session)
+    assert driver.send("bonjour") is False
+    # le brouillon residuel ne doit pas etre renvoye
+    assert session.typed == []
+
+
+def test_mistral_send_detecte_le_brouillon_restaure():
+    """Le champ se vide puis est restaure : l'envoi refuse ne compte pas."""
+    session = MistralSendSession(restored_after=2)
     driver = get_driver("mistral")(session)
     assert driver.send("bonjour") is False
 
