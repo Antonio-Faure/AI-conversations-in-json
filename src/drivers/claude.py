@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import logging
 
 from .base import ChatDriver
+
+log = logging.getLogger("aicv.drivers.claude")
 
 
 class ClaudeDriver(ChatDriver):
@@ -59,6 +62,23 @@ class ClaudeDriver(ChatDriver):
         "reessayez plus tard",
         "réessayez plus tard",
     )
+
+    # -- etat -----------------------------------------------------------------
+
+    def is_rate_limited(self) -> bool:
+        """Detecte un quota epuise et journalise le marqueur exact.
+
+        Le log du marqueur + du contexte permet de diagnostiquer les faux
+        positifs (bannieres de mise en garde transitoires) sans deviner.
+        """
+        text = self.page_text().lower()
+        for marker in self.rate_limit_markers:
+            index = text.find(marker.lower())
+            if index != -1:
+                snippet = text[max(0, index - 100):index + 150].replace("\n", " ")
+                log.warning("claude: marqueur rate-limit %r -> %r", marker, snippet)
+                return True
+        return False
 
     # -- envoi ----------------------------------------------------------------
 
