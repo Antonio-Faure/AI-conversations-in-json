@@ -21,6 +21,26 @@ ROLE_MAP = {"human": "user", "user": "user", "assistant": "assistant",
             "system": "system", "tool": "tool"}
 
 
+def _stream_error_message(resp: Dict[str, Any]) -> str:
+    """Texte du premier `streamError` d'une reponse (quota, erreur de flux).
+
+    Grok renvoie parfois une reponse assistant au `message` vide accompagnee de
+    `streamErrors` (ex. « You've reached your usage limit »). La conserver
+    evite de fusionner les deux messages `user` encadrants, ce qui decalerait
+    tout l'appariement des tours.
+    """
+    errors = resp.get("streamErrors") or []
+    if not errors:
+        meta = resp.get("metadata") or {}
+        errors = (meta.get("request_metadata") or {}).get("stream_errors") or []
+    for err in errors:
+        if isinstance(err, dict):
+            message = err.get("message")
+            if message and str(message).strip():
+                return str(message).strip()
+    return ""
+
+
 class GrokParser(BaseParser):
     service_name = "grok"
 
@@ -42,7 +62,11 @@ class GrokParser(BaseParser):
         for resp in responses:
             text = clean_grok_text(resp.get("message") or "")
             if not text.strip():
-                continue
+                # reponse vide mais porteuse d'une erreur de flux : on la garde
+                # pour preserver l'alternance des roles (cas du quota atteint).
+                text = _stream_error_message(resp)
+                if not text.strip():
+                    continue
             text = text.strip()
             sender = str(resp.get("sender") or "assistant").lower()
             role = ROLE_MAP.get(sender, "assistant")

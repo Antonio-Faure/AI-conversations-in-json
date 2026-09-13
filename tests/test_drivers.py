@@ -634,3 +634,59 @@ def test_grok_detecte_rate_limit_francais():
     # un message de test contenant juste « limite » ne doit pas declencher
     driver2 = cls(TextSession("... limite quand x tend vers 0 de sin(x)/x ..."))
     assert driver2.is_rate_limited() is False
+
+
+class GrokQuotaSession(FakeSession):
+    """Session factice : repond a l'appel quota puis au texte de page.
+
+    `remaining` = valeur renvoyee par `/rest/rate-limits` (None = API HS).
+    `text` = texte de page (contient eventuellement la carte historique).
+    """
+
+    def __init__(self, remaining, text=""):
+        super().__init__()
+        self.remaining = remaining
+        self.text = text
+        self.quota_calls = 0
+        self.quota_bodies = []
+
+    def eval_body(self, body):
+        if "rate-limits" in body:
+            self.quota_calls += 1
+            self.quota_bodies.append(body)
+            return None if self.remaining is None else str(self.remaining)
+        return self.text
+
+
+def test_grok_rate_limit_interroge_l_api():
+    session = GrokQuotaSession(remaining=0)
+    driver = get_driver("grok")(session)
+    assert driver.is_rate_limited() is True
+    assert session.quota_calls == 1
+    body = session.quota_bodies[0]
+    assert "/rest/rate-limits" in body and "modelName" in body and "POST" in body
+
+
+def test_grok_rate_limit_ignore_la_carte_historique():
+    """Carte « Free tier limit reached » du tour 29 : le quota peut etre libre."""
+    historique = (
+        "Free tier limit reached\n"
+        "Réessayez plus tard ou passez à SuperGrok pour bénéficier de limites "
+        "beaucoup plus élevées et de fonctionnalités premium.\n"
+        "Upgrade to SuperGrok"
+    )
+    session = GrokQuotaSession(remaining=1, text=historique)
+    driver = get_driver("grok")(session)
+    # l'API dit qu'il reste 1 requete : pas de faux positif malgre la carte
+    assert driver.is_rate_limited() is False
+    # quota reellement epuise -> True meme si le texte ne dit rien
+    assert get_driver("grok")(GrokQuotaSession(remaining=0)).is_rate_limited() is True
+
+
+def test_grok_rate_limit_repli_dom_si_api_hs():
+    session = GrokQuotaSession(
+        remaining=None,
+        text="Limite levée dans 12 heures 36 minutes — passez à SuperGrok",
+    )
+    driver = get_driver("grok")(session)
+    assert driver.is_rate_limited() is True

@@ -713,6 +713,56 @@ class TestGrokParser:
         with pytest.raises(ParseError):
             GrokParser().parse("", conversation_id="x", extra={"responses": []})
 
+    def test_reponse_vide_avec_stream_error_garde_l_alternance(self):
+        """Cas reel du quota : l'assistant vide ne doit pas fusionner les users.
+
+        Sans la reponse d'erreur, le parser saute le tour vide et les deux
+        messages `user` consecutifs sont fusionnes (le test 30 disparait).
+        """
+        payload = {
+            "conversation": {"conversationId": "grok-2", "title": "Etalon"},
+            "responses": [
+                {"responseId": "r1", "sender": "human",
+                 "message": "Voici un JSON invalide.", "model": ""},
+                {"responseId": "r2", "sender": "assistant", "message": "",
+                 "model": "grok-3",
+                 "streamErrors": [{
+                     "message": "You've reached your usage limit. Please try "
+                                "again later.",
+                     "severity": "STREAM_ERROR_SEVERITY_NORMAL",
+                     "usageLimitReached": {"midTurn": False}}]},
+                {"responseId": "r3", "sender": "human",
+                 "message": "Texte : Alice 30, Bob 25, Charlie 35.", "model": ""},
+                {"responseId": "r4", "sender": "assistant",
+                 "message": "- Bob\n- Alice\n- Charlie", "model": "grok-3"},
+            ],
+        }
+        conv = GrokParser().parse("", conversation_id="grok-2", extra=payload)
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        assert "usage limit" in conv.messages[1].texte
+        assert "Charlie" in conv.messages[3].texte
+        # le message user du 2e tour n'a pas ete absorbe par le 1er
+        assert "Alice" in conv.messages[2].texte
+        assert "Alice" not in conv.messages[0].texte
+
+    def test_stream_error_dans_metadata(self):
+        payload = {
+            "conversation": {"conversationId": "grok-3", "title": "Etalon"},
+            "responses": [
+                {"responseId": "r1", "sender": "human", "message": "Salut",
+                 "model": ""},
+                {"responseId": "r2", "sender": "assistant", "message": "",
+                 "model": "grok-3",
+                 "metadata": {"request_metadata": {"stream_errors": [
+                     {"message": "Rate limit reached."}]}}},
+            ],
+        }
+        conv = GrokParser().parse("", conversation_id="grok-3", extra=payload)
+        assert [m.role for m in conv.messages] == ["user", "assistant"]
+        assert conv.messages[1].texte == "Rate limit reached."
+
 
 class TestMistralParser:
     """Cas reel de l'etalon : une reponse assistant reduite a un <hr>."""
