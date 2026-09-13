@@ -323,6 +323,46 @@ class MistralModeSession(FakeSession):
         return "clicked"
 
 
+def test_claude_rate_limit_sans_faux_positif():
+    cls = get_driver("claude")
+    # toast d'erreur transitoire apres un envoi : ne doit pas passer pour un
+    # quota epuise (bug constate en etalonnage, message 135).
+    driver = cls(TextSession("Something went wrong. Please try again."))
+    assert driver.is_rate_limited() is False
+    # message reel de limite de messages
+    driver2 = cls(
+        TextSession("You've reached your message limit. Try again at 3:00 PM.")
+    )
+    assert driver2.is_rate_limited() is True
+    driver3 = cls(TextSession("Limite de messages atteinte. Réessayez plus tard."))
+    assert driver3.is_rate_limited() is True
+
+
+def test_claude_send_verifie_champ_vide():
+    """Si le champ ne se vide pas (bouton desactive, limite), l'envoi echoue."""
+
+    class ClaudeSendSession(TextSession):
+        def __init__(self, cleared):
+            super().__init__("")
+            self.cleared = cleared
+
+        def eval_body(self, body):
+            if "const sels" in body:
+                return self.cleared
+            return ""
+
+        def type_into(self, selectors, text):
+            self.sent += 1
+            return selectors[0] if selectors else None
+
+        def click_any(self, selectors, timeout_ms=0):
+            return selectors[0] if selectors else None
+
+    cls = get_driver("claude")
+    assert cls(ClaudeSendSession(cleared=True)).send("bonjour") is True
+    assert cls(ClaudeSendSession(cleared=False)).send("bonjour") is False
+
+
 def test_mistral_mode_of():
     cls = get_driver("mistral")
     assert cls.mode_of("https://chat.mistral.ai/chat/abc") == "chat"

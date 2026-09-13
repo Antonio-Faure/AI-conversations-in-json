@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from .base import ChatDriver
 
 
@@ -36,13 +38,64 @@ class ClaudeDriver(ChatDriver):
         "div.font-claude-response",
         "div.font-claude-message",
     )
+    #: Marqueurs specifiques de quota epuise. Les formulations trop larges
+    #: (« try again » seul, « you've reached ») apparaissent dans les toasts
+    #: d'erreur transitoires de claude.ai et declenchaient un faux rate-limit
+    #: apres un envoi (constate en etalonnage, message 135). On ne garde que
+    #: les tournures reelles de limite de messages.
     rate_limit_markers = (
         "message limit",
-        "you've reached",
-        "you have reached",
+        "reached your message limit",
+        "reached your limit",
+        "out of messages",
         "rate limit",
+        "too many requests",
+        "limit will reset",
+        "limit resets",
+        "try again later",
+        "try again at",
         "limite de messages",
+        "limite de message",
         "reessayez plus tard",
         "réessayez plus tard",
-        "try again",
     )
+
+    # -- envoi ----------------------------------------------------------------
+
+    def _input_is_empty(self) -> bool:
+        """True si le champ de saisie est vide (message bien soumis)."""
+        body = (
+            "const sels = %s;"
+            "for (const s of sels) { const el = document.querySelector(s);"
+            "  if (!el) continue;"
+            "  const v = (el.value !== undefined && el.value !== null)"
+            "    ? el.value : (el.innerText || '');"
+            "  return String(v).trim().length === 0;"
+            "}"
+            "return null;"
+        ) % json.dumps(list(self.input_selectors))
+        try:
+            res = self.session.eval_body(body)
+        except Exception:  # noqa: BLE001
+            return True
+        # champ absent : on ne bloque pas, le wait_for_response tranchera
+        return res is not False
+
+    def send(self, text: str) -> bool:
+        """Saisit puis envoie, en verifiant que le champ s'est bien vide.
+
+        En botasaurus `press('Enter')` est un no-op : si le bouton d'envoi est
+        absent/desactive (limite atteinte), le message resterait dans le champ.
+        Sans cette verification le runner le compterait comme envoye.
+        """
+        if text:
+            if self.session.type_into(list(self.input_selectors), text) is None:
+                return False
+            self.session.wait_ms(300)
+        if self.session.click_any(list(self.send_selectors), 4000) is None:
+            self.session.press("Enter")
+        for _ in range(12):
+            if self._input_is_empty():
+                return True
+            self.session.wait_ms(500)
+        return False
