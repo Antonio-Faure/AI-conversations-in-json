@@ -37,9 +37,9 @@ class MistralDriver(ChatDriver):
         "form textarea",
     )
     send_selectors = (
-        "button[type='submit']",
-        "button[aria-label*='Send']",
         "button[aria-label*='Envoyer']",
+        "button[aria-label*='Send']",
+        "button[type='submit']",
     )
     file_input_selectors = ("input[type='file']",)
     #: bouton « + » du compositeur qui ouvre le menu d'import (le champ fichier
@@ -177,11 +177,47 @@ class MistralDriver(ChatDriver):
             return -1
 
     def send(self, text: str) -> bool:
+        """Saisit puis envoie via le bouton visible « Envoyer ».
+
+        Le compositeur contient aussi un `<button type="submit" hidden>` : le
+        clic doit viser le bouton visible, sinon le message reste dans le champ.
+        """
         # capture l'etat assistant AVANT la saisie : une reponse rapide peut
         # deja etre presente quand wait_for_response demarre.
         self._pre_count = self._assistant_count()
         self._pre_len = self._last_assistant_len()
-        return super().send(text)
+        if text:
+            if self.session.type_into(list(self.input_selectors), text) is None:
+                return False
+            self.session.wait_ms(400)
+
+        clicked = self.session.eval_body(
+            "const bs=[...document.querySelectorAll("
+            "\"button[aria-label='Envoyer'],button[aria-label*='Envoyer'],"
+            "button[aria-label*='Send']\")];"
+            "const b=bs.find(x=>{const r=x.getBoundingClientRect();"
+            "return r.width>0&&r.height>0&&!x.disabled;})"
+            "||bs.find(x=>!x.disabled);"
+            "if(b){b.click();return true}return false;"
+        )
+        if not clicked:
+            self.session.eval_body(
+                "const ce=document.querySelector(\"div[contenteditable='true']\");"
+                "if(ce){ce.focus();ce.dispatchEvent(new KeyboardEvent('keydown',"
+                "{key:'Enter',code:'Enter',bubbles:true,cancelable:true}));"
+                "return true}return false;"
+            )
+        self.session.wait_ms(1200)
+
+        # verifier que le champ s'est bien vide (message parti)
+        remaining = self.session.eval_body(
+            "const ce=document.querySelector(\"div[contenteditable='true']\");"
+            "return ce ? (ce.innerText||'').trim().length : 0;"
+        )
+        try:
+            return int(remaining or 0) == 0
+        except (TypeError, ValueError):
+            return True
 
     def wait_for_response(self, timeout_ms=None) -> bool:
         """Attend la fin de generation.

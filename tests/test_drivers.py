@@ -404,6 +404,42 @@ def test_mistral_detecte_limite_messages():
     assert driver.is_rate_limited() is True
 
 
+class MistralSendSession(FakeSession):
+    """Session factice : le bouton « Envoyer » visible est clique."""
+
+    def __init__(self, remaining="0"):
+        super().__init__()
+        self.typed = []
+        self.clicked = []
+        self.remaining = remaining
+
+    def type_into(self, selectors, text):
+        self.typed.append(text)
+        return selectors[0]
+
+    def eval_body(self, body):
+        if "button[aria-label='Envoyer']" in body:
+            self.clicked.append("envoyer")
+            return "true"
+        if "innerText" in body:
+            return self.remaining
+        return ""
+
+
+def test_mistral_send_clique_le_bouton_visible():
+    session = MistralSendSession()
+    driver = get_driver("mistral")(session)
+    assert driver.send("bonjour") is True
+    assert session.typed == ["bonjour"]
+    assert session.clicked == ["envoyer"]
+
+
+def test_mistral_send_detecte_le_champ_non_vide():
+    session = MistralSendSession(remaining="7")
+    driver = get_driver("mistral")(session)
+    assert driver.send("bonjour") is False
+
+
 def test_grok_detecte_rate_limit_francais():
     cls = get_driver("grok")
     # message reellement affiche par l'UI quand le quota est epuise
