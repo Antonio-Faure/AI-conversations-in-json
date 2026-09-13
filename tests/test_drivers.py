@@ -313,6 +313,156 @@ def test_perplexity_rate_limit_sans_faux_positif():
     assert driver4.is_rate_limited() is True
 
 
+class MistralModeSession(FakeSession):
+    def __init__(self):
+        super().__init__()
+        self.eval_bodies = []
+
+    def eval_body(self, body):
+        self.eval_bodies.append(body)
+        return "clicked"
+
+
+def test_mistral_mode_of():
+    cls = get_driver("mistral")
+    assert cls.mode_of("https://chat.mistral.ai/chat/abc") == "chat"
+    assert cls.mode_of("https://chat.mistral.ai/work/abc") == "work"
+    assert cls.mode_of("https://chat.mistral.ai/") is None
+
+
+def test_mistral_open_conversation_force_le_mode_chat():
+    session = MistralModeSession()
+    driver = get_driver("mistral")(session)
+    driver.open_conversation("https://chat.mistral.ai/chat")
+    # le lien de l'app switcher chat doit avoir ete clique
+    assert any("a[href='/chat']" in b for b in session.eval_bodies)
+    assert session.url() == "https://chat.mistral.ai/chat"
+
+
+def test_mistral_open_conversation_work_ne_bascule_pas():
+    session = MistralModeSession()
+    driver = get_driver("mistral")(session)
+    driver.open_conversation("https://chat.mistral.ai/work")
+    assert not any("a[href='/chat']" in b for b in session.eval_bodies)
+    assert session.url() == "https://chat.mistral.ai/work"
+
+
+class StreamingSession(FakeSession):
+    """Session factice : reponse assistant qui grandit puis se stabilise."""
+
+    def __init__(self):
+        super().__init__()
+        self.count_calls = 0
+        self.length = 0
+
+    def eval_body(self, body):
+        if "els.length" in body:
+            return str(self.length)
+        if "querySelectorAll" in body:
+            self.count_calls += 1
+            return "0" if self.count_calls == 1 else "1"
+        return ""
+
+    def is_element_present(self, selector):
+        return False
+
+    def wait_ms(self, ms):
+        if self.length < 10:
+            self.length += 5
+
+
+def test_mistral_wait_for_response_stabilisation():
+    session = StreamingSession()
+    driver = get_driver("mistral")(session)
+    assert driver.wait_for_response(timeout_ms=20000) is True
+    assert session.length == 10
+
+
+class MistralAttachSession(FakeSession):
+    """Session factice : le champ fichier n'apparait qu'apres le menu « + »."""
+
+    def __init__(self):
+        super().__init__()
+        self.file_input_visible = False
+        self.uploaded = []
+
+    def is_element_present(self, selector):
+        return self.file_input_visible and selector == "input[type='file']"
+
+    def click_any(self, selectors, timeout_ms=0):
+        for selector in selectors:
+            if "Ouvrir le menu" in selector:
+                self.file_input_visible = True
+                return selector
+        return None
+
+    def upload_any(self, selectors, paths):
+        if not self.file_input_visible:
+            return None
+        self.uploaded.append(list(paths))
+        return selectors[0] if selectors else None
+
+    def eval_body(self, body):
+        return True
+
+
+def test_mistral_attach_ouvre_le_menu(tmp_path):
+    session = MistralAttachSession()
+    driver = get_driver("mistral")(session)
+    target = tmp_path / "image.png"
+    target.write_bytes(b"x")
+    assert driver.attach([target]) is True
+    assert session.file_input_visible is True
+    assert session.uploaded == [[target]]
+
+
+def test_mistral_attach_sans_fichier_ok():
+    assert get_driver("mistral")(MistralAttachSession()).attach([]) is True
+
+
+def test_mistral_detecte_limite_messages():
+    driver = get_driver("mistral")(
+        TextSession("Limite de messages atteinte. Votre limite sera réinitialisée dans 54 minutes.")
+    )
+    assert driver.is_rate_limited() is True
+
+
+class MistralSendSession(FakeSession):
+    """Session factice : le bouton « Envoyer » visible est clique."""
+
+    def __init__(self, remaining="0"):
+        super().__init__()
+        self.typed = []
+        self.clicked = []
+        self.remaining = remaining
+
+    def type_into(self, selectors, text):
+        self.typed.append(text)
+        return selectors[0]
+
+    def eval_body(self, body):
+        if "button[aria-label='Envoyer']" in body:
+            self.clicked.append("envoyer")
+            return "true"
+        if "innerText" in body:
+            return self.remaining
+        return ""
+
+
+def test_mistral_send_clique_le_bouton_visible():
+    session = MistralSendSession()
+    driver = get_driver("mistral")(session)
+    assert driver.send("bonjour") is True
+    assert session.typed == ["bonjour"]
+    assert session.clicked == ["envoyer"]
+
+
+def test_mistral_send_detecte_le_champ_non_vide():
+    session = MistralSendSession(remaining="7")
+    driver = get_driver("mistral")(session)
+    assert driver.send("bonjour") is False
+
+
 def test_grok_detecte_rate_limit_francais():
     cls = get_driver("grok")
     # message reellement affiche par l'UI quand le quota est epuise
