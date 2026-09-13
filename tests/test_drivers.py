@@ -362,6 +362,28 @@ def test_claude_send_verifie_champ_vide():
     assert cls(ClaudeSendSession(cleared=True)).send("bonjour") is True
     assert cls(ClaudeSendSession(cleared=False)).send("bonjour") is False
 
+    class RestoredDraftSession(TextSession):
+        """Le champ se vide puis Claude restaure le brouillon (envoi refuse)."""
+
+        def __init__(self):
+            super().__init__("")
+            self.input_calls = 0
+
+        def eval_body(self, body):
+            if "const sels" in body:
+                self.input_calls += 1
+                return self.input_calls == 1
+            return ""
+
+        def type_into(self, selectors, text):
+            self.sent += 1
+            return selectors[0] if selectors else None
+
+        def click_any(self, selectors, timeout_ms=0):
+            return selectors[0] if selectors else None
+
+    assert cls(RestoredDraftSession()).send("bonjour") is False
+
 
 def test_mistral_mode_of():
     cls = get_driver("mistral")

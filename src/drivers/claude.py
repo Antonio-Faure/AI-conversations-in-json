@@ -83,7 +83,11 @@ class ClaudeDriver(ChatDriver):
     # -- envoi ----------------------------------------------------------------
 
     def _input_is_empty(self) -> bool:
-        """True si le champ de saisie est vide (message bien soumis)."""
+        """True si le champ de saisie est vide (message bien soumis).
+
+        En cas d'echec d'evaluation on renvoie False : mieux vaut considerer
+        l'envoi comme non abouti que compter un message jamais parti.
+        """
         body = (
             "const sels = %s;"
             "for (const s of sels) { const el = document.querySelector(s);"
@@ -97,25 +101,59 @@ class ClaudeDriver(ChatDriver):
         try:
             res = self.session.eval_body(body)
         except Exception:  # noqa: BLE001
-            return True
-        # champ absent : on ne bloque pas, le wait_for_response tranchera
-        return res is not False
+            return False
+        return res is True
+
+    def _clear_input(self) -> None:
+        """Vide le champ de saisie (brouillon residuel d'un envoi refuse)."""
+        body = (
+            "const el = document.querySelector(\"div.ProseMirror[contenteditable='true']\");"
+            "if (!el) return false;"
+            "el.focus();"
+            "const sel = window.getSelection();"
+            "const range = document.createRange();"
+            "range.selectNodeContents(el);"
+            "sel.removeAllRanges(); sel.addRange(range);"
+            "document.execCommand('delete');"
+            "el.dispatchEvent(new Event('input', {bubbles: true}));"
+            "return true;"
+        )
+        try:
+            self.session.eval_body(body)
+        except Exception:  # noqa: BLE001
+            pass
 
     def send(self, text: str) -> bool:
-        """Saisit puis envoie, en verifiant que le champ s'est bien vide.
+        """Saisit puis envoie, en verifiant que le champ reste vide.
 
         En botasaurus `press('Enter')` est un no-op : si le bouton d'envoi est
         absent/desactive (limite atteinte), le message resterait dans le champ.
-        Sans cette verification le runner le compterait comme envoye.
+        Claude peut aussi vider le champ un instant avant de restaurer le
+        brouillon quand l'envoi est refuse : on reverifie apres une pause pour
+        ne pas compter un message jamais parti comme envoye.
         """
         if text:
+            # purge d'un eventuel brouillon (envoi precedent refuse)
+            if not self._input_is_empty():
+                self._clear_input()
+                self.session.wait_ms(500)
+                if not self._input_is_empty():
+                    log.warning("claude: champ non vide, envoi annule")
+                    return False
             if self.session.type_into(list(self.input_selectors), text) is None:
                 return False
             self.session.wait_ms(300)
         if self.session.click_any(list(self.send_selectors), 4000) is None:
             self.session.press("Enter")
-        for _ in range(12):
+        # 1) le champ doit se vider (envoi soumis)
+        cleared = False
+        for _ in range(16):
             if self._input_is_empty():
-                return True
+                cleared = True
+                break
             self.session.wait_ms(500)
-        return False
+        if not cleared:
+            return False
+        # 2) un envoi refuse (limite) restaure le brouillon juste apres
+        self.session.wait_ms(2500)
+        return self._input_is_empty()
