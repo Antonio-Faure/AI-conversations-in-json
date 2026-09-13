@@ -66,6 +66,53 @@ def merge_turn_snapshots(
     return [html_by_key[key] for key in ordered if key in html_by_key]
 
 
+_MSG_ID_ATTR_RE = re.compile(r"data-message-id=['\"]([^'\"]+)['\"]")
+
+
+def _fragment_message_id(fragment: str) -> Optional[str]:
+    match = _MSG_ID_ATTR_RE.search(fragment)
+    return match.group(1) if match else None
+
+
+def order_fragments_by_time(
+    fragments: List[str], message_meta: Optional[Dict[str, Dict[str, Any]]]
+) -> List[str]:
+    """Reordonne les fragments par timestamp React (`create_time`).
+
+    Le scroll par fenetres peut laisser des trous dans la chaine de succession
+    (virtualisation ChatGPT) : les timestamps donnent une chronologie fiable.
+    Les fragments sans timestamp (tours image sans message-id) sont remplis par
+    voisinage avant/arriere, puis le tri stable preserve l'ordre a egalite.
+    """
+    if not fragments or not message_meta:
+        return fragments
+    times: List[Optional[float]] = []
+    for fragment in fragments:
+        mid = _fragment_message_id(fragment)
+        entry = message_meta.get(mid) if mid else None
+        value = entry.get("time") if isinstance(entry, dict) else None
+        times.append(float(value) if isinstance(value, (int, float)) else None)
+
+    previous: Optional[float] = None
+    for index, value in enumerate(times):
+        if value is None:
+            times[index] = (previous + 1e-6) if previous is not None else None
+        else:
+            previous = value
+    following: Optional[float] = None
+    for index in range(len(times) - 1, -1, -1):
+        value = times[index]
+        if value is None:
+            times[index] = (
+                following - 1e-6 if following is not None else float(index)
+            )
+        else:
+            following = value
+
+    order = sorted(range(len(fragments)), key=lambda index: times[index])
+    return [fragments[index] for index in order]
+
+
 class ChatGPTParser(BaseParser):
     service_name = "chatgpt"
 

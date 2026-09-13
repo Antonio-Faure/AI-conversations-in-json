@@ -312,6 +312,52 @@ def test_chatgpt_send_sans_champ_echoue():
     assert session.typed == []
 
 
+class SettlingChatGPTSession(ChatGPTFakeSession):
+    """Champ qui ne se vide (ou non) qu'apres N verifications."""
+
+    def __init__(self, empty_after=1):
+        super().__init__(input_after=1)
+        self.empty_after = empty_after
+        self.empty_calls = 0
+        self.waits = []
+        self.clicks = 0
+
+    def is_input_empty(self, selectors):
+        self.empty_calls += 1
+        return self.empty_calls >= self.empty_after
+
+    def click_any(self, selectors, timeout_ms=0):
+        self.clicks += 1
+        return selectors[0] if selectors else None
+
+    def wait_ms(self, ms):
+        self.waits.append(ms)
+
+
+def test_chatgpt_send_attend_le_vidage_du_champ():
+    # le champ se vide apres quelques verifications (piece jointe en cours) :
+    # l'envoi doit etre confirme sans relance.
+    session = SettlingChatGPTSession(empty_after=3)
+    driver = get_driver("chatgpt")(session)
+    assert driver.send("bonjour") is True
+    assert session.clicks == 1
+
+
+def test_chatgpt_send_retente_si_champ_non_vide():
+    # le clic d'envoi a ete avale : on retente une fois, puis on echoue.
+    session = SettlingChatGPTSession(empty_after=10**9)
+    driver = get_driver("chatgpt")(session)
+    assert driver.send("bonjour") is False
+    assert session.clicks == 2
+
+
+def test_chatgpt_attach_laisse_le_composeur_traiter():
+    session = SettlingChatGPTSession()
+    driver = get_driver("chatgpt")(session)
+    assert driver.attach([]) is True
+    assert 1500 in session.waits
+
+
 def test_perplexity_rate_limit_sans_faux_positif():
     cls = get_driver("perplexity")
     # page normale : le mot « limite » dans un apercu de conversation ne doit

@@ -12,7 +12,11 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Tuple
 
-from ..parsers.chatgpt import ChatGPTParser, merge_turn_snapshots
+from ..parsers.chatgpt import (
+    ChatGPTParser,
+    merge_turn_snapshots,
+    order_fragments_by_time,
+)
 from ..schema import ConversationRef
 from .base import BaseService, ScrapedPage
 
@@ -155,7 +159,7 @@ return (function(){
   const acc = window.__aicvChatgpt;
   const s = acc && acc.scroller;
   if (!s) return null;
-  const step = Math.max(200, Math.round(s.clientHeight * 0.8));
+  const step = Math.max(200, Math.round(s.clientHeight * 0.5));
   s.scrollTop = Math.max(0, s.scrollTop - step);
   return Math.round(s.scrollTop);
 })();
@@ -222,6 +226,8 @@ class ChatGPTService(BaseService):
         page = super().scrape_conversation(ref)
         fragments, meta = self._collect_conversation_turns()
         if fragments:
+            # la chronologie par timestamp corrige les trous/ordre du scroll
+            fragments = order_fragments_by_time(fragments, meta)
             page.html = (
                 "<!DOCTYPE html><html><head><meta charset='utf-8'></head><body>"
                 + "".join(fragments)
@@ -238,6 +244,12 @@ class ChatGPTService(BaseService):
         scroll_cfg = self.config.get("scroll", {})
         pause_ms = max(200, int(scroll_cfg.get("pause_ms", 700)))
         stable_rounds = max(4, int(scroll_cfg.get("stable_rounds", 3)))
+        # au sommet, ChatGPT charge l'historique par lots : il faut patienter
+        # plus longtemps et exiger plus de rounds stables avant de conclure.
+        top_pause_ms = max(pause_ms, int(scroll_cfg.get("top_pause_ms", 1500)))
+        top_stable_rounds = max(
+            stable_rounds, int(scroll_cfg.get("top_stable_rounds", 6))
+        )
         max_rounds = max(80, int(scroll_cfg.get("max_rounds", 60)) * 3)
 
         self.session.eval_body(_RESET_TURNS_JS)
@@ -264,15 +276,17 @@ class ChatGPTService(BaseService):
         for _ in range(max_rounds):
             info = collect()
             total = int(info.get("total") or 0)
+            top = int(info.get("top") or 0)
             if total == last_total:
                 stable += 1
             else:
                 stable = 0
             last_total = total
-            if int(info.get("top") or 0) <= 0 and stable >= stable_rounds:
+            at_top = top <= 1
+            if at_top and stable >= top_stable_rounds:
                 break
             self.session.eval_body(_SCROLL_UP_JS)
-            self.session.wait_ms(pause_ms)
+            self.session.wait_ms(top_pause_ms if at_top else pause_ms)
 
         data = self.session.eval_body(_FINAL_TURNS_JS) or {}
         snapshots = data.get("snaps") or []

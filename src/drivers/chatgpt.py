@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+from typing import Sequence
 
 from .base import ChatDriver
 
@@ -60,11 +62,44 @@ class ChatGPTDriver(ChatDriver):
         super().open_conversation(url)
         self._wait_for_input()
 
+    def attach(self, paths: Sequence[Path | str]) -> bool:
+        """Joint des fichiers puis laisse le composeur traiter la piece jointe.
+
+        Sans cette pause, le clic d'envoi peut etre avale pendant le rendu de
+        la piece jointe : le message reste dans le champ (deja observe sur
+        `document.pdf`).
+        """
+        ok = super().attach(paths)
+        if ok:
+            self.session.wait_ms(1500)
+        return ok
+
     def send(self, text: str) -> bool:
-        """Attend le champ puis délègue l'envoi a l'implementation de base."""
+        """Attend le champ, envoie, puis confirme que le champ s'est vide.
+
+        ChatGPT peut ignorer le clic d'envoi si une piece jointe est encore en
+        cours de traitement : le message reste alors dans le champ. On attend
+        donc que le champ se vide et, si besoin, on retente l'envoi une fois.
+        """
         if text and not self._wait_for_input():
             return False
-        return super().send(text)
+        if not super().send(text):
+            return False
+        if self._wait_input_cleared():
+            return True
+        self.session.click_any(list(self.send_selectors), 4000)
+        return self._wait_input_cleared()
+
+    def _wait_input_cleared(self, timeout_ms: int = 8000) -> bool:
+        """Attend que le champ de saisie soit vide (envoi accepte)."""
+        elapsed = 0
+        step = 250
+        while elapsed < timeout_ms:
+            if self.confirm_sent():
+                return True
+            self.session.wait_ms(step)
+            elapsed += step
+        return self.confirm_sent()
 
     def _wait_for_input(self, timeout_ms: int = 20000) -> bool:
         """Attend que le contenteditable de saisie soit monte (React)."""

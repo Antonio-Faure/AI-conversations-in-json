@@ -14,7 +14,7 @@ from src.parsers import (
     PerplexityParser,
 )
 from src.parsers.base import ParseError
-from src.parsers.chatgpt import merge_turn_snapshots
+from src.parsers.chatgpt import merge_turn_snapshots, order_fragments_by_time
 from src.parsers.gemini import merge_turn_fragments
 from src.schema import Conversation
 
@@ -204,6 +204,39 @@ class TestChatGPTTurnMerge:
             "Question 2",
             "Reponse 2",
         ]
+
+
+class TestOrderFragmentsByTime:
+    """Reordonnancement chronologique par timestamp React."""
+
+    @staticmethod
+    def _turn(message_id: str, text: str) -> str:
+        return (
+            "<div data-testid='conversation-turn-x'>"
+            f"<div data-message-author-role='user' data-message-id='{message_id}'>"
+            f"<div class='markdown'><p>{text}</p></div></div></div>"
+        )
+
+    def test_reordonne_selon_les_timestamps(self):
+        # l'ordre du scroll (trou) a place c avant b : les timestamps corrigent.
+        fragments = [self._turn("a", "A"), self._turn("c", "C"), self._turn("b", "B")]
+        meta = {"a": {"time": 10.0}, "b": {"time": 20.0}, "c": {"time": 30.0}}
+        ordered = order_fragments_by_time(fragments, meta)
+        assert ordered == [
+            self._turn("a", "A"),
+            self._turn("b", "B"),
+            self._turn("c", "C"),
+        ]
+
+    def test_sans_meta_ordre_inchange(self):
+        fragments = [self._turn("a", "A"), self._turn("b", "B")]
+        assert order_fragments_by_time(fragments, {}) == fragments
+
+    def test_fragment_sans_timestamp_garde_sa_place(self):
+        fragments = [self._turn("a", "A"), "<div>image</div>", self._turn("b", "B")]
+        meta = {"a": {"time": 10.0}, "b": {"time": 20.0}}
+        ordered = order_fragments_by_time(fragments, meta)
+        assert ordered == fragments
 
 
 class TestClaudeParser:
