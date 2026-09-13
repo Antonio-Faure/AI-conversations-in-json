@@ -323,6 +323,40 @@ class TestClaudeParser:
         assert conv.messages[2].texte == "Deuxieme question"
         assert "Deuxieme reponse" in conv.messages[3].texte
 
+    def test_code_inline_conserve_backticks(self):
+        """Le code inline (<code> hors <pre>) reste en markdown `code`."""
+        html = """<html><body>
+          <div data-testid='transcript-list'>
+            <div data-testid='transcript-row' data-perf-row='human'>
+              <div data-cds='UserMessage'><div>
+                <p>Ecris la variable <code>total</code> en code en ligne.</p>
+              </div></div>
+            </div>
+            <div data-testid='transcript-row' data-perf-row='assistant'>
+              <div class="font-claude-response"><div class="prose">
+                <div class="standard-markdown"><p>La variable <code>total</code> vaut 3.</p></div>
+              </div></div>
+            </div>
+            <div data-testid='transcript-row' data-perf-row='human'>
+              <div data-cds='UserMessage'><div><p>Montre un bloc.</p></div></div>
+            </div>
+            <div data-testid='transcript-row' data-perf-row='assistant'>
+              <div class="font-claude-response"><div class="prose">
+                <div class="standard-markdown"><pre><code class="language-python">total = 3</code></pre></div>
+              </div></div>
+            </div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        assert conv.messages[0].texte == "Ecris la variable `total` en code en ligne."
+        assert conv.messages[1].texte == "La variable `total` vaut 3."
+        # les blocs <pre> restent des fences, sans backtick inline parasite
+        assert "```python" in conv.messages[3].texte
+        assert "`total`" not in conv.messages[3].texte
+
 
 def _claude_transcript_row(index: int, role: str, text: str) -> str:
     """Rangee de transcript minimale (comme le DOM virtualise 2026)."""

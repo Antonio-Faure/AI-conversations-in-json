@@ -13,8 +13,11 @@ Blocs reflexion [data-testid="thinking-block"] exclus du texte final.
 
 from __future__ import annotations
 
+import copy
 import re
 from typing import Any, Dict, List, Optional
+
+from bs4 import NavigableString, Tag
 
 from ..schema import Conversation
 from .base import BaseParser, ParseError
@@ -196,6 +199,28 @@ class ClaudeParser(BaseParser):
         return self.check(conv)
 
     # -- helpers -----------------------------------------------------------
+
+    @classmethod
+    def text_of(cls, el: Optional[Tag]) -> str:
+        """Texte propre en preservant le code inline (`` `code` ``).
+
+        `BaseParser.text_of` ne convertit que les blocs ``<pre>`` en fences :
+        le code inline rendu par Claude (``<code>total</code>``) perdait ses
+        backticks, alors que le schema exige un `texte` markdown complet. On
+        transforme ici les ``<code>`` hors ``<pre>`` en code markdown avant le
+        nettoyage commun.
+        """
+        if el is None:
+            return ""
+        node = copy.copy(el)
+        for code in node.find_all("code"):
+            if code.find_parent("pre") is not None:
+                continue  # deja gere en fence par BaseParser._clean_tree
+            content = code.get_text().strip()
+            if not content:
+                continue
+            code.replace_with(NavigableString(f"`{content}`"))
+        return super().text_of(node)
 
     @staticmethod
     def _drop_thinking_labels(content: str) -> str:
