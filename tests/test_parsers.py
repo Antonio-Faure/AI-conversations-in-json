@@ -15,6 +15,7 @@ from src.parsers import (
 )
 from src.parsers.base import ParseError
 from src.parsers.chatgpt import merge_turn_snapshots, order_fragments_by_time
+from src.parsers.claude import merge_transcript_rows
 from src.parsers.gemini import merge_turn_fragments
 from src.schema import Conversation
 
@@ -321,6 +322,76 @@ class TestClaudeParser:
         assert conv.messages[0].texte == "Question courte"
         assert conv.messages[2].texte == "Deuxieme question"
         assert "Deuxieme reponse" in conv.messages[3].texte
+
+
+def _claude_transcript_row(index: int, role: str, text: str) -> str:
+    """Rangee de transcript minimale (comme le DOM virtualise 2026)."""
+    if role == "user":
+        inner = f"<div data-cds='UserMessage'><div><p>{text}</p></div></div>"
+    else:
+        inner = (
+            "<div class='font-claude-response'><div class='prose'>"
+            f"<div class='standard-markdown'><p>{text}</p></div></div></div>"
+        )
+    return (
+        f"<div data-testid='transcript-row' data-index='{index}' "
+        f"data-perf-row='{role}'>{inner}</div>"
+    )
+
+
+class TestClaudeMergeRows:
+    """Fusion des rangees virtualisees du transcript Claude."""
+
+    def test_trie_par_index_et_dedup(self):
+        rows = [
+            _claude_transcript_row(3, "assistant", "Reponse 3"),
+            _claude_transcript_row(0, "user", "Question 0"),
+            _claude_transcript_row(2, "user", "Question 2"),
+            _claude_transcript_row(1, "assistant", "Reponse 1"),
+            _claude_transcript_row(4, "user", "Question 4"),
+            _claude_transcript_row(1, "assistant", "Reponse 1"),  # doublon
+        ]
+        conv = ClaudeParser().parse(
+            merge_transcript_rows(rows), conversation_id="c"
+        )
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant", "user",
+        ]
+        assert [m.texte for m in conv.messages] == [
+            "Question 0", "Reponse 1", "Question 2", "Reponse 3", "Question 4",
+        ]
+
+    def test_dedup_garde_le_rendu_le_plus_complet(self):
+        rows = [
+            _claude_transcript_row(0, "user", "Question"),
+            _claude_transcript_row(0, "user", "Question avec details supplementaires"),
+            _claude_transcript_row(1, "assistant", "Reponse"),
+        ]
+        conv = ClaudeParser().parse(
+            merge_transcript_rows(rows), conversation_id="c"
+        )
+        assert len(conv.messages) == 2
+        assert "details supplementaires" in conv.messages[0].texte
+
+    def test_header_reinjecte_pour_le_modele(self):
+        header = (
+            "<button data-testid='model-selector-dropdown' "
+            "aria-label='Modèle : Sonnet 5 Extra'></button>"
+        )
+        html = merge_transcript_rows(
+            [
+                _claude_transcript_row(0, "user", "Question"),
+                _claude_transcript_row(1, "assistant", "Reponse"),
+            ],
+            header_html=header,
+        )
+        conv = ClaudeParser().parse(html, conversation_id="c")
+        assert conv.model == "Sonnet 5 Extra"
+        assert len(conv.messages) == 2
+
+    def test_fragments_vides(self):
+        assert merge_transcript_rows([]) == ""
+        assert merge_transcript_rows(["<div>sans rangee</div>"]) == ""
 
 
 class TestGeminiParser:

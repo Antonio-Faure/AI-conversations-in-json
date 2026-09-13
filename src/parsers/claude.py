@@ -34,6 +34,41 @@ ASSISTANT_VALUES = ("assistant-message-text", "collapsible-text")
 #: balise des tours user dans le DOM transcript 2026
 USER_CDS = "UserMessage"
 
+#: position absolue (0-based) d'une rangee du transcript virtualise
+ROW_INDEX_ATTR_RE = re.compile(r"data-index=['\"](\d+)['\"]")
+
+
+def merge_transcript_rows(fragments: List[str], header_html: str = "") -> str:
+    """Fusionne les rangees de transcript accumulees en un HTML parsable.
+
+    Claude virtualise le fil : a chaque position de scroll le DOM ne rend
+    qu'une fenetre de `[data-testid='transcript-row']`. Chaque rangee porte
+    `data-index`, sa position absolue (0-based) dans le fil. On deduplique par
+    index (en gardant le rendu le plus complet) puis on trie par index croissant
+    pour restituer la chronologie, independamment du sens du scroll.
+
+    `header_html` (selecteur de modele...) est reinjecte en tete pour conserver
+    les metadonnees de page dans le HTML reconstruit.
+    """
+    best: Dict[int, str] = {}
+    for fragment in fragments:
+        match = ROW_INDEX_ATTR_RE.search(fragment)
+        if not match:
+            continue
+        index = int(match.group(1))
+        previous = best.get(index)
+        if previous is None or len(fragment) > len(previous):
+            best[index] = fragment
+    if not best:
+        return ""
+    ordered = [best[index] for index in sorted(best)]
+    return (
+        "<!DOCTYPE html><html><head><meta charset='utf-8'></head><body>"
+        + (header_html or "")
+        + "".join(ordered)
+        + "</body></html>"
+    )
+
 
 class ClaudeParser(BaseParser):
     service_name = "claude"
