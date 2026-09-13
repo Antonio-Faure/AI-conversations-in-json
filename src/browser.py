@@ -349,6 +349,25 @@ class BrowserSession:
         except PlaywrightError:
             pass
 
+    def is_input_empty(self, selectors: Sequence[str]) -> bool:
+        """Vrai si le premier champ de saisie trouve est vide (envoi accepte)."""
+        for selector in selectors:
+            try:
+                element = self.page.query_selector(selector)
+            except PlaywrightError:
+                continue
+            if element is None:
+                continue
+            try:
+                value = element.evaluate(
+                    "el => (el.value !== undefined && el.value !== null) "
+                    "? el.value : (el.innerText || el.textContent || '')"
+                )
+            except PlaywrightError:
+                value = ""
+            return not str(value or "").strip()
+        return True
+
     # -- scroll ---------------------------------------------------------------
 
     def scroll_page_until_stable(

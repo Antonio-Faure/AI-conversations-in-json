@@ -186,6 +186,28 @@ def test_gemini_attach_sans_fichier_ok():
     assert driver.attach([]) is True
 
 
+class RefusingSession(FakeSession):
+    def is_input_empty(self, selectors):
+        return False
+
+
+def test_confirm_sent_sans_support():
+    assert FakeDriver(FakeSession()).confirm_sent() is True
+
+
+def test_confirm_sent_utilise_la_session():
+    assert FakeDriver(RefusingSession()).confirm_sent() is False
+
+
+def test_envoi_refuse_non_compte(tmp_path):
+    driver = FakeDriver(RefusingSession())
+    status = make_runner(tmp_path, driver, [{"text": "m1"}, {"text": "m2"}]).run()
+    assert status == "error"
+    state = json.loads((tmp_path / "state.json").read_text(encoding="utf-8"))
+    assert state["next_index"] == 0
+    assert "non confirme" in (state["last_error"] or "")
+
+
 def test_target_url_recapture_apres_envoi(tmp_path):
     """Un nouveau chat n'a son id qu'apres le 1er message : l'URL doit suivre."""
 

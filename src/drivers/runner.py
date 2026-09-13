@@ -183,6 +183,14 @@ class EtalonRunner:
                     self.state.last_error = f"envoi echoue (message {index + 1})"
                     self.state.status = STATUS_ERROR
                     break
+                # verification : un envoi refuse (rate/erreur) ne doit pas etre compte
+                self.driver.session.wait_ms(700)
+                if not self.driver.confirm_sent():
+                    self.state.last_error = (
+                        f"envoi non confirme (champ non vide, message {index + 1})"
+                    )
+                    self.state.status = STATUS_ERROR
+                    break
                 self.driver.wait_for_response()
                 self._refresh_target_url()
                 self.state.next_index = index + 1

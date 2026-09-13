@@ -115,6 +115,20 @@ class ChatDriver:
             self.session.press("Enter")
         return True
 
+    def confirm_sent(self) -> bool:
+        """Verifie que l'envoi a bien ete accepte (champ de saisie vide).
+
+        Empeche de compter un message non parti (bouton rate/erreur). Si le
+        moteur ne sait pas verifier, on suppose l'envoi accepte.
+        """
+        checker = getattr(self.session, "is_input_empty", None)
+        if not callable(checker):
+            return True
+        try:
+            return bool(checker(list(self.input_selectors)))
+        except Exception:  # noqa: BLE001
+            return True
+
     def wait_for_response(self, timeout_ms: Optional[int] = None) -> bool:
         """Attend la fin de la generation (disparition du bouton stop)."""
         timeout = int(timeout_ms or self.timeout_ms)

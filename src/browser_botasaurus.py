@@ -14,6 +14,7 @@ Contrairement a Playwright, pas d'objet `page` : tout passe par la facade
 
 from __future__ import annotations
 
+import json
 import os
 import time
 from pathlib import Path
@@ -338,6 +339,22 @@ class BotasaurusSession:
 
     def press(self, key: str) -> None:
         log.debug("press(%s) non supporte directement par botasaurus", key)
+
+    def is_input_empty(self, selectors: Sequence[str]) -> bool:
+        """Vrai si le premier champ de saisie trouve est vide (envoi accepte)."""
+        for raw in selectors:
+            sel = translate_selector(raw)
+            if not self._present(sel, wait_s=0.0):
+                continue
+            empty = self._run_js(
+                "const el = document.querySelector(%s);"
+                "if (!el) return true;"
+                "const v = (el.value !== undefined && el.value !== null) ? el.value "
+                ": (el.innerText || el.textContent || '');"
+                "return String(v).trim().length === 0;" % json.dumps(sel.css)
+            )
+            return bool(empty)
+        return True
 
     # -- scroll ------------------------------------------------------------------
 
