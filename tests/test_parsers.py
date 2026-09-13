@@ -14,6 +14,7 @@ from src.parsers import (
     PerplexityParser,
 )
 from src.parsers.base import ParseError
+from src.parsers.chatgpt import merge_turn_snapshots
 from src.parsers.gemini import merge_turn_fragments
 from src.schema import Conversation
 
@@ -143,6 +144,66 @@ class TestChatGPTParser:
         assert "![photo.png]" in conv.messages[0].texte
         assert "Generated image" in conv.messages[1].texte
         assert "Bien recu" in conv.messages[1].texte
+
+
+class TestChatGPTTurnMerge:
+    """Fusion incrementale des fenetres de tours (virtualisation ChatGPT)."""
+
+    @staticmethod
+    def _turn(message_id: str, role: str, text: str) -> str:
+        return (
+            "<div data-testid='conversation-turn-x'>"
+            f"<div data-message-author-role='{role}' data-message-id='{message_id}'>"
+            f"<div class='markdown'><p>{text}</p></div></div></div>"
+        )
+
+    def test_remonte_sans_doublon_et_ordre_chronologique(self):
+        html = {
+            "m:a": self._turn("a", "user", "A"),
+            "m:b": self._turn("b", "assistant", "B"),
+            "m:c": self._turn("c", "user", "C"),
+            "m:d": self._turn("d", "assistant", "D"),
+        }
+        # fenetres vues en remontant le fil : recents -> anciens
+        snapshots = [["m:d"], ["m:c", "m:d"], ["m:b", "m:c", "m:d"], ["m:a", "m:b"]]
+        fragments = merge_turn_snapshots(snapshots, html)
+        assert fragments == [html["m:a"], html["m:b"], html["m:c"], html["m:d"]]
+
+    def test_composants_disjoints_du_plus_recent_au_plus_ancien(self):
+        html = {
+            "m:a": self._turn("a", "user", "A"),
+            "m:b": self._turn("b", "assistant", "B"),
+            "m:c": self._turn("c", "user", "C"),
+            "m:d": self._turn("d", "assistant", "D"),
+        }
+        # saut de fenetre : deux composants non relies, le second plus ancien
+        snapshots = [["m:d"], ["m:c", "m:d"], ["m:b"], ["m:a", "m:b"]]
+        fragments = merge_turn_snapshots(snapshots, html)
+        assert fragments == [html["m:a"], html["m:b"], html["m:c"], html["m:d"]]
+
+    def test_parse_apres_fusion_roles_alternees(self):
+        html = {
+            "m:u1": self._turn("u1", "user", "Question 1"),
+            "m:a1": self._turn("a1", "assistant", "Reponse 1"),
+            "m:u2": self._turn("u2", "user", "Question 2"),
+            "m:a2": self._turn("a2", "assistant", "Reponse 2"),
+        }
+        snapshots = [["m:a2"], ["m:u2", "m:a2"], ["m:u1", "m:a1", "m:u2"]]
+        fragments = merge_turn_snapshots(snapshots, html)
+        document = "<html><body>" + "".join(fragments) + "</body></html>"
+        conv = ChatGPTParser().parse(document, conversation_id="c")
+        assert [m.role for m in conv.messages] == [
+            "user",
+            "assistant",
+            "user",
+            "assistant",
+        ]
+        assert [m.texte for m in conv.messages] == [
+            "Question 1",
+            "Reponse 1",
+            "Question 2",
+            "Reponse 2",
+        ]
 
 
 class TestClaudeParser:

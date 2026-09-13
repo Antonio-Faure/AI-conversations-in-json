@@ -19,6 +19,53 @@ from .base import BaseParser, ParseError
 CONVERSATION_ID_RE = re.compile(r"/c/([0-9a-fA-F-]{16,}|[A-Za-z0-9_-]{16,})")
 
 
+def merge_turn_snapshots(
+    snapshots: List[List[str]], html_by_key: Dict[str, str]
+) -> List[str]:
+    """Reconstruit l'ordre des tours a partir des fenetres vues au scroll.
+
+    ChatGPT virtualise les fils longs : a chaque instant le DOM ne contient
+    qu'une fenetre de tours. En scrollant, on memorise par cle (message-id ou
+    contenu) chaque fenetre ordonnee. On assemble ensuite les aretes de
+    succession ``cle -> cle suivante`` en une chaine, sans doublon : la
+    chronologie est independante du sens du scroll.
+
+    Les composants disjoints (tours non relies, ex. scroll trop rapide) sont
+    ordonnes par ordre de decouverte inverse : en remontant le fil, un
+    composant decouvert plus tard est plus ancien.
+
+    Retourne les fragments HTML dans l'ordre chronologique.
+    """
+    successor: Dict[str, str] = {}
+    discovery: Dict[str, int] = {}
+    for index, snapshot in enumerate(snapshots):
+        for key in snapshot:
+            discovery.setdefault(key, index)
+        for left, right in zip(snapshot, snapshot[1:]):
+            successor.setdefault(left, right)
+    predecessor = {right: left for left, right in successor.items()}
+
+    components: List[tuple] = []
+    remaining = set(discovery)
+    while remaining:
+        starts = sorted(
+            (key for key in remaining if key not in predecessor),
+            key=lambda key: discovery[key],
+        )
+        start = starts[0] if starts else min(remaining, key=lambda key: discovery[key])
+        component: List[str] = []
+        current: Optional[str] = start
+        while current is not None and current in remaining:
+            component.append(current)
+            remaining.discard(current)
+            current = successor.get(current)
+        components.append((discovery[start], component))
+
+    components.sort(key=lambda item: item[0], reverse=True)
+    ordered = [key for _, component in components for key in component]
+    return [html_by_key[key] for key in ordered if key in html_by_key]
+
+
 class ChatGPTParser(BaseParser):
     service_name = "chatgpt"
 
