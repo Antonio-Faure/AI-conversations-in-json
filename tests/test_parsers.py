@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from src.parsers import (
@@ -796,6 +798,67 @@ class TestGrokParser:
         conv = GrokParser().parse("", conversation_id="grok-3", extra=payload)
         assert [m.role for m in conv.messages] == ["user", "assistant"]
         assert conv.messages[1].texte == "Rate limit reached."
+
+    def test_fichier_genere_garde_l_alternance(self):
+        """Tour assistant reduit a une carte `rendered_file_card` (sans texte).
+
+        Cas reel des tests 37/47 : Grok fournit le fichier demande mais le
+        `message` est vide. Sans conserver la carte, le tour est saute et les
+        deux messages `user` encadrants sont fusionnes.
+        """
+        card = json.dumps({
+            "type": "render_file",
+            "cardType": "rendered_file_card",
+            "file_name": "resultat.txt",
+            "mime_type": "text/plain",
+            "file_size": 18,
+            "url": "users/x/generated/y/resultat.txt",
+        })
+        payload = {
+            "conversation": {"conversationId": "grok-4", "title": "Etalon"},
+            "responses": [
+                {"responseId": "r1", "sender": "human",
+                 "message": "Crée un fichier TXT nommé resultat.txt.", "model": ""},
+                {"responseId": "r2", "sender": "assistant", "message": "",
+                 "model": "grok-3", "cardAttachmentsJson": [card]},
+                {"responseId": "r3", "sender": "human",
+                 "message": "Texte long : Section A début.", "model": ""},
+                {"responseId": "r4", "sender": "assistant",
+                 "message": "Voici le texte long.", "model": "grok-3"},
+            ],
+        }
+        conv = GrokParser().parse("", conversation_id="grok-4", extra=payload)
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        assert "resultat.txt" in conv.messages[1].texte
+        assert conv.messages[1].metadata.get("generated_files")
+        # le message user suivant n'a pas ete absorbe par le precedent
+        assert "Texte long" in conv.messages[2].texte
+        assert "Texte long" not in conv.messages[0].texte
+
+    def test_tour_assistant_vide_garde_l_alternance(self):
+        """Assistant vide sans erreur ni fichier : tour conserve (alternance)."""
+        payload = {
+            "conversation": {"conversationId": "grok-5", "title": "Etalon"},
+            "responses": [
+                {"responseId": "r1", "sender": "human",
+                 "message": "Premier message.", "model": ""},
+                {"responseId": "r2", "sender": "assistant", "message": "",
+                 "model": "grok-3"},
+                {"responseId": "r3", "sender": "human",
+                 "message": "Deuxieme message.", "model": ""},
+                {"responseId": "r4", "sender": "assistant",
+                 "message": "Reponse.", "model": "grok-3"},
+            ],
+        }
+        conv = GrokParser().parse("", conversation_id="grok-5", extra=payload)
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        assert conv.messages[1].texte == ""
+        assert "Deuxieme" in conv.messages[2].texte
+        assert "Deuxieme" not in conv.messages[0].texte
 
 
 class TestMistralParser:
