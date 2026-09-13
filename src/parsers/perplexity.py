@@ -10,8 +10,11 @@ Structure reelle observee (2024-2026) :
 
 from __future__ import annotations
 
+import copy
 import re
 from typing import Any, Dict, List, Optional
+
+from bs4 import NavigableString, Tag
 
 from ..schema import Conversation
 from .base import BaseParser, ParseError, clean_ui_title
@@ -35,22 +38,29 @@ class PerplexityParser(BaseParser):
     conversation_id_pattern = CONV_ID_RE
 
     message_selectors = (
-        "[class*='user-bubble']",
-        "[class*='final-text']",
+        "div[class~='group/user-bubble']",
+        "div[data-workflow-final-text]",
+        "div[class~='group/final-text']",
         "[data-testid='user-query-text']",
         "[data-testid='answer-text']",
         "[data-testid='answer']",
     )
 
-    #: 2026: bulles Tailwind sans data-testid (user-bubble / final-text)
+    #: 2026: bulles Tailwind sans data-testid (user-bubble / final-text).
+    #: `class~=` matche le jeton exact `group/user-bubble` ; l'ancien
+    #: `class*=user-bubble` attrapait aussi la barre d'outils du message
+    #: (jetons `group-hover/user-bubble:...`), d'ou des horodatages parasites.
     USER_SELECTORS = (
-        "div[class*='user-bubble']",
+        "div[class~='group/user-bubble']",
         "[data-testid='user-query-text']",
         "[data-testid='user-query'] .query",
         "div.user-query",
     )
+    #: `data-workflow-final-text` isole le tour de reponse du header de workflow
+    #: (« Recherche terminee ») et du footer d'actions.
     ASSISTANT_SELECTORS = (
-        "div[class*='final-text']",
+        "div[data-workflow-final-text]",
+        "div[class~='group/final-text']",
         "[data-testid='answer-text']",
         "[data-testid='answer-body']",
         "[data-testid='answer'] .answer",
@@ -94,7 +104,10 @@ class PerplexityParser(BaseParser):
         last_user_ts = page_timestamp
 
         for node, role in pairs:
-            content = self.text_of(node)
+            content = (
+                self._user_text(node) if role == "user"
+                else self._assistant_text(node)
+            )
             if not content:
                 continue
             metadata: Dict[str, Any] = {}
@@ -151,6 +164,53 @@ class PerplexityParser(BaseParser):
         if time_el is not None:
             return time_el.get("datetime") or time_el.get_text(strip=True)
         return None
+
+    @classmethod
+    def _user_text(cls, node: Tag) -> str:
+        """Texte de la requete, sans la barre d'outils (horodatage/boutons).
+
+        L'horodatage est dans un conteneur invisible hors survol (classe
+        `opacity-0`) ; `text_of` n'ecarte que les `button`/`svg`. Les URLs
+        saisies sont rendues en `span[role=button][title=url]` et seraient
+        supprimees comme des boutons : on les remet en texte avant nettoyage.
+        """
+        work = copy.copy(node)
+        for toolbar in work.select("[class*='opacity-0']"):
+            toolbar.decompose()
+        for button in work.select("[role='button'][title]"):
+            url = (button.get("title") or "").strip()
+            if url.startswith(("http://", "https://")):
+                button.replace_with(NavigableString(url))
+        return cls.text_of(work)
+
+    @classmethod
+    def _assistant_text(cls, node: Tag) -> str:
+        """Corps de la reponse, sans l'en-tete de workflow (« Recherche terminee »).
+
+        Le tour `final-text` encapsule un en-tete d'etape, le corps rendu
+        (`[data-renderer='lm']`) et un footer d'actions. On ne garde que le(s)
+        corps ; un separateur horizontal (`<hr>`) est restaure en `---`.
+        """
+        bodies = node.select("[data-renderer='lm']")
+        if bodies:
+            parts: List[str] = []
+            for body in bodies:
+                work = copy.copy(body)
+                for hr in work.find_all("hr"):
+                    hr.replace_with(NavigableString("\n\n---\n\n"))
+                text = cls.text_of(work)
+                if text:
+                    parts.append(text)
+            if parts:
+                return "\n\n".join(parts)
+        # repli : retirer l'en-tete de workflow (« Recherche terminee ») et le
+        # footer d'actions avant extraction.
+        work = copy.copy(node)
+        for header in work.select("[class*='step-header']"):
+            header.decompose()
+        for footer in work.select("[data-workflow-text-footer]"):
+            footer.decompose()
+        return cls.text_of(work)
 
     @classmethod
     def _sources_of(cls, answer_node) -> List[str]:

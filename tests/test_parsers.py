@@ -546,6 +546,79 @@ class TestPerplexityParser:
         )
         assert conv.started_at == "2026-09-05T08:00:00Z"
 
+    # DOM 2026 sans data-testid : bulles Tailwind `group/user-bubble` et
+    # tours `data-workflow-final-text` (en-tete de workflow + corps `lm`).
+    _DOM_2026 = """
+    <div class="group group/user-bubble flex items-start justify-end gap-2">
+      <div class="flex flex-col items-end gap-1 max-w-[600px]">
+        <div class="inline-flex flex-col items-end">
+          <div class="min-w-[48px] select-none p-3 bg-subtle rounded-2xl">
+            <span class="min-w-0 font-sans text-base text-primary select-text">
+              <span class="block max-w-full whitespace-pre-line break-words">
+                Crée un lien Markdown vers
+                <span role="button" title="https://exemple.com">https://exemple.com</span>
+                avec le texte "Exemple".
+              </span>
+            </span>
+          </div>
+        </div>
+        <div class="mt-1 flex h-6 items-center justify-end opacity-0
+                    group-hover/user-bubble:pointer-events-auto">
+          <span class="text-tertiary text-xs select-none whitespace-nowrap">01:27</span>
+          <button aria-label="Copier la requête">Copier</button>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col min-w-0 group/final-text gap-1 mt-4"
+         data-workflow-final-text="">
+      <div class="flex flex-col min-w-0 gap-4">
+        <div class="w-full"><div class="contents"><div class="flex flex-col min-w-0">
+          <div class="group/step-header relative z-10 flex items-center gap-2">
+            <div class="min-w-0 w-full flex items-center gap-2">
+              <span class="flex min-w-0 items-center gap-1">
+                <div class="font-sans text-secondary text-sm select-none">Recherche terminée</div>
+              </span>
+            </div>
+          </div>
+        </div></div></div>
+        <div class="w-full"><div class="w-full flex flex-col"><div class="contents">
+          <div class="break-words min-w-0 flex-1"><div>
+            <div class="prose leading-relaxed" data-renderer="lm">
+              <p>[Exemple](https://exemple.com)</p>
+            </div>
+          </div></div>
+        </div></div></div>
+      </div>
+    </div>
+    """
+
+    def test_dom_2026_une_bulle_par_message(self):
+        conv = PerplexityParser().parse(self._DOM_2026, conversation_id="c")
+        # la barre d'outils (jetons `group-hover/user-bubble:...`) ne doit pas
+        # etre selectionnee comme un second message user
+        assert [m.role for m in conv.messages] == ["user", "assistant"]
+
+    def test_dom_2026_sans_horodatage_dans_la_requete(self):
+        conv = PerplexityParser().parse(self._DOM_2026, conversation_id="c")
+        user = conv.messages[0].texte
+        assert "01:27" not in user
+        assert "Copier" not in user
+        # URL saisie rendue en `span[role=button][title]` : conservee
+        assert "https://exemple.com" in user
+
+    def test_dom_2026_assistant_sans_libelle_workflow(self):
+        conv = PerplexityParser().parse(self._DOM_2026, conversation_id="c")
+        assistant = conv.messages[1].texte
+        assert "Recherche terminée" not in assistant
+        assert "[Exemple](https://exemple.com)" in assistant
+
+    def test_dom_2026_separateur_horizontal_en_markdown(self):
+        html = self._DOM_2026.replace(
+            "<p>[Exemple](https://exemple.com)</p>", "<hr/>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        assert conv.messages[1].texte == "---"
+
 
 class TestTextOfMarkdown:
     """Conversion des noeuds riches en markdown (liens, images, code)."""
