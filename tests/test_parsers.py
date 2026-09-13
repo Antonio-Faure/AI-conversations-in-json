@@ -9,6 +9,7 @@ from src.parsers import (
     ClaudeParser,
     GeminiParser,
     GrokParser,
+    MistralParser,
     PARSER_CLASSES,
     PerplexityParser,
 )
@@ -473,6 +474,39 @@ class TestGrokParser:
     def test_sans_reponses_erreur(self):
         with pytest.raises(ParseError):
             GrokParser().parse("", conversation_id="x", extra={"responses": []})
+
+
+class TestMistralParser:
+    """Cas reel de l'etalon : une reponse assistant reduite a un <hr>."""
+
+    HTML = """
+    <html><head><title>Test Mistral</title></head><body><main>
+      <div data-message-author-role="user" data-message-id="u-1">
+        <div class="select-text"><span>Affiche un separateur horizontal.</span></div>
+      </div>
+      <div data-message-author-role="assistant" data-message-id="a-1">
+        <div data-message-part-type="answer">
+          <div class="markdown-container-style"><hr/></div>
+        </div>
+      </div>
+      <div data-message-author-role="user" data-message-id="u-2">
+        <div class="select-text"><span>Affiche le code en ligne.</span></div>
+      </div>
+      <div data-message-author-role="assistant" data-message-id="a-2">
+        <div data-message-part-type="answer">
+          <div class="markdown-container-style"><p>Voici <code>print('Hello')</code>.</p></div>
+        </div>
+      </div>
+    </main></body></html>
+    """
+
+    def test_hr_seul_conserve_l_alternance(self):
+        conv = MistralParser().parse(self.HTML, conversation_id="work-1")
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        assert conv.messages[1].texte == "---"
+        assert "print('Hello')" in conv.messages[3].texte
 
 
 class TestTousLesParsers:

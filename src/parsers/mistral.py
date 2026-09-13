@@ -92,7 +92,16 @@ class MistralParser(BaseParser):
     def _text_of_turn(cls, container, role: str) -> str:
         if role == "assistant":
             parts = container.select("[data-message-part-type='answer']")
-            texts = [cls.text_of(p) for p in parts]
+            texts = []
+            for part in parts:
+                text = cls.text_of(part)
+                # Un tour reduit a un <hr> (reponse « affiche un separateur »)
+                # n'a aucun texte : `get_text` le perd, ce qui ferait fusionner
+                # deux tours user consecutifs (alternance du schema). On le rend
+                # en regle Markdown.
+                if part.find("hr") is not None:
+                    text = f"{text}\n\n---".strip()
+                texts.append(text)
             text = "\n\n".join(t for t in texts if t).strip()
             if text:
                 return text
