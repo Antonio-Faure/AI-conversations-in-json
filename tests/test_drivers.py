@@ -690,3 +690,87 @@ def test_grok_rate_limit_repli_dom_si_api_hs():
     )
     driver = get_driver("grok")(session)
     assert driver.is_rate_limited() is True
+
+
+class ChatGPTTranscriptSession(FakeSession):
+    """Session factice : expose le dernier tour utilisateur et le champ."""
+
+    def __init__(self, last_user="", empty=True, page_text=""):
+        super().__init__()
+        self.last_user = last_user
+        self.empty = empty
+        self.page_text_value = page_text
+        self.typed: list[str] = []
+
+    def is_input_empty(self, selectors):
+        return self.empty
+
+    def eval_body(self, body):
+        if "data-message-author-role='user'" in body:
+            return self.last_user
+        if "document.body" in body:
+            return self.page_text_value
+        return ""
+
+    def type_into(self, selectors, text):
+        self.typed.append(text)
+        return selectors[0] if selectors else None
+
+
+def test_chatgpt_confirm_sent_exige_le_tour_utilisateur():
+    """Champ vide sans nouveau tour : envoi refuse, non compte."""
+    driver = get_driver("chatgpt")(ChatGPTTranscriptSession(last_user="Ancien message"))
+    driver._pending_text = "Bonjour le monde"
+    assert driver.confirm_sent() is False
+
+
+def test_chatgpt_confirm_sent_accepte_le_tour_present():
+    session = ChatGPTTranscriptSession(last_user="Bonjour le monde, voici la suite")
+    driver = get_driver("chatgpt")(session)
+    driver._pending_text = "Bonjour le monde"
+    assert driver.confirm_sent() is True
+
+
+def test_chatgpt_confirm_sent_accepte_la_piece_jointe():
+    """Le tour rendu prefixe par le nom du fichier doit etre reconnu."""
+    session = ChatGPTTranscriptSession(
+        last_user="audio.mp3\nFile\nTranscris cet audio en une seule phrase."
+    )
+    driver = get_driver("chatgpt")(session)
+    driver._pending_text = (
+        "Transcris cet audio en une seule phrase, sans commentaire supplémentaire."
+    )
+    assert driver.confirm_sent() is True
+
+
+def test_chatgpt_confirm_sent_detecte_le_rate_limit():
+    session = ChatGPTTranscriptSession(
+        last_user="Bonjour le monde",
+        page_text="You've reached your message limit. Try again later.",
+    )
+    driver = get_driver("chatgpt")(session)
+    driver._pending_text = "Bonjour le monde"
+    assert driver.confirm_sent() is False
+
+
+def test_chatgpt_confirm_sent_refuse_champ_non_vide():
+    session = ChatGPTTranscriptSession(last_user="Bonjour le monde", empty=False)
+    driver = get_driver("chatgpt")(session)
+    driver._pending_text = "Bonjour le monde"
+    assert driver.confirm_sent() is False
+
+
+def test_chatgpt_detecte_limite_fichiers():
+    """Le free tier bloque les conversations contenant des fichiers/images."""
+    cls = get_driver("chatgpt")
+    driver = cls(
+        TextSession(
+            "Chat paused until usage resets at 5:17 PM\n"
+            "You've reached the limit for chats that include files or images. "
+            "Start a new text-only chat or upgrade to continue now."
+        )
+    )
+    assert driver.is_rate_limited() is True
+    # une conversation texte normale ne doit pas declencher le quota
+    driver2 = cls(TextSession("Affiche exactement un titre H1 « Test »"))
+    assert driver2.is_rate_limited() is False
