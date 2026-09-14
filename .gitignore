@@ -45,3 +45,6 @@ logs/
 
 # LibreOffice
 .~lock.*#
+
+# archive des exports avant etalonnage
+archive/
