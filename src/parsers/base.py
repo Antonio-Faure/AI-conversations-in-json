@@ -188,7 +188,7 @@ class BaseParser(ABC):
                 continue
             display = katex.find_parent(class_="katex-display") is not None
             katex.replace_with(
-                NavigableString(f"\n$${tex}$$\n" if display else f" ${tex} ")
+                NavigableString(f"\n$${tex}$$\n" if display else f" ${tex}$ ")
             )
         for el in node.select("[data-math], [data-math-source]"):
             tex = (el.get("data-math") or el.get("data-math-source") or "").strip()

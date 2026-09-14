@@ -740,6 +740,25 @@ class TestTextOfMarkdown:
         text = self.parser.text_of(self.parser.make_soup(html))
         assert "[![logo](https://x.io/i.png)](https://x.io)" in text
 
+    def test_katex_inline_ferme_le_dollar(self):
+        html = (
+            '<p>Soit <span class="katex"><span class="katex-mathml"><math>'
+            '<semantics><annotation encoding="application/x-tex">E = mc^2</annotation>'
+            "</semantics></math></span><span class=\"katex-html\">E = mc2</span></span>.</p>"
+        )
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "$E = mc^2$" in text
+
+    def test_katex_display_double_dollar(self):
+        html = (
+            '<div class="katex-display"><span class="katex">'
+            '<span class="katex-mathml"><math><semantics>'
+            '<annotation encoding="application/x-tex">\\int_0^1 x^2</annotation>'
+            "</semantics></math></span></span></div>"
+        )
+        text = self.parser.text_of(self.parser.make_soup(html))
+        assert "$$\\int_0^1 x^2$$" in text
+
     def test_bouton_avec_lien_exclu(self):
         html = '<button><a href="https://x.io">Copier</a></button>'
         text = self.parser.text_of(self.parser.make_soup(html))
