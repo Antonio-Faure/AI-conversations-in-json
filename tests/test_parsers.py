@@ -931,6 +931,128 @@ class TestMistralParser:
         assert conv.messages[1].texte == "---"
         assert "print('Hello')" in conv.messages[3].texte
 
+    MARKDOWN_HTML = """
+    <html><head><title>Test Mistral</title></head><body><main>
+      <div data-message-author-role="user" data-message-id="u-1">
+        <div class="select-text"><span>Structure.</span></div>
+      </div>
+      <div data-message-author-role="assistant" data-message-id="a-1">
+        <div data-message-part-type="answer">
+          <div class="markdown-container-style">
+            <h1>Titre</h1><h2>Sous-titre</h2>
+            <ul><li>un</li><li>deux<ul><li>deux a</li></ul></li></ul>
+            <ol start="3"><li>trois</li><li>quatre</li></ol>
+            <table>
+              <tr><th>A</th><th>B</th></tr>
+              <tr><td>1</td><td>2</td></tr>
+            </table>
+            <blockquote><p>citation</p></blockquote>
+            <hr/>
+          </div>
+        </div>
+      </div>
+    </main></body></html>
+    """
+
+    def test_listes_tableaux_titres_et_separateur(self):
+        conv = MistralParser().parse(self.MARKDOWN_HTML, conversation_id="work-1")
+        text = conv.messages[1].texte
+        assert "# Titre" in text
+        assert "## Sous-titre" in text
+        assert "- un\n- deux\n  - deux a" in text
+        assert "3. trois\n4. quatre" in text
+        assert "| A | B |\n| --- | --- |\n| 1 | 2 |" in text
+        assert "> citation" in text
+        assert text.rstrip().endswith("---")
+
+    @staticmethod
+    def _rsc_html(files):
+        """HTML minimal avec un payload RSC Next.js portant les pieces jointes."""
+        message = {
+            "role": "user",
+            "content": "Question",
+            "files": files,
+            "id": "u-1",
+        }
+        script = "self.__next_f.push([1,%s])" % json.dumps(json.dumps(message))
+        return (
+            "<html><head><title>Test Mistral</title></head><body><main>"
+            '<div data-message-author-role="user" data-message-id="u-1">'
+            '<div class="select-text"><span>Question</span></div></div>'
+            f"<script>{script}</script>"
+            "</main></body></html>"
+        )
+
+    def test_pieces_jointes_depuis_payload_rsc(self):
+        html = self._rsc_html(
+            [
+                {"type": "image", "url": "https://blob/chat-images/a?x=1", "name": "image.png"},
+                {"type": "document", "url": "https://blob/chat-documents/b", "name": "document.pdf"},
+                {"type": "audio", "url": "https://blob/chat-documents/c", "name": "audio.mp3"},
+            ]
+        )
+        conv = MistralParser().parse(html, conversation_id="work-1")
+        text = conv.messages[0].texte
+        assert "![image.png](https://blob/chat-images/a?x=1)" in text
+        assert "[document.pdf](https://blob/chat-documents/b)" in text
+        assert "[audio.mp3](https://blob/chat-documents/c)" in text
+
+    def test_pieces_jointes_repli_dom(self):
+        html = """
+        <html><head><title>Test Mistral</title></head><body><main>
+          <div data-message-author-role="user" data-message-id="u-1">
+            <div class="select-text"><span>Question</span></div>
+            <div class="flex-wrap justify-end">
+              <div><img src="https://blob/chat-images/a.png"/></div>
+              <div><p class="group/text-truncator relative grid">
+                <span class="line-clamp-2">notes.txt</span>
+              </p></div>
+            </div>
+          </div>
+        </main></body></html>
+        """
+        conv = MistralParser().parse(html, conversation_id="work-1")
+        text = conv.messages[0].texte
+        assert "![image](https://blob/chat-images/a.png)" in text
+        assert "notes.txt" in text
+
+    RICH_HTML = """
+    <html><head><title>Test Mistral</title></head><body><main>
+      <div data-message-author-role="user" data-message-id="u-1">
+        <div class="select-text"><span>Tableau et maths.</span></div>
+      </div>
+      <div data-message-author-role="assistant" data-message-id="a-1">
+        <div data-message-part-type="answer">
+          <div class="markdown-container-style">
+            <p>Voici <span class="katex"><span class="katex-mathml"><math>
+              <semantics><annotation encoding="application/x-tex">E = mc^2</annotation>
+              </semantics></math></span><span class="katex-html">E = mc2</span></span>.</p>
+            <div data-rich-table-inner-html="&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Nom&lt;/th&gt;&lt;th&gt;Age&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;Alice&lt;/td&gt;&lt;td&gt;25&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;"
+                 data-rich-table-title="Tableau">
+              <div role="table" class="grid rich-table">
+                <div role="columnheader"><button><span>Nom</span></button></div>
+                <div role="columnheader"><button><span>Age</span></button></div>
+                <div role="columnheader" class="bg-card sticky end-0"><button>x</button></div>
+                <div role="cell"><span>Alice</span></div>
+                <div role="cell"><span>25</span></div>
+                <div role="cell" class="bg-card sticky end-0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main></body></html>
+    """
+
+    def test_tableau_rich_ui_et_latex_inline(self):
+        conv = MistralParser().parse(self.RICH_HTML, conversation_id="work-1")
+        text = conv.messages[1].texte
+        assert "$E = mc^2$" in text  # $ fermant (base l'oublie)
+        assert "Tableau" in text
+        assert "| Nom | Age |" in text
+        assert "| --- | --- |" in text
+        assert "| Alice | 25 |" in text
+
 
 class TestTousLesParsers:
     @pytest.mark.parametrize("service", sorted(set(PARSER_CLASSES) - {"grok"}))
