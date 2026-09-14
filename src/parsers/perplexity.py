@@ -26,6 +26,41 @@ MODEL_RE = re.compile(
 )
 
 
+def merge_thread_messages(items: List[Dict[str, Any]]) -> str:
+    """Reconstruit le HTML d'un fil Perplexity a partir des tours accumules.
+
+    Le fil est virtualise : le navigateur ne monte qu'une fenetre de messages.
+    Le service remonte le conteneur scrollable en memorisant chaque message
+    (cle = role + debut de contenu), en gardant le HTML le plus long et la
+    derniere position verticale connue. On trie ici par position absolue pour
+    retrouver l'ordre chronologique, puis on re-emballe chaque message dans un
+    conteneur dedie (le parser retrouve ainsi les sources au bon endroit).
+
+    ``items`` : liste de dicts ``{key, role, html, pos}``.
+    """
+    rows: Dict[str, Dict[str, Any]] = {}
+    for item in items or []:
+        key = item.get("key")
+        html = item.get("html")
+        if not key or not html:
+            continue
+        rows[key] = item
+    if not rows:
+        return ""
+    ordered = sorted(
+        rows.values(),
+        key=lambda it: (it.get("pos") or 0, it.get("key") or ""),
+    )
+    parts = ['<html><body><div class="aicv-perplexity-thread">']
+    for item in ordered:
+        parts.append(
+            '<div class="aicv-ppl-msg" data-role="%s">%s</div>'
+            % (item.get("role") or "message", item["html"])
+        )
+    parts.append("</div></body></html>")
+    return "\n".join(parts)
+
+
 class PerplexityParser(BaseParser):
     service_name = "perplexity"
 

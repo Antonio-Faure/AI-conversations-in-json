@@ -3,6 +3,11 @@
 Decouverte : l'API GraphQL de la library (persisted query) liste TOUT
 (la liste DOM est virtualisee et la sidebar ne montre que le recent).
 Fallback : collecteur DOM incrementiel si l'API change.
+
+Le fil d'une conversation est lui aussi virtualise : le DOM ne monte qu'une
+fenetre de messages (`min-height` reserves pour les autres). `scrape_conversation`
+remonte donc le conteneur `.scrollable-container` en accumulant les messages
+(HTML le plus long gagne) avant de reconstruire un HTML complet a parser.
 """
 
 from __future__ import annotations
@@ -10,12 +15,130 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Optional
 
-from ..parsers.perplexity import PerplexityParser
+from ..parsers.perplexity import PerplexityParser, merge_thread_messages
 from ..schema import ConversationRef
 from ..utils.logging import get_logger, log_fields
-from .base import BaseService
+from .base import BaseService, ScrapedPage
 
 log = get_logger("services")
+
+# -- collecte incrementale du fil (virtualisation) ---------------------------
+
+#: messages user (bulle Tailwind 2026)
+_USER_SELECTOR = "div[class~='group/user-bubble']"
+#: reponse assistant (enveloppe du tour) ; le corps doit contenir `lm`
+_ASSISTANT_SELECTOR = "div[data-workflow-final-text]"
+
+#: remise a zero de l'accumulateur JS
+_RESET_THREAD_JS = """
+window.__aicvPpl = {rows: Object.create(null), pos: Object.create(null),
+                    roles: Object.create(null), scroller: null};
+return 0;
+"""
+
+#: conteneur scrollable du fil (classe stable `scrollable-container`) ; on
+#: choisit celui qui contient le plus de messages (il peut y en avoir d'autres)
+_FIND_SCROLLER_JS = """
+return (function(){
+  let el = null, best = -1;
+  const candidates = Array.from(document.querySelectorAll('.scrollable-container'));
+  for (const c of candidates) {
+    const n = c.querySelectorAll(__USER__).length
+            + c.querySelectorAll(__ASSIST__).length;
+    if (n > best) { el = c; best = n; }
+  }
+  if (!el) {
+    const node = document.querySelector(__USER__) || document.querySelector(__ASSIST__);
+    if (!node) return null;
+    el = node;
+    while (el) {
+      const cs = getComputedStyle(el);
+      if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll')
+          && el.scrollHeight > el.clientHeight + 50 && el.clientHeight > 150) break;
+      el = el.parentElement;
+    }
+  }
+  if (!el) return null;
+  window.__aicvPpl.scroller = el;
+  return {tag: el.tagName, client: el.clientHeight, height: el.scrollHeight,
+          top: Math.round(el.scrollTop)};
+})();
+""".replace("__USER__", json.dumps(_USER_SELECTOR)).replace(
+    "__ASSIST__", json.dumps(_ASSISTANT_SELECTOR)
+)
+
+#: va au bas du fil (les messages recents s'y chargent)
+_SCROLL_BOTTOM_JS = """
+return (function(){
+  const s = window.__aicvPpl && window.__aicvPpl.scroller;
+  if (!s) return null;
+  s.scrollTop = s.scrollHeight;
+  return Math.round(s.scrollTop);
+})();
+"""
+
+#: remonte le fil : les messages plus anciens se prepent au-dessus
+_SCROLL_UP_JS = """
+return (function(){
+  const s = window.__aicvPpl && window.__aicvPpl.scroller;
+  if (!s) return null;
+  const step = Math.max(300, Math.round(s.clientHeight * 0.85));
+  s.scrollTop = Math.max(0, s.scrollTop - step);
+  return Math.round(s.scrollTop);
+})();
+"""
+
+#: memorise les messages montes (cle = role + contenu) ; garde le HTML le plus
+#: long et la derniere position verticale absolue (offset stable grace aux
+#: `min-height` reserves des emplacements non montes)
+_COLLECT_THREAD_JS = """
+return (function(){
+  const acc = window.__aicvPpl;
+  if (!acc) return {count: 0, fresh: 0, top: 0};
+  const s = acc.scroller;
+  const srect = s ? s.getBoundingClientRect() : {top: 0};
+  const st = s ? s.scrollTop : 0;
+  let count = 0, fresh = 0;
+  const consider = (node, role) => {
+    if (!node) return;
+    let text = (node.textContent || '').replace(/\\s+/g, ' ').trim();
+    if (role === 'assistant') {
+      const body = node.querySelector("[data-renderer='lm']");
+      if (!body) return;
+      text = (body.textContent || '').replace(/\\s+/g, ' ').trim();
+    }
+    if (!text) return;
+    const key = role + ':' + text.slice(0, 200);
+    const html = node.outerHTML;
+    const rect = node.getBoundingClientRect();
+    count++;
+    if (acc.rows[key] === undefined) { acc.rows[key] = html; fresh++; }
+    else if (html.length > acc.rows[key].length) { acc.rows[key] = html; }
+    acc.roles[key] = role;
+    acc.pos[key] = Math.round(st + rect.top - srect.top);
+  };
+  document.querySelectorAll(__USER__).forEach(n => consider(n, 'user'));
+  document.querySelectorAll(__ASSIST__).forEach(n => consider(n, 'assistant'));
+  return {count: count, fresh: fresh, top: s ? Math.round(s.scrollTop) : 0,
+          height: s ? s.scrollHeight : 0};
+})();
+""".replace("__USER__", json.dumps(_USER_SELECTOR)).replace(
+    "__ASSIST__", json.dumps(_ASSISTANT_SELECTOR)
+)
+
+#: retourne l'ensemble accumule
+_FINAL_THREAD_JS = """
+return (function(){
+  const acc = window.__aicvPpl;
+  if (!acc) return {items: []};
+  const items = [];
+  for (const key of Object.keys(acc.rows)) {
+    items.push({key: key, role: acc.roles[key] || '', html: acc.rows[key],
+                pos: acc.pos[key] || 0});
+  }
+  return {items: items};
+})();
+"""
 
 
 class PerplexityService(BaseService):
@@ -148,3 +271,58 @@ class PerplexityService(BaseService):
         if model:
             extra["model"] = model
         return extra
+
+    # -- collecte incrementale du fil -------------------------------------------
+
+    def scrape_conversation(self, ref: ConversationRef) -> ScrapedPage:
+        """Charge le fil complet en remontant le conteneur virtualise.
+
+        Le pipeline commun ne monte qu'une fenetre de messages (~12). On
+        accumule les tours en remontant `.scrollable-container`, puis on
+        reconstruit un HTML complet avant parsing. On garde le HTML d'origine
+        si l'accumulation n'apporte pas plus de messages (securite).
+        """
+        page = super().scrape_conversation(ref)
+        merged = self._collect_thread()
+        if merged and merged.count("aicv-ppl-msg") > self._message_count(page.html):
+            page.html = merged
+        return page
+
+    def _collect_thread(self) -> str:
+        """Remonte le fil en memorisant les messages, retourne le HTML accumule."""
+        scroll_cfg = self.config.get("scroll", {})
+        pause_ms = max(250, int(scroll_cfg.get("pause_ms", 700)))
+        max_rounds = max(160, int(scroll_cfg.get("max_rounds", 60)) * 4)
+        stable_rounds = max(4, int(scroll_cfg.get("stable_rounds", 3)) + 1)
+
+        self.session.eval_body(_RESET_THREAD_JS)
+        if self.session.eval_body(_FIND_SCROLLER_JS) is None:
+            return ""
+        self.session.eval_body(_SCROLL_BOTTOM_JS)
+        self.session.wait_ms(pause_ms)
+
+        at_top = False
+        stable = 0
+        for _ in range(max_rounds):
+            info = self.session.eval_body(_COLLECT_THREAD_JS) or {}
+            fresh = int(info.get("fresh") or 0)
+            count = int(info.get("count") or 0)
+            if at_top and fresh == 0 and count > 0:
+                stable += 1
+                if stable >= stable_rounds:
+                    break
+            else:
+                stable = 0
+            step = self.session.eval_body(_SCROLL_UP_JS)
+            if step is None:
+                break
+            at_top = int(step) <= 1
+            self.session.wait_ms(pause_ms)
+
+        data = self.session.eval_body(_FINAL_THREAD_JS) or {}
+        return merge_thread_messages(data.get("items") or [])
+
+    @staticmethod
+    def _message_count(html: str) -> int:
+        """Nombre approximatif de messages montes dans un HTML Perplexity."""
+        return html.count("group/user-bubble") + html.count("data-workflow-final-text")

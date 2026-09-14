@@ -19,6 +19,7 @@ from src.parsers.base import ParseError
 from src.parsers.chatgpt import merge_turn_snapshots, order_fragments_by_time
 from src.parsers.claude import merge_transcript_rows
 from src.parsers.gemini import merge_turn_fragments
+from src.parsers.perplexity import merge_thread_messages
 from src.schema import Conversation
 
 
@@ -654,6 +655,43 @@ class TestPerplexityParser:
         )
         conv = PerplexityParser().parse(html, conversation_id="c")
         assert conv.messages[1].texte == "---"
+
+
+class TestPerplexityMergeThread:
+    """Fusion des messages accumules en remontant le fil virtualise."""
+
+    _USER = (
+        '<div class="group group/user-bubble flex items-start justify-end gap-2">'
+        "<span>{text}</span></div>"
+    )
+    _ASSIST = (
+        '<div class="flex flex-col min-w-0 group/final-text gap-1 mt-4" '
+        'data-workflow-final-text=""><div class="prose" data-renderer="lm">'
+        "<p>{text}</p></div></div>"
+    )
+
+    def _items(self):
+        # ordre de decouverte remontant le fil : les positions absolues
+        # permettent de retrouver l'ordre chronologique.
+        return [
+            {"key": "a:2", "role": "assistant", "html": self._ASSIST.format(text="R2"), "pos": 300},
+            {"key": "u:1", "role": "user", "html": self._USER.format(text="Q1"), "pos": 100},
+            {"key": "a:1", "role": "assistant", "html": self._ASSIST.format(text="R1"), "pos": 200},
+            {"key": "u:2", "role": "user", "html": self._USER.format(text="Q2"), "pos": 250},
+        ]
+
+    def test_trie_par_position_et_parse(self):
+        conv = PerplexityParser().parse(
+            merge_thread_messages(self._items()), conversation_id="c"
+        )
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        assert [m.texte for m in conv.messages] == ["Q1", "R1", "Q2", "R2"]
+
+    def test_items_vides(self):
+        assert merge_thread_messages([]) == ""
+        assert merge_thread_messages([{"key": "", "html": ""}]) == ""
 
 
 class TestTextOfMarkdown:
