@@ -602,6 +602,142 @@ class TestGeminiParser:
         )
         assert "Decris l'image" in conv.messages[0].texte
 
+    def test_langage_et_sortie_des_blocs_code(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>Code</div></user-query>"
+            "<model-response><message-content><code-block>"
+            "<div class='code-block-decoration header-formatted'><span>Python</span></div>"
+            "<pre><code class='code-container formatted' data-test-id='code-content'>"
+            "print(1)</code></pre>"
+            "<div class='code-block-decoration header'><span>Résultat du code</span></div>"
+            "<mat-divider></mat-divider>"
+            "<pre><code class='code-result-container' "
+            "data-test-id='code-output-stdout-stderr'>1</code></pre>"
+            "</code-block></message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        text = conv.messages[1].texte
+        assert "```python\nprint(1)\n```" in text
+        assert "Résultat du code" not in text
+        assert [b.language for b in conv.messages[1].code_blocks] == ["python", ""]
+        assert conv.messages[1].code_blocks[1].code == "1"
+
+    def test_entete_ui_nest_pas_un_langage(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>Mermaid</div></user-query>"
+            "<model-response><message-content><code-block>"
+            "<div class='code-block-decoration header-formatted'>"
+            "<span>Extrait de code</span></div>"
+            "<pre><code class='code-container'>graph LR</code></pre>"
+            "</code-block></message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        text = conv.messages[1].texte
+        assert "Extrait de code" not in text
+        assert "```\ngraph LR\n```" in text
+
+    def test_titres_en_markdown(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>Structure</div></user-query>"
+            "<model-response><message-content>"
+            "<h1>Titre</h1><h2>Sous-titre</h2><h3>Sous-sous-titre</h3>"
+            "</message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        text = conv.messages[1].texte
+        assert "# Titre" in text
+        assert "## Sous-titre" in text
+        assert "### Sous-sous-titre" in text
+
+    def test_citation_gras_italique_barre_et_code_inline(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>Styles</div></user-query>"
+            "<model-response><message-content>"
+            "<blockquote><p>Le code est de la poésie logique</p></blockquote>"
+            "<p><b>A</b> <i>B</i> <s>C</s> <code>git status</code></p>"
+            "</message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        text = conv.messages[1].texte
+        assert "> Le code est de la poésie logique" in text
+        assert "**A** *B* ~~C~~" in text
+        assert "`git status`" in text
+
+    def test_latex_data_math_en_dollars(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>LaTeX</div></user-query>"
+            "<model-response><message-content><p>Soit "
+            "<span class='math-inline' data-math='E=mc^2'>rendu</span>.</p>"
+            "<div class='math-block' data-math='a^2 + b^2 = c^2'>rendu</div>"
+            "</message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        text = conv.messages[1].texte
+        assert "$E=mc^2$" in text
+        assert "$$a^2 + b^2 = c^2$$" in text
+
+    def test_fichier_genere_sans_icone_ni_bouton(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>CSV</div></user-query>"
+            "<model-response><message-content>"
+            "<generated-file>"
+            "<img alt='Icône CSV' "
+            "src='https://drive-thirdparty.googleusercontent.com/32/type/text/csv'>"
+            "<div class='file-name-lr' title='produits.csv'>produits</div>"
+            "<div class='file-type-lr'>CSV</div>"
+            "<button>Ouvert</button>"
+            "</generated-file>"
+            "</message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        text = conv.messages[1].texte
+        assert "produits.csv" in text
+        assert "drive-thirdparty" not in text
+        assert "Ouvert" not in text
+
+    def test_piece_jointe_fichier_garde_le_nom(self):
+        html = (
+            "<html><body>"
+            "<user-query>"
+            "<div class='file-preview-container'>"
+            "<div data-test-id='uploaded-file'>"
+            "<button aria-label='Projet Helios.pdf'>"
+            "<div class='extension-label'>PDF</div>"
+            "<div class='filename-label'>Projet Helios</div>"
+            "</button></div></div>"
+            "<div class='query-text'>Résume le fichier</div>"
+            "</user-query>"
+            "<model-response><message-content>Résumé</message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        assert "Projet Helios.pdf" in conv.messages[0].texte
+        assert "Résume le fichier" in conv.messages[0].texte
+
+    def test_ligne_de_separation_horizontale(self):
+        html = (
+            "<html><body>"
+            "<user-query><div class='query-text'>Haut/Bas</div></user-query>"
+            "<model-response><message-content>"
+            "<p>Haut</p><hr><p>Bas</p>"
+            "</message-content></model-response>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        assert "Haut\n\n---\n\nBas" in conv.messages[1].texte
+
 
 def _turn_block(turn_id: str, question: str, answer: str) -> str:
     return (
