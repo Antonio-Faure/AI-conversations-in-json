@@ -149,6 +149,97 @@ class TestChatGPTParser:
         assert "Generated image" in conv.messages[1].texte
         assert "Bien recu" in conv.messages[1].texte
 
+    @staticmethod
+    def _conversation(markdown: str) -> Conversation:
+        html = (
+            "<html><body><main>"
+            "<div data-testid='conversation-turn-1'>"
+            "<div data-message-author-role='assistant' data-message-id='a1'>"
+            f"<div class='markdown'>{markdown}</div></div></div>"
+            "</main></body></html>"
+        )
+        return ChatGPTParser().parse(html, conversation_id="c")
+
+    def test_markdown_blocs_et_inline(self):
+        conv = self._conversation(
+            "<h1>Test</h1><h2>Sous-test</h2>"
+            "<p><strong>Premier</strong> <em>deuxième</em> <del>troisième</del></p>"
+            "<ul><li><p>Pomme</p></li><li><p>Poire</p></li></ul>"
+            "<ol><li><p>Lire</p></li><li><p>Analyser</p></li></ol>"
+            "<ul class='contains-task-list'>"
+            "<li class='task-list-item'><p><input disabled type='checkbox'/> Faire</p></li>"
+            "<li class='task-list-item'><p><input checked disabled type='checkbox'/> Terminé</p></li>"
+            "</ul>"
+            "<p><code>sorted(key=...)</code></p>"
+            "<blockquote><p>Ceci est un test.</p></blockquote><hr/>"
+            "<table><thead><tr><th>A</th><th>1</th></tr></thead>"
+            "<tbody><tr><td>B</td><td>2</td></tr></tbody></table>"
+        )
+        texte = conv.messages[0].texte
+        assert "# Test" in texte
+        assert "## Sous-test" in texte
+        assert "**Premier** *deuxième* ~~troisième~~" in texte
+        assert "- Pomme" in texte and "- Poire" in texte
+        assert "1. Lire" in texte and "2. Analyser" in texte
+        assert "- [ ] Faire" in texte and "- [x] Terminé" in texte
+        assert "`sorted(key=...)`" in texte
+        assert "> Ceci est un test." in texte
+        assert "---" in texte
+        assert "| A | 1 |" in texte
+        assert "| --- | --- |" in texte
+        assert "| B | 2 |" in texte
+
+    def test_code_language_entete(self):
+        conv = self._conversation(
+            "<pre class='overflow-visible!'><div class='flex w-full font-sans'>"
+            "<div class='flex max-w-[75%] items-center'>Python</div>"
+            "<div class='flex flex-row'><button>Run</button></div></div>"
+            "<pre class='cm-content'><code><span>x = 2</span></code></pre></pre>"
+            "<pre class='overflow-visible!'><pre class='cm-content'>"
+            "<code>print(\"test\")</code></pre></pre>"
+        )
+        blocks = conv.messages[0].code_blocks
+        assert blocks[0].language == "python"
+        assert blocks[0].code == "x = 2"
+        assert blocks[1].language == ""
+        assert blocks[1].code == 'print("test")'
+
+    def test_latex_inline_et_bloc(self):
+        conv = self._conversation(
+            "<p><span data-math-source='E = mc^2' role='math'>"
+            "<span class='katex'><annotation encoding='application/x-tex'>E = mc^2</annotation>"
+            "</span></span></p>"
+            "<span data-math-source='\\frac{1}{2}' style='display: block;'></span>"
+        )
+        texte = conv.messages[0].texte
+        assert "$E = mc^2$" in texte
+        assert "$$\\frac{1}{2}$$" in texte
+        assert "\\(" not in texte
+
+    def test_citation_pill_source(self):
+        conv = self._conversation(
+            "<ol><li><p>Example Domain "
+            "<span data-testid='webpage-citation-pill'><a href='https://example.com/'>"
+            "<span><img alt='' width='128' height='128' "
+            "src='https://www.google.com/s2/favicons?domain=example.com'/></span>"
+            "<span class='truncate'>Example Domain</span></a></span></p></li></ol>"
+        )
+        texte = conv.messages[0].texte
+        assert "1. Example Domain [Example Domain](https://example.com/)" in texte
+        assert "favicons" not in texte
+        assert "![image]" not in texte
+
+    def test_tour_avec_data_turn_sans_role(self):
+        html = """<html><body><main>
+          <div data-testid='conversation-turn-1' data-turn='user'>
+            <div class='markdown'><p>Question</p></div></div>
+          <div data-testid='conversation-turn-2' data-turn='assistant'>
+            <div class='markdown'><p>Réponse</p></div></div>
+        </main></body></html>"""
+        conv = ChatGPTParser().parse(html, conversation_id="c")
+        assert [m.role for m in conv.messages] == ["user", "assistant"]
+        assert conv.messages[1].texte == "Réponse"
+
 
 class TestChatGPTTurnMerge:
     """Fusion incrementale des fenetres de tours (virtualisation ChatGPT)."""

@@ -10,13 +10,28 @@ Structure reelle observee (2024-2026):
 
 from __future__ import annotations
 
+import copy
 import re
 from typing import Any, Dict, List, Optional
+
+from bs4 import NavigableString
 
 from ..schema import Conversation
 from .base import BaseParser, ParseError
 
 CONVERSATION_ID_RE = re.compile(r"/c/([0-9a-fA-F-]{16,}|[A-Za-z0-9_-]{16,})")
+
+#: domaines des visuels de contenu ChatGPT (pieces jointes + images generees)
+CONTENT_IMAGE_HOSTS = ("estuary", "oaiusercontent", "images.openai.com")
+
+#: langage affiche par ChatGPT -> identifiant usuel de fence markdown
+_LANGUAGE_ALIASES = {
+    "c++": "cpp",
+    "c#": "csharp",
+    "objective-c": "objectivec",
+    "shell": "bash",
+    "plain text": "text",
+}
 
 
 def merge_turn_snapshots(
@@ -172,7 +187,7 @@ class ChatGPTParser(BaseParser):
 
         for turn, role in turns:
             content_el = self.select_first(turn, self.CONTENT_SELECTORS)
-            content = self.text_of(content_el)
+            content = self._content_text(content_el)
             # pieces jointes / images generees (souvent hors du .markdown)
             attachments = self.attachments_markdown(turn, url_filter=self._is_content_image)
             if attachments and attachments not in content:
@@ -241,7 +256,7 @@ class ChatGPTParser(BaseParser):
 
     @staticmethod
     def _is_content_image(src: str) -> bool:
-        return ("estuary" in src) or ("oaiusercontent" in src)
+        return any(host in src for host in CONTENT_IMAGE_HOSTS)
 
     def _is_image_turn(self, turn) -> bool:
         """Tour assistant sans role explicite mais portant une image generee."""
@@ -260,8 +275,9 @@ class ChatGPTParser(BaseParser):
         """Tours dans l'ordre du document, images generees incluses.
 
         ChatGPT rend parfois un tour image (assistant) sans
-        `data-message-author-role` : il faut le conserver pour ne pas fusionner
-        deux messages utilisateur consecutifs.
+        `data-message-author-role` : le role est alors porte par le conteneur
+        `[data-testid^='conversation-turn'][data-turn]`. On conserve ces tours
+        pour ne pas fusionner deux messages du meme role consecutifs.
         """
         positions: Dict[Any, int] = {}
         for element in soup.descendants:
@@ -274,10 +290,277 @@ class ChatGPTParser(BaseParser):
         for el in soup.select("[data-testid^='conversation-turn']"):
             if el.select_one("[data-message-author-role]") is not None:
                 continue
-            if self._is_image_turn(el):
-                turns.append((positions.get(id(el), 0), el, "assistant"))
+            if el.get("style") == "display: none;":
+                continue
+            role = (el.get("data-turn") or "").lower()
+            if role not in ("user", "assistant", "system", "tool"):
+                if not self._is_image_turn(el):
+                    continue
+                role = "assistant"
+            turns.append((positions.get(id(el), 0), el, role))
         turns.sort(key=lambda item: item[0])
         return [(turn, role) for _, turn, role in turns]
+
+    # -- rendu markdown (titres, listes, tableaux, code, LaTeX) ----------------
+
+    @classmethod
+    def _content_text(cls, el) -> str:
+        """Texte markdown d'un tour ChatGPT.
+
+        ``BaseParser.text_of`` aplatit les ``<ul>/<ol>``, ``<table>``,
+        ``<h1..h6>``, ``<blockquote>``, ``<hr>`` et les mises en forme inline
+        (``strong``/``em``/``del``/``code``). On les convertit en markdown sur
+        une copie avant l'extraction, puis on reinjecte les remplacements
+        apres nettoyage (qui supprime l'indentation) pour conserver listes
+        imbriquees et separateurs.
+        """
+        if el is None:
+            return ""
+        node = copy.copy(el)
+        replacements: Dict[str, str] = {}
+        cls._drop_math_block_controls(node)
+        cls._latex_to_markdown(node)
+        cls._citation_pills(node)
+        cls._code_languages(node)
+        cls._inline_markup(node)
+
+        # blockquotes : traiter les plus externes (recursion du contenu)
+        for index, quote in enumerate(node.find_all("blockquote")):
+            if quote.find_parent("blockquote") is not None:
+                continue
+            inner = cls._content_text(quote)
+            quoted = "\n".join(
+                f"> {line}" if line else ">" for line in inner.splitlines()
+            )
+            token = f"@@AICV_CHATGPT_QUOTE_{index}@@"
+            replacements[token] = quoted
+            quote.replace_with(NavigableString(f"\n{token}\n"))
+
+        for index, table in enumerate(node.find_all("table")):
+            token = f"@@AICV_CHATGPT_TABLE_{index}@@"
+            replacements[token] = cls._table_markdown(table)
+            table.replace_with(NavigableString(f"\n{token}\n"))
+
+        for index, lst in enumerate(node.find_all(["ul", "ol"])):
+            if lst.find_parent(["ul", "ol"]) is not None:
+                continue  # traitee avec sa liste parente
+            token = f"@@AICV_CHATGPT_LIST_{index}@@"
+            replacements[token] = "\n".join(cls._render_list(lst))
+            lst.replace_with(NavigableString(f"\n{token}\n"))
+
+        for index, heading in enumerate(
+            node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
+        ):
+            level = int(heading.name[1])
+            title = re.sub(r"\s*\n\s*", " ", cls._content_text(heading)).strip()
+            token = f"@@AICV_CHATGPT_HEADING_{index}@@"
+            replacements[token] = f"{'#' * level} {title}".strip()
+            heading.replace_with(NavigableString(f"\n{token}\n"))
+
+        for hr in node.find_all("hr"):
+            hr.replace_with(NavigableString("\n@@AICV_CHATGPT_HR@@\n"))
+
+        text = cls.text_of(node)
+        for token, markdown in replacements.items():
+            text = text.replace(token, markdown)
+        return text.replace("@@AICV_CHATGPT_HR@@", "---")
+
+    @classmethod
+    def _inline_markup(cls, node) -> None:
+        """Mises en forme inline -> markdown (hors blocs de code).
+
+        Les elements sont traites du plus profond au plus externe pour que les
+        imbrications (``**gras *italique***``) soient preservees.
+        """
+        tags = node.find_all(["strong", "b", "em", "i", "del", "s", "code"])
+        for tag in reversed(tags):
+            if tag.find_parent("pre") is not None:
+                continue  # contenu de bloc de code : deja gere par text_of
+            if tag.name == "code":
+                code = tag.get_text()
+                if code:
+                    tag.replace_with(NavigableString(f"`{code}`"))
+                continue
+            inner = re.sub(r"\s*\n\s*", " ", cls.text_of(copy.copy(tag))).strip()
+            if not inner:
+                continue
+            if tag.name in ("strong", "b"):
+                markdown = f"**{inner}**"
+            elif tag.name in ("em", "i"):
+                markdown = f"*{inner}*"
+            else:
+                markdown = f"~~{inner}~~"
+            tag.replace_with(NavigableString(markdown))
+
+    @classmethod
+    def _latex_to_markdown(cls, node) -> None:
+        """KaTeX ChatGPT -> ``$...$`` / ``$$...$$``.
+
+        ChatGPT porte la source TeX dans ``data-math-source`` (qui contient le
+        rendu KaTeX) ; ``BaseParser`` la convertit en ``\\(...\\)``. On prefere
+        la convention ``$...$`` et on detecte les equations en bloc via
+        ``style="display: block"``, la classe de bloc ou le panneau de legende.
+        """
+        for element in node.select("[data-math-source]"):
+            if element.find_parent(attrs={"data-math-source": True}) is not None:
+                continue
+            tex = (element.get("data-math-source") or "").strip()
+            if not tex:
+                continue
+            element.replace_with(
+                NavigableString(
+                    f"\n$${tex}$$\n" if cls._math_is_display(element) else f" ${tex}$ "
+                )
+            )
+        for katex in node.select("span.katex"):
+            if katex.find_parent(attrs={"data-math-source": True}) is not None:
+                continue
+            annotation = katex.find(
+                "annotation", attrs={"encoding": "application/x-tex"}
+            )
+            if annotation is None:
+                continue
+            tex = annotation.get_text().strip()
+            if not tex:
+                continue
+            display = (
+                katex.find_parent(class_="katex-display") is not None
+                or cls._math_is_display(katex)
+            )
+            katex.replace_with(
+                NavigableString(f"\n$${tex}$$\n" if display else f" ${tex}$ ")
+            )
+
+    @staticmethod
+    def _math_is_display(element) -> bool:
+        style = (element.get("style") or "").replace(" ", "").lower()
+        classes = " ".join(element.get("class") or [])
+        if "display:block" in style or "mathBlock" in classes:
+            return True
+        return (
+            element.find_parent(class_="katex-display") is not None
+            or element.find_parent(class_="caption-text") is not None
+        )
+
+    @staticmethod
+    def _drop_math_block_controls(node) -> None:
+        """Retire les curseurs d'un bloc math interactif (garde les equations).
+
+        Ces cartes embarquent des sliders (``a``/``b``) et leurs libelles KaTeX
+        qui n'ont pas de sens en markdown ; le texte ``sr-only`` decrivant
+        l'interaction est conserve.
+        """
+        for card in node.select("[data-testid='math-block-layout']"):
+            description = " ".join(
+                s.get_text(" ", strip=True) for s in card.select(".sr-only")
+            ).strip()
+            for panel in card.select(".control-panel"):
+                panel.decompose()
+            if description:
+                card.insert_after(NavigableString(f"\n{description}\n"))
+
+    @classmethod
+    def _citation_pills(cls, node) -> None:
+        """Pastilles de source web -> lien markdown (sans favicon/etat hover)."""
+        for pill in node.select("[data-testid='webpage-citation-pill']"):
+            link = pill.find("a")
+            if link is None:
+                continue
+            href = (link.get("href") or "").strip()
+            label_el = link.select_one("span.truncate")
+            label = (
+                label_el.get_text(" ", strip=True)
+                if label_el is not None
+                else link.get_text(" ", strip=True)
+            )
+            label = re.sub(r"\s+", " ", label).strip()
+            count = ""
+            for span in link.find_all("span"):
+                text = span.get_text(" ", strip=True)
+                if text.startswith("+") and text[1:].isdigit():
+                    count = text
+                    break
+            if count and count not in label:
+                label = f"{label} {count}".strip()
+            if not href or not label:
+                pill.decompose()
+                continue
+            pill.replace_with(
+                NavigableString(f" [{cls._md_escape_label(label)}]({href}) ")
+            )
+
+    @classmethod
+    def _code_languages(cls, node) -> None:
+        """Injecte la langue des blocs de code ChatGPT (en-tete de la carte)."""
+        for pre in node.find_all("pre"):
+            if pre.get("data-language"):
+                continue
+            header = pre.select_one("div.font-sans")
+            if header is None:
+                continue
+            label_el = header.find("div", recursive=False)
+            if label_el is None:
+                continue
+            label = re.sub(r"\s+", " ", label_el.get_text(" ", strip=True)).strip()
+            if not label or len(label) > 30:
+                continue
+            pre["data-language"] = cls._normalize_language(label)
+
+    @staticmethod
+    def _normalize_language(label: str) -> str:
+        language = label.strip().lower()
+        return _LANGUAGE_ALIASES.get(language, language)
+
+    @classmethod
+    def _inline_text(cls, el) -> str:
+        """Texte markdown inline (sans structure de blocs)."""
+        if el is None:
+            return ""
+        return cls._content_text(el)
+
+    @classmethod
+    def _table_markdown(cls, table) -> str:
+        """Tableau HTML -> lignes markdown ``| ... |`` avec separateur."""
+        rows: List[List[str]] = []
+        for tr in table.find_all("tr"):
+            cells = tr.find_all(["th", "td"])
+            rows.append([cls._inline_text(c).strip() for c in cells])
+        if not rows:
+            return ""
+        width = max(len(row) for row in rows)
+        lines: List[str] = []
+        for index, row in enumerate(rows):
+            padded = row + [""] * (width - len(row))
+            lines.append("| " + " | ".join(padded) + " |")
+            if index == 0:
+                lines.append("| " + " | ".join(["---"] * width) + " |")
+        return "\n".join(lines)
+
+    @classmethod
+    def _render_list(cls, lst, depth: int = 0) -> List[str]:
+        """Liste HTML -> lignes markdown (puces, numeros, cases a cocher)."""
+        ordered = lst.name == "ol"
+        try:
+            start = int(lst.get("start") or 1)
+        except (TypeError, ValueError):
+            start = 1
+        lines: List[str] = []
+        for offset, li in enumerate(lst.find_all("li", recursive=False)):
+            checkbox = li.find("input", attrs={"type": "checkbox"})
+            if checkbox is not None:
+                marker = f"- [{'x' if checkbox.has_attr('checked') else ' '}]"
+            else:
+                marker = f"{start + offset}." if ordered else "-"
+            li_copy = copy.copy(li)
+            for sub in li_copy.find_all(["ul", "ol"]):
+                sub.decompose()
+            for box in li_copy.find_all("input"):
+                box.decompose()
+            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
+            lines.append(f"{'  ' * depth}{marker} {text}".rstrip())
+            for sub in li.find_all(["ul", "ol"], recursive=False):
+                lines.extend(cls._render_list(sub, depth + 1))
+        return lines
 
     @staticmethod
     def _role_of(turn) -> str:
