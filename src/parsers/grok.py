@@ -12,6 +12,7 @@ les donnees viennent de l'API authentifiee par cookies, passees en `extra` :
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, Dict, List, Optional
 
 from ..schema import Conversation
@@ -36,6 +37,60 @@ def _asset_url(key: str) -> str:
 def _md_label(name: str) -> str:
     """Echappe le libelle d'un lien/image markdown."""
     return str(name or "").replace("[", "\\[").replace("]", "\\]")
+
+
+# balises de citation inline `<grok:render ... citation_card ...>`
+_RENDER_RE = re.compile(
+    r"<grok:render\b(?P<attrs>[^>]*)>(?P<body>.*?)</grok:render>",
+    re.DOTALL | re.IGNORECASE,
+)
+_ATTR_RE = re.compile(r"(\w+)=[\"']([^\"']*)[\"']")
+_CITATION_ID_RE = re.compile(
+    r"<argument\b[^>]*name=[\"']citation_id[\"'][^>]*>(?P<id>.*?)</argument>",
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+def _citation_urls(resp: Dict[str, Any]) -> Dict[str, str]:
+    """Carte `citation_card` -> URL, indexee par identifiant de carte."""
+    urls: Dict[str, str] = {}
+    for item in resp.get("cardAttachmentsJson") or []:
+        card: Any = item
+        if isinstance(item, str):
+            try:
+                card = json.loads(item)
+            except json.JSONDecodeError:
+                continue
+        if not isinstance(card, dict):
+            continue
+        if card.get("cardType") == "citation_card" or card.get("type") == "render_inline_citation":
+            card_id = card.get("id")
+            url = card.get("url")
+            if card_id and url:
+                urls[str(card_id)] = str(url)
+    return urls
+
+
+def _render_citations(message: str, resp: Dict[str, Any]) -> str:
+    """Remplace les citations inline par un lien markdown `[n](url)`.
+
+    Grok insere des balises `<grok:render ... citation_card>` que
+    `clean_grok_text` supprimerait avec la source. On les convertit avant.
+    """
+    urls = _citation_urls(resp)
+    if not urls or "<grok:render" not in message:
+        return message
+
+    def repl(match: "re.Match[str]") -> str:
+        attrs = dict(_ATTR_RE.findall(match.group("attrs")))
+        url = urls.get(str(attrs.get("card_id") or ""))
+        if not url:
+            return match.group(0)
+        ref = _CITATION_ID_RE.search(match.group("body"))
+        label = ref.group("id").strip() if ref else "source"
+        return f"[{_md_label(label)}]({url})"
+
+    return _RENDER_RE.sub(repl, message)
 
 
 def _attachment_items(resp: Dict[str, Any]) -> List[Dict[str, str]]:
@@ -165,7 +220,7 @@ class GrokParser(BaseParser):
         messages: List[Any] = []
         models: List[str] = []
         for resp in responses:
-            text = clean_grok_text(resp.get("message") or "").strip()
+            text = clean_grok_text(_render_citations(resp.get("message") or "", resp)).strip()
             cards = _rendered_files(resp)
             files_text = _rendered_files_text(cards)
             attachments = _attachments_markdown(resp)

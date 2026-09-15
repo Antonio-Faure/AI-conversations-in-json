@@ -1379,6 +1379,38 @@ class TestGrokParser:
         assert "![image](https://assets.grok.com/gen/img.png)" in text
         assert "![image](https://assets.grok.com/users/u1/generated/2.png)" in text
 
+    def test_citation_inline_vers_lien_markdown(self):
+        """`<grok:render ... citation_card>` -> lien markdown `[n](url)`."""
+        card = json.dumps({
+            "id": "d1a063",
+            "type": "render_inline_citation",
+            "cardType": "citation_card",
+            "url": "https://www.calendardate.com/todays.htm",
+            "kind": 1,
+        })
+        payload = {
+            "conversation": {"conversationId": "grok-10", "title": "Etalon"},
+            "responses": [
+                {"responseId": "r1", "sender": "human",
+                 "message": "Quelle date ? Cite la source."},
+                {"responseId": "r2", "sender": "assistant", "model": "grok-3",
+                 "message": ("La date actuelle est le 13."
+                             '<grok:render card_id="d1a063" card_type="citation_card" '
+                             'type="render_inline_citation">'
+                             '<argument name="citation_id">1</argument>'
+                             "</grok:render>"),
+                 "cardAttachmentsJson": [card]},
+            ],
+        }
+        conv = GrokParser().parse("", conversation_id="grok-10", extra=payload)
+        text = conv.messages[1].texte
+        assert "<grok:render" not in text
+        assert "https://www.calendardate.com/todays.htm" in text
+        assert text == (
+            "La date actuelle est le 13."
+            "[1](https://www.calendardate.com/todays.htm)"
+        )
+
 
 class TestGrokServiceFetch:
     """Le pipeline d'images a besoin d'un `fetch` authentifie (cookies)."""
