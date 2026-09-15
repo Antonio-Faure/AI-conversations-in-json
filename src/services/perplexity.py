@@ -32,7 +32,8 @@ _ASSISTANT_SELECTOR = "div[data-workflow-final-text]"
 #: remise a zero de l'accumulateur JS
 _RESET_THREAD_JS = """
 window.__aicvPpl = {rows: Object.create(null), pos: Object.create(null),
-                    roles: Object.create(null), scroller: null};
+                    roles: Object.create(null), scroller: null,
+                    ids: new WeakMap(), idSeq: 0, round: 0};
 return 0;
 """
 
@@ -88,37 +89,51 @@ return (function(){
 })();
 """
 
-#: memorise les messages montes (cle = role + contenu) ; garde le HTML le plus
-#: long et la derniere position verticale absolue (offset stable grace aux
-#: `min-height` reserves des emplacements non montes)
+#: memorise les messages montes. Identite stable par noeud DOM (WeakMap) : on
+#: ne fusionne plus deux tours distincts au corps identique. L'ordre suit la
+#: remontee du fil (les nouveaux sont plus anciens) via un rang decroissant,
+#: ce qui reste fiable malgre les decalages de `scrollHeight` quand les
+#: messages anciens se prepent.
 _COLLECT_THREAD_JS = """
 return (function(){
   const acc = window.__aicvPpl;
   if (!acc) return {count: 0, fresh: 0, top: 0};
   const s = acc.scroller;
-  const srect = s ? s.getBoundingClientRect() : {top: 0};
-  const st = s ? s.scrollTop : 0;
+  if (!acc.ids) { acc.ids = new WeakMap(); acc.idSeq = 0; }
+  if (acc.round === undefined) acc.round = 0;
+  acc.round -= 1;                       // remontee : le prochain lot est plus ancien
+  const base = acc.round * 100000;
   let count = 0, fresh = 0;
-  const consider = (node, role) => {
-    if (!node) return;
+  const nodes = Array.from(document.querySelectorAll(__USER__ + ',' + __ASSIST__));
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    const role = node.matches(__USER__) ? 'user' : 'assistant';
+    let root = node;
     let text = (node.textContent || '').replace(/\\s+/g, ' ').trim();
     if (role === 'assistant') {
       const body = node.querySelector("[data-renderer='lm']");
-      if (!body) return;
+      if (!body) continue;
+      root = body;
       text = (body.textContent || '').replace(/\\s+/g, ' ').trim();
     }
-    if (!text) return;
-    const key = role + ':' + text.slice(0, 200);
+    // un tour au contenu visuel seul (image generee, separateur `hr`) n'a pas
+    // de texte : ne pas le perdre.
+    const visual = root.querySelector('img, hr') !== null;
+    if (!text && !visual) continue;
+    let nid = acc.ids.get(node);
+    if (nid === undefined) { nid = ++acc.idSeq; acc.ids.set(node, nid); }
+    const key = role + ':' + nid;
     const html = node.outerHTML;
-    const rect = node.getBoundingClientRect();
     count++;
-    if (acc.rows[key] === undefined) { acc.rows[key] = html; fresh++; }
-    else if (html.length > acc.rows[key].length) { acc.rows[key] = html; }
-    acc.roles[key] = role;
-    acc.pos[key] = Math.round(st + rect.top - srect.top);
-  };
-  document.querySelectorAll(__USER__).forEach(n => consider(n, 'user'));
-  document.querySelectorAll(__ASSIST__).forEach(n => consider(n, 'assistant'));
+    if (acc.rows[key] === undefined) {
+      acc.rows[key] = html;
+      acc.roles[key] = role;
+      acc.pos[key] = base + i;           // ordre chronologique croissant
+      fresh++;
+    } else if (html.length > acc.rows[key].length) {
+      acc.rows[key] = html;
+    }
+  }
   return {count: count, fresh: fresh, top: s ? Math.round(s.scrollTop) : 0,
           height: s ? s.scrollHeight : 0};
 })();

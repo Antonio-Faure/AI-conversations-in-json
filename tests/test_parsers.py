@@ -656,6 +656,134 @@ class TestPerplexityParser:
         conv = PerplexityParser().parse(html, conversation_id="c")
         assert conv.messages[1].texte == "---"
 
+    # -- markdown riche (images, listes, tableaux, code, LaTeX) ---------------
+
+    @staticmethod
+    def _assistant(body: str) -> str:
+        return (
+            '<div data-workflow-final-text=""><div data-renderer="lm">'
+            f"{body}</div></div>"
+        )
+
+    @staticmethod
+    def _user(body: str) -> str:
+        return (
+            '<div class="group group/user-bubble flex items-start justify-end">'
+            f"{body}</div>"
+        )
+
+    def test_image_piece_jointe_s3_en_markdown(self):
+        html = self._user(
+            '<div class="inline-flex">'
+            '<span class="whitespace-pre-line">Décris cette image.</span>'
+            '<button><div class="size-6 overflow-hidden">'
+            '<img alt="Pièce jointe" class="aspect-square opacity-0" '
+            'src="https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/x/image.jpg">'
+            "</div></button>"
+            '<div class="mt-1 opacity-0 group-hover/user-bubble:opacity-100">'
+            '<span>01:27</span><button aria-label="Copier">Copier</button></div>'
+            "</div>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        text = conv.messages[0].texte
+        assert "![Pièce jointe](https://ppl-ai-file-upload.s3.amazonaws.com" in text
+        assert "Décris cette image." in text
+        assert "01:27" not in text and "Copier" not in text
+
+    def test_piece_jointe_fichier_garde_le_nom(self):
+        html = self._user(
+            '<span class="whitespace-pre-line">Analyse ce fichier.</span>'
+            '<button class="reset"><div><svg></svg></div>'
+            '<div class="line-clamp-1">notes.txt</div></button>'
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        assert "notes.txt" in conv.messages[0].texte
+
+    def test_liste_imbriquee_en_markdown(self):
+        html = self._assistant(
+            "<ul><li>Parent<ul><li>Enfant 1</li><li>Enfant 2</li></ul></li>"
+            "<li>Autre</li></ul>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        text = conv.messages[0].texte
+        assert "- Parent" in text
+        assert "  - Enfant 1" in text
+        assert "  - Enfant 2" in text
+        assert "- Autre" in text
+
+    def test_liste_numerotee_respecte_start(self):
+        html = self._assistant('<ol start="3"><li>Trois</li><li>Quatre</li></ol>')
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        assert conv.messages[0].texte == "3. Trois\n4. Quatre"
+
+    def test_checklist_cases_a_cocher(self):
+        html = self._assistant(
+            '<ul><li class="list-none"><span data-pplx-task-checkbox="true">'
+            '<button aria-checked="true"></button></span>Fait</li>'
+            '<li class="list-none"><span data-pplx-task-checkbox="true">'
+            '<button aria-checked="false"></button></span>À faire</li></ul>'
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        assert conv.messages[0].texte == "- [x] Fait\n- [ ] À faire"
+
+    def test_tableau_en_markdown(self):
+        html = self._assistant(
+            "<table><thead><tr><th>Colonne 1</th><th>Colonne 2</th></tr></thead>"
+            "<tbody><tr><td>Ligne 1</td><td>Donnée A</td></tr></tbody></table>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        text = conv.messages[0].texte
+        assert "| Colonne 1 | Colonne 2 |" in text
+        assert "| --- | --- |" in text
+        assert "| Ligne 1 | Donnée A |" in text
+
+    def test_latex_inline_et_display(self):
+        inline = (
+            '<span class="katex"><span class="katex-mathml"><math><semantics>'
+            '<annotation encoding="application/x-tex">E = mc^2</annotation>'
+            "</semantics></math></span></span>"
+        )
+        display = (
+            '<span class="katex-display"><span class="katex">'
+            '<span class="katex-mathml"><math><semantics>'
+            '<annotation encoding="application/x-tex">\\int_0^1 x</annotation>'
+            "</semantics></math></span></span></span>"
+        )
+        conv = PerplexityParser().parse(
+            self._assistant(f"<p>Soit {inline}.</p><p>{display}</p>"),
+            conversation_id="c",
+        )
+        text = conv.messages[0].texte
+        assert "$E = mc^2$" in text
+        assert "$$\\int_0^1 x$$" in text
+
+    def test_code_language_depuis_figcaption(self):
+        html = self._assistant(
+            '<pre class="not-prose"><figure><figcaption><span>python</span>'
+            '<button aria-label="Copier le code">Copier</button></figcaption>'
+            '<code><span>print(1)</span></code></figure></pre>'
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        blocks = conv.messages[0].code_blocks
+        assert blocks and blocks[0].language == "python"
+        assert "print(1)" in blocks[0].code
+
+    def test_deux_reponses_identiques_restent_distinctes(self):
+        body = "Oui."
+        html = (
+            self._user("<span>Question 1 ?</span>")
+            + self._assistant(body)
+            + self._user("<span>Question 2 ?</span>")
+            + self._assistant(body)
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        assert [m.texte for m in conv.messages] == [
+            "Question 1 ?", "Oui.", "Question 2 ?", "Oui.",
+        ]
+
 
 class TestPerplexityMergeThread:
     """Fusion des messages accumules en remontant le fil virtualise."""
@@ -692,6 +820,29 @@ class TestPerplexityMergeThread:
     def test_items_vides(self):
         assert merge_thread_messages([]) == ""
         assert merge_thread_messages([{"key": "", "html": ""}]) == ""
+
+    def test_reponses_identiques_cles_distinctes_non_fusionnees(self):
+        body = self._ASSIST.format(text="R")
+        items = [
+            {"key": "u:1", "role": "user", "html": self._USER.format(text="Q1"), "pos": 100},
+            {"key": "a:1", "role": "assistant", "html": body, "pos": 200},
+            {"key": "u:2", "role": "user", "html": self._USER.format(text="Q2"), "pos": 250},
+            {"key": "a:2", "role": "assistant", "html": body, "pos": 300},
+        ]
+        conv = PerplexityParser().parse(
+            merge_thread_messages(items), conversation_id="c"
+        )
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        assert [m.texte for m in conv.messages] == ["Q1", "R", "Q2", "R"]
+
+    def test_cle_de_collecte_stable_par_noeud(self):
+        # plus de cle `role + texte[:200]` qui fusionnait deux tours identiques
+        from src.services.perplexity import _COLLECT_THREAD_JS
+
+        assert "WeakMap" in _COLLECT_THREAD_JS
+        assert "text.slice(0, 200)" not in _COLLECT_THREAD_JS
 
 
 class TestTextOfMarkdown:

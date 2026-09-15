@@ -208,14 +208,23 @@ class PerplexityParser(BaseParser):
         `opacity-0`) ; `text_of` n'ecarte que les `button`/`svg`. Les URLs
         saisies sont rendues en `span[role=button][title=url]` et seraient
         supprimees comme des boutons : on les remet en texte avant nettoyage.
+        Les pieces jointes (apercu image dans un bouton, nom de fichier) sont
+        conservees.
+
+        Certains descendants de la piece jointe portent aussi `opacity-0`
+        (vignette d'apercu) : on ne decompose pas les `img` pour que le
+        markdown de l'image soit produit par `text_of`.
         """
         work = copy.copy(node)
         for toolbar in work.select("[class*='opacity-0']"):
+            if toolbar.name == "img":
+                continue
             toolbar.decompose()
         for button in work.select("[role='button'][title]"):
             url = (button.get("title") or "").strip()
             if url.startswith(("http://", "https://")):
                 button.replace_with(NavigableString(url))
+        cls._preserve_file_attachments(work)
         return cls.text_of(work)
 
     @classmethod
@@ -224,16 +233,13 @@ class PerplexityParser(BaseParser):
 
         Le tour `final-text` encapsule un en-tete d'etape, le corps rendu
         (`[data-renderer='lm']`) et un footer d'actions. On ne garde que le(s)
-        corps ; un separateur horizontal (`<hr>`) est restaure en `---`.
+        corps ; listes, tableaux, titres et separateurs sont rendus en markdown.
         """
         bodies = node.select("[data-renderer='lm']")
         if bodies:
             parts: List[str] = []
             for body in bodies:
-                work = copy.copy(body)
-                for hr in work.find_all("hr"):
-                    hr.replace_with(NavigableString("\n\n---\n\n"))
-                text = cls.text_of(work)
+                text = cls._content_text(body)
                 if text:
                     parts.append(text)
             if parts:
@@ -245,7 +251,152 @@ class PerplexityParser(BaseParser):
             header.decompose()
         for footer in work.select("[data-workflow-text-footer]"):
             footer.decompose()
-        return cls.text_of(work)
+        return cls._content_text(work)
+
+    # -- rendu markdown (listes, tableaux, titres, code) -----------------------
+
+    @classmethod
+    def _content_text(cls, el: Optional[Tag]) -> str:
+        """Texte markdown d'un contenu Perplexity.
+
+        ``BaseParser.text_of`` aplatit les ``<ul>/<ol>``, ``<table>`` et
+        ``<h1..h6>``. On les convertit en markdown sur une copie avant
+        l'extraction, puis on reinjecte les remplacements apres nettoyage
+        (qui supprime l'indentation des lignes) afin de conserver listes
+        imbriquees et separateurs.
+        """
+        if el is None:
+            return ""
+        node = copy.copy(el)
+        replacements: Dict[str, str] = {}
+        cls._code_languages(node)
+
+        # blockquotes : traiter les plus externes (recursion du contenu)
+        for index, quote in enumerate(node.find_all("blockquote")):
+            if quote.find_parent("blockquote") is not None:
+                continue
+            inner = cls._content_text(quote)
+            quoted = "\n".join(
+                f"> {line}" if line else ">" for line in inner.splitlines()
+            )
+            token = f"@@AICV_PPL_QUOTE_{index}@@"
+            replacements[token] = quoted
+            quote.replace_with(NavigableString(f"\n{token}\n"))
+
+        for index, table in enumerate(node.find_all("table")):
+            token = f"@@AICV_PPL_TABLE_{index}@@"
+            replacements[token] = cls._table_markdown(table)
+            table.replace_with(NavigableString(f"\n{token}\n"))
+
+        for index, lst in enumerate(node.find_all(["ul", "ol"])):
+            if lst.find_parent(["ul", "ol"]) is not None:
+                continue  # traitee avec sa liste parente
+            token = f"@@AICV_PPL_LIST_{index}@@"
+            replacements[token] = "\n".join(cls._render_list(lst))
+            lst.replace_with(NavigableString(f"\n{token}\n"))
+
+        for index, heading in enumerate(
+            node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
+        ):
+            level = int(heading.name[1])
+            title = re.sub(r"\s*\n\s*", " ", cls._inline_text(heading)).strip()
+            token = f"@@AICV_PPL_HEADING_{index}@@"
+            replacements[token] = f"{'#' * level} {title}".strip()
+            heading.replace_with(NavigableString(f"\n{token}\n"))
+
+        for hr in node.find_all("hr"):
+            hr.replace_with(NavigableString("\n@@AICV_PPL_HR@@\n"))
+
+        text = cls.text_of(node)
+        for token, markdown in replacements.items():
+            text = text.replace(token, markdown)
+        return text.replace("@@AICV_PPL_HR@@", "---")
+
+    @staticmethod
+    def _code_languages(node: Tag) -> None:
+        """Injecte la langue des blocs de code (``figcaption span``) dans le `pre`."""
+        for pre in node.find_all("pre"):
+            if pre.get("data-language"):
+                continue
+            cap = pre.find("figcaption")
+            label = cap.find("span") if cap is not None else None
+            if label is None and cap is not None:
+                label = cap
+            if label is None:
+                continue
+            lang = label.get_text(" ", strip=True).split()
+            if lang:
+                pre["data-language"] = lang[0]
+
+    @classmethod
+    def _inline_text(cls, el: Optional[Tag]) -> str:
+        """Texte markdown inline (sans structure de blocs)."""
+        if el is None:
+            return ""
+        return cls.text_of(copy.copy(el))
+
+    @classmethod
+    def _table_markdown(cls, table: Tag) -> str:
+        """Tableau HTML -> lignes markdown ``| ... |`` avec separateur."""
+        rows: List[List[str]] = []
+        for tr in table.find_all("tr"):
+            cells = tr.find_all(["th", "td"])
+            rows.append([cls._inline_text(c).strip() for c in cells])
+        if not rows:
+            return ""
+        width = max(len(row) for row in rows)
+        lines: List[str] = []
+        for index, row in enumerate(rows):
+            padded = row + [""] * (width - len(row))
+            lines.append("| " + " | ".join(padded) + " |")
+            if index == 0:
+                lines.append("| " + " | ".join(["---"] * width) + " |")
+        return "\n".join(lines)
+
+    @classmethod
+    def _render_list(cls, lst: Tag, depth: int = 0) -> List[str]:
+        """Liste HTML -> lignes markdown (puces, numeros, cases a cocher)."""
+        ordered = lst.name == "ol"
+        try:
+            start = int(lst.get("start") or 1)
+        except (TypeError, ValueError):
+            start = 1
+        lines: List[str] = []
+        for offset, li in enumerate(lst.find_all("li", recursive=False)):
+            checkbox = li.select_one("[data-pplx-task-checkbox]")
+            if checkbox is not None:
+                button = checkbox.find("button")
+                checked = str(
+                    button.get("aria-checked") if button is not None else ""
+                ).lower() == "true"
+                marker = f"- [{'x' if checked else ' '}]"
+            else:
+                marker = f"{start + offset}." if ordered else "-"
+            li_copy = copy.copy(li)
+            for sub in li_copy.find_all(["ul", "ol"]):
+                sub.decompose()
+            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
+            lines.append(f"{'  ' * depth}{marker} {text}".rstrip())
+            for sub in li.find_all(["ul", "ol"], recursive=False):
+                lines.extend(cls._render_list(sub, depth + 1))
+        return lines
+
+    #: noms de fichiers joints rendus en `<button>` (sans apercu image)
+    _FILE_LABEL_RE = re.compile(
+        r"^[\w .()'\-]+\.(txt|md|csv|json|pdf|png|jpe?g|gif|webp|svg|"
+        r"mp3|wav|m4a|mp4|mov|webm|docx?|xlsx?|pptx?|zip|rtf|odt)$",
+        re.IGNORECASE,
+    )
+
+    @classmethod
+    def _preserve_file_attachments(cls, node: Tag) -> None:
+        """Remet le nom des pieces jointes non-image (bouton sans apercu)."""
+        for button in node.find_all("button"):
+            if button.find("img") is not None:
+                continue  # apercu image : laisse a `text_of`
+            label = button.get_text(" ", strip=True)
+            if label and cls._FILE_LABEL_RE.match(label):
+                button.replace_with(NavigableString(f"\n\n{label}\n\n"))
 
     @classmethod
     def _sources_of(cls, answer_node) -> List[str]:
