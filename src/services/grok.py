@@ -22,6 +22,58 @@ PAGE_SIZE = 50
 MAX_PAGES = 200
 
 
+def _guess_mime(data: bytes) -> Optional[str]:
+    """Type MIME devine par signature (les assets Grok sont derriere cookies)."""
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return "image/gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    if data[:2] == b"BM":
+        return "image/bmp"
+    head = data[:256].lstrip().lower()
+    if head.startswith(b"<svg") or head.startswith(b"<?xml"):
+        return "image/svg+xml"
+    return None
+
+
+class _CookieFetchSession:
+    """Session factice exposant `fetch` pour le pipeline d'images.
+
+    Grok n'a pas de navigateur : `download_service_images` cherche
+    `session.fetch` pour telecharger les images authentifiees. On l'implemente
+    au-dessus du `CookieClient`, en deleguant le reste a la session d'origine.
+    """
+
+    def __init__(self, http: CookieClient, inner: Optional[Any] = None):
+        self._http = http
+        self._inner = inner
+
+    def fetch(self, url: str):
+        try:
+            status, data = self._http.get(url, accept="image/*,*/*")
+        except Exception:  # noqa: BLE001 (reseau : on laisse le repli HTTP)
+            return None
+        if status != 200 or not data:
+            return None
+        return data, _guess_mime(data)
+
+    def wait_ms(self, ms: int) -> None:
+        pass
+
+    def close(self) -> None:
+        pass
+
+    def __getattr__(self, name: str) -> Any:
+        inner = object.__getattribute__(self, "_inner")
+        if inner is not None:
+            return getattr(inner, name)
+        raise AttributeError(name)
+
+
 class GrokService(BaseService):
     name = "grok"
     uses_browser = False
@@ -31,6 +83,7 @@ class GrokService(BaseService):
         super().__init__(session, config)
         cookies_dir = Path((self.config or {}).get("cookies_dir") or "cookies")
         self.http = CookieClient("grok", cookies_dir)
+        self.session = _CookieFetchSession(self.http, session)
 
     def build_parser(self) -> GrokParser:
         return GrokParser()

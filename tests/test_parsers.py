@@ -1295,6 +1295,134 @@ class TestGrokParser:
         assert "Deuxieme" in conv.messages[2].texte
         assert "Deuxieme" not in conv.messages[0].texte
 
+    def test_pieces_jointes_image_et_fichier(self):
+        """Image jointe -> markdown `![...]`, fichier -> lien markdown."""
+        payload = {
+            "conversation": {"conversationId": "grok-6", "title": "Etalon"},
+            "responses": [
+                {"responseId": "r1", "sender": "human",
+                 "message": "Décris cette image et ce fichier.",
+                 "model": "",
+                 "fileAttachmentAssetMetadata": [
+                     {"assetId": "a1", "mimeType": "image/png",
+                      "name": "image.png",
+                      "key": "users/u1/a1/content"},
+                     {"assetId": "a2", "mimeType": "text/plain",
+                      "name": "notes.txt",
+                      "key": "users/u1/a2/content"},
+                 ]},
+                {"responseId": "r2", "sender": "assistant",
+                 "message": "Voilà.", "model": "grok-3"},
+            ],
+        }
+        conv = GrokParser().parse("", conversation_id="grok-6", extra=payload)
+        text = conv.messages[0].texte
+        assert "![image.png](https://assets.grok.com/users/u1/a1/content)" in text
+        assert "[notes.txt](https://assets.grok.com/users/u1/a2/content)" in text
+        assert text.startswith("Décris cette image")
+
+    def test_piece_jointe_seule_garde_l_alternance(self):
+        """Tour utilisateur sans texte mais avec image : ne pas le sauter."""
+        payload = {
+            "conversation": {"conversationId": "grok-7", "title": "Etalon"},
+            "responses": [
+                {"responseId": "r1", "sender": "human",
+                 "message": "",
+                 "fileAttachmentAssetMetadata": [
+                     {"mimeType": "image/jpeg", "name": "photo.jpg",
+                      "key": "users/u1/photo/content"},
+                 ]},
+                {"responseId": "r2", "sender": "assistant",
+                 "message": "Reponse.", "model": "grok-3"},
+            ],
+        }
+        conv = GrokParser().parse("", conversation_id="grok-7", extra=payload)
+        assert [m.role for m in conv.messages] == ["user", "assistant"]
+        assert conv.messages[0].texte == \
+            "![photo.jpg](https://assets.grok.com/users/u1/photo/content)"
+
+    def test_piece_jointe_repli_metadata(self):
+        """Repli sur `fileAttachmentsMetadata` si les assets riches manquent."""
+        payload = {
+            "conversation": {"conversationId": "grok-9", "title": "Etalon"},
+            "responses": [
+                {"responseId": "r1", "sender": "human",
+                 "message": "Voici.",
+                 "fileAttachmentsMetadata": [
+                     {"fileName": "doc.pdf", "fileMimeType": "application/pdf",
+                      "fileUri": "users/u1/doc/content"},
+                 ]},
+                {"responseId": "r2", "sender": "assistant",
+                 "message": "Recu.", "model": "grok-3"},
+            ],
+        }
+        conv = GrokParser().parse("", conversation_id="grok-9", extra=payload)
+        assert "[doc.pdf](https://assets.grok.com/users/u1/doc/content)" \
+            in conv.messages[0].texte
+
+    def test_image_generee_en_markdown(self):
+        """Image generee (URL absolue ou cle) ajoutee en markdown."""
+        payload = {
+            "conversation": {"conversationId": "grok-8", "title": "Etalon"},
+            "responses": [
+                {"responseId": "r1", "sender": "human", "message": "Genere."},
+                {"responseId": "r2", "sender": "assistant",
+                 "message": "Voici.", "model": "grok-3",
+                 "generatedImageUrls": [
+                     "https://assets.grok.com/gen/img.png",
+                     "users/u1/generated/2.png",
+                 ]},
+            ],
+        }
+        conv = GrokParser().parse("", conversation_id="grok-8", extra=payload)
+        text = conv.messages[1].texte
+        assert "![image](https://assets.grok.com/gen/img.png)" in text
+        assert "![image](https://assets.grok.com/users/u1/generated/2.png)" in text
+
+
+class TestGrokServiceFetch:
+    """Le pipeline d'images a besoin d'un `fetch` authentifie (cookies)."""
+
+    class _FakeHttp:
+        def __init__(self, status, data):
+            self.calls = []
+            self._status = status
+            self._data = data
+
+        def get(self, url, accept="application/json"):
+            self.calls.append(url)
+            return self._status, self._data
+
+    def test_fetch_renvoie_bytes_et_mime(self):
+        from src.services.grok import _CookieFetchSession
+
+        png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+        http = self._FakeHttp(200, png)
+        session = _CookieFetchSession(http)
+        data, mime = session.fetch("https://assets.grok.com/x/content")
+        assert data == png
+        assert mime == "image/png"
+        assert http.calls == ["https://assets.grok.com/x/content"]
+
+    def test_fetch_echec_renvoie_none(self):
+        from src.services.grok import _CookieFetchSession
+
+        session = _CookieFetchSession(self._FakeHttp(403, b"no"))
+        assert session.fetch("https://assets.grok.com/x/content") is None
+
+    def test_delegue_les_autres_methodes(self):
+        from src.services.grok import _CookieFetchSession
+
+        class Inner:
+            def evaluate(self, expr):
+                return expr
+
+        session = _CookieFetchSession(self._FakeHttp(200, b""), Inner())
+        assert session.evaluate("1+1") == "1+1"
+        # wait_ms/close restent des no-op (pas de navigateur)
+        assert session.wait_ms(12) is None
+
+
 
 class TestMistralParser:
     """Cas reel de l'etalon : une reponse assistant reduite a un <hr>."""

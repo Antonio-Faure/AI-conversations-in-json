@@ -21,6 +21,75 @@ from .base import BaseParser, ParseError
 ROLE_MAP = {"human": "user", "user": "user", "assistant": "assistant",
             "system": "system", "tool": "tool"}
 
+#: base publique des assets Grok (`users/.../content`, images, fichiers generes)
+ASSETS_BASE = "https://assets.grok.com"
+
+
+def _asset_url(key: str) -> str:
+    """URL absolue d'un asset Grok a partir de sa cle (`users/.../content`)."""
+    key = str(key or "").strip()
+    if key.startswith(("http://", "https://")):
+        return key
+    return f"{ASSETS_BASE}/{key.lstrip('/')}"
+
+
+def _md_label(name: str) -> str:
+    """Echappe le libelle d'un lien/image markdown."""
+    return str(name or "").replace("[", "\\[").replace("]", "\\]")
+
+
+def _attachment_items(resp: Dict[str, Any]) -> List[Dict[str, str]]:
+    """Pieces jointes d'un tour (nom, type MIME, cle d'asset).
+
+    Grok expose les fichiers joins dans `fileAttachmentAssetMetadata` (riche :
+    nom + mime + cle) et `fileAttachmentsMetadata` (repli). Les cles sont
+    relatives (`users/.../content`) et servies par `assets.grok.com`.
+    """
+    items: List[Dict[str, str]] = []
+    for meta in resp.get("fileAttachmentAssetMetadata") or []:
+        if not isinstance(meta, dict):
+            continue
+        key = str(meta.get("key") or "").strip()
+        if not key:
+            continue
+        items.append({
+            "name": str(meta.get("name") or "fichier").strip() or "fichier",
+            "mime": str(meta.get("mimeType") or "").strip().lower(),
+            "key": key,
+        })
+    if items:
+        return items
+    for meta in resp.get("fileAttachmentsMetadata") or []:
+        if not isinstance(meta, dict):
+            continue
+        key = str(meta.get("fileUri") or "").strip()
+        if not key:
+            continue
+        items.append({
+            "name": str(meta.get("fileName") or "fichier").strip() or "fichier",
+            "mime": str(meta.get("fileMimeType") or "").strip().lower(),
+            "key": key,
+        })
+    return items
+
+
+def _attachments_markdown(resp: Dict[str, Any]) -> str:
+    """Markdown des pieces jointes : images en `![...]`, autres en `[...]`."""
+    entries: List[str] = []
+    for item in _attachment_items(resp):
+        url = _asset_url(item["key"])
+        label = _md_label(item["name"])
+        if item["mime"].startswith("image/"):
+            entries.append(f"![{label}]({url})")
+        else:
+            entries.append(f"[{label}]({url})")
+    # images generees (le cas echeant) : URL deja absolues ou cles d'asset
+    for url in resp.get("generatedImageUrls") or []:
+        if isinstance(url, str) and url.strip():
+            entries.append(f"![image]({_asset_url(url)})")
+    seen: set = set()
+    return "\n\n".join(e for e in entries if not (e in seen or seen.add(e)))
+
 
 def _rendered_files(resp: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Cartes `rendered_file_card` d'une reponse (fichiers generes par Grok).
@@ -99,6 +168,7 @@ class GrokParser(BaseParser):
             text = clean_grok_text(resp.get("message") or "").strip()
             cards = _rendered_files(resp)
             files_text = _rendered_files_text(cards)
+            attachments = _attachments_markdown(resp)
             if not text:
                 # reponse vide mais porteuse d'une erreur de flux : on la garde
                 # pour preserver l'alternance des roles (cas du quota atteint).
@@ -106,6 +176,11 @@ class GrokParser(BaseParser):
             if not text and files_text:
                 # tour assistant reduit a un fichier genere (resultat.txt, PDF...)
                 text = files_text
+                files_text = ""
+            if not text and attachments:
+                # tour sans texte reduit a une piece jointe (image, document...)
+                text = attachments
+                attachments = ""
             if not text:
                 role = ROLE_MAP.get(
                     str(resp.get("sender") or "assistant").lower(), "assistant"
@@ -114,8 +189,11 @@ class GrokParser(BaseParser):
                     continue
                 # tour assistant totalement vide : on le conserve vide pour ne pas
                 # fusionner les deux messages `user` encadrants (alternance).
-            elif files_text and files_text not in text:
-                text = f"{text}\n\n{files_text}"
+            else:
+                if files_text and files_text not in text:
+                    text = f"{text}\n\n{files_text}"
+                if attachments and attachments not in text:
+                    text = f"{text}\n\n{attachments}"
             text = text.strip()
             sender = str(resp.get("sender") or "assistant").lower()
             role = ROLE_MAP.get(sender, "assistant")
