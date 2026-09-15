@@ -28,6 +28,25 @@ MODEL_TEXT_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: libelles de l'en-tete d'un bloc de code qui ne sont pas un langage
+#: (Gemini affiche "Extrait de code", "Resultat du code"...)
+_CODE_UI_LABELS = frozenset(
+    {
+        "",
+        "code",
+        "extrait de code",
+        "code snippet",
+        "resultat",
+        "resultat du code",
+        "résultat",
+        "résultat du code",
+        "sortie",
+        "output",
+    }
+)
+#: un langage tient en un seul jeton (Python, C++, HTML, YAML...)
+_LANGUAGE_TOKEN_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+#.\-]*$")
+
 #: conteneur d'un tour complet (requete + reponse) dans le DOM Gemini
 TURN_SELECTOR = ".conversation-container"
 #: selecteur de la reponse textuelle d'un tour
@@ -167,9 +186,11 @@ class GeminiParser(BaseParser):
             content = self._content_text(content_el if content_el is not None else node)
             if role == "user":
                 attach_root = node.find_parent("user-query") or node
-                attachments = self.attachments_markdown(
+                images = self.attachments_markdown(
                     attach_root, url_filter=self._is_content_image
                 )
+                files = self._file_attachments_markdown(attach_root)
+                attachments = "\n\n".join(part for part in (images, files) if part)
                 if attachments and attachments not in content:
                     content = f"{content}\n\n{attachments}".strip() if content else attachments
             if not content:
@@ -224,34 +245,203 @@ class GeminiParser(BaseParser):
 
     @classmethod
     def _content_text(cls, el) -> str:
-        """Texte markdown d'un contenu Gemini (listes et tableaux preserves).
+        """Texte markdown d'un contenu Gemini (listes, tableaux, titres...).
 
-        ``BaseParser.text_of`` aplatit les ``<ul>/<ol>`` et les ``<table>`` :
-        on les convertit en markdown sur une copie avant l'extraction. Les
-        conversions sont reinjectees apres le nettoyage (qui supprime
-        l'indentation des lignes) pour conserver les listes imbriquees.
+        ``BaseParser.text_of`` aplatit les ``<ul>/<ol>``, ``<table>``,
+        ``<h1..h6>``, ``<blockquote>``, ``<hr>``, le gras/italique, le code en
+        ligne et la LaTeX ``data-math``. On normalise tout cela en markdown sur
+        une copie avant l'extraction, puis on reinjecte les remplacements apres
+        le nettoyage (qui supprime l'indentation des lignes) afin de conserver
+        listes imbriquees et separateurs.
         """
         if el is None:
             return ""
         node = copy.copy(el)
         replacements: Dict[str, str] = {}
 
+        cls._drop_ui_nodes(node)
+        cls._preprocess_code_blocks(node)
+        cls._latex_markdown(node)
+        cls._inline_markdown(node)
+        cls._generated_files(node)
+
+        # blockquotes : traiter les plus externes (recursion du contenu)
+        for index, quote in enumerate(node.find_all("blockquote")):
+            if quote.find_parent("blockquote") is not None:
+                continue
+            inner = cls._content_text(quote)
+            quoted = "\n".join(
+                f"> {line}" if line else ">" for line in inner.splitlines()
+            )
+            token = f"@@AICV_GEMINI_QUOTE_{index}@@"
+            replacements[token] = quoted
+            quote.replace_with(NavigableString(f"\n{token}\n"))
+
         for index, table in enumerate(node.find_all("table")):
-            token = f"@@AICV_TABLE_{index}@@"
+            token = f"@@AICV_GEMINI_TABLE_{index}@@"
             replacements[token] = cls._table_markdown(table)
-            table.replace_with(NavigableString(token))
+            table.replace_with(NavigableString(f"\n{token}\n"))
 
         for index, lst in enumerate(node.find_all(["ul", "ol"])):
             if lst.find_parent(["ul", "ol"]) is not None:
                 continue  # traitee avec sa liste parente
-            token = f"@@AICV_LIST_{index}@@"
+            token = f"@@AICV_GEMINI_LIST_{index}@@"
             replacements[token] = "\n".join(cls._render_list(lst))
-            lst.replace_with(NavigableString(token))
+            lst.replace_with(NavigableString(f"\n{token}\n"))
+
+        for index, heading in enumerate(
+            node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
+        ):
+            level = int(heading.name[1])
+            title = re.sub(r"\s*\n\s*", " ", cls._inline_text(heading)).strip()
+            token = f"@@AICV_GEMINI_HEADING_{index}@@"
+            replacements[token] = f"{'#' * level} {title}".rstrip()
+            heading.replace_with(NavigableString(f"\n{token}\n"))
+
+        for hr in node.find_all("hr"):
+            hr.replace_with(NavigableString("\n@@AICV_GEMINI_HR@@\n"))
 
         text = cls.text_of(node)
         for token, markdown in replacements.items():
             text = text.replace(token, markdown)
-        return text
+        return text.replace("@@AICV_GEMINI_HR@@", "---")
+
+    # -- rendu inline (avant `BaseParser.text_of`) -----------------------------
+
+    @classmethod
+    def _drop_ui_nodes(cls, node) -> None:
+        """Retire les libelles lecteur d'ecran / elements caches hors contenu."""
+        for sel in (
+            ".cdk-visually-hidden",
+            "[class*='screen-reader']",
+            "[aria-hidden='true']",
+        ):
+            for tag in list(node.select(sel)):
+                try:
+                    tag.decompose()
+                except Exception:
+                    pass
+
+    @classmethod
+    def _preprocess_code_blocks(cls, node) -> None:
+        """Injecte le langage des ``<code-block>`` Gemini dans le ``<pre>``.
+
+        Gemini enveloppe le code dans ``<code-block>`` avec un en-tete
+        ``.code-block-decoration``; ``BaseParser.text_of`` ne connait que les
+        classes ``language-*``. On recopie le libelle (s'il s'agit bien d'un
+        langage) dans ``data-language`` puis on retire les en-tetes pour qu'ils
+        ne polluent pas le texte.
+        """
+        for pre in node.find_all("pre"):
+            if pre.find_parent("pre") is not None:
+                continue
+            code = pre.find("code")
+            classes = list(code.get("class") or []) if code is not None else []
+            is_output = "code-result-container" in classes or (
+                code is not None
+                and code.get("data-test-id") == "code-output-stdout-stderr"
+            )
+            if not is_output:
+                deco = pre.find_previous(class_="code-block-decoration")
+                block = pre.find_parent("code-block")
+                if deco is not None and (
+                    block is None or deco.find_parent("code-block") is block
+                ):
+                    lang = cls._normalize_language(deco.get_text(" ", strip=True))
+                    if lang:
+                        pre["data-language"] = lang
+        for deco in node.select(".code-block-decoration"):
+            deco.decompose()
+        for divider in node.find_all("mat-divider"):
+            divider.decompose()
+
+    @staticmethod
+    def _normalize_language(label: str) -> str:
+        """Libelle d'en-tete -> identifiant de langage (ou vide si UI)."""
+        text = re.sub(r"\s+", " ", (label or "")).strip()
+        if text.lower() in _CODE_UI_LABELS or re.search(r"\s", text):
+            return ""
+        if not _LANGUAGE_TOKEN_RE.match(text):
+            return ""
+        return text.lower()
+
+    @classmethod
+    def _latex_markdown(cls, node) -> None:
+        """``data-math`` Gemini -> ``$...$`` / ``$$...$$``.
+
+        ``BaseParser._clean_tree`` transforme sinon ces noeuds en ``\\(...\\)``
+        / ``\\[...\\]`` ; on impose le markdown ``$`` attendu par le schema.
+        """
+        for el in node.select("[data-math], [data-math-source]"):
+            tex = (el.get("data-math") or el.get("data-math-source") or "").strip()
+            if not tex:
+                continue
+            classes = " ".join(el.get("class") or [])
+            display = (
+                el.name == "div"
+                or "math-block" in classes
+                or el.get("data-math-display") == "block"
+            )
+            el.replace_with(
+                NavigableString(f"\n$${tex}$$\n" if display else f" ${tex}$ ")
+            )
+
+    @classmethod
+    def _inline_markdown(cls, node) -> None:
+        """Code en ligne, gras, italique et barre -> markdown (hors ``pre``)."""
+        for code in node.find_all("code"):
+            if code.find_parent("pre") is not None:
+                continue
+            text = code.get_text(" ", strip=True)
+            if text:
+                code.replace_with(NavigableString(f"`{text}`"))
+            else:
+                code.decompose()
+
+        emphases = node.find_all(["b", "strong", "i", "em", "del", "s", "strike"])
+        markers = {
+            "b": "**",
+            "strong": "**",
+            "i": "*",
+            "em": "*",
+            "del": "~~",
+            "s": "~~",
+            "strike": "~~",
+        }
+        # du plus profond au plus externe : preserve l'imbrication
+        for el in sorted(emphases, key=lambda t: len(list(t.parents)), reverse=True):
+            if el.find_parent("pre") is not None:
+                continue
+            inner = cls._inline_text(el)
+            if inner:
+                marker = markers[el.name]
+                el.replace_with(NavigableString(f"{marker}{inner}{marker}"))
+            else:
+                el.decompose()
+
+    @classmethod
+    def _generated_files(cls, node) -> None:
+        """Puce de fichier genere -> nom du fichier, sans icone ni bouton."""
+        for generated in node.find_all("generated-file"):
+            name_el = generated.select_one(".file-name-lr")
+            name = ""
+            if name_el is not None:
+                name = (name_el.get("title") or name_el.get_text(" ", strip=True)).strip()
+            if not name:
+                name = generated.get_text(" ", strip=True)
+            generated.replace_with(NavigableString(f"\n\n{name}\n\n" if name else "\n"))
+        # icones de type de fichier (ex: /32/type/text/csv) : hors contenu
+        for img in node.find_all("img"):
+            src = img.get("src") or ""
+            if "drive-thirdparty.googleusercontent.com" in src:
+                img.decompose()
+
+    @classmethod
+    def _inline_text(cls, el) -> str:
+        """Texte markdown inline (sans nouvelle structure de blocs)."""
+        if el is None:
+            return ""
+        return cls.text_of(copy.copy(el))
 
     @classmethod
     def _table_markdown(cls, table) -> str:
@@ -259,7 +449,7 @@ class GeminiParser(BaseParser):
         rows = []
         for tr in table.find_all("tr"):
             cells = tr.find_all(["th", "td"])
-            rows.append([c.get_text(" ", strip=True) for c in cells])
+            rows.append([cls._inline_text(c).strip() for c in cells])
         if not rows:
             return ""
         width = max(len(row) for row in rows)
@@ -283,12 +473,29 @@ class GeminiParser(BaseParser):
             li_copy = copy.copy(li)
             for sub in li_copy.find_all(["ul", "ol"]):
                 sub.decompose()
-            text = re.sub(r"\s*\n\s*", " ", cls.text_of(li_copy)).strip()
+            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
             marker = f"{start + offset}." if ordered else "-"
             lines.append(f"{'  ' * depth}{marker} {text}")
             for sub in li.find_all(["ul", "ol"], recursive=False):
                 lines.extend(cls._render_list(sub, depth + 1))
         return lines
+
+    @classmethod
+    def _file_attachments_markdown(cls, root) -> str:
+        """Noms des pieces jointes non-image (pastille ``uploaded-file``)."""
+        names: List[str] = []
+        for div in root.select("[data-test-id='uploaded-file']"):
+            button = div.find("button") or div
+            name = (button.get("aria-label") or "").strip()
+            if not name:
+                filename = div.select_one(".filename-label")
+                extension = div.select_one(".extension-label")
+                stem = filename.get_text(" ", strip=True) if filename else ""
+                ext = extension.get_text(" ", strip=True).lower() if extension else ""
+                name = f"{stem}.{ext}" if stem and ext else stem
+            if name and name not in names:
+                names.append(name)
+        return "\n\n".join(names)
 
     @staticmethod
     def _is_content_image(src: str) -> bool:

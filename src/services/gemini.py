@@ -19,21 +19,40 @@ _RESET_TURNS_JS = (
     "window.__aicvOrder = [];"
     "return 0;"
 )
-#: memorise les tours visibles puis remonte le fil (Gemini lazy-loade le haut)
+#: memorise les tours visibles puis remonte le fil (Gemini lazy-loade le haut).
+#: Le DOM final peut manquer la reponse d'un tour encore en rendu : on ecrase
+#: alors l'exemplaire memorise des que la reponse apparait, et on renvoie une
+#: signature (tours repondus) pour ne pas conclure a la stabilite trop tot.
 _COLLECT_TURNS_JS = """
 return (function(){
   const nodes = Array.from(document.querySelectorAll(__SELECTOR__));
   const fresh = [];
+  const answered = nodes.map(function(n){
+    return n.querySelector('message-content') ? '1' : '0';
+  });
   for (const n of nodes) {
     const key = n.getAttribute('id') || ('k' + n.textContent.trim().slice(0, 120));
-    if (window.__aicvTurns[key] === undefined) {
-      window.__aicvTurns[key] = n.outerHTML;
+    const html = n.outerHTML;
+    const hasAnswer = n.querySelector('message-content') ? true : false;
+    const previous = window.__aicvTurns[key];
+    if (previous === undefined) {
+      window.__aicvTurns[key] = html;
       window.__aicvOrder.push(key);
       fresh.push(key);
+    } else if (hasAnswer && previous.indexOf('<message-content') === -1) {
+      window.__aicvTurns[key] = html;  // version complete (reponse rendue)
     }
   }
+  // Gemini scrolle dans <infinite-scroller> (pas la fenetre) : on remonte
+  // explicitement le conteneur scrollable pour declencher le chargement.
+  let scrollHost = nodes.length ? nodes[0].parentElement : null;
+  while (scrollHost) {
+    if (scrollHost.scrollHeight > scrollHost.clientHeight + 5) break;
+    scrollHost = scrollHost.parentElement;
+  }
+  if (scrollHost) scrollHost.scrollTop = 0;
   if (nodes.length) nodes[0].scrollIntoView({block: 'start', inline: 'nearest'});
-  return [fresh.length, window.__aicvOrder.length, nodes.length];
+  return [fresh.length, window.__aicvOrder.length, nodes.length, answered.join('')];
 })();
 """.replace("__SELECTOR__", json.dumps(TURN_SELECTOR))
 #: amene le fil en bas (certains fils s'ouvrent sur les premiers tours)
@@ -138,21 +157,28 @@ class GeminiService(BaseService):
             self.session.eval_body(_SCROLL_BOTTOM_JS)
             self.session.wait_ms(pause_ms)
         last_total = -1
+        last_signature = None
         stable = 0
         for _ in range(max_rounds):
             result = self.session.eval_body(_COLLECT_TURNS_JS)
             self.session.wait_ms(pause_ms)
             total = int(result[1]) if result else 0
-            if total == last_total:
+            signature = str(result[3]) if result and len(result) > 3 else ""
+            # stabilite = plus de tours charges ET plus de reponses rendues
+            if total == last_total and signature == last_signature:
                 stable += 1
             else:
                 stable = 0
             last_total = total
+            last_signature = signature
             if stable >= stable_rounds:
                 break
 
         data = self.session.eval_body(_FINAL_TURNS_JS) or {}
-        fragments = [f for f in data.get("order") or [] if f]
-        if not fragments:
-            fragments = [f for f in data.get("seen") or [] if f]
+        # `seen` = accumulateur (versions completes, ordre de decouverte) ;
+        # `order` = DOM final (ordre logique du fil). On donne `order` en
+        # dernier pour qu'a score egal la fusion retienne son exemplaire (donc
+        # l'ordre logique), tout en completant avec `seen` les tours absents.
+        fragments = [f for f in data.get("seen") or [] if f]
+        fragments += [f for f in data.get("order") or [] if f]
         return fragments
