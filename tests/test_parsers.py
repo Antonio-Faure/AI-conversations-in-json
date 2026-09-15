@@ -451,6 +451,96 @@ class TestClaudeParser:
         assert "```python" in conv.messages[3].texte
         assert "`total`" not in conv.messages[3].texte
 
+    def test_markdown_complet(self):
+        """Titres, listes (imbriquees/checklist), citations, `---`, tableaux."""
+        html = """<html><body>
+          <div data-testid='transcript-row' data-perf-row='assistant'>
+            <div class="font-claude-response"><div class="prose">
+              <div class="standard-markdown">
+                <h2>Section</h2>
+                <p><strong>gras</strong> <em>ital</em> <del>barre</del></p>
+                <ul><li>un</li><li>deux<ul><li>nid</li></ul></li></ul>
+                <ol><li>premier</li><li>second</li></ol>
+                <ul class="contains-task-list">
+                  <li class="task-list-item"><input disabled type="checkbox"/> a faire</li>
+                  <li class="task-list-item"><input checked disabled type="checkbox"/> fait</li>
+                </ul>
+                <blockquote><p>citation</p></blockquote>
+                <hr/>
+                <table>
+                  <thead><tr><th>Cle</th><th>Val</th></tr></thead>
+                  <tbody><tr><td>a</td><td>1</td></tr></tbody>
+                </table>
+              </div>
+            </div></div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        texte = conv.messages[0].texte
+        assert "## Section" in texte
+        assert "**gras**" in texte
+        assert "*ital*" in texte
+        assert "~~barre~~" in texte
+        assert "- un" in texte
+        assert "  - nid" in texte  # liste imbriquee indente
+        assert "1. premier" in texte
+        assert "2. second" in texte
+        assert "- [ ] a faire" in texte
+        assert "- [x] fait" in texte
+        assert "> citation" in texte
+        assert "\n---\n" in texte
+        assert "| Cle | Val |" in texte
+        assert "| --- | --- |" in texte
+
+    def test_pieces_jointes_user(self):
+        """Images et fichiers joints : markdown (URL absolue) + noms."""
+        html = """<html><body>
+          <div data-testid='transcript-row' data-perf-row='human'>
+            <div data-cds='UserMessage'>
+              <div data-cds='MessageAttachments'>
+                <div data-cds='MessageAttachmentsImage' data-testid='file-thumbnail'>
+                  <img alt="" src="/api/files/abc/preview" width="120" height="120"/>
+                  <span class="sr-only">image.png</span>
+                </div>
+                <div data-cds='MessageAttachmentsFile' data-testid='file-thumbnail'>
+                  <span title="notes.txt"><span class="sr-only">notes.txt</span></span>
+                </div>
+              </div>
+              <div data-testid='user-message'><p>Analyse ca.</p></div>
+            </div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        texte = conv.messages[0].texte
+        assert "Analyse ca." in texte
+        assert "![image.png](https://claude.ai/api/files/abc/preview)" in texte
+        assert "notes.txt" in texte
+
+    def test_code_langage_et_favicon_exclus(self):
+        """En-tete de code retire (langage conserve), favicons non extraits."""
+        html = """<html><body>
+          <div data-testid='transcript-row' data-perf-row='assistant'>
+            <div class="font-claude-response"><div class="prose">
+              <div class="standard-markdown">
+                <div data-not-prose=""><div aria-label="Code python">
+                  <div class="text-text-500 font-small">python</div>
+                  <div class="overflow-x-auto">
+                    <pre><code class="language-python">x = 1</code></pre>
+                  </div>
+                </div></div>
+                <p>Voir <img alt="" height="32" width="32"
+                  src="https://t0.gstatic.com/faviconV2"/> la source.</p>
+              </div>
+            </div></div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        texte = conv.messages[0].texte
+        assert "```python" in texte
+        assert not texte.startswith("python")
+        assert "gstatic" not in texte
+        assert conv.messages[0].code_blocks[0].language == "python"
+
 
 def _claude_transcript_row(index: int, role: str, text: str) -> str:
     """Rangee de transcript minimale (comme le DOM virtualise 2026)."""
