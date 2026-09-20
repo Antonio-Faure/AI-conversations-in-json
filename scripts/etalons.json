@@ -1,0 +1,105 @@
+{
+  "chatgpt": [
+    {
+      "id": "6aa5b793-5eb8-83eb-9171-0de0b7328fc5",
+      "label": "titres markdown",
+      "baseline": {
+        "messages": 238,
+        "consecutive_roles": 0,
+        "images": 2,
+        "tables": 3,
+        "lists": 13,
+        "code_langs": 15,
+        "latex": 114
+      }
+    }
+  ],
+  "claude": [
+    {
+      "id": "dd573247-66d8-4ca9-a133-78882c37ecbd",
+      "label": "structure html",
+      "baseline": {
+        "messages": 370,
+        "consecutive_roles": 0,
+        "images": 14,
+        "tables": 3,
+        "lists": 14,
+        "code_langs": 26,
+        "latex": 63
+      }
+    }
+  ],
+  "gemini": [
+    {
+      "id": "599f791d92a6bc11",
+      "label": "conversation etalon",
+      "baseline": {
+        "messages": 84,
+        "consecutive_roles": 0,
+        "images": 3,
+        "tables": 1,
+        "lists": 6,
+        "code_langs": 16,
+        "latex": 40
+      }
+    }
+  ],
+  "grok": [
+    {
+      "id": "f85ec063-5eaa-403e-9333-47b4a2f82cb8",
+      "label": "conversation etalon",
+      "baseline": {
+        "messages": 122,
+        "consecutive_roles": 0,
+        "images": 4,
+        "tables": 1,
+        "lists": 7,
+        "code_langs": 15,
+        "latex": 56
+      }
+    }
+  ],
+  "mistral": [
+    {
+      "id": "8a9ac42e-86a8-482a-a0cc-b9ffb11b9e7a",
+      "label": "work",
+      "baseline": {
+        "messages": 98,
+        "consecutive_roles": 0,
+        "images": 4,
+        "tables": 5,
+        "lists": 7,
+        "code_langs": 6,
+        "latex": 32
+      }
+    },
+    {
+      "id": "1e8dfb6d-3742-404c-9a6d-e0d41f5e632c",
+      "label": "chat",
+      "baseline": {
+        "messages": 40,
+        "consecutive_roles": 0,
+        "images": 2,
+        "tables": 4,
+        "lists": 18,
+        "code_langs": 24,
+        "latex": 54
+      }
+    }
+  ],
+  "perplexity": [
+    {
+      "id": "7ed85e4b-b88b-401c-b1af-5a7e0b50d715",
+      "label": "titre principal",
+      "baseline": {
+        "messages": 116,
+        "consecutive_roles": 0,
+        "images": 1,
+        "tables": 4,
+        "lists": 9,
+        "code_langs": 19,
+        "latex": 59
+      }
+    }
+  ]
+}
