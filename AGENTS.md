@@ -45,12 +45,17 @@ ce fichier donne les conventions et le mode opératoire.
 .venv/bin/python scripts/download_images.py      # images locales (best effort)
 .venv/bin/python scripts/random_conversation.py
 .venv/bin/python scripts/audit_exports.py exports
+
+# Contrôle de régression des conversations d'étalonnage (canaris des parseurs)
+.venv/bin/python scripts/check_etalons.py            # compare à la baseline
+.venv/bin/python scripts/check_etalons.py --update   # mémorise la baseline
 ```
 
 Options récentes utiles : `--match TEXTE` (ne scraper que les titres/id
 correspondants), `--screenshots` (un PNG par tour, centré, dans
 `exports/<platform>/screenshots/<conv>/message-NN.png`), `--output DIR`
-(surcharge `output_dir`).
+(surcharge `output_dir`), `--retry-unavailable` (réessaie les conversations
+marquées indisponibles).
 
 ## Architecture (points d'entrée)
 
@@ -116,6 +121,15 @@ correspondants), `--screenshots` (un PNG par tour, centré, dans
 - Skill `etalon-runner` et agents `.opencode/agent/runner-<bot>.md` (gemini, grok).
 - Dossiers runtime hors dépôt : `/home/odin/Documents/code/aicv-run/<bot>/`.
 
+## Conversation d'étalonnage (canari des parseurs)
+
+- Liste suivie dans `scripts/etalons.json` (plateforme → id/label + baseline).
+- `scripts/check_etalons.py` compare les métriques (messages, alternance des
+  rôles, images, tableaux, listes, langues de code, LaTeX) à la baseline et sort
+  en erreur si une capacité chute → à lancer après chaque `--monthly`.
+- Quand une conversation d'étalonnage change (nouvel étalonnage), mettre à jour
+  les id dans `scripts/etalons.json` puis `check_etalons.py --update`.
+
 ## Pièges connus
 
 - DOM des plateformes volatil → chaînes de sélecteurs de repli ; mettre à jour
@@ -123,9 +137,18 @@ correspondants), `--screenshots` (un PNG par tour, centré, dans
 - Cloudflare : Claude/Perplexity/Mistral forcent `engine: botasaurus` ; login et
   export doivent utiliser **le même moteur** (cookies liés à l'UA).
 - Perplexity gratuit rate-limite → espacer (`--daily`), pas de scraping massif.
+- **Fils « collés en bas »** (Perplexity, parfois Claude/ChatGPT) : un `scrollTop`
+  programmatique est annulé. Utiliser `session.scroll_wheel` (molette réelle CDP)
+  pour remonter le conteneur, pas `scrollTop`.
+- Conversations **indisponibles** (supprimées/privées) : l'URL redirige vers
+  l'accueil ; elles sont marquées `unavailable` dans `conversation_list.json` et
+  plus retentées. `--retry-unavailable` lève le flag pour un nouvel essai.
+- Une **fusion JSON partielle** (scrape tronqué) ne remplace pas l'archive :
+  statut `kept` (préfixe/suffixe) → ne pas dégrader un export complet.
 - Mistral : **deux modes** `/chat` et `/work` (même titre possible) ; le mode est
   activé par `_ensure_mode`. Timestamps non exposés (`null`).
-- Grok : pas de navigateur → pas de screenshots, HTML généré (`html_render.py`).
+- Grok : pas de navigateur → pas de screenshots, HTML généré (`html_render.py`) ;
+  les pièces jointes sont téléchargées via un `fetch` authentifié par cookies.
 - Après un `reparse_exports.py` ou un `download_images.py`, relancer
   `rag_index.py --force` (cache par empreinte de message).
 
