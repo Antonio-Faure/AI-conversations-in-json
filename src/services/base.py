@@ -6,6 +6,7 @@ travail de lecture DOM a son parser (BeautifulSoup, testable sans navigateur).
 
 from __future__ import annotations
 
+import hashlib
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -17,7 +18,14 @@ from ..parsers.base import LOGIN_URL_PARTS, ParseError
 from ..schema import Conversation, ConversationRef
 from ..selectors import translate_selector
 from ..utils.logging import get_logger, log_fields
-from ..utils.screenshots import MAX_TURNS, SETTLE_MS, scroll_to_index_body
+from ..utils.screenshots import (
+    MAX_STEPS,
+    MAX_TURNS,
+    SETTLE_MS,
+    STABLE_ROUNDS,
+    screenshot_reset_body,
+    screenshot_step_body,
+)
 
 if TYPE_CHECKING:  # evite la dependance playwright pour les tests parsers/schema
     from ..browser import BrowserSession
@@ -37,6 +45,10 @@ class EmptyConversationError(RuntimeError):
     """La conversation ne charge aucun message (vide, tâche, ou app en echec)."""
 
 
+class ConversationUnavailableError(EmptyConversationError):
+    """Conversation inaccessible (supprimee/privee) : ne plus la retenter."""
+
+
 #: textes des dialogs de rate limite (ChatGPT "Too many requests", etc.)
 RATE_LIMIT_MARKERS = ("too many requests", "trop de requ", "temporairement limit")
 RATE_LIMIT_DISMISS_SELECTORS = (
@@ -44,6 +56,14 @@ RATE_LIMIT_DISMISS_SELECTORS = (
     "button:has-text('OK')",
     'button:has-text("J\'ai compris")',
 )
+
+
+def _file_digest(path: Path) -> str:
+    """Empreinte SHA-1 d'un fichier (pour dedupliquer les screenshots)."""
+    try:
+        return hashlib.sha1(path.read_bytes()).hexdigest()
+    except OSError:
+        return f"missing:{path}"
 
 
 @dataclass
@@ -391,6 +411,10 @@ class BaseService(ABC):
     ) -> int:
         """Capture un screenshot par tour DOM (tour centre dans le viewport).
 
+        Les fils virtualises ne montent qu'une fenetre de tours : on descend de
+        maniere monotone (identite stable par tour) en defilant pour charger la
+        suite, au lieu d'indexer la fenetre courante.
+
         Retourne le nombre de captures reussies. Sans selecteurs ou sans
         navigateur (Grok) : ne fait rien.
         """
@@ -400,13 +424,38 @@ class BaseService(ABC):
             session, "screenshot"
         ):
             return 0
+        if not session.eval_body(screenshot_reset_body(selectors)):
+            return 0
         out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        session.wait_ms(SETTLE_MS)
         count = 0
-        for index in range(MAX_TURNS):
-            if not session.eval_body(scroll_to_index_body(selectors, index)):
+        stable = 0
+        seen_hashes: set = set()
+        for _ in range(MAX_STEPS):
+            step = session.eval_body(screenshot_step_body(selectors))
+            if step == "shot":
+                session.wait_ms(SETTLE_MS)
+                tmp = out_dir / f".aicv-tmp-{count + 1:02d}.png"
+                shot = session.screenshot(tmp)
+                if shot:
+                    digest = _file_digest(Path(shot))
+                    if digest in seen_hashes:
+                        # tour non amenageable (panneau artefact, virtualisation) :
+                        # une image identique a la precedente induirait en erreur.
+                        Path(shot).unlink(missing_ok=True)
+                    else:
+                        seen_hashes.add(digest)
+                        Path(shot).replace(out_dir / f"message-{count + 1:02d}.png")
+                        count += 1
+                stable = 0
+                if count >= MAX_TURNS:
+                    break
+            elif step == "advance":
+                session.wait_ms(SETTLE_MS)
+                stable += 1
+                if stable >= STABLE_ROUNDS:
+                    break
+            else:
                 break
-            session.wait_ms(SETTLE_MS)
-            target = out_dir / f"message-{index + 1:02d}.png"
-            if session.screenshot(target):
-                count += 1
         return count
