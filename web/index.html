@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Recherche — Conversations IA</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔎</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e94560' stroke-width='2' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='M20 20l-3.4-3.4'/></svg>">
 <script>
   /* Chrome : palette bordeaux imposee (cf. formules-physique-chimie.html) */
   (function () {
@@ -19,61 +19,72 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<a class="skip-link" href="#main">Aller aux résultats</a>
 <div class="container">
   <header>
     <div class="header-left">
       <h1>Conversations IA</h1>
-      <p class="subtitle">Recherche textuelle + sémantique dans les messages de ChatGPT, Claude, Gemini, Perplexity, Grok et Mistral</p>
+      <p class="subtitle">Recherche textuelle et sémantique dans les messages de ChatGPT, Claude, Gemini, Perplexity, Grok et Mistral</p>
     </div>
-    <div class="header-right">
-      <label class="theme-toggle" id="themeToggle" title="Basculer clair/nuit">
-        <span class="theme-toggle-label" id="themeLabel">Nuit</span>
-        <div class="toggle-track" id="toggleTrack"><div class="toggle-thumb"></div></div>
-      </label>
-    </div>
+    <button class="theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="true" aria-label="Thème de l'interface">
+      <span class="theme-toggle-label" id="themeLabel">Nuit</span>
+      <span class="toggle-track" id="toggleTrack" aria-hidden="true"><span class="toggle-thumb"></span></span>
+    </button>
   </header>
 
-  <div class="search-panel">
+  <section class="search-panel" aria-label="Recherche">
     <div class="search-row">
-      <input type="text" id="q" class="search-input" placeholder="Rechercher un message, une idée, un bout de code…" autocomplete="off">
-      <button id="searchBtn" class="btn">Rechercher</button>
-      <button id="randomBtn" class="btn ghost" type="button" title="Ouvrir une conversation au hasard">🎲 Aléatoire</button>
-      <button id="paramsToggle" class="params-toggle" type="button">⚙️ Paramètres</button>
+      <div class="field">
+        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.4-3.4"/></svg>
+        <input type="text" id="q" class="search-input" placeholder="Rechercher un message, une idée, un bout de code…" autocomplete="off" aria-label="Recherche">
+      </div>
+      <button id="searchBtn" class="btn" type="button">Rechercher</button>
+      <button id="randomBtn" class="btn ghost" type="button" title="Ouvrir une conversation au hasard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
+        Aléatoire
+      </button>
+      <button id="paramsToggle" class="params-toggle" type="button" aria-expanded="false" aria-controls="searchParams">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h8M18 7h2M4 17h4M12 17h8"/><circle cx="15" cy="7" r="2.4"/><circle cx="9" cy="17" r="2.4"/></svg>
+        Paramètres
+      </button>
     </div>
     <div class="search-params collapsed" id="searchParams">
       <div>
-        <label class="filter-label">Chatbots</label>
-        <div class="chip-list" id="platformChips"></div>
+        <span class="filter-label" id="platformsLabel">Chatbots</span>
+        <div class="chip-list" id="platformChips" role="group" aria-labelledby="platformsLabel"></div>
       </div>
       <div>
-        <label class="filter-label">Pondération sémantique : <span id="alphaVal">0.6</span></label>
+        <label class="filter-label" for="alpha">Pondération sémantique : <span id="alphaVal">0.6</span></label>
         <input type="range" id="alpha" min="0" max="1" step="0.05" value="0.6">
-        <div class="rc-meta" style="margin-top:4px"><span>mots-clés</span><span style="margin-left:auto">sémantique</span></div>
+        <div class="rc-meta range-legend"><span>mots-clés</span><span>sémantique</span></div>
       </div>
       <div>
-        <label class="filter-label">Modèle</label>
+        <label class="filter-label" for="modelFilter">Modèle</label>
         <select id="modelFilter" class="search-input"><option value="">Tous les modèles</option></select>
       </div>
       <div>
-        <label class="filter-label">Plage de dates</label>
-        <div class="row-inputs"><input type="date" id="dateFrom"><input type="date" id="dateTo"></div>
+        <span class="filter-label">Plage de dates</span>
+        <div class="row-inputs"><input type="date" id="dateFrom" aria-label="Date de début"><span class="range-sep">→</span><input type="date" id="dateTo" aria-label="Date de fin"></div>
       </div>
       <div>
-        <label class="filter-label">Nombre de résultats : <span id="kVal">30</span></label>
+        <label class="filter-label" for="k">Nombre de résultats : <span id="kVal">30</span></label>
         <input type="range" id="k" min="5" max="100" step="5" value="30">
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="stats" id="stats"></div>
+  <div class="stats" id="stats" role="status" aria-live="polite"></div>
 
   <div class="layout">
     <aside class="sidebar" id="sidebar">
       <h2>Navigation</h2>
-      <p class="side-item" style="cursor:default;color:var(--text-muted)">Lance une recherche pour voir les conversations.</p>
+      <p class="side-empty">Lance une recherche pour voir les conversations.</p>
     </aside>
-    <main class="main" id="main">
-      <div class="no-results">Recherche textuelle exacte et sémantique (embeddings) combinées.</div>
+    <main class="main" id="main" tabindex="-1">
+      <div class="state">
+        <p class="state-title">Recherche textuelle exacte et sémantique</p>
+        <p class="state-text">Les résultats sont regroupés par conversation.</p>
+      </div>
     </main>
   </div>
 </div>

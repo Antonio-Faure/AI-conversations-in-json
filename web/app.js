@@ -38,10 +38,12 @@ const $ = (id) => document.getElementById(id);
 })();
 
 function updateToggleUI(theme) {
-  const track = $("toggleTrack"), label = $("themeLabel");
-  if (!track) return;
-  if (theme === "dark") { track.classList.add("active"); label.textContent = "Jour"; }
-  else { track.classList.remove("active"); label.textContent = "Nuit"; }
+  const toggle = $("themeToggle"), label = $("themeLabel");
+  if (!toggle) return;
+  const dark = theme === "dark";
+  toggle.setAttribute("aria-checked", dark ? "true" : "false");
+  toggle.setAttribute("aria-label", dark ? "Thème sombre" : "Thème clair");
+  if (label) label.textContent = dark ? "Nuit" : "Jour";
 }
 
 /* ---------- helpers ---------- */
@@ -170,6 +172,35 @@ function enhance(root, terms) {
   hardenLinks(root);
 }
 
+function renderError(message, retry) {
+  const main = $("main");
+  main.innerHTML = `<div class="state error">
+    <p class="state-title">Une erreur est survenue</p>
+    <p class="state-text">${escapeHtml(message)}</p>
+    <button class="btn ghost" type="button" id="retryBtn">Réessayer</button>
+  </div>`;
+  const btn = $("retryBtn");
+  if (btn && retry) btn.addEventListener("click", retry);
+}
+
+function renderEmpty(title, text) {
+  $("main").innerHTML = `<div class="state">
+    <p class="state-title">${escapeHtml(title)}</p>
+    ${text ? `<p class="state-text">${escapeHtml(text)}</p>` : ""}
+  </div>`;
+}
+
+/* Entree/Espace activent les elements cliquables (div/bouton non natifs). */
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const target = e.target;
+  if (target.closest("input, textarea, select, [contenteditable='true']")) return;
+  const el = target.closest("button, a, [data-open], .conv-card, .side-item, .anchor");
+  if (!el || el.tagName === "BUTTON" || el.tagName === "A") return;
+  e.preventDefault();
+  el.click();
+});
+
 function platformName(p) { return PLATFORM_LABEL[p] || p || "?"; }
 function roleLabel(r) { return r === "user" ? "Utilisateur" : (r === "assistant" ? "Assistant" : (r || "?")); }
 function formatTs(ts) { return ts ? String(ts).replace("T", " ").replace("Z", "").slice(0, 16) : "—"; }
@@ -177,8 +208,10 @@ function scorePct(v) { return Math.round((v || 0) * 100); }
 
 /* ---------- init ---------- */
 window.addEventListener("DOMContentLoaded", () => {
-  $("paramsToggle").addEventListener("click", () =>
-    $("searchParams").classList.toggle("collapsed"));
+  $("paramsToggle").addEventListener("click", () => {
+    const collapsed = $("searchParams").classList.toggle("collapsed");
+    $("paramsToggle").setAttribute("aria-expanded", collapsed ? "false" : "true");
+  });
   $("searchBtn").addEventListener("click", search);
   $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
   $("randomBtn").addEventListener("click", openRandomConversation);
@@ -195,7 +228,7 @@ async function openRandomConversation() {
     if (data.error) throw new Error(data.error);
     openConversation(data.platform, data.conversation_id, null);
   } catch (err) {
-    $("main").innerHTML = `<div class="no-results">Erreur: ${escapeHtml(err.message)}</div>`;
+    renderError(err.message, openRandomConversation);
   }
 }
 
@@ -209,18 +242,20 @@ async function loadDefaultConversations() {
     const items = (data.conversations || []).slice(0, 100);
     renderConversationList(items, "Dernières conversations");
     renderDefaultSidebar(items);
-  } catch (err) { console.error(err); }
+  } catch (err) {
+    renderError(err.message, loadDefaultConversations);
+  }
 }
 
 function renderConversationList(items, heading) {
   const main = $("main");
   if (!items.length) {
-    main.innerHTML = `<div class="no-results">Aucune conversation.</div>`;
+    renderEmpty("Aucune conversation", "Rien n'a encore été scrapé.");
     return;
   }
   main.innerHTML = `<h2 class="section-title">${escapeHtml(heading)}</h2>` + `<div class="conv-list">` +
     items.map((c, i) => `
-      <div class="conv-card" data-i="${i}">
+      <div class="conv-card" data-i="${i}" role="button" tabindex="0">
         <div class="rc-head">
           <span class="badge platform">${escapeHtml(platformName(c.platform))}</span>
           <span class="badge small">${c.message_count ?? "?"} messages</span>
@@ -243,7 +278,7 @@ function renderConversationList(items, heading) {
 function renderDefaultSidebar(items) {
   const sidebar = $("sidebar");
   sidebar.innerHTML = `<h2>Conversations récentes</h2>` + items.slice(0, 40).map((c) => `
-    <div class="side-item" data-platform="${escapeHtml(c.platform)}" data-id="${escapeHtml(c.conversation_id)}">
+    <div class="side-item" role="button" tabindex="0" data-platform="${escapeHtml(c.platform)}" data-id="${escapeHtml(c.conversation_id)}">
       <span>${escapeHtml((c.title || c.conversation_id).slice(0, 42))}</span>
       <span class="muted">${escapeHtml(platformName(c.platform))} · ${escapeHtml(formatTs(c.last_message_at))}</span>
     </div>`).join("");
@@ -257,15 +292,19 @@ async function loadFilters() {
     const container = $("platformChips");
     container.innerHTML = "";
     for (const platform of data.platforms || []) {
-      const chip = document.createElement("span");
+      const chip = document.createElement("button");
+      chip.type = "button";
       chip.className = "chip";
       chip.dataset.platform = platform;
+      chip.setAttribute("aria-pressed", "false");
       chip.innerHTML = `${escapeHtml(platformName(platform))} <span class="count"></span>`;
       chip.addEventListener("click", () => {
         if (state.platforms.has(platform)) state.platforms.delete(platform);
         else state.platforms.add(platform);
-        chip.classList.toggle("active", state.platforms.has(platform));
-        if (state.results.length) search();
+        const on = state.platforms.has(platform);
+        chip.classList.toggle("active", on);
+        chip.setAttribute("aria-pressed", on ? "true" : "false");
+        if (state.view === "groups" && state.groups.length) search();
       });
       container.appendChild(chip);
     }
@@ -326,17 +365,18 @@ async function search() {
     renderGroups();
     renderSidebar();
   } catch (err) {
-    $("main").innerHTML = `<div class="no-results">Erreur: ${escapeHtml(err.message)}</div>`;
+    renderError(err.message, search);
   }
 }
 
 function renderGroups() {
   const main = $("main");
   if (!state.groups.length) {
-    main.innerHTML = `<div class="no-results">Aucun message trouvé.</div>`;
+    renderEmpty("Aucun message trouvé", "Essaie d'autres mots-clés ou élargis les filtres.");
     return;
   }
-  main.innerHTML = `<h2 class="section-title">${state.groups.length} conversation(s) — ${state.groups.reduce((a, g) => a + g.hit_count, 0)} message(s)</h2>` +
+  const hits = state.groups.reduce((a, g) => a + g.hit_count, 0);
+  main.innerHTML = `<h2 class="section-title">${state.groups.length} conversation${state.groups.length > 1 ? "s" : ""} · ${hits} message${hits > 1 ? "s" : ""}</h2>` +
     `<div class="results-grid">` + state.groups.map((g, gi) => `
     <div class="group-card ${g.hit_count > 1 ? "multi" : "single"}" data-g="${gi}">
       <div class="rc-head">
@@ -345,10 +385,10 @@ function renderGroups() {
         <span class="badge small">meilleur score ${scorePct(g.best_score)}</span>
         ${g.url ? `<a class="conv-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener noreferrer" data-stop="1">Ouvrir ↗</a>` : ""}
       </div>
-      <div class="conv-title" data-open="${gi}">${escapeHtml(g.title || g.conversation_id)}</div>
+      <div class="conv-title group-title" data-open="${gi}" role="button" tabindex="0">${escapeHtml(g.title || g.conversation_id)}</div>
       <div class="group-hits">
         ${g.messages.map((r, mi) => `
-          <div class="hit" data-open="${gi}" data-m="${mi}">
+          <div class="hit" data-open="${gi}" data-m="${mi}" role="button" tabindex="0">
             <div class="rc-meta">
               <span class="badge role-${r.role === "user" ? "user" : "assistant"}">${escapeHtml(roleLabel(r.role))}</span>
               <span>${escapeHtml(formatTs(r.timestamp))}</span>
@@ -374,10 +414,10 @@ function renderSidebar() {
   if (state.conversation) {
     const conv = state.conversation;
     sidebar.innerHTML = `<h2>${escapeHtml(conv.title || conv.conversation_id)}</h2>
-      <div class="side-item" id="backToResults">← Retour</div>
+      <div class="side-item" id="backToResults" role="button" tabindex="0">← Retour</div>
       <div class="side-sep"></div>
       <h2>Messages</h2>` + (conv.messages || []).map((m, i) =>
-        `<div class="anchor" data-mid="${escapeHtml(m.message_id || "")}" data-i="${i}">
+        `<div class="anchor" data-mid="${escapeHtml(m.message_id || "")}" data-i="${i}" role="button" tabindex="0">
           ${escapeHtml(roleLabel(m.role))} · ${escapeHtml((m.texte || "").replace(/\s+/g, " ").slice(0, 48))}
         </div>`).join("");
     $("backToResults").addEventListener("click", backToResults);
@@ -386,7 +426,7 @@ function renderSidebar() {
     return;
   }
   sidebar.innerHTML = `<h2>Conversations (${state.groups.length})</h2>` + state.groups.map((g, gi) => `
-    <div class="side-item" data-g="${gi}">
+    <div class="side-item" role="button" tabindex="0" data-g="${gi}">
       <span>${escapeHtml((g.title || g.conversation_id).slice(0, 42))}</span>
       <span class="muted">${escapeHtml(platformName(g.platform))} · ${g.hit_count} message(s)</span>
     </div>`).join("");
@@ -425,7 +465,7 @@ async function openConversation(platform, conversationId, matchedMid) {
       if (target) target.scrollIntoView({ block: "center" });
     }, 60);
   } catch (err) {
-    $("main").innerHTML = `<div class="no-results">Erreur: ${escapeHtml(err.message)}</div>`;
+    renderError(err.message, () => openConversation(platform, conversationId, matchedMid));
   }
 }
 
