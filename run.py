@@ -75,6 +75,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--parallel", type=int, metavar="N",
         help="scraper N services (domaines differents) en parallele (defaut: config)",
     )
+    parser.add_argument(
+        "--retry-unavailable", action="store_true",
+        help="reessayer les conversations marquees indisponibles (supprimees/privées)",
+    )
     parser.add_argument("--headful", action="store_true",
                         help="navigateur visible (debug / login manuel)")
     parser.add_argument("--screenshots", action="store_true",
@@ -180,6 +184,7 @@ def main(argv=None) -> int:
         summary = orchestrator.run(
             mode=mode, limit=args.limit, services=args.service,
             parallel=parallel, match=args.match,
+            retry_unavailable=args.retry_unavailable,
         )
     except KeyboardInterrupt:
         log.warning("interrompu")

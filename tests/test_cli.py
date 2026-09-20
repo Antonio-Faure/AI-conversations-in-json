@@ -97,7 +97,8 @@ class TestMain:
             def __init__(self, config, **kwargs):
                 calls["config"] = config
 
-            def run(self, mode, limit=None, services=None, parallel=None, match=None):
+            def run(self, mode, limit=None, services=None, parallel=None, match=None,
+                    retry_unavailable=False):
                 calls["run"] = {"mode": mode, "limit": limit, "services": services}
                 summary = RunSummary(mode=mode)
                 summary.services["chatgpt"] = ServiceResult(
@@ -122,13 +123,30 @@ class TestMain:
             def __init__(self, config, **kwargs):
                 pass
 
-            def run(self, mode, limit=None, services=None, parallel=None, match=None):
+            def run(self, mode, limit=None, services=None, parallel=None, match=None,
+                    retry_unavailable=False):
                 calls["match"] = match
                 return RunSummary(mode=mode)
 
         monkeypatch.setattr(run_cli, "Orchestrator", StubOrchestrator)
         assert run_cli.main(["--daily", "--match", "Conversation etalon"]) == 0
         assert calls["match"] == "Conversation etalon"
+
+    def test_retry_unavailable_transmis(self, monkeypatch):
+        calls = {}
+
+        class StubOrchestrator:
+            def __init__(self, config, **kwargs):
+                pass
+
+            def run(self, mode, limit=None, services=None, parallel=None, match=None,
+                    retry_unavailable=False):
+                calls["retry_unavailable"] = retry_unavailable
+                return RunSummary(mode=mode)
+
+        monkeypatch.setattr(run_cli, "Orchestrator", StubOrchestrator)
+        assert run_cli.main(["--daily", "--retry-unavailable"]) == 0
+        assert calls["retry_unavailable"] is True
 
     def test_screenshots_active_config(self, monkeypatch):
         calls = {}
@@ -137,7 +155,8 @@ class TestMain:
             def __init__(self, config, **kwargs):
                 calls["config"] = config
 
-            def run(self, mode, limit=None, services=None, parallel=None, match=None):
+            def run(self, mode, limit=None, services=None, parallel=None, match=None,
+                    retry_unavailable=False):
                 return RunSummary(mode=mode)
 
         monkeypatch.setattr(run_cli, "Orchestrator", StubOrchestrator)
@@ -151,7 +170,8 @@ class TestMain:
             def __init__(self, config, **kwargs):
                 pass
 
-            def run(self, mode, limit=None, services=None, parallel=None, match=None):
+            def run(self, mode, limit=None, services=None, parallel=None, match=None,
+                    retry_unavailable=False):
                 calls["mode"] = mode
                 return RunSummary(mode=mode)
 
@@ -164,7 +184,8 @@ class TestMain:
             def __init__(self, config, **kwargs):
                 pass
 
-            def run(self, mode, limit=None, services=None, parallel=None, match=None):
+            def run(self, mode, limit=None, services=None, parallel=None, match=None,
+                    retry_unavailable=False):
                 summary = RunSummary(mode=mode)
                 summary.services["chatgpt"] = ServiceResult(
                     service="chatgpt", failed=["c1"]

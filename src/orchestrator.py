@@ -495,6 +495,7 @@ class Orchestrator:
         mode: str,
         limit: Optional[int] = None,
         match: Optional[str] = None,
+        retry_unavailable: bool = False,
     ) -> ServiceResult:
         result = ServiceResult(service=name)
         svc_config = self.config.get("services", {}).get(name, {})
@@ -512,6 +513,16 @@ class Orchestrator:
 
         list_path = conversation_list_path(self.output_dir, name)
         index = load_conversation_list(list_path)
+        if retry_unavailable:
+            cleared = [
+                cid for cid, entry in index.items() if entry.pop("unavailable", None)
+            ]
+            if cleared:
+                log_fields(
+                    log, 20,
+                    f"{name}: {len(cleared)} conversations indisponibles reessayees",
+                    extra={"service": name},
+                )
         known = sum(1 for entry in index.values() if entry.get("scraped"))
 
         try:
@@ -644,6 +655,7 @@ class Orchestrator:
         services: Optional[List[str]] = None,
         parallel: int = 1,
         match: Optional[str] = None,
+        retry_unavailable: bool = False,
     ) -> RunSummary:
         if mode not in MODES:
             raise ValueError(f"mode invalide {mode!r} (attendu: {', '.join(MODES)})")
@@ -655,7 +667,10 @@ class Orchestrator:
         def run_group(group: List[str]) -> None:
             # sequentiel DANS un groupe ; les groupes (domaines) tournent en parallele
             for name in group:
-                result = self.run_service(name, mode, limit=limit, match=match)
+                result = self.run_service(
+                    name, mode, limit=limit, match=match,
+                    retry_unavailable=retry_unavailable,
+                )
                 with lock:
                     summary.services[name] = result
 

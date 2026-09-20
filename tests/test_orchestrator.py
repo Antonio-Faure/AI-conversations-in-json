@@ -534,6 +534,9 @@ class TestEngine:
         assert second.targets == 0
         assert second.skipped == []
 
+        third = orch.run(mode="monthly", retry_unavailable=True).services["unavail"]
+        assert third.targets == 3  # les flags sont leves pour un nouvel essai
+
 
 class TestRunSummary:
     def test_ok_et_total(self):
