@@ -53,6 +53,7 @@ services:
     enabled: true
     url: https://www.perplexity.ai/
     engine: botasaurus         # Cloudflare bloque Playwright + decouverte API GraphQL
+    pacing_ms: 8000            # quota gratuit : espacer pour eviter le rate-limit
   # Grok : API HTTP + cookies (Chromium bloque par Cloudflare, pas de navigateur)
   grok:
     enabled: true

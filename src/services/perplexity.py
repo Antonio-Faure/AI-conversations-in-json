@@ -15,10 +15,11 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Optional
 
+from ..parsers.base import ParseError
 from ..parsers.perplexity import PerplexityParser, merge_thread_messages
 from ..schema import ConversationRef
 from ..utils.logging import get_logger, log_fields
-from .base import BaseService, ScrapedPage
+from .base import BaseService, ConversationUnavailableError, ScrapedPage
 
 log = get_logger("services")
 
@@ -61,8 +62,11 @@ return (function(){
   }
   if (!el) return null;
   window.__aicvPpl.scroller = el;
+  const box = el.getBoundingClientRect();
   return {tag: el.tagName, client: el.clientHeight, height: el.scrollHeight,
-          top: Math.round(el.scrollTop)};
+          top: Math.round(el.scrollTop),
+          cx: Math.round(box.left + box.width / 2),
+          cy: Math.round(box.top + box.height / 2)};
 })();
 """.replace("__USER__", json.dumps(_USER_SELECTOR)).replace(
     "__ASSIST__", json.dumps(_ASSISTANT_SELECTOR)
@@ -297,7 +301,17 @@ class PerplexityService(BaseService):
         reconstruit un HTML complet avant parsing. On garde le HTML d'origine
         si l'accumulation n'apporte pas plus de messages (securite).
         """
-        page = super().scrape_conversation(ref)
+        try:
+            page = super().scrape_conversation(ref)
+        except ParseError:
+            # une conversation supprimee/privee redirige vers l'accueil : inutile
+            # de la retenter a chaque passe.
+            current = str(self.session.url() or "")
+            if ref.id and ref.id not in current:
+                raise ConversationUnavailableError(
+                    f"{self.name}: conversation inaccessible ({ref.id} -> {current})"
+                ) from None
+            raise
         merged = self._collect_thread()
         if merged and merged.count("aicv-ppl-msg") > self._message_count(page.html):
             page.html = merged
@@ -311,27 +325,44 @@ class PerplexityService(BaseService):
         stable_rounds = max(4, int(scroll_cfg.get("stable_rounds", 3)) + 1)
 
         self.session.eval_body(_RESET_THREAD_JS)
-        if self.session.eval_body(_FIND_SCROLLER_JS) is None:
+        found = self.session.eval_body(_FIND_SCROLLER_JS)
+        if found is None:
             return ""
-        self.session.eval_body(_SCROLL_BOTTOM_JS)
-        self.session.wait_ms(pause_ms)
+        # le fil Perplexity se recolle en bas : `scrollTop` programme est annule,
+        # on utilise donc de vrais evenements molette (facade scroll_wheel).
+        wheel = getattr(self.session, "scroll_wheel", None)
+        cx = int(found.get("cx") or 0)
+        cy = int(found.get("cy") or 0)
+        client = max(200, int(found.get("client") or 600))
+        if wheel is None:
+            self.session.eval_body(_SCROLL_BOTTOM_JS)
+            self.session.wait_ms(pause_ms)
+        else:
+            # descendre franchement pour charger les tours recents
+            for _ in range(8):
+                wheel(cx, cy, client)
+                self.session.wait_ms(150)
+            self.session.wait_ms(pause_ms)
 
         at_top = False
         stable = 0
+        step = max(300, int(client * 0.85))
         for _ in range(max_rounds):
             info = self.session.eval_body(_COLLECT_THREAD_JS) or {}
             fresh = int(info.get("fresh") or 0)
             count = int(info.get("count") or 0)
+            at_top = int(info.get("top") or 0) <= 1
             if at_top and fresh == 0 and count > 0:
                 stable += 1
                 if stable >= stable_rounds:
                     break
             else:
                 stable = 0
-            step = self.session.eval_body(_SCROLL_UP_JS)
-            if step is None:
-                break
-            at_top = int(step) <= 1
+            if wheel is None:
+                if self.session.eval_body(_SCROLL_UP_JS) is None:
+                    break
+            else:
+                wheel(cx, cy, -step)
             self.session.wait_ms(pause_ms)
 
         data = self.session.eval_body(_FINAL_THREAD_JS) or {}

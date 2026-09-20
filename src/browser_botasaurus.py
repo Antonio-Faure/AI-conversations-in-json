@@ -434,6 +434,24 @@ class BotasaurusSession:
             log.debug("screenshot failed: %s", exc)
             return None
 
+    def scroll_wheel(self, x: int, y: int, delta_y: int) -> None:
+        """Molette reelle (CDP Input.dispatchMouseEvent) au point (x, y).
+
+        Certains fils (Perplexity) restaurent leur `scrollTop` des qu'on le
+        programme : un vrai evenement molette, lui, tient.
+        """
+        try:
+            from botasaurus_driver import cdp
+
+            drv = self.driver
+            drv.run_cdp_command(cdp.input_.dispatch_mouse_event(
+                "mouseMoved", float(x), float(y), pointer_type="mouse"))
+            drv.run_cdp_command(cdp.input_.dispatch_mouse_event(
+                "mouseWheel", float(x), float(y), delta_x=0, delta_y=float(delta_y),
+                pointer_type="mouse"))
+        except Exception as exc:  # noqa: BLE001
+            log.debug("scroll wheel failed: %s", exc)
+
     def looks_logged_out(
         self, login_url_parts: List[str], login_selectors: List[str]
     ) -> bool:

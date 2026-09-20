@@ -40,6 +40,7 @@ from .schema import ConversationRef, SchemaError
 from .services.base import (
     BaseService,
     BlockedError,
+    ConversationUnavailableError,
     EmptyConversationError,
     NoopSession,
     ServiceNotLoggedIn,
@@ -356,6 +357,17 @@ class Orchestrator:
                 extra={"conversation_id": ref.id, "error": str(exc)},
             )
             return "blocked"
+        except ConversationUnavailableError as exc:
+            log_fields(
+                log, logging.WARNING,
+                f"{service.name}: conversation indisponible (marquee)",
+                extra={"conversation_id": ref.id, "reason": str(exc)},
+            )
+            entry = index.get(ref.id)
+            if entry is not None:
+                entry["unavailable"] = True
+            result.skipped.append(ref.id)
+            return None
         except EmptyConversationError as exc:
             log_fields(
                 log, logging.WARNING, f"{service.name}: conversation ignoree",
@@ -404,8 +416,14 @@ class Orchestrator:
         payload = conv.to_dict(validate=False)
         existing = read_json(json_path, default=None)
         merged, status, appended = merge_conversation_json(existing, payload)
-        if status == "unchanged":
+        if status in ("unchanged", "kept"):
             result.unchanged.append(ref.id)
+            if status == "kept":
+                log_fields(
+                    log, logging.WARNING,
+                    f"{service.name}: scrape partiel ignore (archive conservee)",
+                    extra={"service": service.name, "conversation_id": ref.id},
+                )
         else:
             write_json_atomic(json_path, merged)
             result.exported.append(json_path)
@@ -461,6 +479,12 @@ class Orchestrator:
             selected = {ref.id for ref in unknown}
             selected.update(ref.id for ref in refs[:DAILY_RECENT])
             targets = [ref for ref in refs if ref.id in selected]
+        # conversations inaccessibles (supprimees/privees) : ne plus retenter
+        unavailable = {
+            cid for cid, entry in index.items() if entry.get("unavailable")
+        }
+        if unavailable:
+            targets = [ref for ref in targets if ref.id not in unavailable]
         if limit:
             targets = targets[:limit]
         return targets

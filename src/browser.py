@@ -458,6 +458,18 @@ class BrowserSession:
             log.debug("screenshot failed: %s", exc)
             return None
 
+    def scroll_wheel(self, x: int, y: int, delta_y: int) -> None:
+        """Molette reelle (evenement souris) au point (x, y).
+
+        Certains fils (Perplexity) restaurent leur `scrollTop` en bas des que le
+        defilement est programme : un vrai evenement molette, lui, tient.
+        """
+        try:
+            self.page.mouse.move(int(x), int(y))
+            self.page.mouse.wheel(0, int(delta_y))
+        except PlaywrightError as exc:
+            log.debug("scroll wheel failed: %s", exc)
+
     def looks_logged_out(self, login_url_parts: List[str], login_selectors: List[str]) -> bool:
         """True si la page courante ressemble a un ecran de connexion."""
         url = self.url().lower()

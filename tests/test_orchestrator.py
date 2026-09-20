@@ -20,7 +20,12 @@ from src.orchestrator import (
 )
 from src.parsers.base import ParseError
 from src.schema import Conversation, ConversationRef, Message
-from src.services.base import BlockedError, EmptyConversationError, ServiceNotLoggedIn
+from src.services.base import (
+    BlockedError,
+    ConversationUnavailableError,
+    EmptyConversationError,
+    ServiceNotLoggedIn,
+)
 
 
 def make_conversation(platform="fake", conv_id="c1", n=2, title=None):
@@ -155,6 +160,13 @@ class EmptyConversationService(FakeService):
 
     def export_conversation_with_html(self, ref):
         raise EmptyConversationError(f"{self.name}: conversation sans message")
+
+
+class UnavailableConversationService(FakeService):
+    name = "unavail"
+
+    def export_conversation_with_html(self, ref):
+        raise ConversationUnavailableError(f"{self.name}: conversation inaccessible")
 
 
 class ManyConversations(FakeService):
@@ -505,6 +517,23 @@ class TestEngine:
         assert not summary.has_failures
         assert result.exported == []
 
+    def test_conversation_indisponible_marquee_puis_ignoree(self, workdir):
+        from src.utils.file_utils import load_conversation_list
+
+        orch, _ = make_orchestrator(
+            workdir, {"unavail": UnavailableConversationService}
+        )
+        first = orch.run(mode="monthly").services["unavail"]
+        assert sorted(first.skipped) == ["c01", "c02", "c03"]
+        index = load_conversation_list(
+            workdir / "exports" / "unavail" / "conversation_list.json"
+        )
+        assert all(index[cid].get("unavailable") for cid in ("c01", "c02", "c03"))
+
+        second = orch.run(mode="monthly").services["unavail"]
+        assert second.targets == 0
+        assert second.skipped == []
+
 
 class TestRunSummary:
     def test_ok_et_total(self):
@@ -607,6 +636,37 @@ class TestSmartJson:
 
         old = {"conversation_id": "c", "messages": [{"texte": "a"}], "exported_at": "v1"}
         new = {"conversation_id": "c", "messages": [{"texte": "X"}], "exported_at": "v2"}
+        _, status, _ = merge_conversation_json(old, new)
+        assert status == "rewritten"
+
+    def test_scrape_partiel_suffixe_conserve_archive(self):
+        from src.utils.file_utils import merge_conversation_json
+
+        old = {"conversation_id": "c", "exported_at": "v1",
+               "messages": [{"texte": "a"}, {"texte": "b"}, {"texte": "c"}]}
+        new = {"conversation_id": "c", "exported_at": "v2",
+               "messages": [{"texte": "b"}, {"texte": "c"}]}
+        merged, status, appended = merge_conversation_json(old, new)
+        assert status == "kept" and appended == 0
+        assert [m["texte"] for m in merged["messages"]] == ["a", "b", "c"]
+
+    def test_scrape_partiel_prefixe_conserve_archive(self):
+        from src.utils.file_utils import merge_conversation_json
+
+        old = {"conversation_id": "c", "exported_at": "v1",
+               "messages": [{"texte": "a"}, {"texte": "b"}, {"texte": "c"}]}
+        new = {"conversation_id": "c", "exported_at": "v2",
+               "messages": [{"texte": "a"}, {"texte": "b"}]}
+        _, status, _ = merge_conversation_json(old, new)
+        assert status == "kept"
+
+    def test_plus_court_mais_divergent_reecrit(self):
+        from src.utils.file_utils import merge_conversation_json
+
+        old = {"conversation_id": "c", "exported_at": "v1",
+               "messages": [{"texte": "a"}, {"texte": "b"}, {"texte": "c"}]}
+        new = {"conversation_id": "c", "exported_at": "v2",
+               "messages": [{"texte": "X"}]}
         _, status, _ = merge_conversation_json(old, new)
         assert status == "rewritten"
 

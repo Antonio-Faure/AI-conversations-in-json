@@ -132,6 +132,7 @@ def merge_conversation_json(
       - "written"   : pas de fichier existant
       - "unchanged" : contenu identique -> ne pas ecrire
       - "patched"   : les anciens messages sont un prefixe -> ajout des nouveaux
+      - "kept"      : scrape partiel (sous-ensemble debut/fin) -> garder l'ancien
       - "rewritten" : contenu divergent -> reecriture complete
     """
     if not isinstance(existing, dict):
@@ -148,6 +149,17 @@ def merge_conversation_json(
         merged = dict(new)
         merged["messages"] = old_messages + new_messages[len(old_messages):]
         return merged, "patched", len(new_messages) - len(old_messages)
+    if (
+        old_messages
+        and len(new_messages) < len(old_messages)
+        and new_messages
+        and (
+            old_messages[: len(new_messages)] == new_messages
+            or old_messages[-len(new_messages):] == new_messages
+        )
+    ):
+        # fenetre partielle (debut ou fin) : ne pas degrader l'archive
+        return existing, "kept", 0
     return new, "rewritten", len(new_messages)
 
 
