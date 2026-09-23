@@ -161,16 +161,58 @@ def print_sheet(name: str) -> int:
     return 0
 
 
+def _run_root() -> Path:
+    return Path(os.environ.get("AICV_RUN_DIR") or "/home/odin/Documents/code/aicv-run")
+
+
+def write_queue(name: str) -> int:
+    """Ecrit `<run_dir>/calibration_queue.json` pour le runner d'envoi."""
+    path = CAL_DIR / f"{name}.json"
+    if not path.exists():
+        print(f"{name}: calibration absente", file=sys.stderr)
+        return 2
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    messages = payload.get("messages") or []
+    if not messages:
+        print(f"{name}: aucune suite a envoyer", file=sys.stderr)
+        return 2
+    run_dir = _run_root() / name
+    run_dir.mkdir(parents=True, exist_ok=True)
+    queue = {
+        "bot": name,
+        "source": "calibration",
+        "messages": [
+            {
+                "test": index,
+                "name": message.get("source_test") or "",
+                "text": message["text"],
+                "attachments": list(message.get("attachments") or []),
+            }
+            for index, message in enumerate(messages, 1)
+        ],
+    }
+    target = run_dir / "calibration_queue.json"
+    target.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"{name}: {len(messages)} messages -> {target}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bot", action="append", help="ne traiter que ce(s) bot(s)")
     parser.add_argument("--report", action="store_true", help="afficher la couverture")
     parser.add_argument("--print", dest="print_bot", action="append", metavar="BOT",
                         help="afficher la fiche d'envoi (messages a poster) d'un bot")
+    parser.add_argument("--write-queue", action="store_true",
+                        help="ecrire la file d'envoi (calibration_queue.json) par bot")
     args = parser.parse_args()
 
     if args.print_bot:
         return max((print_sheet(name) for name in args.print_bot), default=0)
+
+    if args.write_queue:
+        names = args.bot or list(SOURCES)
+        return max((write_queue(name) for name in names), default=0)
 
     manifest = load_manifest(MANIFEST_PATH)
     names = args.bot or list(SOURCES)
