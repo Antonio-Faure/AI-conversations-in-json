@@ -248,11 +248,15 @@ _UPLOAD_HINTS = (
     "cette image", "image jointe", "capture d'ecran", "capture ecran", "ce document",
     "cet audio", "cette video", "cette vidéo", "cet enregistrement", "jointe", "joint",
 )
-#: mots supplementaires -> fichier du jeu standard
+#: mots supplementaires (et extensions) -> fichier du jeu standard
 _EXTRA_ALIASES = {
     "capture": "image.png", "capture d'ecran": "image.png", "screenshot": "image.png",
-    "photo": "image.png", "enregistrement": "audio.mp3", "transcription": "audio.mp3",
-    "voix": "audio.mp3",
+    "photo": "image.png", "png": "image.png", "jpg": "image.png", "jpeg": "image.png",
+    "enregistrement": "audio.mp3", "transcription": "audio.mp3", "voix": "audio.mp3",
+    "mp3": "audio.mp3", "wav": "audio.mp3",
+    "mp4": "video.mp4", "mov": "video.mp4",
+    "pdf": "document.pdf", "csv": "donnees.csv", "json": "donnees.json",
+    "txt": "notes.txt", "md": "notes.md",
 }
 
 
@@ -264,9 +268,12 @@ def _media_files(text: str, media: Dict[str, str]) -> List[str]:
 
 
 def _attachments(preparation: str, prompt: str, media: Dict[str, str]) -> List[str]:
+    """Piece jointe : d'abord la preparation, sinon les indices du message."""
     prep = fold(preparation)
     if prep and not prep.startswith("aucune"):
-        return _media_files(preparation, media)
+        files = _media_files(preparation, media)
+        if files:
+            return files
     if any(hint in fold(prompt) for hint in _UPLOAD_HINTS):
         return _media_files(prompt, media)
     return []

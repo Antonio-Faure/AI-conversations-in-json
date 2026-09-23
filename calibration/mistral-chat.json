@@ -107,7 +107,9 @@
     },
     {
       "text": "Extrais les tâches de ce fichier audio et affiche-les sous forme de liste à puces.",
-      "attachments": [],
+      "attachments": [
+        "audio.mp3"
+      ],
       "exposes": [
         "audio",
         "checklist",

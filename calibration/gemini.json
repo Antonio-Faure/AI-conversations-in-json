@@ -156,7 +156,9 @@
     },
     {
       "text": "Transcris cet enregistrement audio en une phrase.",
-      "attachments": [],
+      "attachments": [
+        "audio.mp3"
+      ],
       "exposes": [
         "audio"
       ],

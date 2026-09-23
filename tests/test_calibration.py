@@ -171,6 +171,19 @@ def test_suite_et_amorces_depuis_export():
     assert "suite complète" in boot["suite"]
 
 
+def test_piece_jointe_deduite_par_extension():
+    from src.utils.calibration import _attachments
+
+    media = {
+        "audio": "audio.mp3", "image": "image.png", "pdf": "document.pdf",
+        "csv": "donnees.csv", "json": "donnees.json", "txt": "notes.txt",
+        "md": "notes.md", "video": "video.mp4",
+    }
+    assert _attachments("Enregistrer un fichier test.mp3", "Transcris-le.", media) == ["audio.mp3"]
+    assert _attachments("Aucune.", "Décris cette image.", media) == ["image.png"]
+    assert _attachments("Aucune.", "Aucun fichier ici.", media) == []
+
+
 def test_alignement_noms_de_fichiers():
     assert align_filenames("Lis test.txt et donne le code.", ["notes.txt"]) == \
         "Lis notes.txt et donne le code."

@@ -136,7 +136,9 @@
     },
     {
       "text": "Transcris cet audio. Réponds UNIQUEMENT avec le texte transcrit, sans guillemets ni autre texte.",
-      "attachments": [],
+      "attachments": [
+        "audio.mp3"
+      ],
       "exposes": [
         "audio"
       ],
