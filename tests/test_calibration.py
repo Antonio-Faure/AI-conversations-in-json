@@ -202,6 +202,22 @@ def test_suite_depuis_markdown(tmp_path):
     assert len(extract_tests(text)) == 4
 
 
+def test_complements_couvrent_les_manquants():
+    from src.utils.calibration import apply_supplements
+
+    payload = {
+        "messages": [],
+        "capabilities_covered": [],
+        "capabilities_missing": ["reasoning", "headings"],
+    }
+    supplements = {"reasoning": {"text": "Résous étape par étape.", "exposes": ["reasoning"]}}
+    out = apply_supplements(payload, supplements)
+    assert out["capabilities_covered"] == ["reasoning"]
+    assert out["capabilities_missing"] == ["headings"]
+    assert out["messages"][0]["source_test"] == "supplement"
+    assert out["messages"][0]["exposes"] == ["reasoning"]
+
+
 def test_manifest_coherent():
     manifest = _manifest()
     ids = [c["id"] for c in manifest["capabilities"]]
@@ -216,7 +232,10 @@ def test_manifest_coherent():
 def test_fichiers_calibration_valides():
     manifest = _manifest()
     ids = {c["id"] for c in manifest["capabilities"]}
-    files = [p for p in CAL_DIR.glob("*.json") if p.name not in ("manifest.json", "bootstraps.json")]
+    files = [
+        p for p in CAL_DIR.glob("*.json")
+        if p.name not in ("manifest.json", "bootstraps.json", "supplements.json")
+    ]
     assert files
     for path in files:
         payload = json.loads(path.read_text(encoding="utf-8"))

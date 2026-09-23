@@ -332,6 +332,10 @@
       "keywords": [
         "genere une image",
         "génère une image",
+        "cree une image",
+        "crée une image",
+        "generer une image",
+        "générer une image",
         "image generee",
         "image générée",
         "dall",
@@ -360,7 +364,17 @@
         "fichier généré",
         "telechargeable",
         "téléchargeable",
-        "exporter"
+        "fournis le fichier",
+        "fournis reellement",
+        "fournis réellement",
+        "creer un fichier",
+        "créer un fichier",
+        "genere un fichier",
+        "génère un fichier",
+        "cree reellement",
+        "crée réellement",
+        "fichier a telecharger",
+        "fichier à télécharger"
       ]
     },
     {
@@ -452,8 +466,8 @@
         "etape par etape",
         "étape par étape",
         "think",
-        "pensee",
-        "pensée"
+        "montre ton raisonnement",
+        "en montrant"
       ]
     },
     {
@@ -464,10 +478,16 @@
       "keywords": [
         "execution de code",
         "exécution de code",
+        "execute reellement",
+        "exécute réellement",
+        "execute ce python",
+        "exécute ce python",
         "execute le code",
         "exécute le code",
         "interpreteur",
-        "interpréteur"
+        "interpréteur",
+        "sortie de l'execution",
+        "sortie de l'exécution"
       ]
     },
     {

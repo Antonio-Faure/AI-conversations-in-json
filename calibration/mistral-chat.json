@@ -48,6 +48,14 @@
       "source_test": "Affichage de code en ligne."
     },
     {
+      "text": "Affiche un tableau Markdown avec 2 colonnes (Nom, Âge) et 2 lignes (Alice, 25) et (Bob, 30).",
+      "attachments": [],
+      "exposes": [
+        "table"
+      ],
+      "source_test": "Création d'un tableau en Markdown."
+    },
+    {
       "text": "Affiche la formule inline pour E = mc².",
       "attachments": [],
       "exposes": [
@@ -76,15 +84,6 @@
       "source_test": "Affichage et exécution de code Python."
     },
     {
-      "text": "Affiche un exemple minimal de données CSV avec 2 colonnes (Nom, Âge) et 2 lignes (Alice, 25) et (Bob, 30).",
-      "attachments": [],
-      "exposes": [
-        "table",
-        "upload_csv"
-      ],
-      "source_test": "Affichage et analyse de données CSV."
-    },
-    {
       "text": "Décris ce que montre cette capture d'écran en une phrase.",
       "attachments": [
         "image.png"
@@ -93,6 +92,17 @@
         "upload_image"
       ],
       "source_test": "Analyse d'une capture d'écran."
+    },
+    {
+      "text": "Extrais les titres et les listes de ce fichier Markdown. Affiche uniquement les résultats.",
+      "attachments": [
+        "notes.md"
+      ],
+      "exposes": [
+        "headings",
+        "upload_text"
+      ],
+      "source_test": "Lecture et analyse d'un fichier Markdown."
     },
     {
       "text": "Valide ce fichier JSON et affiche son contenu. Réponds uniquement par \"Valide\" ou \"Invalide\" suivi du contenu.",
@@ -128,14 +138,14 @@
       "source_test": "Résumé d'une vidéo (si supporté)."
     },
     {
-      "text": "Crée un fichier Markdown nommé test.md avec le contenu \"# Titre\\nCeci est un test\". Affiche uniquement le lien de téléchargement.",
+      "text": "Génère un fichier CSV avec les données suivantes : Nom, Âge\\nAlice, 25\\nBob, 30. Affiche uniquement le lien de téléchargement.",
       "attachments": [],
       "exposes": [
-        "headings",
+        "generated_file",
         "link",
-        "upload_text"
+        "upload_csv"
       ],
-      "source_test": "Génération d'un fichier Markdown."
+      "source_test": "Génération d'un fichier CSV."
     },
     {
       "text": "Quel est mon nom ? Réponds uniquement avec le nom.",
@@ -165,47 +175,94 @@
         "upload_pdf"
       ],
       "source_test": "Gestion d'un fichier trop volumineux."
+    },
+    {
+      "text": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "list_nested"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Affiche uniquement une image Markdown pointant vers https://placehold.co/120x60 avec le texte alternatif « test ».",
+      "attachments": [],
+      "exposes": [
+        "image_markdown"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Génère une image d'un renard roux dans une forêt enneigée. Aucun texte.",
+      "attachments": [],
+      "exposes": [
+        "image_generation"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "artifact_canvas"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "emoji_unicode"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "attachments": [],
+      "exposes": [
+        "reasoning"
+      ],
+      "source_test": "supplement"
     }
   ],
   "capabilities_covered": [
-    "headings",
-    "emphasis",
-    "inline_code",
-    "link",
+    "artifact_canvas",
+    "audio",
     "blockquote",
-    "hr",
-    "list_bullet",
-    "list_numbered",
     "checklist",
-    "table",
     "code_block",
+    "code_execution",
     "code_languages",
     "code_long",
-    "latex_inline",
+    "connectors",
+    "emoji_unicode",
+    "emphasis",
+    "generated_file",
+    "headings",
+    "hr",
+    "image_generation",
+    "image_markdown",
+    "inline_code",
     "latex_display",
+    "latex_inline",
     "latex_matrix",
-    "upload_image",
-    "upload_pdf",
-    "upload_csv",
-    "upload_json",
-    "upload_text",
-    "audio",
-    "video",
+    "link",
+    "list_bullet",
+    "list_nested",
+    "list_numbered",
     "long_message",
+    "reasoning",
     "refusal_error",
+    "table",
     "thread_memory",
-    "web_search_citations",
-    "code_execution",
-    "connectors"
+    "upload_csv",
+    "upload_image",
+    "upload_json",
+    "upload_pdf",
+    "upload_text",
+    "video",
+    "web_search_citations"
   ],
   "capabilities_coverable_uncovered": [],
-  "capabilities_missing": [
-    "list_nested",
-    "image_markdown",
-    "image_generation",
-    "artifact_canvas",
-    "generated_file",
-    "emoji_unicode",
-    "reasoning"
-  ]
+  "capabilities_missing": []
 }

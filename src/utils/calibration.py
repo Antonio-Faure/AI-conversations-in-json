@@ -389,6 +389,37 @@ def build_payload(
     }
 
 
+def apply_supplements(
+    payload: Dict[str, Any], supplements: Dict[str, Dict[str, Any]]
+) -> Dict[str, Any]:
+    """Ajoute les tests de complement pour les capacites non couvertes.
+
+    `supplements` : {capacite_id: {text, exposes, attachments?}}. Les messages
+    ajoutes portent `source_test = "supplement"`.
+    """
+    covered = set(payload.get("capabilities_covered") or [])
+    messages = list(payload.get("messages") or [])
+    remaining = []
+    for capability in payload.get("capabilities_missing") or []:
+        supplement = supplements.get(capability)
+        if not supplement or capability in covered:
+            remaining.append(capability)
+            continue
+        messages.append(
+            {
+                "text": supplement["text"],
+                "attachments": list(supplement.get("attachments") or []),
+                "exposes": list(supplement.get("exposes") or [capability]),
+                "source_test": "supplement",
+            }
+        )
+        covered.add(capability)
+    payload["messages"] = messages
+    payload["capabilities_covered"] = sorted(covered)
+    payload["capabilities_missing"] = remaining
+    return payload
+
+
 def suite_from_export(payload: Dict[str, Any]) -> Optional[str]:
     """Retourne le texte de la suite generee dans un export JSON, sinon None."""
     messages = payload.get("messages") or []

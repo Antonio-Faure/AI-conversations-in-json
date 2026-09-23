@@ -142,6 +142,9 @@ marquées indisponibles).
   suite) à envoyer **une fois** aux bots sans suite.
 - `calibration/sources/<bot>.md` : suites exportées depuis un canvas/document
   (ChatGPT, Claude) quand le bot n'expose pas la suite dans un export JSON.
+- `calibration/supplements.json` : tests de complément pour les capacités que la
+  suite du bot ne couvre pas (marqués `source_test = "supplement"`) → couverture
+  36/36 ; retirer une entrée désactive le complément.
 - Régénérer : `.venv/bin/python scripts/calibration_build.py --report`.
   L'extraction lit les exports `documentation-*` (JSON), le canvas (HTML
   Mistral) ou `calibration/sources/<bot>.md` ; le rapport liste les capacités

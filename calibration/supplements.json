@@ -1,0 +1,51 @@
+{
+  "note": "Tests de complement, appliques uniquement aux bots dont la suite generee ne couvre pas la capacite. Ils sont marques source_test=supplement dans calibration/<bot>.json ; retirer une entree ici la desactive.",
+  "supplements": {
+    "list_nested": {
+      "text": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "exposes": ["list_nested"]
+    },
+    "emoji_unicode": {
+      "text": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "exposes": ["emoji_unicode"]
+    },
+    "reasoning": {
+      "text": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "exposes": ["reasoning"]
+    },
+    "artifact_canvas": {
+      "text": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "exposes": ["artifact_canvas"]
+    },
+    "image_generation": {
+      "text": "Génère une image d'un renard roux dans une forêt enneigée. Aucun texte.",
+      "exposes": ["image_generation"]
+    },
+    "generated_file": {
+      "text": "Crée un fichier texte téléchargeable nommé notes.txt contenant « Bonjour ». Fournis le fichier.",
+      "exposes": ["generated_file"]
+    },
+    "upload_json": {
+      "text": "Lis le fichier donnees.json joint et donne uniquement la valeur de la clé « etalon ».",
+      "attachments": ["donnees.json"],
+      "exposes": ["upload_json"]
+    },
+    "upload_text": {
+      "text": "Résume le fichier notes.txt joint en une phrase.",
+      "attachments": ["notes.txt"],
+      "exposes": ["upload_text"]
+    },
+    "image_markdown": {
+      "text": "Affiche uniquement une image Markdown pointant vers https://placehold.co/120x60 avec le texte alternatif « test ».",
+      "exposes": ["image_markdown"]
+    },
+    "latex_inline": {
+      "text": "Écris la formule inline E=mc^2 en LaTeX dans une phrase d'une ligne.",
+      "exposes": ["latex_inline"]
+    },
+    "code_execution": {
+      "text": "Exécute réellement ce Python et donne uniquement la sortie : print(sum([4, 5, 6]))",
+      "exposes": ["code_execution"]
+    }
+  }
+}

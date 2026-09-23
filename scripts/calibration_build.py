@@ -24,6 +24,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.utils.calibration import (  # noqa: E402
+    apply_supplements,
     build_payload,
     bootstraps_from_export,
     extract_tests,
@@ -33,6 +34,7 @@ from src.utils.calibration import (  # noqa: E402
 
 CAL_DIR = ROOT / "calibration"
 MANIFEST_PATH = CAL_DIR / "manifest.json"
+SUPPLEMENTS_PATH = CAL_DIR / "supplements.json"
 
 #: suite generee par le chatbot, par bot (JSON = export, html = canvas Mistral,
 #: md = fichier Markdown exporte depuis un canvas/document ChatGPT/Claude)
@@ -81,11 +83,18 @@ def _conversation_ref(spec: Dict[str, Any]) -> Optional[str]:
     return payload.get("url") or payload.get("conversation_id")
 
 
+def _load_supplements() -> Dict[str, Dict[str, Any]]:
+    if not SUPPLEMENTS_PATH.exists():
+        return {}
+    data = json.loads(SUPPLEMENTS_PATH.read_text(encoding="utf-8"))
+    return dict(data.get("supplements") or {})
+
+
 def _build_bot(name: str, spec: Dict[str, Any], manifest: Dict[str, Any]) -> Dict[str, Any]:
     suite = suite_from_path(spec["kind"], ROOT / spec["path"])
     tests = extract_tests(suite or "")
     platform = spec.get("platform") or name
-    return build_payload(
+    payload = build_payload(
         platform=platform,
         tests=tests,
         manifest=manifest,
@@ -93,6 +102,7 @@ def _build_bot(name: str, spec: Dict[str, Any], manifest: Dict[str, Any]) -> Dic
         source_conversation=_conversation_ref(spec),
         generated_from=str(spec["path"]),
     )
+    return apply_supplements(payload, _load_supplements())
 
 
 def _missing_payload(name: str, manifest: Dict[str, Any], spec: Dict[str, Any]) -> Dict[str, Any]:
