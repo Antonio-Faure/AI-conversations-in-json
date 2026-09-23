@@ -272,6 +272,40 @@ def _attachments(preparation: str, prompt: str, media: Dict[str, str]) -> List[s
     return []
 
 
+#: extension citee -> extension du fichier standard fourni
+_EXT_ALIASES = {"jpg": "png", "jpeg": "png", "wav": "mp3", "mov": "mp4", "m4a": "mp3"}
+_FILENAME_RE = re.compile(
+    r"\b[\w\-]+\.(?:txt|md|csv|json|pdf|png|jpg|jpeg|mp3|wav|mp4|mov|m4a|docx|xlsx|pptx|zip)\b",
+    re.I,
+)
+
+
+def align_filenames(prompt: str, attachments: Sequence[str]) -> str:
+    """Aligne les noms de fichiers cites sur les pieces jointes reelles.
+
+    Les suites generent leurs propres noms (`test.txt`, `data.csv`) ; on les
+    remplace par le fichier standard joint (meme extension, dans l'ordre).
+    """
+    if not attachments:
+        return prompt
+    pools: Dict[str, List[str]] = {}
+    for name in attachments:
+        pools.setdefault(name.rsplit(".", 1)[-1].lower(), []).append(name)
+    used: Dict[str, int] = {}
+
+    def replace(match: "re.Match") -> str:
+        ext = match.group(0).rsplit(".", 1)[-1].lower()
+        ext = _EXT_ALIASES.get(ext, ext)
+        pool = pools.get(ext)
+        if not pool:
+            return match.group(0)
+        index = used.get(ext, 0)
+        used[ext] = index + 1
+        return pool[min(index, len(pool) - 1)]
+
+    return _FILENAME_RE.sub(replace, prompt)
+
+
 def dedupe(tests: Sequence[CalibrationTest]) -> List[CalibrationTest]:
     """Retire les tests dont le message est identique (normalise)."""
     seen: Set[str] = set()
@@ -328,7 +362,7 @@ def build_payload(
     covered = {cid for test in selected for cid in test.capabilities}
     messages = [
         {
-            "text": test.prompt,
+            "text": align_filenames(test.prompt, test.attachments),
             "attachments": test.attachments,
             "exposes": sorted(test.capabilities),
             "source_test": test.capability,

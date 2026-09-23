@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from src.utils.calibration import (
+    align_filenames,
     bootstraps_from_export,
     build_payload,
     extract_tests,
@@ -168,6 +169,16 @@ def test_suite_et_amorces_depuis_export():
     boot = bootstraps_from_export(payload)
     assert boot["documentation"].startswith("Dresse")
     assert "suite complète" in boot["suite"]
+
+
+def test_alignement_noms_de_fichiers():
+    assert align_filenames("Lis test.txt et donne le code.", ["notes.txt"]) == \
+        "Lis notes.txt et donne le code."
+    assert align_filenames("Compare a.csv et b.csv.", ["donnees.csv"]) == \
+        "Compare donnees.csv et donnees.csv."
+    assert align_filenames("Analyse cette photo.jpg.", ["image.png"]) == \
+        "Analyse cette image.png."
+    assert align_filenames("Aucun fichier cité.", []) == "Aucun fichier cité."
 
 
 def test_suite_depuis_markdown(tmp_path):

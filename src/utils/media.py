@@ -120,9 +120,14 @@ def generate_media(out_dir: Path, with_av: bool = True) -> List[Path]:
     audio = out_dir / "audio.mp3"
     if _run_ffmpeg(["-f", "lavfi", "-i", "sine=frequency=440:duration=2", str(audio)]):
         created.append(audio)
+    # video avec piste audio (tests « audio de la vidéo »)
     video = out_dir / "video.mp4"
     if _run_ffmpeg(
-        ["-f", "lavfi", "-i", "testsrc=duration=2:size=320x240:rate=15", str(video)]
+        [
+            "-f", "lavfi", "-i", "testsrc=duration=2:size=320x240:rate=15",
+            "-f", "lavfi", "-i", "sine=frequency=440:duration=2",
+            "-shortest", "-pix_fmt", "yuv420p", str(video),
+        ]
     ):
         created.append(video)
     return created

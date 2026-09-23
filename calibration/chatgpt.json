@@ -109,7 +109,7 @@
       "source_test": "Interprétation d'une interface."
     },
     {
-      "text": "Lis test.txt et donne uniquement le nombre secret.",
+      "text": "Lis notes.txt et donne uniquement le nombre secret.",
       "attachments": [
         "notes.txt"
       ],

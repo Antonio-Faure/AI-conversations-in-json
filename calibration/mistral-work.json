@@ -103,7 +103,7 @@
       "source_test": "Extraction de texte depuis une image via OCR."
     },
     {
-      "text": "Extrais le texte du fichier test.pdf. Réponds UNIQUEMENT avec le texte extrait, sans autre texte.",
+      "text": "Extrais le texte du fichier document.pdf. Réponds UNIQUEMENT avec le texte extrait, sans autre texte.",
       "attachments": [
         "document.pdf"
       ],
@@ -113,7 +113,7 @@
       "source_test": "Extraction de texte depuis un PDF."
     },
     {
-      "text": "Lis le fichier test.json et extrais les noms des personnes sous forme de liste JSON. Affiche UNIQUEMENT la liste, sans texte avant ou après.",
+      "text": "Lis le fichier donnees.json et extrais les noms des personnes sous forme de liste JSON. Affiche UNIQUEMENT la liste, sans texte avant ou après.",
       "attachments": [
         "donnees.json"
       ],
@@ -143,7 +143,7 @@
       "source_test": "Transcription d’un fichier audio en texte."
     },
     {
-      "text": "Utilise du code pour lire le fichier test_code.txt et afficher son contenu. Réponds UNIQUEMENT avec le contenu du fichier.",
+      "text": "Utilise du code pour lire le fichier notes.txt et afficher son contenu. Réponds UNIQUEMENT avec le contenu du fichier.",
       "attachments": [
         "notes.txt"
       ],
