@@ -1,0 +1,249 @@
+{
+  "platform": "perplexity",
+  "mode": null,
+  "source_conversation": "https://www.perplexity.ai/search/d5c650cf-b24f-4d65-954e-a56e5aa7d1d2",
+  "generated_from": "dresse-une-documentation-complete-et-structuree-de-tout-ce-que-tu-peux-faire-dan.json",
+  "test_pool": 201,
+  "messages": [
+    {
+      "text": "Écris une phrase contenant du texte en gras, en italique et barré. Réponds uniquement avec cette phrase.",
+      "attachments": [],
+      "exposes": [
+        "emphasis"
+      ],
+      "source_test": "Application des styles de base."
+    },
+    {
+      "text": "Crée une liste à puces avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "attachments": [],
+      "exposes": [
+        "list_bullet"
+      ],
+      "source_test": "Création d’une liste non ordonnée."
+    },
+    {
+      "text": "Crée une liste numérotée avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "attachments": [],
+      "exposes": [
+        "list_numbered"
+      ],
+      "source_test": "Création d’une liste ordonnée."
+    },
+    {
+      "text": "Crée une checklist avec 2 cases vides. Réponds uniquement avec la checklist.",
+      "attachments": [],
+      "exposes": [
+        "checklist"
+      ],
+      "source_test": "Création d’une checklist Markdown."
+    },
+    {
+      "text": "Écris une citation Markdown avec le symbole >. Réponds uniquement avec la citation.",
+      "attachments": [],
+      "exposes": [
+        "blockquote"
+      ],
+      "source_test": "Insertion d’une citation."
+    },
+    {
+      "text": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+      "attachments": [],
+      "exposes": [
+        "hr"
+      ],
+      "source_test": "Insertion d’une ligne horizontale."
+    },
+    {
+      "text": "Écris le mot \"print\" en code inline. Réponds uniquement avec le code.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "inline_code"
+      ],
+      "source_test": "Insertion de code inline."
+    },
+    {
+      "text": "Insère une image Markdown avec l’URL https://via.placeholder.com/100 et l’alt \"Test\". Réponds uniquement avec l’image.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "image_markdown"
+      ],
+      "source_test": "Insertion d’une image via syntaxe Markdown."
+    },
+    {
+      "text": "Crée un bloc repliable avec <details><summary>Titre</summary>Contenu</details>. Réponds uniquement avec ce bloc.",
+      "attachments": [],
+      "exposes": [
+        "code_languages",
+        "headings"
+      ],
+      "source_test": "Utilisation de détails HTML repliables."
+    },
+    {
+      "text": "Écris la formule inline \\( E = mc^2 \\). Réponds uniquement avec la formule.",
+      "attachments": [],
+      "exposes": [
+        "latex_inline"
+      ],
+      "source_test": "Affichage d’une formule inline."
+    },
+    {
+      "text": "Écris un système avec \\begin{cases} x+y=1 \\\\ x-y=0 \\end{cases} en bloc. Réponds uniquement avec la formule.",
+      "attachments": [],
+      "exposes": [
+        "latex_display",
+        "latex_matrix"
+      ],
+      "source_test": "Alignement d’équations."
+    },
+    {
+      "text": "Génère un CSV avec 2 colonnes (nom, valeur) et 2 lignes. Ne mets aucun texte avant ou après.",
+      "attachments": [],
+      "exposes": [
+        "table",
+        "upload_csv"
+      ],
+      "source_test": "Génération de CSV."
+    },
+    {
+      "text": "Décris cette image en 10 mots maximum.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "upload_image"
+      ],
+      "source_test": "Description d’une image fournie."
+    },
+    {
+      "text": "Résume ce fichier en 5 mots maximum.",
+      "attachments": [
+        "notes.txt"
+      ],
+      "exposes": [
+        "upload_text"
+      ],
+      "source_test": "Lecture de fichier texte."
+    },
+    {
+      "text": "Résume ce PDF en 10 mots maximum.",
+      "attachments": [
+        "document.pdf"
+      ],
+      "exposes": [
+        "upload_pdf"
+      ],
+      "source_test": "Lecture de PDF."
+    },
+    {
+      "text": "Convertis ce fichier en YAML. Fournis le fichier YAML en sortie.",
+      "attachments": [
+        "donnees.json"
+      ],
+      "exposes": [
+        "code_languages",
+        "upload_json"
+      ],
+      "source_test": "Conversion de fichier."
+    },
+    {
+      "text": "Résume ce texte en 20 mots maximum.",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "long_message",
+        "thread_memory"
+      ],
+      "source_test": "Gestion de contexte étendu."
+    },
+    {
+      "text": "Transcris l’audio de cette vidéo. Réponds uniquement avec la transcription.",
+      "attachments": [
+        "audio.mp3",
+        "video.mp4"
+      ],
+      "exposes": [
+        "audio",
+        "video"
+      ],
+      "source_test": "Transcription vidéo."
+    },
+    {
+      "text": "Recherche la dernière version de Python. Réponds uniquement avec le numéro de version.",
+      "attachments": [],
+      "exposes": [
+        "web_search_citations"
+      ],
+      "source_test": "Recherche Web."
+    },
+    {
+      "text": "Exécute : print(\"Hello\"). Réponds uniquement avec la sortie.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "code_execution"
+      ],
+      "source_test": "Exécution de code."
+    },
+    {
+      "text": "Le skill utilise-t-il d’autres outils ? Réponds par \"oui\" ou \"non\".",
+      "attachments": [],
+      "exposes": [
+        "connectors"
+      ],
+      "source_test": "Skill utilisant outils."
+    },
+    {
+      "text": "Lis https://lien-invalide.test. Indique l’erreur.",
+      "attachments": [],
+      "exposes": [
+        "link",
+        "refusal_error"
+      ],
+      "source_test": "URL hors ligne."
+    }
+  ],
+  "capabilities_covered": [
+    "headings",
+    "emphasis",
+    "inline_code",
+    "link",
+    "blockquote",
+    "hr",
+    "list_bullet",
+    "list_numbered",
+    "checklist",
+    "table",
+    "code_block",
+    "code_languages",
+    "code_long",
+    "latex_inline",
+    "latex_display",
+    "latex_matrix",
+    "image_markdown",
+    "upload_image",
+    "upload_pdf",
+    "upload_csv",
+    "upload_json",
+    "upload_text",
+    "audio",
+    "video",
+    "long_message",
+    "refusal_error",
+    "thread_memory",
+    "web_search_citations",
+    "code_execution",
+    "connectors"
+  ],
+  "capabilities_coverable_uncovered": [],
+  "capabilities_missing": [
+    "list_nested",
+    "image_generation",
+    "artifact_canvas",
+    "generated_file",
+    "emoji_unicode",
+    "reasoning"
+  ]
+}

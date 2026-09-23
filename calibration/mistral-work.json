@@ -1,0 +1,227 @@
+{
+  "platform": "mistral",
+  "mode": "work",
+  "source_conversation": "https://chat.mistral.ai/work/fa92852a-3056-48b3-b68a-f5ad599d89e3",
+  "generated_from": "capacites-et-fonctionnalites-detaillees.json",
+  "test_pool": 156,
+  "messages": [
+    {
+      "text": "Affiche le mot \"important\" en gras, le mot \"optionnel\" en italique et le mot \"annulé\" en barré. Utilise uniquement ces trois mots, chacun sur une nouvelle ligne.",
+      "attachments": [],
+      "exposes": [
+        "emphasis"
+      ],
+      "source_test": "Mise en forme de texte (gras, italique, barré)."
+    },
+    {
+      "text": "Numérote ces étapes : première, deuxième, troisième. Utilise uniquement la liste numérotée, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "list_numbered"
+      ],
+      "source_test": "Création de listes ordonnées."
+    },
+    {
+      "text": "Cite cette phrase en bloc : \"La simplicité est la sophistication suprême.\" Utilise uniquement la citation, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "blockquote"
+      ],
+      "source_test": "Affichage de citations en bloc."
+    },
+    {
+      "text": "Crée un lien vers \"https://fr.wikipedia.org\" avec le texte \"Wikipédia\". Utilise uniquement le lien, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "link"
+      ],
+      "source_test": "Création de liens cliquables."
+    },
+    {
+      "text": "Affiche un séparateur horizontal. Utilise uniquement le séparateur, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "hr"
+      ],
+      "source_test": "Affichage d’un séparateur visuel."
+    },
+    {
+      "text": "Affiche le code \"print('Hello')\" en ligne. Utilise uniquement ce code, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "inline_code",
+        "web_search_citations"
+      ],
+      "source_test": "Affichage de code en ligne."
+    },
+    {
+      "text": "Affiche la formule E=mc^2 en LaTeX inline, suivie de \" — Équation d'Einstein\". Utilise uniquement cette ligne.",
+      "attachments": [],
+      "exposes": [
+        "latex_display",
+        "latex_inline"
+      ],
+      "source_test": "Affichage d’une formule mathématique en ligne."
+    },
+    {
+      "text": "Affiche une matrice 2x2 avec les éléments a, b, c, d en LaTeX, suivie de \" — Matrice\". Utilise uniquement ces éléments.",
+      "attachments": [],
+      "exposes": [
+        "latex_matrix"
+      ],
+      "source_test": "Affichage d’une matrice en LaTeX."
+    },
+    {
+      "text": "Donne un exemple minimal de requête SQL (1 ligne) qui sélectionne tout depuis une table \"users\". Utilise un bloc de code avec coloration syntaxique. Pas d'explication.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "code_languages",
+        "table"
+      ],
+      "source_test": "Génération de code SQL avec coloration syntaxique."
+    },
+    {
+      "text": "Génère un CSV avec 2 colonnes (Nom,Âge) et 2 lignes (Alice,30) et (Bob,25). Affiche UNIQUEMENT le CSV, sans texte avant ou après.",
+      "attachments": [],
+      "exposes": [
+        "table",
+        "upload_csv"
+      ],
+      "source_test": "Génération de données au format CSV."
+    },
+    {
+      "text": "Extrais le texte de cette image. Réponds UNIQUEMENT avec le texte extrait, sans guillemets ni autre texte.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "image_markdown",
+        "upload_image"
+      ],
+      "source_test": "Extraction de texte depuis une image via OCR."
+    },
+    {
+      "text": "Extrais le texte du fichier test.pdf. Réponds UNIQUEMENT avec le texte extrait, sans autre texte.",
+      "attachments": [
+        "document.pdf"
+      ],
+      "exposes": [
+        "upload_pdf"
+      ],
+      "source_test": "Extraction de texte depuis un PDF."
+    },
+    {
+      "text": "Lis le fichier test.json et extrais les noms des personnes sous forme de liste JSON. Affiche UNIQUEMENT la liste, sans texte avant ou après.",
+      "attachments": [
+        "donnees.json"
+      ],
+      "exposes": [
+        "code_languages",
+        "upload_json"
+      ],
+      "source_test": "Extraction de données depuis un fichier JSON."
+    },
+    {
+      "text": "Dans ce texte : \"Section 1: Contenu A. Section 2: Contenu B. Section 3: Contenu C.\", liste les titres de section. Réponds avec une liste à puces de 3 éléments max.",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "headings",
+        "list_bullet",
+        "long_message"
+      ],
+      "source_test": "Identification de sections dans un texte long."
+    },
+    {
+      "text": "Transcris cet audio. Réponds UNIQUEMENT avec le texte transcrit, sans guillemets ni autre texte.",
+      "attachments": [],
+      "exposes": [
+        "audio"
+      ],
+      "source_test": "Transcription d’un fichier audio en texte."
+    },
+    {
+      "text": "Ouvre la documentation Python à https://docs.python.org/3/tutorial/ et affiche UNIQUEMENT le titre du premier chapitre.",
+      "attachments": [],
+      "exposes": [
+        "connectors"
+      ],
+      "source_test": "Accès à une documentation technique."
+    },
+    {
+      "text": "Utilise du code pour lire le fichier test_code.txt et afficher son contenu. Réponds UNIQUEMENT avec le contenu du fichier.",
+      "attachments": [
+        "notes.txt"
+      ],
+      "exposes": [
+        "code_block",
+        "code_execution",
+        "thread_memory",
+        "upload_text"
+      ],
+      "source_test": "Lecture d’un fichier via exécution de code."
+    },
+    {
+      "text": "Crée un Canvas de type table nommé \"tableau-test\" avec le contenu :\n---\nname: tableau-test\ntitle: Tableau de Test\ntype: table\n---\n\n| Col1 | Col2 |\n|------|------|\n| A    | 1    |\n| B    | 2    |\nConfirme UNIQUEMENT par \"Canvas tableau-test créé\".",
+      "attachments": [],
+      "exposes": [
+        "artifact_canvas",
+        "table"
+      ],
+      "source_test": "Création d’un Canvas de type tableau."
+    },
+    {
+      "text": "Affiche une vidéo directement dans le chat. Réponds UNIQUEMENT avec \"Impossible\".",
+      "attachments": [],
+      "exposes": [
+        "checklist",
+        "refusal_error",
+        "video"
+      ],
+      "source_test": "Signalement d’une tâche impossible."
+    }
+  ],
+  "capabilities_covered": [
+    "headings",
+    "emphasis",
+    "inline_code",
+    "link",
+    "blockquote",
+    "hr",
+    "list_bullet",
+    "list_numbered",
+    "checklist",
+    "table",
+    "code_block",
+    "code_languages",
+    "code_long",
+    "latex_inline",
+    "latex_display",
+    "latex_matrix",
+    "image_markdown",
+    "upload_image",
+    "upload_pdf",
+    "upload_csv",
+    "upload_json",
+    "upload_text",
+    "audio",
+    "video",
+    "artifact_canvas",
+    "long_message",
+    "refusal_error",
+    "thread_memory",
+    "web_search_citations",
+    "code_execution",
+    "connectors"
+  ],
+  "capabilities_coverable_uncovered": [],
+  "capabilities_missing": [
+    "list_nested",
+    "image_generation",
+    "generated_file",
+    "emoji_unicode",
+    "reasoning"
+  ]
+}

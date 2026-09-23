@@ -1,0 +1,489 @@
+{
+  "version": 1,
+  "note": "Taxonomie fermee des capacites qu'une conversation d'etalonnage doit exposer. `keywords` sert au taggage automatique des tests generes par les chatbots ; `parsed_today` indique si le parseur actuel extrait deja le bloc.",
+  "media": {
+    "image": "image.png",
+    "pdf": "document.pdf",
+    "csv": "donnees.csv",
+    "json": "donnees.json",
+    "audio": "audio.mp3",
+    "video": "video.mp4",
+    "txt": "notes.txt",
+    "markdown": "notes.md"
+  },
+  "capabilities": [
+    {
+      "id": "headings",
+      "label": "Titres H1-H3",
+      "category": "formatting",
+      "parsed_today": true,
+      "keywords": [
+        "titre",
+        "sous-titre",
+        "niveau",
+        "h1",
+        "h2",
+        "h3"
+      ]
+    },
+    {
+      "id": "emphasis",
+      "label": "Gras / italique / barre",
+      "category": "formatting",
+      "parsed_today": true,
+      "keywords": [
+        "gras",
+        "italique",
+        "barre",
+        "barré"
+      ]
+    },
+    {
+      "id": "inline_code",
+      "label": "Code inline",
+      "category": "formatting",
+      "parsed_today": true,
+      "keywords": [
+        "code inline",
+        "code en ligne",
+        "inline code",
+        "balise code"
+      ]
+    },
+    {
+      "id": "link",
+      "label": "Lien hypertexte",
+      "category": "formatting",
+      "parsed_today": true,
+      "keywords": [
+        "lien",
+        "hypertexte"
+      ]
+    },
+    {
+      "id": "blockquote",
+      "label": "Citation",
+      "category": "formatting",
+      "parsed_today": true,
+      "keywords": [
+        "citation",
+        "blockquote",
+        "citer",
+        "guillemets"
+      ]
+    },
+    {
+      "id": "hr",
+      "label": "Separateur horizontal",
+      "category": "formatting",
+      "parsed_today": true,
+      "keywords": [
+        "separateur",
+        "séparateur",
+        "horizontal",
+        "ligne de separation"
+      ]
+    },
+    {
+      "id": "list_bullet",
+      "label": "Liste a puces",
+      "category": "lists",
+      "parsed_today": true,
+      "keywords": [
+        "puces",
+        "liste non ordonnee",
+        "liste à puces",
+        "bullet"
+      ]
+    },
+    {
+      "id": "list_numbered",
+      "label": "Liste numerotee",
+      "category": "lists",
+      "parsed_today": true,
+      "keywords": [
+        "liste ordonnee",
+        "liste ordonnée",
+        "liste numerotee",
+        "liste numérotée",
+        "numerotee",
+        "numérotée"
+      ]
+    },
+    {
+      "id": "checklist",
+      "label": "Checklist",
+      "category": "lists",
+      "parsed_today": true,
+      "keywords": [
+        "checklist",
+        "case",
+        "coche",
+        "coché",
+        "tache",
+        "tâche"
+      ]
+    },
+    {
+      "id": "list_nested",
+      "label": "Liste imbriquee",
+      "category": "lists",
+      "parsed_today": true,
+      "keywords": [
+        "imbriqu",
+        "sous-element",
+        "sous-élément",
+        "nested"
+      ]
+    },
+    {
+      "id": "table",
+      "label": "Tableau Markdown",
+      "category": "table",
+      "parsed_today": true,
+      "keywords": [
+        "tableau",
+        "table",
+        "colonne",
+        "ligne de donnees"
+      ]
+    },
+    {
+      "id": "code_block",
+      "label": "Bloc de code",
+      "category": "code",
+      "parsed_today": true,
+      "keywords": [
+        "bloc de code",
+        "code",
+        "coloration"
+      ]
+    },
+    {
+      "id": "code_languages",
+      "label": "Langages de code",
+      "category": "code",
+      "parsed_today": true,
+      "keywords": [
+        "python",
+        "javascript",
+        "sql",
+        "bash",
+        "json",
+        "yaml",
+        "html",
+        "css",
+        "rust",
+        "java",
+        "c++"
+      ]
+    },
+    {
+      "id": "code_long",
+      "label": "Code long",
+      "category": "code",
+      "parsed_today": true,
+      "keywords": [
+        "code long",
+        "25 lignes",
+        "40 lignes",
+        "50 lignes",
+        "bloc long",
+        "volumineux",
+        "long"
+      ]
+    },
+    {
+      "id": "latex_inline",
+      "label": "LaTeX inline",
+      "category": "math",
+      "parsed_today": true,
+      "keywords": [
+        "latex inline",
+        "formule inline",
+        "en inline",
+        "formule en ligne",
+        "inline latex",
+        "equation inline"
+      ]
+    },
+    {
+      "id": "latex_display",
+      "label": "LaTeX centre",
+      "category": "math",
+      "parsed_today": true,
+      "keywords": [
+        "formule centree",
+        "formule centrée",
+        "display",
+        "equation",
+        "équation"
+      ]
+    },
+    {
+      "id": "latex_matrix",
+      "label": "Matrice / determinant",
+      "category": "math",
+      "parsed_today": true,
+      "keywords": [
+        "matrice",
+        "determinant",
+        "déterminant",
+        "systeme",
+        "système"
+      ]
+    },
+    {
+      "id": "image_markdown",
+      "label": "Image Markdown distante",
+      "category": "media",
+      "parsed_today": true,
+      "keywords": [
+        "image markdown",
+        "image distante",
+        "image via",
+        "inserer une image",
+        "insérer une image",
+        "balise image"
+      ]
+    },
+    {
+      "id": "upload_image",
+      "label": "Image jointe",
+      "category": "media",
+      "parsed_today": true,
+      "keywords": [
+        "image jointe",
+        "image fournie",
+        "ocr",
+        "capture",
+        "decrire l'image",
+        "décrire l'image"
+      ]
+    },
+    {
+      "id": "upload_pdf",
+      "label": "Fichier PDF joint",
+      "category": "media",
+      "parsed_today": true,
+      "keywords": [
+        "pdf"
+      ]
+    },
+    {
+      "id": "upload_csv",
+      "label": "Fichier CSV joint",
+      "category": "media",
+      "parsed_today": true,
+      "keywords": [
+        "csv"
+      ]
+    },
+    {
+      "id": "upload_json",
+      "label": "Fichier JSON joint",
+      "category": "media",
+      "parsed_today": true,
+      "keywords": [
+        "fichier json",
+        "json joint",
+        "json fourni"
+      ]
+    },
+    {
+      "id": "upload_text",
+      "label": "Fichier texte / markdown joint",
+      "category": "media",
+      "parsed_today": true,
+      "keywords": [
+        "fichier texte",
+        "txt",
+        "markdown joint",
+        "fichier markdown"
+      ]
+    },
+    {
+      "id": "audio",
+      "label": "Audio / transcription",
+      "category": "media",
+      "parsed_today": true,
+      "keywords": [
+        "audio",
+        "transcription audio",
+        "fichier audio",
+        "transcrire l'audio"
+      ]
+    },
+    {
+      "id": "video",
+      "label": "Video / sous-titres",
+      "category": "media",
+      "parsed_today": false,
+      "keywords": [
+        "video",
+        "vidéo"
+      ]
+    },
+    {
+      "id": "image_generation",
+      "label": "Image generee",
+      "category": "generation",
+      "parsed_today": false,
+      "keywords": [
+        "genere une image",
+        "génère une image",
+        "image generee",
+        "image générée",
+        "dall",
+        "imagen",
+        "aurora"
+      ]
+    },
+    {
+      "id": "artifact_canvas",
+      "label": "Artefact / canvas",
+      "category": "generation",
+      "parsed_today": false,
+      "keywords": [
+        "artefact",
+        "artifact",
+        "canvas"
+      ]
+    },
+    {
+      "id": "generated_file",
+      "label": "Fichier genere / telechargeable",
+      "category": "generation",
+      "parsed_today": false,
+      "keywords": [
+        "fichier genere",
+        "fichier généré",
+        "telechargeable",
+        "téléchargeable",
+        "exporter"
+      ]
+    },
+    {
+      "id": "long_message",
+      "label": "Message long (virtualisation)",
+      "category": "behavior",
+      "parsed_today": true,
+      "keywords": [
+        "texte long",
+        "message long",
+        "longueur",
+        "volumineux",
+        "resume long",
+        "résumé long",
+        "longue"
+      ]
+    },
+    {
+      "id": "emoji_unicode",
+      "label": "Emoji / unicode / i18n",
+      "category": "behavior",
+      "parsed_today": true,
+      "keywords": [
+        "emoji",
+        "unicode",
+        "arabe",
+        "hebreu",
+        "hébreu",
+        "chinois",
+        "japonais",
+        "multilingue"
+      ]
+    },
+    {
+      "id": "refusal_error",
+      "label": "Refus / erreur",
+      "category": "behavior",
+      "parsed_today": true,
+      "keywords": [
+        "refus",
+        "erreur",
+        "interdit",
+        "impossible",
+        "limite"
+      ]
+    },
+    {
+      "id": "thread_memory",
+      "label": "Memoire du fil",
+      "category": "behavior",
+      "parsed_today": false,
+      "keywords": [
+        "memoire",
+        "mémoire",
+        "precedent",
+        "précédent",
+        "contexte",
+        "fil",
+        "rappel"
+      ]
+    },
+    {
+      "id": "web_search_citations",
+      "label": "Recherche web + sources",
+      "category": "tools",
+      "parsed_today": false,
+      "keywords": [
+        "recherche web",
+        "recherche sur le web",
+        "sur le web",
+        "sources",
+        "actualite",
+        "actualité",
+        "recent",
+        "récent",
+        "internet",
+        "en ligne"
+      ]
+    },
+    {
+      "id": "reasoning",
+      "label": "Raisonnement / reflexion",
+      "category": "tools",
+      "parsed_today": false,
+      "keywords": [
+        "raisonnement",
+        "reflexion",
+        "réflexion",
+        "etape par etape",
+        "étape par étape",
+        "think",
+        "pensee",
+        "pensée"
+      ]
+    },
+    {
+      "id": "code_execution",
+      "label": "Execution de code",
+      "category": "tools",
+      "parsed_today": false,
+      "keywords": [
+        "execution de code",
+        "exécution de code",
+        "execute le code",
+        "exécute le code",
+        "interpreteur",
+        "interpréteur"
+      ]
+    },
+    {
+      "id": "connectors",
+      "label": "Outils / connecteurs",
+      "category": "tools",
+      "parsed_today": false,
+      "keywords": [
+        "connecteur",
+        "outil",
+        "integration",
+        "intégration",
+        "api",
+        "gmail",
+        "drive"
+      ]
+    }
+  ]
+}

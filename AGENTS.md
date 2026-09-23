@@ -130,6 +130,22 @@ marquées indisponibles).
 - Quand une conversation d'étalonnage change (nouvel étalonnage), mettre à jour
   les id dans `scripts/etalons.json` puis `check_etalons.py --update`.
 
+## Calibration (suite de tests compactée par bot)
+
+- `calibration/manifest.json` : taxonomie fermée des capacités à exposer
+  (`keywords` = taggage auto, `parsed_today` = déjà parsé ou non).
+- `calibration/<bot>.json` : la conversation d'étalonnage compactée — les
+  messages **générés par le bot lui-même** (« crée une suite de messages
+  utilisateur pour tester toutes ces capacités »), réduits au **minimum qui
+  couvre tout** (set-cover) et 100 % propres à ce bot.
+- `calibration/bootstraps.json` : les 2 amorces (documentation + génération de
+  suite) à envoyer **une fois** aux bots sans suite (chatgpt, claude).
+- Régénérer : `.venv/bin/python scripts/calibration_build.py --report`.
+  L'extraction lit les exports `documentation-*` (JSON) ou le canvas (HTML
+  Mistral) ; le rapport liste les capacités non couvertes.
+- Envoi (une seule fois) : sous-agent browser-use par bot, puis on gèle le
+  HTML/JSON de la conversation obtenue.
+
 ## Pièges connus
 
 - DOM des plateformes volatil → chaînes de sélecteurs de repli ; mettre à jour

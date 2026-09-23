@@ -1,0 +1,218 @@
+{
+  "platform": "grok",
+  "mode": null,
+  "source_conversation": "https://grok.com/chat/0f7b6401-0323-47c1-a230-35301b2c8800",
+  "generated_from": "documentation-capabilities-data-tools-memory.json",
+  "test_pool": 60,
+  "messages": [
+    {
+      "text": "Affiche uniquement un titre niveau 1 « Test Titre » et un sous-titre niveau 2 « Sous-titre ». Aucune autre phrase.",
+      "attachments": [],
+      "exposes": [
+        "headings"
+      ],
+      "source_test": "Affichage de titres et sous-titres Markdown."
+    },
+    {
+      "text": "Affiche uniquement : gras *italique* ~~barré~~. Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "emphasis"
+      ],
+      "source_test": "Mise en forme inline (gras, italique, barré)."
+    },
+    {
+      "text": "Affiche uniquement une liste numérotée de 3 éléments : un, deux, trois. Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "list_numbered"
+      ],
+      "source_test": "Liste numérotée."
+    },
+    {
+      "text": "Affiche uniquement une checklist de 2 items : [ ] à faire et [x] fait. Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "checklist"
+      ],
+      "source_test": "Checklist Markdown."
+    },
+    {
+      "text": "Affiche uniquement une citation : « Ceci est un test ». Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "blockquote"
+      ],
+      "source_test": "Bloc de citation."
+    },
+    {
+      "text": "Affiche uniquement un séparateur horizontal entre les mots « Haut » et « Bas ». Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "hr"
+      ],
+      "source_test": "Séparateur horizontal."
+    },
+    {
+      "text": "Affiche uniquement la phrase : Le mot `code` est en ligne. Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "inline_code",
+        "web_search_citations"
+      ],
+      "source_test": "Code inline."
+    },
+    {
+      "text": "Affiche uniquement un tableau Markdown de 2 colonnes (Nom, Âge) et 2 lignes de données fictives. Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "table"
+      ],
+      "source_test": "Tableau Markdown."
+    },
+    {
+      "text": "Affiche uniquement une image Markdown cliquable (lien vers https://example.com) avec alt « clic ». Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "image_markdown",
+        "link"
+      ],
+      "source_test": "Image Markdown cliquable (lien autour)."
+    },
+    {
+      "text": "Affiche uniquement un système de 2 équations linéaires simples. Puis une phrase. Maximum 4 lignes.",
+      "attachments": [],
+      "exposes": [
+        "latex_display",
+        "latex_matrix"
+      ],
+      "source_test": "Système d’équations."
+    },
+    {
+      "text": "Voici un JSON invalide : {\"a\":1,}. Dis uniquement s’il est valide ou non et l’erreur en 1 phrase max.",
+      "attachments": [],
+      "exposes": [
+        "code_languages",
+        "refusal_error"
+      ],
+      "source_test": "Détection d’erreur de format."
+    },
+    {
+      "text": "Décris cette image en maximum 15 mots. Rien d’autre.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "upload_image"
+      ],
+      "source_test": "Description d’image fournie."
+    },
+    {
+      "text": "Texte long :\nSection A début : Pomme\n... (répéter 20 fois « Ligne de remplissage. »)\nSection milieu : Poire\n... (répéter 20 fois « Ligne de remplissage. »)\nSection fin : Banane\nExtrais uniquement les 3 fruits dans l’ordre. Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "long_message"
+      ],
+      "source_test": "Traitement de texte long avec extraction précise."
+    },
+    {
+      "text": "Si tu peux analyser cet audio, extrais la tâche en 5 mots max. Sinon réponds uniquement « Audio non supporté ».",
+      "attachments": [
+        "audio.mp3"
+      ],
+      "exposes": [
+        "audio"
+      ],
+      "source_test": "Traitement audio."
+    },
+    {
+      "text": "Si tu peux analyser cette vidéo, dis la couleur dominante en 3 mots max. Sinon réponds uniquement « Vidéo non supportée ».",
+      "attachments": [
+        "video.mp4"
+      ],
+      "exposes": [
+        "video"
+      ],
+      "source_test": "Analyse vidéo."
+    },
+    {
+      "text": "Exécute un script Python qui crée un fichier output.csv contenant « a,b\\n1,2 ». Fournis le fichier. Réponds en maximum 2 phrases.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "code_languages",
+        "upload_csv"
+      ],
+      "source_test": "Exécution code + génération fichier."
+    },
+    {
+      "text": "Crée un fichier JSON minimal {\"test\":true} et un fichier Markdown contenant « # Titre ». Fournis les deux fichiers. Maximum 2 phrases.",
+      "attachments": [],
+      "exposes": [
+        "upload_json",
+        "upload_text"
+      ],
+      "source_test": "Création de fichiers de différents types."
+    },
+    {
+      "text": "Liste uniquement les skills réellement disponibles (docx, pdf, pptx, xlsx, ffmpeg, etc.). Maximum 5 puces. Rien d’autre.",
+      "attachments": [],
+      "exposes": [
+        "list_bullet",
+        "upload_pdf"
+      ],
+      "source_test": "Déclaration de disponibilité des skills."
+    },
+    {
+      "text": "Quels connecteurs sont actuellement disponibles ? Réponds en maximum 3 puces ou « Aucun ».",
+      "attachments": [],
+      "exposes": [
+        "connectors"
+      ],
+      "source_test": "Détection des connecteurs."
+    }
+  ],
+  "capabilities_covered": [
+    "headings",
+    "emphasis",
+    "inline_code",
+    "link",
+    "blockquote",
+    "hr",
+    "list_bullet",
+    "list_numbered",
+    "checklist",
+    "table",
+    "code_block",
+    "code_languages",
+    "code_long",
+    "latex_display",
+    "latex_matrix",
+    "image_markdown",
+    "upload_image",
+    "upload_pdf",
+    "upload_csv",
+    "upload_json",
+    "upload_text",
+    "audio",
+    "video",
+    "long_message",
+    "refusal_error",
+    "web_search_citations",
+    "connectors"
+  ],
+  "capabilities_coverable_uncovered": [],
+  "capabilities_missing": [
+    "list_nested",
+    "latex_inline",
+    "image_generation",
+    "artifact_canvas",
+    "generated_file",
+    "emoji_unicode",
+    "thread_memory",
+    "reasoning",
+    "code_execution"
+  ]
+}

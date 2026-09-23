@@ -1,0 +1,209 @@
+{
+  "platform": "mistral",
+  "mode": "chat",
+  "source_conversation": "https://chat.mistral.ai/chat/af10715b-915d-4b50-9c52-1de754e48ef4",
+  "generated_from": "capacites-et-fonctionnalites.html",
+  "test_pool": 164,
+  "messages": [
+    {
+      "text": "Affiche la phrase suivante avec \"important\" en gras, \"secondaire\" en italique et \"inutile\" barré : \"Ce mot est important, ce mot est secondaire, et ce mot est inutile.\"",
+      "attachments": [],
+      "exposes": [
+        "emphasis"
+      ],
+      "source_test": "Mise en forme de texte (gras, italique, barré)."
+    },
+    {
+      "text": "Affiche une liste numérotée avec 3 étapes : \"Première étape\", \"Deuxième étape\", \"Troisième étape\".",
+      "attachments": [],
+      "exposes": [
+        "list_numbered"
+      ],
+      "source_test": "Création d'une liste numérotée."
+    },
+    {
+      "text": "Affiche la citation suivante : \"La vie, c'est comme une boîte de chocolats.\" — Forrest Gump. Utilise le format Markdown pour les citations.",
+      "attachments": [],
+      "exposes": [
+        "blockquote"
+      ],
+      "source_test": "Affichage d'une citation."
+    },
+    {
+      "text": "Affiche un séparateur horizontal.",
+      "attachments": [],
+      "exposes": [
+        "hr"
+      ],
+      "source_test": "Affichage d'un séparateur horizontal."
+    },
+    {
+      "text": "Affiche la phrase suivante avec \"print('Hello')\" en code en ligne : \"Pour afficher un message, utilise print('Hello').\"",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "inline_code",
+        "web_search_citations"
+      ],
+      "source_test": "Affichage de code en ligne."
+    },
+    {
+      "text": "Affiche la formule inline pour E = mc².",
+      "attachments": [],
+      "exposes": [
+        "latex_inline",
+        "web_search_citations"
+      ],
+      "source_test": "Affichage d'une formule LaTeX en ligne."
+    },
+    {
+      "text": "Affiche le système d'équations suivant en LaTeX : x + y = 1 et 2x - y = 3.",
+      "attachments": [],
+      "exposes": [
+        "latex_display",
+        "latex_matrix"
+      ],
+      "source_test": "Affichage d'un système d'équations en LaTeX."
+    },
+    {
+      "text": "Affiche un exemple minimal de code Python qui calcule la somme de 2 et 3, avec coloration syntaxique. Explique en une phrase.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "code_execution",
+        "code_languages"
+      ],
+      "source_test": "Affichage et exécution de code Python."
+    },
+    {
+      "text": "Affiche un exemple minimal de données CSV avec 2 colonnes (Nom, Âge) et 2 lignes (Alice, 25) et (Bob, 30).",
+      "attachments": [],
+      "exposes": [
+        "table",
+        "upload_csv"
+      ],
+      "source_test": "Affichage et analyse de données CSV."
+    },
+    {
+      "text": "Décris ce que montre cette capture d'écran en une phrase.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "upload_image"
+      ],
+      "source_test": "Analyse d'une capture d'écran."
+    },
+    {
+      "text": "Valide ce fichier JSON et affiche son contenu. Réponds uniquement par \"Valide\" ou \"Invalide\" suivi du contenu.",
+      "attachments": [
+        "donnees.json"
+      ],
+      "exposes": [
+        "code_languages",
+        "upload_json"
+      ],
+      "source_test": "Lecture et validation d'un fichier JSON."
+    },
+    {
+      "text": "Extrais les tâches de ce fichier audio et affiche-les sous forme de liste à puces.",
+      "attachments": [],
+      "exposes": [
+        "audio",
+        "checklist",
+        "list_bullet"
+      ],
+      "source_test": "Extraction de tâches depuis un audio."
+    },
+    {
+      "text": "Résume cette vidéo en une phrase. Si la vidéo ne peut pas être analysée, réponds \"Non supporté\".",
+      "attachments": [
+        "video.mp4"
+      ],
+      "exposes": [
+        "video"
+      ],
+      "source_test": "Résumé d'une vidéo (si supporté)."
+    },
+    {
+      "text": "Crée un fichier Markdown nommé test.md avec le contenu \"# Titre\\nCeci est un test\". Affiche uniquement le lien de téléchargement.",
+      "attachments": [],
+      "exposes": [
+        "headings",
+        "link",
+        "upload_text"
+      ],
+      "source_test": "Génération d'un fichier Markdown."
+    },
+    {
+      "text": "Quel est mon nom ? Réponds uniquement avec le nom.",
+      "attachments": [],
+      "exposes": [
+        "thread_memory"
+      ],
+      "source_test": "Utilisation d'une information précédente dans la conversation."
+    },
+    {
+      "text": "Peux-tu consulter une API externe pour obtenir des données ? Réponds uniquement par \"Oui\" ou \"Non\".",
+      "attachments": [],
+      "exposes": [
+        "connectors"
+      ],
+      "source_test": "Accès à un service externe (ex: API)."
+    },
+    {
+      "text": "Analyse ce fichier. Si c'est impossible, réponds \"Fichier trop volumineux\".",
+      "attachments": [
+        "document.pdf"
+      ],
+      "exposes": [
+        "code_long",
+        "long_message",
+        "refusal_error",
+        "upload_pdf"
+      ],
+      "source_test": "Gestion d'un fichier trop volumineux."
+    }
+  ],
+  "capabilities_covered": [
+    "headings",
+    "emphasis",
+    "inline_code",
+    "link",
+    "blockquote",
+    "hr",
+    "list_bullet",
+    "list_numbered",
+    "checklist",
+    "table",
+    "code_block",
+    "code_languages",
+    "code_long",
+    "latex_inline",
+    "latex_display",
+    "latex_matrix",
+    "upload_image",
+    "upload_pdf",
+    "upload_csv",
+    "upload_json",
+    "upload_text",
+    "audio",
+    "video",
+    "long_message",
+    "refusal_error",
+    "thread_memory",
+    "web_search_citations",
+    "code_execution",
+    "connectors"
+  ],
+  "capabilities_coverable_uncovered": [],
+  "capabilities_missing": [
+    "list_nested",
+    "image_markdown",
+    "image_generation",
+    "artifact_canvas",
+    "generated_file",
+    "emoji_unicode",
+    "reasoning"
+  ]
+}
