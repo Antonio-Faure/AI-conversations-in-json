@@ -179,6 +179,10 @@ class EtalonRunner:
                     self.state.last_error = f"upload echoue (message {index + 1})"
                     self.state.status = STATUS_ERROR
                     break
+                if attachments:
+                    # laisser l'upload se terminer (sinon le bouton d'envoi
+                    # reste desactive et le message ne part pas)
+                    self.driver.session.wait_ms(3000)
                 if not self.driver.send(item.get("text") or ""):
                     self.state.last_error = f"envoi echoue (message {index + 1})"
                     self.state.status = STATUS_ERROR
