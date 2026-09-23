@@ -115,7 +115,10 @@ class ChatDriver:
     def send(self, text: str) -> bool:
         if text:
             if self.session.type_into(list(self.input_selectors), text) is None:
-                return False
+                # champ momentanement absent (rendu differe) : un nouvel essai
+                self.session.wait_ms(1500)
+                if self.session.type_into(list(self.input_selectors), text) is None:
+                    return False
             self.session.wait_ms(300)
         if self.session.click_any(list(self.send_selectors), 4000) is None:
             self.session.press("Enter")
