@@ -59,7 +59,13 @@ class ChatDriver:
         self.open_home()
         clicked = self.session.click_any(list(self.new_chat_selectors), 6000)
         self.session.wait_ms(1500)
-        return clicked is not None
+        if clicked is not None:
+            return True
+        # repli : la page d'accueil expose deja le champ de saisie
+        return any(
+            self.session.is_element_present(selector)
+            for selector in self.input_selectors
+        )
 
     # -- lecture d'etat -------------------------------------------------------
 
