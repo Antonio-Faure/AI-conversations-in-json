@@ -3,7 +3,7 @@
   "mode": "work",
   "source_conversation": "https://chat.mistral.ai/work/fa92852a-3056-48b3-b68a-f5ad599d89e3",
   "generated_from": "exports/mistral/capacites-et-fonctionnalites-detaillees.json",
-  "test_pool": 156,
+  "test_pool": 181,
   "messages": [
     {
       "text": "Affiche le mot \"important\" en gras, le mot \"optionnel\" en italique et le mot \"annulé\" en barré. Utilise uniquement ces trois mots, chacun sur une nouvelle ligne.",
@@ -143,14 +143,6 @@
       "source_test": "Transcription d’un fichier audio en texte."
     },
     {
-      "text": "Ouvre la documentation Python à https://docs.python.org/3/tutorial/ et affiche UNIQUEMENT le titre du premier chapitre.",
-      "attachments": [],
-      "exposes": [
-        "connectors"
-      ],
-      "source_test": "Accès à une documentation technique."
-    },
-    {
       "text": "Utilise du code pour lire le fichier test_code.txt et afficher son contenu. Réponds UNIQUEMENT avec le contenu du fichier.",
       "attachments": [
         "notes.txt"
@@ -170,6 +162,15 @@
         "artifact_canvas"
       ],
       "source_test": "Création d’un document PDF via Canvas."
+    },
+    {
+      "text": "L'outil de génération d'images est-il disponible ? Si oui, génère une image avec le prompt \"cercle rouge\" et confirme par \"Image générée\". Sinon, réponds \"Non disponible\".",
+      "attachments": [],
+      "exposes": [
+        "connectors",
+        "image_generation"
+      ],
+      "source_test": "Vérification de la disponibilité de image_generation."
     },
     {
       "text": "Affiche une vidéo directement dans le chat. Réponds UNIQUEMENT avec \"Impossible\".",
@@ -207,6 +208,7 @@
     "upload_text",
     "audio",
     "video",
+    "image_generation",
     "artifact_canvas",
     "long_message",
     "refusal_error",
@@ -218,7 +220,6 @@
   "capabilities_coverable_uncovered": [],
   "capabilities_missing": [
     "list_nested",
-    "image_generation",
     "generated_file",
     "emoji_unicode",
     "reasoning"

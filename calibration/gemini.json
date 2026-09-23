@@ -3,7 +3,7 @@
   "mode": null,
   "source_conversation": "https://gemini.google.com/app/98d2ab41adeb1d20",
   "generated_from": "exports/gemini/documentation-des-capacites-de-gemini.json",
-  "test_pool": 36,
+  "test_pool": 39,
   "messages": [
     {
       "text": "Affiche la phrase suivante en appliquant les styles demandés : le mot 'A' en gras, le mot 'B' en italique et le mot 'C' en texte barré. Réponds en une seule ligne.",
@@ -188,6 +188,15 @@
         "generated_file"
       ],
       "source_test": "Créer un fichier binaire/texte réel et fournir un lien de téléchargement direct."
+    },
+    {
+      "text": "Mémorise dans mon profil que ma couleur préférée pour les interfaces est le violet. Réponds 'Mémorisé'.",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "thread_memory"
+      ],
+      "source_test": "Modifier la mémoire à long terme de l'utilisateur."
     }
   ],
   "capabilities_covered": [
@@ -216,6 +225,7 @@
     "generated_file",
     "long_message",
     "refusal_error",
+    "thread_memory",
     "web_search_citations",
     "connectors"
   ],
@@ -227,7 +237,6 @@
     "image_generation",
     "artifact_canvas",
     "emoji_unicode",
-    "thread_memory",
     "reasoning",
     "code_execution"
   ]

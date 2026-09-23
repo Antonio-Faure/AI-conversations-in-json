@@ -21,13 +21,9 @@ BOOTSTRAP_DOC = "Dresse une documentation complète"
 
 _SEC_RE = re.compile(r"(?m)^\s*Capacit[ée] test[ée]e\s*:\s*(.*)$")
 _PREP_RE = re.compile(r"(?m)^\s*Pr[ée]paration\s*:\s*(.*)$")
-_MSG_RE = re.compile(
-    r"Message utilisateur à envoyer[^\n]*\n+(?:```[a-zA-Z0-9]*[ \t]*\n)(.*?)```", re.S
-)
+_FENCE_RE = re.compile(r"```[a-zA-Z0-9]*[ \t]*\n(.*?)```", re.S)
 #: repli quand les fences ne sont pas dans le texte (canvas HTML rendu en <pre>)
-_MSG_FALLBACK_RE = re.compile(
-    r"Message utilisateur à envoyer[^\n]*\n(.*?)(?=\n\s*R[ée]sultat attendu|\Z)", re.S
-)
+_RESULT_RE = re.compile(r"\s*(.*?)(?=\n\s*R[ée]sultat attendu|\Z)", re.S)
 _TAG_RE = re.compile(r"<[^>]+>")
 _HEAD_RE = re.compile(r"(?m)^\s*#{1,6}\s+(.+?)\s*$")
 
@@ -84,15 +80,17 @@ def _is_placeholder(*texts: str) -> bool:
 
 
 def _prompt_from_body(body: str) -> str:
-    """Message utilisateur d'un test : bloc fenced, sinon texte avant le resultat."""
-    match = _MSG_RE.search(body)
+    """Message utilisateur d'un test : bloc fenced, sinon texte avant le resultat.
+
+    `body` commence juste apres la ligne « Message utilisateur a envoyer ».
+    """
+    match = _FENCE_RE.search(body)
     if match:
         return match.group(1).strip()
-    fallback = _MSG_FALLBACK_RE.search(body)
+    fallback = _RESULT_RE.match(body)
     if not fallback:
         return ""
-    raw = re.sub(r"```[a-zA-Z0-9]*", "", fallback.group(1))
-    return raw.strip()
+    return re.sub(r"```[a-zA-Z0-9]*", "", fallback.group(1)).strip()
 
 
 def fold(text: str) -> str:
@@ -128,40 +126,94 @@ class CalibrationTest:
     attachments: List[str] = field(default_factory=list)
 
 
-def extract_tests(suite_text: str) -> List[CalibrationTest]:
-    """Extrait les tests {section, capacite, preparation, message a envoyer}."""
-    text = normalize(suite_text)
-    headings = [(m.start(), " ".join(m.group(1).split())) for m in _HEAD_RE.finditer(text)]
-    starts = list(_SEC_RE.finditer(text))
+_ANCHOR_RE = re.compile(r"(?m)^\s*Message utilisateur à envoyer[^\n]*$")
+_TEST_TITLE_RE = re.compile(r"(?i)^test\s*\d+(?:\.\d+)?\s*[—\-–:.]*\s*")
+
+
+def _nearest_section(headings: List, pos: int) -> str:
+    """Dernier titre hors test avant `pos` (contexte de categorie)."""
+    section = ""
+    for heading_pos, title in headings:
+        if heading_pos >= pos:
+            break
+        if _is_test_heading(title):
+            continue
+        section = title
+    return section
+
+
+def _prompt_in_block(block: str) -> str:
+    """Message a envoyer dans une section de test : apres l'ancre, sinon 1er bloc."""
+    anchor = _ANCHOR_RE.search(block)
+    if anchor:
+        prompt = _prompt_from_body(block[anchor.end():])
+        if prompt:
+            return prompt
+    fence = _FENCE_RE.search(block)
+    return fence.group(1).strip() if fence else ""
+
+
+def _tests_from_sections(text: str, headings: List) -> List[CalibrationTest]:
+    """Un test par titre « Test N — ... » (format canvas/document)."""
+    test_heads = [(pos, title) for pos, title in headings if _is_test_heading(title)]
+    bounds = [pos for pos, _ in test_heads] + [len(text)]
     tests: List[CalibrationTest] = []
-    for i, match in enumerate(starts):
-        end = starts[i + 1].start() if i + 1 < len(starts) else len(text)
-        body = text[match.end():end]
-        prompt = _prompt_from_body(body)
+    for i, (pos, title) in enumerate(test_heads):
+        block = text[pos:bounds[i + 1]]
+        caps = list(_SEC_RE.finditer(block))
+        capability = (
+            " ".join(caps[-1].group(1).split()) if caps
+            else _TEST_TITLE_RE.sub("", title).strip()
+        )
+        preps = list(_PREP_RE.finditer(block))
+        preparation = " ".join(preps[-1].group(1).split()) if preps else ""
+        prompt = _prompt_in_block(block)
+        if not prompt or _is_placeholder(prompt, capability):
+            continue
+        tests.append(CalibrationTest(len(tests), capability, preparation, prompt,
+                                     _nearest_section(headings, pos)))
+    return tests
+
+
+def _tests_from_anchors(text: str, headings: List) -> List[CalibrationTest]:
+    """Un test par ancre « Message utilisateur a envoyer » (suites sans titres)."""
+    capabilities = [(m.start(), " ".join(m.group(1).split())) for m in _SEC_RE.finditer(text)]
+    preparations = [(m.start(), " ".join(m.group(1).split())) for m in _PREP_RE.finditer(text)]
+    anchors = list(_ANCHOR_RE.finditer(text))
+    tests: List[CalibrationTest] = []
+    for i, anchor in enumerate(anchors):
+        end = anchors[i + 1].start() if i + 1 < len(anchors) else len(text)
+        prompt = _prompt_from_body(text[anchor.end():end])
         if not prompt:
             continue
-        capability = " ".join(match.group(1).split())
+        lower = anchors[i - 1].end() if i > 0 else 0
+        caps = [v for p, v in capabilities if lower <= p < anchor.start()]
+        prep = [v for p, v in preparations if lower <= p < anchor.start()]
+        if not caps:
+            titles = [
+                t for p, t in headings if p < anchor.start() and _is_test_heading(t)
+            ]
+            caps = [_TEST_TITLE_RE.sub("", titles[-1]).strip()] if titles else []
+        capability = caps[-1] if caps else ""
         if _is_placeholder(prompt, capability):
             continue
-        prep_match = _PREP_RE.search(body)
-        preparation = " ".join(prep_match.group(1).split()) if prep_match else ""
-        section = ""
-        for pos, title in headings:
-            if pos >= match.start():
-                break
-            if _is_test_heading(title):
-                continue
-            section = title
-        tests.append(
-            CalibrationTest(
-                index=len(tests),
-                capability=capability,
-                preparation=preparation,
-                prompt=prompt,
-                section=section,
-            )
-        )
+        tests.append(CalibrationTest(len(tests), capability,
+                                     prep[-1] if prep else "", prompt,
+                                     _nearest_section(headings, anchor.start())))
     return tests
+
+
+def extract_tests(suite_text: str) -> List[CalibrationTest]:
+    """Extrait les tests {section, capacite, preparation, message a envoyer}.
+
+    Deux passes complementaires : par sections « Test N — ... » (canvas/document
+    ou le libelle est parfois omis) puis par ancres (suites sans titres). Les
+    doublons de message sont retires ensuite par `dedupe`.
+    """
+    text = normalize(suite_text)
+    headings = [(m.start(), " ".join(m.group(1).split())) for m in _HEAD_RE.finditer(text)]
+    tests = _tests_from_sections(text, headings) + _tests_from_anchors(text, headings)
+    return dedupe(tests)
 
 
 def load_manifest(path: Path) -> Dict[str, Any]:

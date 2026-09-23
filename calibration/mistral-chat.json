@@ -3,7 +3,7 @@
   "mode": "chat",
   "source_conversation": "https://chat.mistral.ai/chat/af10715b-915d-4b50-9c52-1de754e48ef4",
   "generated_from": "exports/mistral/capacites-et-fonctionnalites.html",
-  "test_pool": 164,
+  "test_pool": 165,
   "messages": [
     {
       "text": "Affiche la phrase suivante avec \"important\" en gras, \"secondaire\" en italique et \"inutile\" barré : \"Ce mot est important, ce mot est secondaire, et ce mot est inutile.\"",

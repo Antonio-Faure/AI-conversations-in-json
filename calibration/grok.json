@@ -3,7 +3,7 @@
   "mode": null,
   "source_conversation": "https://grok.com/chat/0f7b6401-0323-47c1-a230-35301b2c8800",
   "generated_from": "exports/grok/documentation-capabilities-data-tools-memory.json",
-  "test_pool": 60,
+  "test_pool": 61,
   "messages": [
     {
       "text": "Affiche uniquement un titre niveau 1 « Test Titre » et un sous-titre niveau 2 « Sous-titre ». Aucune autre phrase.",
@@ -173,6 +173,14 @@
         "connectors"
       ],
       "source_test": "Détection des connecteurs."
+    },
+    {
+      "text": "Quel est mon fruit préféré fictif ? Réponds en 5 mots max.",
+      "attachments": [],
+      "exposes": [
+        "thread_memory"
+      ],
+      "source_test": "Mémoire conversation (séquence)"
     }
   ],
   "capabilities_covered": [
@@ -200,6 +208,7 @@
     "video",
     "long_message",
     "refusal_error",
+    "thread_memory",
     "web_search_citations",
     "connectors"
   ],
@@ -212,7 +221,6 @@
     "artifact_canvas",
     "generated_file",
     "emoji_unicode",
-    "thread_memory",
     "reasoning",
     "code_execution"
   ]

@@ -1,10 +1,188 @@
 {
   "platform": "claude",
-  "status": "source_absente",
+  "mode": null,
+  "source_conversation": null,
   "generated_from": "calibration/sources/claude.md",
-  "messages": [],
-  "capabilities_covered": [],
-  "capabilities_missing": [
+  "test_pool": 184,
+  "messages": [
+    {
+      "text": "Écris le mot \"test\" trois fois : une fois en gras, une fois en italique, une fois barré. Une ligne par mot, rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "emphasis"
+      ],
+      "source_test": "mise en forme inline."
+    },
+    {
+      "text": "Fais une liste numérotée de 3 étapes fictives pour \"ouvrir une boîte\". Aucun texte avant ou après.",
+      "attachments": [],
+      "exposes": [
+        "list_numbered"
+      ],
+      "source_test": "liste ordonnée."
+    },
+    {
+      "text": "Fais une checklist de 3 tâches fictives, la 2e cochée comme faite. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "checklist"
+      ],
+      "source_test": "liste de tâches cochables."
+    },
+    {
+      "text": "Affiche la phrase fictive \"Ceci est une citation de test.\" en citation Markdown (>). Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "blockquote"
+      ],
+      "source_test": "blockquote Markdown."
+    },
+    {
+      "text": "Affiche le mot \"Haut\", puis un séparateur horizontal, puis le mot \"Bas\". Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "hr"
+      ],
+      "source_test": "ligne de séparation."
+    },
+    {
+      "text": "Écris la variable `total` en code en ligne dans une phrase courte. Une phrase maximum.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "inline_code",
+        "web_search_citations"
+      ],
+      "source_test": "code inline."
+    },
+    {
+      "text": "Écris l'équation E=mc² en LaTeX inline dans une phrase d'une ligne.",
+      "attachments": [],
+      "exposes": [
+        "latex_display",
+        "latex_inline"
+      ],
+      "source_test": "LaTeX inline."
+    },
+    {
+      "text": "Affiche en LaTeX une matrice 2x2 avec 1,2,3,4. Une seule formule, rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "latex_matrix"
+      ],
+      "source_test": "Matrice"
+    },
+    {
+      "text": "Donne une commande Bash de moins de 10 lignes qui liste les fichiers .txt d'un dossier. Une phrase d'explication maximum.",
+      "attachments": [],
+      "exposes": [
+        "code_languages",
+        "upload_text"
+      ],
+      "source_test": "Bash"
+    },
+    {
+      "text": "Donne une requête SQL de moins de 10 lignes qui sélectionne les clients d'une table \"clients\" nés après 2000. Une phrase d'explication maximum.",
+      "attachments": [],
+      "exposes": [
+        "code_languages",
+        "link",
+        "table"
+      ],
+      "source_test": "SQL"
+    },
+    {
+      "text": "Montre à quoi ressemble le code source Markdown (non rendu) d'un titre et d'une liste à puces, dans un bloc de code étiqueté markdown. Une phrase d'explication maximum.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "headings",
+        "list_bullet"
+      ],
+      "source_test": "Markdown (comme langage de code)"
+    },
+    {
+      "text": "Quel texte exact vois-tu sur cette image ? Réponds uniquement par le texte lu.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "upload_image"
+      ],
+      "source_test": "Lecture de texte dans une image (OCR)"
+    },
+    {
+      "text": "Liste uniquement les noms de personnes présents dans ce PDF.",
+      "attachments": [
+        "document.pdf"
+      ],
+      "exposes": [
+        "upload_pdf"
+      ],
+      "source_test": "Extraction de noms depuis un PDF"
+    },
+    {
+      "text": "Trouve la ligne où le total ne correspond pas à la somme des deux colonnes précédentes. Réponds par le numéro de ligne.",
+      "attachments": [],
+      "exposes": [
+        "table",
+        "thread_memory"
+      ],
+      "source_test": "Détection d'une incohérence dans un tableur"
+    },
+    {
+      "text": "Transforme ce fichier JSON en tableau Markdown, rien d'autre.",
+      "attachments": [
+        "donnees.json"
+      ],
+      "exposes": [
+        "code_languages",
+        "table",
+        "upload_json"
+      ],
+      "source_test": "Tableau de résultats depuis un JSON"
+    },
+    {
+      "text": "Y a-t-il de la musique dans cette vidéo ? Réponds par oui ou non.",
+      "attachments": [
+        "video.mp4"
+      ],
+      "exposes": [
+        "audio",
+        "video"
+      ],
+      "source_test": "Analyse de l'audio d'une vidéo"
+    },
+    {
+      "text": "Exécute du code pour générer un fichier CSV de 3 lignes (nom,score) avec des données fictives, et donne-moi le fichier.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "code_execution",
+        "upload_csv"
+      ],
+      "source_test": "Génération d'un CSV via exécution de code"
+    },
+    {
+      "text": "As-tu accès en ce moment à un connecteur externe (email, agenda, Drive) dans cette conversation ? Réponds en une phrase.",
+      "attachments": [],
+      "exposes": [
+        "connectors"
+      ],
+      "source_test": "Existence de connecteurs/outils externes (question)"
+    },
+    {
+      "text": "Explique ce qu'est la photosynthèse en moins de 20 mots.",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "long_message",
+        "refusal_error"
+      ],
+      "source_test": "Respect d'une limite de longueur"
+    }
+  ],
+  "capabilities_covered": [
     "headings",
     "emphasis",
     "inline_code",
@@ -14,7 +192,6 @@
     "list_bullet",
     "list_numbered",
     "checklist",
-    "list_nested",
     "table",
     "code_block",
     "code_languages",
@@ -22,7 +199,6 @@
     "latex_inline",
     "latex_display",
     "latex_matrix",
-    "image_markdown",
     "upload_image",
     "upload_pdf",
     "upload_csv",
@@ -30,17 +206,21 @@
     "upload_text",
     "audio",
     "video",
-    "image_generation",
-    "artifact_canvas",
-    "generated_file",
     "long_message",
-    "emoji_unicode",
     "refusal_error",
     "thread_memory",
     "web_search_citations",
-    "reasoning",
     "code_execution",
     "connectors"
   ],
-  "note": "Deposer la suite generee par le bot dans calibration/sources/claude.md (export Markdown du canvas/document), puis relancer calibration_build.py."
+  "capabilities_coverable_uncovered": [],
+  "capabilities_missing": [
+    "list_nested",
+    "image_markdown",
+    "image_generation",
+    "artifact_canvas",
+    "generated_file",
+    "emoji_unicode",
+    "reasoning"
+  ]
 }
