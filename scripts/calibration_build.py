@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -127,11 +128,39 @@ def _write_bootstraps(pending: list) -> Path:
     return path
 
 
+def print_sheet(name: str) -> int:
+    """Fiche d'envoi : messages a poster dans l'ordre, avec les pieces jointes."""
+    path = CAL_DIR / f"{name}.json"
+    if not path.exists():
+        print(f"{name}: calibration absente ({path.name})", file=sys.stderr)
+        return 2
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    messages = payload.get("messages") or []
+    if not messages:
+        print(f"{name}: aucune suite (statut {payload.get('status')})", file=sys.stderr)
+        return 2
+    mode = f" [mode {payload['mode']}]" if payload.get("mode") else ""
+    print(f"\n# {name}{mode} — {len(messages)} messages a poster (dans l'ordre)")
+    for i, message in enumerate(messages, 1):
+        joint = f"   [PJ: {', '.join(message['attachments'])}]" if message.get("attachments") else ""
+        print(f"{i:2}. {message['text']}{joint}")
+    if any(m.get("attachments") for m in messages):
+        media_root = Path(os.environ.get("AICV_RUN_DIR") or "/home/odin/Documents/code/aicv-run")
+        print(f"   medias: {media_root / name / 'attachments'} "
+              f"(generer: scripts/make_media.py --bot {name})")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bot", action="append", help="ne traiter que ce(s) bot(s)")
     parser.add_argument("--report", action="store_true", help="afficher la couverture")
+    parser.add_argument("--print", dest="print_bot", action="append", metavar="BOT",
+                        help="afficher la fiche d'envoi (messages a poster) d'un bot")
     args = parser.parse_args()
+
+    if args.print_bot:
+        return max((print_sheet(name) for name in args.print_bot), default=0)
 
     manifest = load_manifest(MANIFEST_PATH)
     names = args.bot or list(SOURCES)

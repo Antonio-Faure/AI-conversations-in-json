@@ -143,8 +143,12 @@ marquées indisponibles).
 - `calibration/sources/<bot>.md` : suites exportées depuis un canvas/document
   (ChatGPT, Claude) quand le bot n'expose pas la suite dans un export JSON.
 - Régénérer : `.venv/bin/python scripts/calibration_build.py --report`.
-  L'extraction lit les exports `documentation-*` (JSON) ou le canvas (HTML
-  Mistral) ; le rapport liste les capacités non couvertes.
+  L'extraction lit les exports `documentation-*` (JSON), le canvas (HTML
+  Mistral) ou `calibration/sources/<bot>.md` ; le rapport liste les capacités
+  non couvertes.
+- Fiche d'envoi (messages à poster dans l'ordre + pièces jointes) :
+  `.venv/bin/python scripts/calibration_build.py --print <bot>`.
+  Médias : `.venv/bin/python scripts/make_media.py --bot <bot>`.
 - Envoi (une seule fois) : sous-agent browser-use par bot, puis on gèle le
   HTML/JSON de la conversation obtenue.
 
