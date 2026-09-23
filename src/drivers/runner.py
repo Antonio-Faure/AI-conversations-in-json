@@ -190,6 +190,12 @@ class EtalonRunner:
                 # verification : un envoi refuse (rate/erreur) ne doit pas etre compte
                 self.driver.session.wait_ms(700)
                 if not self.driver.confirm_sent():
+                    # le texte est encore dans le champ : re-soumettre sans retaper
+                    submit = getattr(self.driver, "submit", None)
+                    if callable(submit):
+                        submit()
+                        self.driver.session.wait_ms(1200)
+                if not self.driver.confirm_sent():
                     self.state.last_error = (
                         f"envoi non confirme (champ non vide, message {index + 1})"
                     )
