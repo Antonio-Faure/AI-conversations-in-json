@@ -49,9 +49,9 @@ def test_regression_detectee_sous_le_seuil():
 
 def test_detecte_les_capacites_presentes():
     caps = detect_capabilities(PAYLOAD)
-    assert {"headings", "emphasis", "inline_code", "link", "table",
-            "image_markdown", "latex_inline", "code_block", "code_languages"} <= caps
-    assert "hr" not in caps
+    assert {"list_bullet", "list_numbered", "table", "image_markdown",
+            "latex_inline", "code_block", "code_languages"} <= caps
+    assert "hr" not in caps and "blockquote" not in caps
 
 
 def test_detecte_refus_et_unicode():
