@@ -119,6 +119,15 @@ class ChatDriver:
             self.session.wait_ms(300)
         if self.session.click_any(list(self.send_selectors), 4000) is None:
             self.session.press("Enter")
+        # secours : champ encore rempli -> le clic n'a pas soumis, on tente Entree
+        checker = getattr(self.session, "is_input_empty", None)
+        if callable(checker):
+            self.session.wait_ms(600)
+            try:
+                if not checker(list(self.input_selectors)):
+                    self.session.press("Enter")
+            except Exception:  # noqa: BLE001
+                pass
         return True
 
     def confirm_sent(self) -> bool:
