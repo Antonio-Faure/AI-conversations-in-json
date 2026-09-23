@@ -82,6 +82,8 @@ class MistralDriver(ChatDriver):
     def __init__(self, session, config=None):
         super().__init__(session, config)
         self._mode = None
+        #: mode ouvert pour une nouvelle conversation (« work » par defaut)
+        self.preferred_mode = "work"
         # etat capture juste avant l'envoi, pour detecter la reponse meme si
         # elle apparait pendant la saisie/le clic
         self._pre_count = 0
@@ -132,7 +134,7 @@ class MistralDriver(ChatDriver):
         return False
 
     def open_home(self) -> None:
-        self.ensure_mode("work")
+        self.ensure_mode(self.preferred_mode)
 
     def open_conversation(self, url: str) -> None:
         mode = self.mode_of(url)
@@ -142,7 +144,7 @@ class MistralDriver(ChatDriver):
         self.session.wait_ms(1500)
 
     def new_conversation(self) -> bool:
-        self.ensure_mode("work")
+        self.ensure_mode(self.preferred_mode)
         return super().new_conversation()
 
     # -- pieces jointes -------------------------------------------------------

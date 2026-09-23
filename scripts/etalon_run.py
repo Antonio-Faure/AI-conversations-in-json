@@ -50,6 +50,8 @@ def main() -> int:
     parser.add_argument("--url", help="URL de la conversation cible (sinon nouvelle)")
     parser.add_argument("--engine", choices=("playwright", "botasaurus"),
                         help="moteur (defaut: botasaurus pour grok, sinon config)")
+    parser.add_argument("--mode", choices=("work", "chat"),
+                        help="mode d'une nouvelle conversation (Mistral)")
     parser.add_argument("--config", "-c", default=ROOT / "config.yaml", type=Path)
     parser.add_argument("--headful", action="store_true")
     parser.add_argument("--dry-run", action="store_true",
@@ -69,6 +71,8 @@ def main() -> int:
     session = default_browser_factory(Path(config["profile_dir"]), args.bot, config)
     try:
         driver = driver_cls(session, config)
+        if args.mode and hasattr(driver, "preferred_mode"):
+            driver.preferred_mode = args.mode
         if args.dry_run:
             driver.open_home()
             session.wait_ms(2500)
