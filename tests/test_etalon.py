@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from src.utils.etalon import conversation_metrics, regressions
+from src.utils.etalon import conversation_metrics, detect_capabilities, regressions
 
 PAYLOAD = {
     "conversation_id": "c",
@@ -45,6 +45,20 @@ def test_regression_detectee_sous_le_seuil():
     assert any(item.startswith("messages") for item in lost)
     assert any(item.startswith("images") for item in lost)
     assert not any(item.startswith("tables") for item in lost)
+
+
+def test_detecte_les_capacites_presentes():
+    caps = detect_capabilities(PAYLOAD)
+    assert {"headings", "emphasis", "inline_code", "link", "table",
+            "image_markdown", "latex_inline", "code_block", "code_languages"} <= caps
+    assert "hr" not in caps
+
+
+def test_detecte_refus_et_unicode():
+    payload = {"messages": [{"role": "assistant", "texte": "Désolé, je ne peux pas 😀 مرحبا"}]}
+    caps = detect_capabilities(payload)
+    assert "refusal_error" in caps
+    assert "emoji_unicode" in caps
 
 
 def test_regression_consecutive_roles_seulement_si_augmente():

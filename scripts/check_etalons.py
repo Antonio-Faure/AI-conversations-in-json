@@ -22,7 +22,12 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.utils.etalon import FEATURES, conversation_metrics, regressions  # noqa: E402
+from src.utils.etalon import (  # noqa: E402
+    FEATURES,
+    conversation_metrics,
+    detect_capabilities,
+    regressions,
+)
 
 
 def _find_export(output_dir: Path, platform: str, conv_id: str) -> Optional[Path]:
@@ -77,8 +82,16 @@ def main() -> int:
                 problems += 1
             if lost:
                 problems += 1
+            expected = set(etalon.get("expected_capabilities") or [])
+            if expected:
+                missing = sorted(expected - detect_capabilities(payload))
+                if missing:
+                    print(f"    capacites absentes: {', '.join(missing)}")
+                    problems += 1
             if args.update:
                 etalon["baseline"] = metrics
+                if expected:
+                    etalon["detected_capabilities"] = sorted(detect_capabilities(payload))
     if args.update:
         args.config.write_text(
             json.dumps(entries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
