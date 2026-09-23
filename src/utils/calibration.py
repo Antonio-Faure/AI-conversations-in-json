@@ -38,6 +38,11 @@ _SECTION_RULES = (
     ("math", frozenset({"math"})),
     ("equation", frozenset({"math"})),
     ("équation", frozenset({"math"})),
+    # "generation" avant "fichier" : « Generation de fichiers » = generation
+    ("canvas", frozenset({"generation"})),
+    ("artefact", frozenset({"generation"})),
+    ("artifact", frozenset({"generation"})),
+    ("generation", frozenset({"generation"})),
     ("image", frozenset({"media"})),
     ("fichier", frozenset({"media"})),
     ("audio", frozenset({"media"})),
@@ -47,10 +52,6 @@ _SECTION_RULES = (
     ("recherche", frozenset({"tools"})),
     ("web", frozenset({"tools"})),
     ("outil", frozenset({"tools"})),
-    ("canvas", frozenset({"generation"})),
-    ("artefact", frozenset({"generation"})),
-    ("artifact", frozenset({"generation"})),
-    ("generation", frozenset({"generation"})),
 )
 
 
@@ -312,6 +313,8 @@ def suite_from_path(kind: str, path: Path) -> Optional[str]:
     path = Path(path)
     if kind == "html":
         return html_to_text(path.read_text(encoding="utf-8", errors="replace"))
+    if kind in ("md", "markdown", "txt"):
+        return path.read_text(encoding="utf-8", errors="replace")
     payload = json.loads(path.read_text(encoding="utf-8"))
     return suite_from_export(payload)
 

@@ -1,7 +1,7 @@
 {
   "platform": "chatgpt",
-  "status": "suite_a_generer",
-  "source_conversation": "https://chatgpt.com/c/6aa50612-87dc-83eb-82f4-3749486f626d",
+  "status": "source_absente",
+  "generated_from": "calibration/sources/chatgpt.md",
   "messages": [],
   "capabilities_covered": [],
   "capabilities_missing": [
@@ -42,5 +42,5 @@
     "code_execution",
     "connectors"
   ],
-  "note": "Envoyer les amorces (calibration/bootstraps.json) puis relancer calibration_build.py."
+  "note": "Deposer la suite generee par le bot dans calibration/sources/chatgpt.md (export Markdown du canvas/document), puis relancer calibration_build.py."
 }

@@ -2,7 +2,7 @@
   "platform": "perplexity",
   "mode": null,
   "source_conversation": "https://www.perplexity.ai/search/d5c650cf-b24f-4d65-954e-a56e5aa7d1d2",
-  "generated_from": "dresse-une-documentation-complete-et-structuree-de-tout-ce-que-tu-peux-faire-dan.json",
+  "generated_from": "exports/perplexity/dresse-une-documentation-complete-et-structuree-de-tout-ce-que-tu-peux-faire-dan.json",
   "test_pool": 201,
   "messages": [
     {

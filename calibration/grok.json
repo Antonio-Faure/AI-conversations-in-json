@@ -2,7 +2,7 @@
   "platform": "grok",
   "mode": null,
   "source_conversation": "https://grok.com/chat/0f7b6401-0323-47c1-a230-35301b2c8800",
-  "generated_from": "documentation-capabilities-data-tools-memory.json",
+  "generated_from": "exports/grok/documentation-capabilities-data-tools-memory.json",
   "test_pool": 60,
   "messages": [
     {
@@ -109,6 +109,16 @@
       "source_test": "Description d’image fournie."
     },
     {
+      "text": "Extrais uniquement la date de ce fichier TXT. Rien d’autre.",
+      "attachments": [
+        "notes.txt"
+      ],
+      "exposes": [
+        "upload_text"
+      ],
+      "source_test": "Lecture d’un fichier TXT."
+    },
+    {
       "text": "Texte long :\nSection A début : Pomme\n... (répéter 20 fois « Ligne de remplissage. »)\nSection milieu : Poire\n... (répéter 20 fois « Ligne de remplissage. »)\nSection fin : Banane\nExtrais uniquement les 3 fruits dans l’ordre. Rien d’autre.",
       "attachments": [],
       "exposes": [
@@ -148,15 +158,6 @@
       "source_test": "Exécution code + génération fichier."
     },
     {
-      "text": "Crée un fichier JSON minimal {\"test\":true} et un fichier Markdown contenant « # Titre ». Fournis les deux fichiers. Maximum 2 phrases.",
-      "attachments": [],
-      "exposes": [
-        "upload_json",
-        "upload_text"
-      ],
-      "source_test": "Création de fichiers de différents types."
-    },
-    {
       "text": "Liste uniquement les skills réellement disponibles (docx, pdf, pptx, xlsx, ffmpeg, etc.). Maximum 5 puces. Rien d’autre.",
       "attachments": [],
       "exposes": [
@@ -194,7 +195,6 @@
     "upload_image",
     "upload_pdf",
     "upload_csv",
-    "upload_json",
     "upload_text",
     "audio",
     "video",
@@ -207,6 +207,7 @@
   "capabilities_missing": [
     "list_nested",
     "latex_inline",
+    "upload_json",
     "image_generation",
     "artifact_canvas",
     "generated_file",

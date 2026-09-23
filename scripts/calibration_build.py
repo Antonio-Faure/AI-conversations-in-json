@@ -2,8 +2,9 @@
 """Construit les conversations d'etalonnage compactees (offline).
 
 Pour chaque bot, on recupere la suite de tests que le chatbot a generee
-lui-meme, on la tague par capacite (calibration/manifest.json) et on garde le
-plus petit ensemble couvrant tout. Sortie : calibration/<bot>.json + un rapport.
+lui-meme (export JSON, canvas HTML Mistral, ou fichier Markdown exporte depuis
+un canvas/document ChatGPT/Claude), on la tague par capacite
+(calibration/manifest.json) et on garde le plus petit ensemble couvrant tout.
 
     .venv/bin/python scripts/calibration_build.py
     .venv/bin/python scripts/calibration_build.py --bot gemini --report
@@ -32,8 +33,11 @@ from src.utils.calibration import (  # noqa: E402
 CAL_DIR = ROOT / "calibration"
 MANIFEST_PATH = CAL_DIR / "manifest.json"
 
-#: conversation « documentation » par bot (suite generee par le chatbot)
+#: suite generee par le chatbot, par bot (JSON = export, html = canvas Mistral,
+#: md = fichier Markdown exporte depuis un canvas/document ChatGPT/Claude)
 SOURCES: Dict[str, Dict[str, Any]] = {
+    "chatgpt": {"kind": "md", "path": "calibration/sources/chatgpt.md"},
+    "claude": {"kind": "md", "path": "calibration/sources/claude.md"},
     "gemini": {
         "kind": "json",
         "path": "exports/gemini/documentation-des-capacites-de-gemini.json",
@@ -61,12 +65,6 @@ SOURCES: Dict[str, Dict[str, Any]] = {
     },
 }
 
-#: bots dont la suite reste a generer (envoyer les amorces via browser-use)
-PENDING = {
-    "chatgpt": "exports/chatgpt/documentation-des-capacites.json",
-    "claude": None,
-}
-
 #: conversation de reference pour extraire les deux amorces
 BOOTSTRAP_SOURCE = SOURCES["perplexity"]["path"]
 
@@ -92,20 +90,23 @@ def _build_bot(name: str, spec: Dict[str, Any], manifest: Dict[str, Any]) -> Dic
         manifest=manifest,
         mode=spec.get("mode"),
         source_conversation=_conversation_ref(spec),
-        generated_from=Path(spec["path"]).name,
+        generated_from=str(spec["path"]),
     )
 
 
-def _pending_payload(name: str, manifest: Dict[str, Any], path: Optional[str]) -> Dict[str, Any]:
+def _missing_payload(name: str, manifest: Dict[str, Any], spec: Dict[str, Any]) -> Dict[str, Any]:
     all_ids = [c["id"] for c in manifest.get("capabilities") or []]
     return {
         "platform": name,
-        "status": "suite_a_generer",
-        "source_conversation": _conversation_ref({"path": path}) if path else None,
+        "status": "source_absente",
+        "generated_from": str(spec["path"]),
         "messages": [],
         "capabilities_covered": [],
         "capabilities_missing": all_ids,
-        "note": "Envoyer les amorces (calibration/bootstraps.json) puis relancer calibration_build.py.",
+        "note": (
+            f"Deposer la suite generee par le bot dans {spec['path']} "
+            "(export Markdown du canvas/document), puis relancer calibration_build.py."
+        ),
     }
 
 
@@ -113,10 +114,10 @@ def _write(path: Path, payload: Dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def _write_bootstraps() -> Path:
+def _write_bootstraps(pending: list) -> Path:
     payload = json.loads((ROOT / BOOTSTRAP_SOURCE).read_text(encoding="utf-8"))
     boot = bootstraps_from_export(payload)
-    boot["pending_bots"] = sorted(PENDING)
+    boot["pending_bots"] = sorted(pending)
     boot["note"] = (
         "Deux amorces a envoyer une fois a chaque bot sans suite : documenter les "
         "capacites, puis generer la suite de tests."
@@ -141,9 +142,16 @@ def main() -> int:
         if spec is None:
             print(f"{name}: source inconnue", file=sys.stderr)
             continue
-        payload = _build_bot(name, spec, manifest)
+        exists = (ROOT / spec["path"]).exists()
+        payload = (
+            _build_bot(name, spec, manifest) if exists
+            else _missing_payload(name, manifest, spec)
+        )
         _write(CAL_DIR / f"{name}.json", payload)
         if args.report:
+            if not exists:
+                print(f"{name:14} source absente -> {spec['path']}")
+                continue
             covered = len(payload["capabilities_covered"])
             total = covered + len(payload["capabilities_missing"])
             print(
@@ -153,11 +161,10 @@ def main() -> int:
             )
 
     if not args.bot:
-        for name, path in PENDING.items():
-            _write(CAL_DIR / f"{name}.json", _pending_payload(name, manifest, path))
-        boot_path = _write_bootstraps()
+        pending = [n for n, s in SOURCES.items() if not (ROOT / s["path"]).exists()]
+        boot_path = _write_bootstraps(pending)
         if args.report:
-            print(f"bootstraps ecrits: {boot_path.relative_to(ROOT)} (bots: {', '.join(sorted(PENDING))})")
+            print(f"bootstraps ecrits: {boot_path.relative_to(ROOT)} (en attente: {', '.join(pending) or '-'})")
     return 0
 
 

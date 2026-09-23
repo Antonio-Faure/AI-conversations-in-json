@@ -139,7 +139,9 @@ marquées indisponibles).
   utilisateur pour tester toutes ces capacités »), réduits au **minimum qui
   couvre tout** (set-cover) et 100 % propres à ce bot.
 - `calibration/bootstraps.json` : les 2 amorces (documentation + génération de
-  suite) à envoyer **une fois** aux bots sans suite (chatgpt, claude).
+  suite) à envoyer **une fois** aux bots sans suite.
+- `calibration/sources/<bot>.md` : suites exportées depuis un canvas/document
+  (ChatGPT, Claude) quand le bot n'expose pas la suite dans un export JSON.
 - Régénérer : `.venv/bin/python scripts/calibration_build.py --report`.
   L'extraction lit les exports `documentation-*` (JSON) ou le canvas (HTML
   Mistral) ; le rapport liste les capacités non couvertes.

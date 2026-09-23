@@ -2,7 +2,7 @@
   "platform": "mistral",
   "mode": "work",
   "source_conversation": "https://chat.mistral.ai/work/fa92852a-3056-48b3-b68a-f5ad599d89e3",
-  "generated_from": "capacites-et-fonctionnalites-detaillees.json",
+  "generated_from": "exports/mistral/capacites-et-fonctionnalites-detaillees.json",
   "test_pool": 156,
   "messages": [
     {
@@ -164,13 +164,12 @@
       "source_test": "Lecture d’un fichier via exécution de code."
     },
     {
-      "text": "Crée un Canvas de type table nommé \"tableau-test\" avec le contenu :\n---\nname: tableau-test\ntitle: Tableau de Test\ntype: table\n---\n\n| Col1 | Col2 |\n|------|------|\n| A    | 1    |\n| B    | 2    |\nConfirme UNIQUEMENT par \"Canvas tableau-test créé\".",
+      "text": "Crée un Canvas de type text/markdown nommé \"rapport\" avec le contenu \"# Rapport de test\\n\\nCeci est un rapport.\". Confirme UNIQUEMENT par \"Canvas rapport créé\".",
       "attachments": [],
       "exposes": [
-        "artifact_canvas",
-        "table"
+        "artifact_canvas"
       ],
-      "source_test": "Création d’un Canvas de type tableau."
+      "source_test": "Création d’un document PDF via Canvas."
     },
     {
       "text": "Affiche une vidéo directement dans le chat. Réponds UNIQUEMENT avec \"Impossible\".",

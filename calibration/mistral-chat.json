@@ -2,7 +2,7 @@
   "platform": "mistral",
   "mode": "chat",
   "source_conversation": "https://chat.mistral.ai/chat/af10715b-915d-4b50-9c52-1de754e48ef4",
-  "generated_from": "capacites-et-fonctionnalites.html",
+  "generated_from": "exports/mistral/capacites-et-fonctionnalites.html",
   "test_pool": 164,
   "messages": [
     {

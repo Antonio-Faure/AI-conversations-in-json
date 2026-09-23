@@ -13,6 +13,7 @@ from src.utils.calibration import (
     section_categories,
     select_minimal_cover,
     suite_from_export,
+    suite_from_path,
     tag_tests,
 )
 
@@ -169,6 +170,14 @@ def test_suite_et_amorces_depuis_export():
     assert "suite complète" in boot["suite"]
 
 
+def test_suite_depuis_markdown(tmp_path):
+    path = tmp_path / "chatgpt.md"
+    path.write_text(SUITE, encoding="utf-8")
+    text = suite_from_path("md", path)
+    assert "Affiche un titre H1" in text
+    assert len(extract_tests(text)) == 4
+
+
 def test_manifest_coherent():
     manifest = _manifest()
     ids = [c["id"] for c in manifest["capabilities"]]
@@ -188,7 +197,7 @@ def test_fichiers_calibration_valides():
     for path in files:
         payload = json.loads(path.read_text(encoding="utf-8"))
         assert payload.get("platform")
-        if payload.get("status") == "suite_a_generer":
+        if payload.get("status") in ("suite_a_generer", "source_absente"):
             assert payload["messages"] == []
             continue
         assert payload["messages"], path.name

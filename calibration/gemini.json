@@ -2,7 +2,7 @@
   "platform": "gemini",
   "mode": null,
   "source_conversation": "https://gemini.google.com/app/98d2ab41adeb1d20",
-  "generated_from": "documentation-des-capacites-de-gemini.json",
+  "generated_from": "exports/gemini/documentation-des-capacites-de-gemini.json",
   "test_pool": 36,
   "messages": [
     {
@@ -180,6 +180,14 @@
         "web_search_citations"
       ],
       "source_test": "Déclencher l'outil de recherche Web, trouver une donnée récente et citer la source."
+    },
+    {
+      "text": "Génère un fichier CSV téléchargeable nommé 'produits.csv' contenant 2 colonnes (Produit, Prix) et 2 lignes.",
+      "attachments": [],
+      "exposes": [
+        "generated_file"
+      ],
+      "source_test": "Créer un fichier binaire/texte réel et fournir un lien de téléchargement direct."
     }
   ],
   "capabilities_covered": [
@@ -205,6 +213,7 @@
     "upload_csv",
     "audio",
     "video",
+    "generated_file",
     "long_message",
     "refusal_error",
     "web_search_citations",
@@ -217,7 +226,6 @@
     "upload_text",
     "image_generation",
     "artifact_canvas",
-    "generated_file",
     "emoji_unicode",
     "thread_memory",
     "reasoning",

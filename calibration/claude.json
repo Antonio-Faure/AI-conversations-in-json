@@ -1,7 +1,7 @@
 {
   "platform": "claude",
-  "status": "suite_a_generer",
-  "source_conversation": null,
+  "status": "source_absente",
+  "generated_from": "calibration/sources/claude.md",
   "messages": [],
   "capabilities_covered": [],
   "capabilities_missing": [
@@ -42,5 +42,5 @@
     "code_execution",
     "connectors"
   ],
-  "note": "Envoyer les amorces (calibration/bootstraps.json) puis relancer calibration_build.py."
+  "note": "Deposer la suite generee par le bot dans calibration/sources/claude.md (export Markdown du canvas/document), puis relancer calibration_build.py."
 }
