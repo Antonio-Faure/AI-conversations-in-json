@@ -130,10 +130,17 @@ class ChatDriver:
         checker = getattr(self.session, "is_input_empty", None)
         if not callable(checker):
             return True
-        try:
-            return bool(checker(list(self.input_selectors)))
-        except Exception:  # noqa: BLE001
-            return True
+        # certains editeurs (Gemini) vident le champ avec un leger retard :
+        # on re-teste quelques fois avant de conclure a un echec.
+        for attempt in range(4):
+            try:
+                if checker(list(self.input_selectors)):
+                    return True
+            except Exception:  # noqa: BLE001
+                return True
+            if attempt < 3:
+                self.session.wait_ms(600)
+        return False
 
     def wait_for_response(self, timeout_ms: Optional[int] = None) -> bool:
         """Attend la fin de la generation (disparition du bouton stop)."""
