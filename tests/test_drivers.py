@@ -70,7 +70,7 @@ class FakeDriver(ChatDriver):
 
 class LimitedDriver(FakeDriver):
     def is_rate_limited(self):
-        return self.session.sent >= 3
+        return self.session.sent >= 2
 
 
 class NoUploadDriver(FakeDriver):
