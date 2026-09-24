@@ -136,7 +136,7 @@ class EtalonRunner:
         if url and url != self.state.target_url:
             self.state.target_url = url
 
-    def _await_new_response(self, before: int, timeout_ms: int = 90000) -> str:
+    def _await_new_response(self, before: int, timeout_ms: int = 180000) -> str:
         """Attend qu'un nouveau message assistant soit persiste.
 
         Retourne "ok", "rate_limited" ou "timeout". Sans selecteurs de messages
@@ -202,7 +202,7 @@ class EtalonRunner:
                 if attachments:
                     # laisser l'upload se terminer (sinon le bouton d'envoi
                     # reste desactive et le message ne part pas)
-                    self.driver.session.wait_ms(3000)
+                    self.driver.session.wait_ms(5000)
                 before = self.driver.count_assistant_messages()
                 if not self.driver.send(item.get("text") or ""):
                     self.state.last_error = f"envoi echoue (message {index + 1})"
