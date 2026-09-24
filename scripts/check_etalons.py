@@ -23,6 +23,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.utils.etalon import (  # noqa: E402
+    DETECTABLE,
     FEATURES,
     conversation_metrics,
     detect_capabilities,
@@ -84,10 +85,15 @@ def main() -> int:
                 problems += 1
             expected = set(etalon.get("expected_capabilities") or [])
             if expected:
-                missing = sorted(expected - detect_capabilities(payload))
+                detected = detect_capabilities(payload)
+                verifiable = expected & DETECTABLE
+                missing = sorted(verifiable - detected)
                 if missing:
                     print(f"    capacites absentes: {', '.join(missing)}")
                     problems += 1
+                unchecked = sorted(expected - DETECTABLE)
+                if unchecked:
+                    print(f"    non verifiables auto ({len(unchecked)}): {', '.join(unchecked)}")
             if args.update:
                 etalon["baseline"] = metrics
                 if expected:

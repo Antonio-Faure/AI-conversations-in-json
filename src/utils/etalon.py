@@ -75,6 +75,13 @@ _DETECTORS = {
 }
 
 
+#: capacites verifiables automatiquement depuis un export (les autres, comme les
+#: pieces jointes ou le raisonnement, ne sont pas observables dans le JSON seul).
+DETECTABLE = frozenset(_DETECTORS) | {
+    "code_block", "code_languages", "code_long", "long_message",
+}
+
+
 def detect_capabilities(payload: Dict[str, Any]) -> Set[str]:
     """Capacites observables dans un export scraped (heuristique par motifs)."""
     messages = payload.get("messages") or []
