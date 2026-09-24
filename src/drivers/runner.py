@@ -136,6 +136,26 @@ class EtalonRunner:
         if url and url != self.state.target_url:
             self.state.target_url = url
 
+    def _await_new_response(self, before: int, timeout_ms: int = 90000) -> str:
+        """Attend qu'un nouveau message assistant soit persiste.
+
+        Retourne "ok", "rate_limited" ou "timeout". Sans selecteurs de messages
+        assistant (count = -1), on ne peut pas verifier : on suppose "ok".
+        """
+        if before < 0:
+            return "ok"
+        elapsed = 0
+        step = 1000
+        while elapsed < timeout_ms:
+            if self.driver.is_rate_limited():
+                return "rate_limited"
+            now = self.driver.count_assistant_messages()
+            if now > before:
+                return "ok"
+            self.driver.session.wait_ms(step)
+            elapsed += step
+        return "timeout"
+
     def _open_target(self) -> bool:
         if self.state.target_url:
             self.driver.open_conversation(self.state.target_url)
@@ -183,6 +203,7 @@ class EtalonRunner:
                     # laisser l'upload se terminer (sinon le bouton d'envoi
                     # reste desactive et le message ne part pas)
                     self.driver.session.wait_ms(3000)
+                before = self.driver.count_assistant_messages()
                 if not self.driver.send(item.get("text") or ""):
                     self.state.last_error = f"envoi echoue (message {index + 1})"
                     self.state.status = STATUS_ERROR
@@ -198,6 +219,18 @@ class EtalonRunner:
                 if not self.driver.confirm_sent():
                     self.state.last_error = (
                         f"envoi non confirme (champ non vide, message {index + 1})"
+                    )
+                    self.state.status = STATUS_ERROR
+                    break
+                # persistance : n'avancer qu'une fois la reponse reellement ecrite
+                verdict = self._await_new_response(before)
+                if verdict == "rate_limited":
+                    self.state.last_error = f"rate-limit (message {index + 1})"
+                    self.state.status = STATUS_RATE_LIMITED
+                    break
+                if verdict != "ok":
+                    self.state.last_error = (
+                        f"reponse non persistee (message {index + 1})"
                     )
                     self.state.status = STATUS_ERROR
                     break
