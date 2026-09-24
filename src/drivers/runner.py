@@ -136,36 +136,6 @@ class EtalonRunner:
         if url and url != self.state.target_url:
             self.state.target_url = url
 
-    @staticmethod
-    def _needle(text: str) -> str:
-        """Extrait normalise (pour retrouver le message dans le transcript)."""
-        import unicodedata
-
-        normalized = unicodedata.normalize("NFKD", text or "")
-        ascii_only = "".join(c for c in normalized if not unicodedata.combining(c))
-        return " ".join(ascii_only.lower().split())[:40]
-
-    def _await_submission(self, text: str, timeout_ms: int = 90000) -> str:
-        """Attend que le message envoye apparaisse dans le transcript.
-
-        Signal robuste aux fils virtualises (le message envoye est dans le
-        viewport) et qui ne depend pas du rendu de la reponse. Retourne "ok",
-        "rate_limited" ou "timeout".
-        """
-        needle = self._needle(text)
-        if not needle:
-            return "ok"
-        elapsed = 0
-        step = 700
-        while elapsed < timeout_ms:
-            if self.driver.is_rate_limited():
-                return "rate_limited"
-            if needle in self._needle(self.driver.page_text()):
-                return "ok"
-            self.driver.session.wait_ms(step)
-            elapsed += step
-        return "timeout"
-
     def _open_target(self) -> bool:
         if self.state.target_url:
             self.driver.open_conversation(self.state.target_url)
@@ -228,18 +198,6 @@ class EtalonRunner:
                 if not self.driver.confirm_sent():
                     self.state.last_error = (
                         f"envoi non confirme (champ non vide, message {index + 1})"
-                    )
-                    self.state.status = STATUS_ERROR
-                    break
-                # persistance : le message envoye doit apparaitre dans le fil
-                verdict = self._await_submission(item.get("text") or "")
-                if verdict == "rate_limited":
-                    self.state.last_error = f"rate-limit (message {index + 1})"
-                    self.state.status = STATUS_RATE_LIMITED
-                    break
-                if verdict != "ok":
-                    self.state.last_error = (
-                        f"message non confirme dans le fil (message {index + 1})"
                     )
                     self.state.status = STATUS_ERROR
                     break
