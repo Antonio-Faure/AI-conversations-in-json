@@ -19,6 +19,7 @@ from src.parsers.base import ParseError
 from src.parsers.chatgpt import merge_turn_snapshots, order_fragments_by_time
 from src.parsers.claude import merge_transcript_rows
 from src.parsers.gemini import merge_turn_fragments
+from src.parsers.mistral import merge_message_fragments
 from src.parsers.perplexity import merge_thread_messages
 from src.schema import Conversation
 
@@ -1778,6 +1779,55 @@ class TestMistralParser:
         assert "| Nom | Age |" in text
         assert "| --- | --- |" in text
         assert "| Alice | 25 |" in text
+
+    IMAGE_HTML = """
+    <html><head><title>Test Mistral</title></head><body><main>
+      <div data-message-author-role="user" data-message-id="u-1">
+        <div class="select-text"><span>Génère une image.</span></div>
+      </div>
+      <div data-message-author-role="assistant" data-message-id="a-1">
+        <div data-message-part-type="answer">
+          <div class="markdown-container-style">
+            <img src="/cdn-cgi/image/width=800/https://blob/chat-images/fox.jpg" alt="Generated image"/>
+          </div>
+        </div>
+      </div>
+      <div data-message-author-role="user" data-message-id="u-2">
+        <div class="select-text"><span>Suite.</span></div>
+      </div>
+      <div data-message-author-role="assistant" data-message-id="a-2">
+        <div data-message-part-type="answer">
+          <div class="markdown-container-style"><p>Fin.</p></div>
+        </div>
+      </div>
+    </main></body></html>
+    """
+
+    def test_image_seule_conserve_l_alternance_et_absolutise(self):
+        """Un assistant « image seule » ne doit pas fusionner deux tours user."""
+        conv = MistralParser().parse(self.IMAGE_HTML, conversation_id="chat-1")
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        image = conv.messages[1].texte
+        assert "![Generated image](https://chat.mistral.ai/cdn-cgi/image/width=800/" in image
+
+    def test_merge_message_fragments_ordre_et_dedup(self):
+        """Fenetres virtualisees remontees : ordre reconstitue, sans doublon."""
+        def turn(key: str, role: str) -> str:
+            return f'<div data-message-author-role="{role}" data-message-id="{key}">x</div>'
+
+        rows = {key: turn(key, "user") for key in ("m1", "m2", "m3", "m4")}
+        # deux fenetres : [m2,m3] puis [m1,m2] (remontee), decouverte m2,m3,m1
+        edges = [["m2", "m3"], ["m1", "m2"]]
+        seq = ["m2", "m3", "m1"]
+        html = merge_message_fragments(rows, edges, seq)
+        assert html.index('data-message-id="m1"') < html.index('data-message-id="m2"')
+        assert html.index('data-message-id="m2"') < html.index('data-message-id="m3"')
+        assert html.count('data-message-id="m1"') == 1
+
+    def test_merge_message_fragments_vide(self):
+        assert merge_message_fragments({}, [], []) == ""
 
 
 class TestTousLesParsers:
