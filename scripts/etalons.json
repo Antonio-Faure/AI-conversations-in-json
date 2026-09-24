@@ -2,7 +2,7 @@
   "chatgpt": [
     {
       "id": "6ab3d353-7720-83ed-acf4-071071015321",
-      "label": "chatgpt (chatgpt)",
+      "label": "chatgpt",
       "url": "https://chatgpt.com/c/6ab3d353-7720-83ed-acf4-071071015321",
       "expected_capabilities": [
         "artifact_canvas",
@@ -74,9 +74,9 @@
   ],
   "claude": [
     {
-      "id": "cf1f06b6-7dde-46d7-90a0-941006a9ef8c",
-      "label": "claude (claude)",
-      "url": "https://claude.ai/chat/cf1f06b6-7dde-46d7-90a0-941006a9ef8c?artifact=29c85fb8-0e43-4fcd-9f66-d062f6b40b30",
+      "id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "label": "claude",
+      "url": "https://claude.ai/chat/2e6aa38c-170f-46b5-8cba-ec63c7d2cdef?artifact=7e55ea63-19ac-4715-be8e-ee7f86573cbd",
       "expected_capabilities": [
         "artifact_canvas",
         "audio",
@@ -120,7 +120,7 @@
         "consecutive_roles": 0,
         "images": 1,
         "tables": 1,
-        "lists": 4,
+        "lists": 5,
         "code_langs": 2,
         "latex": 6
       },
@@ -149,9 +149,9 @@
   ],
   "gemini": [
     {
-      "id": "b10d350fe36efb20",
-      "label": "gemini (gemini)",
-      "url": "https://gemini.google.com/app/b10d350fe36efb20",
+      "id": "706a00030f2723df",
+      "label": "gemini",
+      "url": "https://gemini.google.com/app/706a00030f2723df",
       "expected_capabilities": [
         "artifact_canvas",
         "audio",
@@ -191,28 +191,41 @@
         "web_search_citations"
       ],
       "baseline": {
-        "messages": 34,
+        "messages": 60,
         "consecutive_roles": 0,
-        "images": 1,
-        "tables": 0,
-        "lists": 3,
-        "code_langs": 0,
-        "latex": 0
+        "images": 2,
+        "tables": 1,
+        "lists": 8,
+        "code_langs": 14,
+        "latex": 38
       },
       "detected_capabilities": [
+        "blockquote",
+        "checklist",
+        "code_block",
+        "code_languages",
+        "code_long",
+        "emoji_unicode",
+        "emphasis",
+        "headings",
         "image_markdown",
         "inline_code",
+        "latex_display",
+        "latex_inline",
+        "latex_matrix",
         "link",
         "list_bullet",
+        "list_nested",
         "list_numbered",
-        "refusal_error"
+        "long_message",
+        "table"
       ]
     }
   ],
   "grok": [
     {
       "id": "4ed769f4-8475-4ff4-b72d-3a4fb0bcef06",
-      "label": "grok (grok)",
+      "label": "grok",
       "url": "https://grok.com/c/4ed769f4-8475-4ff4-b72d-3a4fb0bcef06?rid=edf186e9-8dd5-4a99-a233-26b8796fe600",
       "expected_capabilities": [
         "artifact_canvas",
@@ -266,9 +279,9 @@
   ],
   "perplexity": [
     {
-      "id": "8b426857-2650-4e4b-a063-6772da3fc4f9",
-      "label": "perplexity (perplexity)",
-      "url": "https://www.perplexity.ai/search/8b426857-2650-4e4b-a063-6772da3fc4f9",
+      "id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "label": "perplexity",
+      "url": "https://www.perplexity.ai/search/345497b2-f088-4803-ad42-27a1442dc41c",
       "expected_capabilities": [
         "artifact_canvas",
         "audio",
@@ -306,31 +319,14 @@
         "upload_text",
         "video",
         "web_search_citations"
-      ],
-      "baseline": {
-        "messages": 18,
-        "consecutive_roles": 0,
-        "images": 3,
-        "tables": 0,
-        "lists": 0,
-        "code_langs": 0,
-        "latex": 6
-      },
-      "detected_capabilities": [
-        "blockquote",
-        "hr",
-        "image_markdown",
-        "latex_display",
-        "latex_inline",
-        "latex_matrix"
       ]
     }
   ],
   "mistral": [
     {
-      "id": "cc991640-2f2c-473e-ae66-01d2edc218e1",
-      "label": "mistral-work (work)",
-      "url": "https://chat.mistral.ai/work/cc991640-2f2c-473e-ae66-01d2edc218e1",
+      "id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "label": "mistral-work",
+      "url": "https://chat.mistral.ai/work/d37eaec7-ec10-47e0-af48-f0c5675159ce",
       "expected_capabilities": [
         "artifact_canvas",
         "audio",
@@ -368,35 +364,11 @@
         "upload_text",
         "video",
         "web_search_citations"
-      ],
-      "baseline": {
-        "messages": 42,
-        "consecutive_roles": 0,
-        "images": 1,
-        "tables": 1,
-        "lists": 4,
-        "code_langs": 2,
-        "latex": 4
-      },
-      "detected_capabilities": [
-        "blockquote",
-        "code_block",
-        "code_languages",
-        "hr",
-        "image_markdown",
-        "latex_inline",
-        "latex_matrix",
-        "link",
-        "list_bullet",
-        "list_nested",
-        "list_numbered",
-        "refusal_error",
-        "table"
       ]
     },
     {
       "id": "539fa207-ffe3-410c-a48c-7e8881fcac3d",
-      "label": "mistral-chat (chat)",
+      "label": "mistral-chat",
       "url": "https://chat.mistral.ai/chat/539fa207-ffe3-410c-a48c-7e8881fcac3d",
       "expected_capabilities": [
         "artifact_canvas",
