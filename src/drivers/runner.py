@@ -137,20 +137,27 @@ class EtalonRunner:
             self.state.target_url = url
 
     def _await_new_response(self, before: int, timeout_ms: int = 180000) -> str:
-        """Attend qu'un nouveau message assistant soit persiste.
+        """Attend qu'une reponse soit generee (donc persistee).
 
-        Retourne "ok", "rate_limited" ou "timeout". Sans selecteurs de messages
-        assistant (count = -1), on ne peut pas verifier : on suppose "ok".
+        Signaux : comptage de messages assistant en hausse OU generation
+        demarree puis terminee (robuste aux fils virtualises ou le comptage
+        reste constant). Retourne "ok", "rate_limited" ou "timeout".
         """
-        if before < 0:
+        if before < 0 and not self.driver.stop_selectors:
             return "ok"
         elapsed = 0
-        step = 1000
+        step = 400
+        started = False
         while elapsed < timeout_ms:
             if self.driver.is_rate_limited():
                 return "rate_limited"
             now = self.driver.count_assistant_messages()
-            if now > before:
+            if before >= 0 and now > before:
+                return "ok"
+            generating = self.driver.is_generating()
+            if generating:
+                started = True
+            elif started:
                 return "ok"
             self.driver.session.wait_ms(step)
             elapsed += step
