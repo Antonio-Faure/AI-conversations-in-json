@@ -967,6 +967,18 @@ class TestPerplexityParser:
         )
         assert conv.started_at == "2026-09-05T08:00:00Z"
 
+    def test_titre_ne_prend_pas_un_h1_de_reponse(self):
+        # le HTML accumule ne contient que les messages : le service y recopie
+        # le <title> du fil, sinon un `# Titre` d'une reponse deviendrait le nom.
+        html = (
+            "<html><head><title>Nom du fil</title></head><body>"
+            '<div class="group group/user-bubble">question</div>'
+            '<div data-workflow-final-text=""><div data-renderer="lm">'
+            "<h1>Titre principal</h1></div></div></body></html>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        assert conv.title == "Nom du fil"
+
     # DOM 2026 sans data-testid : bulles Tailwind `group/user-bubble` et
     # tours `data-workflow-final-text` (en-tete de workflow + corps `lm`).
     _DOM_2026 = """

@@ -13,6 +13,8 @@ remonte donc le conteneur `.scrollable-container` en accumulant les messages
 from __future__ import annotations
 
 import json
+import re
+from html import escape as html_escape
 from typing import Any, Dict, List, Optional
 
 from ..parsers.base import ParseError
@@ -79,6 +81,17 @@ return (function(){
   if (!s) return null;
   s.scrollTop = s.scrollHeight;
   return Math.round(s.scrollTop);
+})();
+"""
+
+#: etat du conteneur : a-t-on atteint le bas ?
+_AT_BOTTOM_JS = """
+return (function(){
+  const s = window.__aicvPpl && window.__aicvPpl.scroller;
+  if (!s) return null;
+  return {top: Math.round(s.scrollTop), height: s.scrollHeight,
+          client: s.clientHeight,
+          at_bottom: s.scrollTop + s.clientHeight >= s.scrollHeight - 2};
 })();
 """
 
@@ -313,12 +326,44 @@ class PerplexityService(BaseService):
                 ) from None
             raise
         merged = self._collect_thread()
-        if merged and merged.count("aicv-ppl-msg") > self._message_count(page.html):
-            page.html = merged
+        merged_count = merged.count('class="aicv-ppl-msg"')
+        base_count = self._message_count(page.html)
+        log_fields(
+            log, 20, f"{self.name}: thread collecte",
+            extra={"monte": base_count, "accumule": merged_count},
+        )
+        # on prend le HTML accumule des qu'il apporte strictement plus de
+        # messages que la fenetre montee (il en contient toujours au moins
+        # autant, et il est ordonne) ; `_message_count` compte des noeuds, pas
+        # des sous-chaines de classes Tailwind.
+        if merged and merged_count > base_count:
+            page.html = self._with_base_title(merged, page.html)
         return page
 
+    @staticmethod
+    def _with_base_title(merged: str, base: str) -> str:
+        """Recopie le ``<title>`` de la page dans le HTML accumule.
+
+        Le HTML accumule ne contient que les messages : sans ce titre, le
+        parser prendrait le premier ``<h1>`` d'une reponse pour le nom du fil.
+        """
+        match = re.search(r"<title[^>]*>(.*?)</title>", base, re.S | re.I)
+        if not match:
+            return merged
+        title = re.sub(r"\s+", " ", match.group(1)).strip()
+        if not title:
+            return merged
+        head = "<head><title>%s</title></head>" % html_escape(title)
+        return merged.replace("<html><body>", "<html>" + head + "<body>", 1)
+
     def _collect_thread(self) -> str:
-        """Remonte le fil en memorisant les messages, retourne le HTML accumule."""
+        """Charge tout le fil virtualise : bas detecte, puis remontee accumulee.
+
+        Le fil Perplexity se recolle en bas : `scrollTop` programme est annule,
+        on utilise donc de vrais evenements molette (facade ``scroll_wheel``).
+        On descend d'abord jusqu'au bas reel (sinon on raterait les derniers
+        tours d'un fil long), puis on remonte en memorisant chaque message.
+        """
         scroll_cfg = self.config.get("scroll", {})
         pause_ms = max(250, int(scroll_cfg.get("pause_ms", 700)))
         max_rounds = max(160, int(scroll_cfg.get("max_rounds", 60)) * 4)
@@ -326,32 +371,35 @@ class PerplexityService(BaseService):
 
         self.session.eval_body(_RESET_THREAD_JS)
         found = self.session.eval_body(_FIND_SCROLLER_JS)
+        log_fields(log, 10, f"{self.name}: scroller du fil", extra={"found": found})
         if found is None:
             return ""
-        # le fil Perplexity se recolle en bas : `scrollTop` programme est annule,
-        # on utilise donc de vrais evenements molette (facade scroll_wheel).
         wheel = getattr(self.session, "scroll_wheel", None)
         cx = int(found.get("cx") or 0)
         cy = int(found.get("cy") or 0)
         client = max(200, int(found.get("client") or 600))
-        if wheel is None:
-            self.session.eval_body(_SCROLL_BOTTOM_JS)
-            self.session.wait_ms(pause_ms)
-        else:
-            # descendre franchement pour charger les tours recents
-            for _ in range(8):
-                wheel(cx, cy, client)
-                self.session.wait_ms(150)
-            self.session.wait_ms(pause_ms)
+        step = max(300, int(client * 0.85))
 
+        # 1) descendre jusqu'au bas reel. On ne memorise rien ici : l'ordre de
+        #    collecte n'est fiable que sur une remontee monotone (rangs
+        #    decroissants attribues a chaque lot plus ancien).
+        self._scroll_to_bottom(
+            wheel, cx, cy, step, pause_ms, max_rounds, stable_rounds
+        )
+
+        # 2) remonter en memorisant chaque message jusqu'au haut stable.
         at_top = False
         stable = 0
-        step = max(300, int(client * 0.85))
-        for _ in range(max_rounds):
+        for rnd in range(max_rounds):
             info = self.session.eval_body(_COLLECT_THREAD_JS) or {}
             fresh = int(info.get("fresh") or 0)
             count = int(info.get("count") or 0)
             at_top = int(info.get("top") or 0) <= 1
+            log_fields(
+                log, 10, f"{self.name}: remontee {rnd}",
+                extra={"top": info.get("top"), "height": info.get("height"),
+                       "count": count, "fresh": fresh, "at_top": at_top},
+            )
             if at_top and fresh == 0 and count > 0:
                 stable += 1
                 if stable >= stable_rounds:
@@ -366,9 +414,52 @@ class PerplexityService(BaseService):
             self.session.wait_ms(pause_ms)
 
         data = self.session.eval_body(_FINAL_THREAD_JS) or {}
+        log_fields(
+            log, 10, f"{self.name}: fin de collecte",
+            extra={"items": len(data.get("items") or [])},
+        )
         return merge_thread_messages(data.get("items") or [])
+
+    def _scroll_to_bottom(
+        self, wheel, cx, cy, step, pause_ms, max_rounds, stable_rounds
+    ) -> None:
+        """Descend le fil jusqu'a un bas stable (hauteur et position figees)."""
+        last_height = -1
+        stable = 0
+        for _ in range(max_rounds):
+            state = self.session.eval_body(_AT_BOTTOM_JS) or {}
+            height = int(state.get("height") or 0)
+            if bool(state.get("at_bottom")) and height == last_height:
+                stable += 1
+                if stable >= stable_rounds:
+                    return
+            else:
+                stable = 0
+            last_height = height
+            if wheel is None:
+                if self.session.eval_body(_SCROLL_BOTTOM_JS) is None:
+                    return
+            else:
+                wheel(cx, cy, step)
+            self.session.wait_ms(pause_ms)
 
     @staticmethod
     def _message_count(html: str) -> int:
-        """Nombre approximatif de messages montes dans un HTML Perplexity."""
-        return html.count("group/user-bubble") + html.count("data-workflow-final-text")
+        """Nombre de messages montes dans un HTML Perplexity.
+
+        On compte des **noeuds** via BeautifulSoup : un simple
+        ``html.count("data-workflow-final-text")`` etait fausse par les classes
+        Tailwind arbitraires des ancetres (``[&[data-workflow-final-text]+div]``),
+        qui gonflaient le compte de la fenetre brute (~30 pour 9 reponses) et
+        faisaient jeter le HTML accumule riche.
+        """
+        if not html:
+            return 0
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(html, "html.parser")
+        return len(
+            soup.select(
+                "div[class~='group/user-bubble'], div[data-workflow-final-text]"
+            )
+        )

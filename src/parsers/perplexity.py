@@ -30,11 +30,13 @@ def merge_thread_messages(items: List[Dict[str, Any]]) -> str:
     """Reconstruit le HTML d'un fil Perplexity a partir des tours accumules.
 
     Le fil est virtualise : le navigateur ne monte qu'une fenetre de messages.
-    Le service remonte le conteneur scrollable en memorisant chaque message
-    (cle = role + debut de contenu), en gardant le HTML le plus long et la
-    derniere position verticale connue. On trie ici par position absolue pour
-    retrouver l'ordre chronologique, puis on re-emballe chaque message dans un
-    conteneur dedie (le parser retrouve ainsi les sources au bon endroit).
+    Le service descend jusqu'au bas puis remonte le conteneur scrollable en
+    memorisant chaque message (identite stable par noeud DOM, cf.
+    ``_COLLECT_THREAD_JS``), en gardant le HTML le plus long et une position
+    absolue decroissante quand on remonte vers les plus anciens. On trie ici par
+    position pour retrouver l'ordre chronologique, puis on re-emballe chaque
+    message dans un conteneur dedie (le parser retrouve ainsi les sources au bon
+    endroit).
 
     ``items`` : liste de dicts ``{key, role, html, pos}``.
     """
@@ -111,7 +113,10 @@ class PerplexityParser(BaseParser):
     TITLE_SELECTORS = (
         "h1[data-testid='user-query']",
         "header h1",
-        "h1",
+        # NB : pas de `h1` nu — il attraperait un titre rendu dans le corps
+        # d'une reponse (« # Titre principal ») au lieu du nom du fil. Le
+        # service recopie le `<title>` de la page dans le HTML accumule.
+        "[data-testid='thread-title']",
     )
 
     def parse(
