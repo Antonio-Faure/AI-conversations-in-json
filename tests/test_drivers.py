@@ -15,6 +15,7 @@ class FakeSession:
     def __init__(self):
         self.url_value = "https://fake.test/chat/c1"
         self.sent = 0
+        self.texts = []
 
     def goto(self, url):
         self.url_value = url
@@ -36,6 +37,7 @@ class FakeSession:
 
     def type_into(self, selectors, text):
         self.sent += 1
+        self.texts.append(text)
         return selectors[0] if selectors else None
 
     def upload_any(self, selectors, paths):
@@ -60,6 +62,10 @@ class FakeDriver(ChatDriver):
     def count_assistant_messages(self) -> int:
         # simule la persistance : un message assistant par envoi
         return getattr(self.session, "sent", 0)
+
+    def page_text(self) -> str:
+        # le transcript contient les messages envoyes
+        return " ".join(getattr(self.session, "texts", []))
 
 
 class LimitedDriver(FakeDriver):

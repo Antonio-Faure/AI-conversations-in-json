@@ -136,28 +136,31 @@ class EtalonRunner:
         if url and url != self.state.target_url:
             self.state.target_url = url
 
-    def _await_new_response(self, before: int, timeout_ms: int = 180000) -> str:
-        """Attend qu'une reponse soit generee (donc persistee).
+    @staticmethod
+    def _needle(text: str) -> str:
+        """Extrait normalise (pour retrouver le message dans le transcript)."""
+        import unicodedata
 
-        Signaux : comptage de messages assistant en hausse OU generation
-        demarree puis terminee (robuste aux fils virtualises ou le comptage
-        reste constant). Retourne "ok", "rate_limited" ou "timeout".
+        normalized = unicodedata.normalize("NFKD", text or "")
+        ascii_only = "".join(c for c in normalized if not unicodedata.combining(c))
+        return " ".join(ascii_only.lower().split())[:40]
+
+    def _await_submission(self, text: str, timeout_ms: int = 90000) -> str:
+        """Attend que le message envoye apparaisse dans le transcript.
+
+        Signal robuste aux fils virtualises (le message envoye est dans le
+        viewport) et qui ne depend pas du rendu de la reponse. Retourne "ok",
+        "rate_limited" ou "timeout".
         """
-        if before < 0 and not self.driver.stop_selectors:
+        needle = self._needle(text)
+        if not needle:
             return "ok"
         elapsed = 0
-        step = 400
-        started = False
+        step = 700
         while elapsed < timeout_ms:
             if self.driver.is_rate_limited():
                 return "rate_limited"
-            now = self.driver.count_assistant_messages()
-            if before >= 0 and now > before:
-                return "ok"
-            generating = self.driver.is_generating()
-            if generating:
-                started = True
-            elif started:
+            if needle in self._needle(self.driver.page_text()):
                 return "ok"
             self.driver.session.wait_ms(step)
             elapsed += step
@@ -210,7 +213,6 @@ class EtalonRunner:
                     # laisser l'upload se terminer (sinon le bouton d'envoi
                     # reste desactive et le message ne part pas)
                     self.driver.session.wait_ms(5000)
-                before = self.driver.count_assistant_messages()
                 if not self.driver.send(item.get("text") or ""):
                     self.state.last_error = f"envoi echoue (message {index + 1})"
                     self.state.status = STATUS_ERROR
@@ -229,15 +231,15 @@ class EtalonRunner:
                     )
                     self.state.status = STATUS_ERROR
                     break
-                # persistance : n'avancer qu'une fois la reponse reellement ecrite
-                verdict = self._await_new_response(before)
+                # persistance : le message envoye doit apparaitre dans le fil
+                verdict = self._await_submission(item.get("text") or "")
                 if verdict == "rate_limited":
                     self.state.last_error = f"rate-limit (message {index + 1})"
                     self.state.status = STATUS_RATE_LIMITED
                     break
                 if verdict != "ok":
                     self.state.last_error = (
-                        f"reponse non persistee (message {index + 1})"
+                        f"message non confirme dans le fil (message {index + 1})"
                     )
                     self.state.status = STATUS_ERROR
                     break
