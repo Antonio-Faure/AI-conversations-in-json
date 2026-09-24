@@ -19,6 +19,7 @@ import copy
 import json
 import re
 from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin
 
 from bs4 import NavigableString
 
@@ -29,6 +30,63 @@ from .base import BaseParser, ParseError
 # (/chat/projects/<id>) ne sont pas des conversations et sont exclus par le
 # motif d'id (uuid juste apres /chat/ ou /work/).
 ID_RE = re.compile(r"/(?:chat|work)/([0-9a-fA-F-]{8,})")
+
+#: origine de l'app (les images generees sont referencees en chemin relatif
+#: `/cdn-cgi/image/...` : il faut les absolutiser avant telechargement)
+BASE_URL = "https://chat.mistral.ai"
+
+
+def merge_message_fragments(
+    rows: Dict[str, str],
+    edges: List[Any],
+    seq: List[str],
+) -> str:
+    """Fusionne les tours accumules pendant la remontee d'un fil Mistral.
+
+    Mistral peut virtualiser un long fil : a chaque position de scroll le DOM
+    ne monte qu'une fenetre de tours (`div[data-message-author-role]`). Chaque
+    tour est deduplique par `data-message-id` (on garde le rendu le plus
+    complet). Faute d'indice absolu, l'ordre logique est reconstitue a partir
+    des aretes ``tour -> tour suivant`` observees dans le DOM ; les tours non
+    relies sont ajoutes dans l'ordre de decouverte (``seq``).
+
+    Retourne un document HTML minimal parsable par :meth:`MistralParser.parse`.
+    """
+    if not rows:
+        return ""
+    succ: Dict[str, List[str]] = {}
+    pred: Dict[str, set] = {}
+    for edge in edges or []:
+        if not isinstance(edge, (list, tuple)) or len(edge) != 2:
+            continue
+        left, right = str(edge[0]), str(edge[1])
+        if left not in rows or right not in rows or left == right:
+            continue
+        succ.setdefault(left, [])
+        if right not in succ[left]:
+            succ[left].append(right)
+        pred.setdefault(right, set()).add(left)
+
+    # chaine lineaire : on part des tours sans predecesseur (tete du fil)
+    order: List[str] = []
+    seen: set = set()
+    starts = [key for key in seq if key in rows and not pred.get(key)]
+    starts += [key for key in seq if key in rows and key not in starts]
+    for start in starts:
+        node: Optional[str] = start
+        while node is not None and node not in seen:
+            seen.add(node)
+            order.append(node)
+            following = [n for n in succ.get(node, []) if n not in seen]
+            node = following[0] if following else None
+    order += [key for key in seq if key in rows and key not in seen]
+
+    return (
+        "<!DOCTYPE html><html><head><meta charset='utf-8'></head><body>"
+        + "".join(rows[key] for key in order)
+        + "</body></html>"
+    )
+
 
 # Payload RSC Next.js : chaque fragment est une chaine JSON (`self.__next_f.push`).
 _RSC_PUSH_RE = re.compile(r"self\.__next_f\.push\(\[1,(\"(?:[^\"\\]|\\.)*\")\]\)")
@@ -214,11 +272,14 @@ class MistralParser(BaseParser):
             parts = container.select("[data-message-part-type='answer']")
             texts = [cls._content_text(part) for part in parts]
             text = "\n\n".join(t for t in texts if t).strip()
-            if text:
-                return text
-            # reponses rendues en "canvas"/document (sans partie answer)
-            canvas = container.select_one("div[class*='pt-3'][class*='pb-4']")
-            return cls._content_text(canvas).strip() if canvas is not None else ""
+            if not text:
+                # reponses rendues en "canvas"/document (sans partie answer)
+                canvas = container.select_one("div[class*='pt-3'][class*='pb-4']")
+                text = cls._content_text(canvas).strip() if canvas is not None else ""
+            images = cls._generated_images_markdown(container, text)
+            if images:
+                return f"{text}\n\n{images}".strip() if text else images
+            return text
         # user : le corps du message (hors boutons/actions) + pieces jointes
         body = container.select_one(".select-text") or container
         text = cls._content_text(body)
@@ -226,6 +287,39 @@ class MistralParser(BaseParser):
         if attachments:
             return f"{text}\n\n{attachments}".strip() if text else attachments
         return text
+
+    @classmethod
+    def _generated_images_markdown(cls, container, existing: str = "") -> str:
+        """Images de contenu d'un tour assistant (ex: images generees).
+
+        Le DOM les reference en chemin relatif (`/cdn-cgi/image/...`) ; on les
+        absolutise pour permettre leur telechargement par le pipeline. Le tour
+        « image seule » doit rester non vide, sinon deux messages `user`
+        consecutifs seraient fusionnes par `normalize_messages` et le tour
+        serait perdu.
+        """
+        entries: List[str] = []
+        seen: set = set()
+        for img in container.find_all("img"):
+            if (img.get("aria-hidden") or "").lower() == "true":
+                continue
+            if img.find_parent(attrs={"data-slot": "avatar"}) is not None:
+                continue
+            src = (img.get("src") or "").strip()
+            if src.startswith("//"):
+                src = "https:" + src
+            elif src.startswith("/"):
+                src = urljoin(BASE_URL, src)
+            if not src.startswith(("http://", "https://")):
+                continue
+            if src in existing:
+                continue
+            alt = (img.get("alt") or "image").strip() or "image"
+            markdown = f"![{cls._md_escape_label(alt)}]({src})"
+            if markdown not in seen:
+                seen.add(markdown)
+                entries.append(markdown)
+        return "\n\n".join(entries)
 
     @classmethod
     def _content_text(cls, el) -> str:
