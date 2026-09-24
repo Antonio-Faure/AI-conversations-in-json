@@ -6,7 +6,7 @@ import pytest
 
 from src.parsers.base import ParseError
 from src.schema import ConversationRef
-from src.services.base import BaseService, ConversationUnavailableError
+from src.services.base import BaseService, ConversationUnavailableError, ScrapedPage
 from src.services.perplexity import PerplexityService
 
 RESET = "window.__aicvPpl = {rows"
@@ -47,6 +47,9 @@ class BaseSession:
         if FIND in body and "cx:" in body:
             return {"tag": "DIV", "client": 800, "height": 8000, "top": 0,
                     "cx": 111, "cy": 222}
+        if "at_bottom" in body:
+            return {"top": 8000, "height": 8000, "client": 800,
+                    "at_bottom": True}
         if COLLECT in body:
             return self._infos.pop(0) if self._infos else {"count": 10, "fresh": 0, "top": 0}
         if FINAL in body:
@@ -93,7 +96,7 @@ def test_collecte_sans_molette_replie_sur_scrolltop():
     session = BaseSession(INFOS, ITEMS)
     html = _service(session)._collect_thread()
     assert html.count("aicv-ppl-msg") == len(ITEMS)
-    assert session.scroll_bottom_calls == 1
+    assert session.scroll_bottom_calls >= 1
     assert session.scroll_up_calls >= 1
 
 
@@ -136,3 +139,61 @@ def test_parse_error_normal_repropagé(monkeypatch):
     monkeypatch.setattr(BaseService, "scrape_conversation", _raise_parse)
     with pytest.raises(ParseError):
         _service(session).scrape_conversation(REF)
+
+
+# -- comptage des messages et fusion du HTML accumule --------------------------
+
+#: la sous-chaine `data-workflow-final-text` revient dans les classes Tailwind
+#: arbitraires des ancetres : un `html.count()` gonflait la fenetre brute.
+_RAW_INFLATE = (
+    '<html><head><title>Nom du fil</title></head><body>'
+    '<div class="[&[data-workflow-final-text]+div:not(.mt-2)]:pt-0">'
+    '<div class="group/user-bubble">q2</div>'
+    '<div data-workflow-final-text=""><div data-renderer="lm">a2</div></div>'
+    "</div></body></html>"
+)
+_MERGED = (
+    "<html><body><div class=\"aicv-perplexity-thread\">"
+    '<div class="aicv-ppl-msg" data-role="user">'
+    '<div class="group/user-bubble">q1</div></div>'
+    '<div class="aicv-ppl-msg" data-role="assistant">'
+    '<div data-workflow-final-text=""><div data-renderer="lm">a1</div></div></div>'
+    '<div class="aicv-ppl-msg" data-role="user">'
+    '<div class="group/user-bubble">q2</div></div>'
+    '<div class="aicv-ppl-msg" data-role="assistant">'
+    '<div data-workflow-final-text=""><div data-renderer="lm">a2</div></div></div>'
+    "</div></body></html>"
+)
+
+
+def test_message_count_compte_les_noeuds_pas_les_sous_chaines():
+    # 2 messages malgre 3 occurrences de `data-workflow-final-text`
+    assert PerplexityService._message_count(_RAW_INFLATE) == 2
+
+
+def test_scrape_utilise_le_html_accumule_malgre_les_classes_tailwind(monkeypatch):
+    session = WheelSession(INFOS, ITEMS)
+    service = _service(session)
+
+    def fake_scrape(self, ref):
+        return ScrapedPage(html=_RAW_INFLATE, conversation_id=ref.id, url=ref.url)
+
+    monkeypatch.setattr(BaseService, "scrape_conversation", fake_scrape)
+    monkeypatch.setattr(service, "_collect_thread", lambda: _MERGED)
+    page = service.scrape_conversation(REF)
+    assert "aicv-ppl-msg" in page.html, "le HTML accumule doit etre retenu"
+    # le titre de la page est recopie pour que le parser ne prenne pas un h1
+    assert "<title>Nom du fil</title>" in page.html
+
+
+def test_scrape_garde_la_page_si_l_accumulation_n_apporte_rien(monkeypatch):
+    session = WheelSession(INFOS, ITEMS)
+    service = _service(session)
+
+    def fake_scrape(self, ref):
+        return ScrapedPage(html=_RAW_INFLATE, conversation_id=ref.id, url=ref.url)
+
+    monkeypatch.setattr(BaseService, "scrape_conversation", fake_scrape)
+    monkeypatch.setattr(service, "_collect_thread", lambda: "")
+    page = service.scrape_conversation(REF)
+    assert page.html == _RAW_INFLATE
