@@ -828,6 +828,32 @@ class TestGeminiParser:
         conv = GeminiParser().parse(html, conversation_id="c")
         assert "Haut\n\n---\n\nBas" in conv.messages[1].texte
 
+    def test_reponse_vide_ne_fusionne_pas_deux_requetes(self):
+        # un tour dont la reponse est vide (image pure, etat de rendu) ne doit
+        # pas coller la requete suivante ni perdre son alternance.
+        html = (
+            "<html><body>"
+            '<div class="conversation-container" id="a">'
+            "<user-query><div class='query-text'>Question A</div></user-query>"
+            "<model-response><message-content></message-content></model-response>"
+            "</div>"
+            '<div class="conversation-container" id="b">'
+            "<user-query><div class='query-text'>Question B</div></user-query>"
+            "<model-response><message-content>Reponse B</message-content></model-response>"
+            "</div>"
+            "</body></html>"
+        )
+        conv = GeminiParser().parse(html, conversation_id="c")
+        assert [m.role for m in conv.messages] == [
+            "user",
+            "assistant",
+            "user",
+            "assistant",
+        ]
+        assert "Question A" in conv.messages[0].texte
+        assert conv.messages[1].texte == ""
+        assert "Question B" in conv.messages[2].texte
+
 
 def _turn_block(turn_id: str, question: str, answer: str) -> str:
     return (
@@ -871,6 +897,47 @@ class TestGeminiMergeTurns:
         assert "Reponse A bis" in conv.messages[3].texte
         # A n'apparait qu'une fois
         assert sum("Question A" in m.texte for m in conv.messages) == 1
+
+    def test_ordre_suit_le_dom_final(self):
+        # decouverte melangee : `order` (DOM final) impose l'ordre logique du fil
+        seen = [
+            _turn_block("id-b", "Question B", "Reponse B"),
+            _turn_block("id-a", "Question A", "Reponse A"),
+        ]
+        order = [
+            _turn_block("id-a3", "Question A", "Reponse A"),
+            _turn_block("id-b3", "Question B", "Reponse B"),
+        ]
+        conv = GeminiParser().parse(
+            merge_turn_fragments(seen, order), conversation_id="c"
+        )
+        assert [m.role for m in conv.messages] == ["user", "assistant"] * 2
+        assert "Question A" in conv.messages[0].texte
+        assert "Question B" in conv.messages[2].texte
+
+    def test_clef_ignore_le_libelle_lecteur_ecran(self):
+        # la requete est dupliquee par le libelle d'accessibilite : la clef doit
+        # rester identique d'un exemplaire virtualise a l'autre (sinon le tour
+        # n'est pas dedoublonne).
+        def block(turn_id: str, hidden: str) -> str:
+            return (
+                f'<div class="conversation-container" id="{turn_id}">'
+                "<user-query><div class='query-text'>"
+                f"<h5 class='cdk-visually-hidden screen-reader-user-query-label'>{hidden}</h5>"
+                "<p>Question A</p></div></user-query>"
+                "<model-response><message-content>Reponse A</message-content>"
+                "</model-response></div>"
+            )
+
+        fragments = [
+            block("id-1", "Vous avez dit"),
+            block("id-2", "Vous avez dit Vous avez dit"),
+        ]
+        conv = GeminiParser().parse(
+            merge_turn_fragments(fragments), conversation_id="c"
+        )
+        assert len(conv.messages) == 2
+        assert conv.messages[0].texte.strip() == "Question A"
 
     def test_fragments_vides(self):
         assert merge_turn_fragments([]) == ""

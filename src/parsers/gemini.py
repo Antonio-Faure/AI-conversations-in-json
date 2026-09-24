@@ -56,15 +56,29 @@ TURN_ANSWER_SELECTOR = (
 )
 
 
+#: noeuds d'accessibilite qui dupliquent la requete dans un tour virtualise
+_UI_TEXT_SELECTORS = (
+    ".cdk-visually-hidden",
+    "[class*='screen-reader']",
+    "[aria-hidden='true']",
+)
+
+
 def _turn_user_key(turn_soup: BeautifulSoup) -> str:
     """Clef d'identite d'un tour : requete utilisateur normalisee (+ images).
 
     L'id du conteneur change d'un rendu virtualise a l'autre ; on s'appuie
-    donc sur le contenu de la requete pour reconnaitre un meme tour.
+    donc sur le contenu de la requete pour reconnaitre un meme tour. On retire
+    au prealable les libelles lecteur d'ecran (``cdk-visually-hidden``) qui
+    dupliquent le texte et feraient diverger la clef d'un exemplaire a l'autre.
     """
     user = turn_soup.select_one("user-query")
     if user is None:
         return ""
+    user = copy.copy(user)
+    for sel in _UI_TEXT_SELECTORS:
+        for tag in user.select(sel):
+            tag.decompose()
     text = re.sub(r"\s+", " ", user.get_text(" ", strip=True)).strip().lower()
     images = " ".join(
         (img.get("src") or img.get("alt") or "") for img in user.find_all("img")
@@ -77,19 +91,25 @@ def _turn_has_answer(turn_soup: BeautifulSoup) -> bool:
     return bool(answer is not None and answer.get_text(strip=True))
 
 
-def merge_turn_fragments(fragments: List[str]) -> str:
+def merge_turn_fragments(
+    fragments: List[str], order: Optional[List[str]] = None
+) -> str:
     """Fusionne des tours autonomes en un HTML unique, sans doublon.
 
     Gemini virtualise le fil : en remontant, le DOM rend parfois plusieurs
-    exemplaires d'un meme tour (fenetres re-rendues, variantes de reponse).
-    On garde, pour chaque requete utilisateur, l'occurrence la plus complete
-    (reponse non vide) et la plus tardive dans l'ordre du document — celle du
-    fil principal.
+    exemplaires d'un meme tour (fenetres re-rendues, variantes de reponse). On
+    garde, pour chaque requete utilisateur, l'occurrence la plus complete
+    (reponse non vide).
+
+    ``order`` (optionnel) est la liste des tours du DOM final dans l'ordre
+    logique du fil ; elle sert de reference d'ordre, les tours absents etant
+    ajoutes a la suite dans leur ordre de decouverte. Sans elle, on retombe sur
+    l'ordre de decouverte de ``fragments`` (comportement historique).
 
     Retourne un document HTML minimal parsable par :meth:`GeminiParser.parse`.
     """
     parsed: List[tuple] = []
-    for fragment in fragments:
+    for fragment in list(order or []) + list(fragments):
         soup = BeautifulSoup(fragment, "html.parser")
         user = soup.select_one("user-query")
         if user is None:
@@ -104,7 +124,25 @@ def merge_turn_fragments(fragments: List[str]) -> str:
         # >= : a score egal, l'occurrence la plus tardive prime (fil principal)
         if previous is None or has_answer >= previous[0]:
             best[key] = (has_answer, index, fragment)
-    selected = [entry[2] for entry in sorted(best.values(), key=lambda e: e[1])]
+
+    # Ordre logique : d'abord les tours du DOM final (`order`), puis ceux
+    # seulement accumules (`fragments`) dans leur ordre de decouverte.
+    ordered_keys: List[str] = []
+    placed: set = set()
+    for fragment in order or []:
+        soup = BeautifulSoup(fragment, "html.parser")
+        if soup.select_one("user-query") is None:
+            continue
+        key = _turn_user_key(soup)
+        if key in best and key not in placed:
+            ordered_keys.append(key)
+            placed.add(key)
+    for key, entry in sorted(best.items(), key=lambda item: item[1][1]):
+        if key not in placed:
+            ordered_keys.append(key)
+            placed.add(key)
+
+    selected = [best[key][2] for key in ordered_keys]
     return (
         "<!DOCTYPE html><html><head><meta charset='utf-8'></head><body>"
         + "".join(selected)
@@ -166,19 +204,45 @@ class GeminiParser(BaseParser):
         extra = extra or {}
         soup = self.make_soup(html)
 
-        user_nodes = self.select_all_any(soup, self.USER_SELECTORS[:6])
-        assistant_nodes = self.select_all_any(soup, self.ASSISTANT_SELECTORS[:4])
-
-        pairs = [(n, "user") for n in user_nodes] + [(n, "assistant") for n in assistant_nodes]
-        # ordre du document
-        positions = {}
-        for el in soup.descendants:
-            positions.setdefault(id(el), len(positions))
-        pairs.sort(key=lambda p: positions.get(id(p[0]), 1 << 30))
+        # Chaque `.conversation-container` = un tour (requete + reponse). On
+        # apparie a l'interieur du conteneur plutot que globalement : un tour
+        # dont la reponse est vide (image pure, etat de rendu) reste ainsi
+        # rattache a sa requete et ne colle pas deux requetes consecutives.
+        containers = soup.select(".conversation-container")
+        pairs: List[tuple] = []
+        allow_empty_assistant = bool(containers)
+        if containers:
+            for container in containers:
+                user = container.select_one("user-query")
+                assistant = container.select_one("model-response")
+                if user is None and assistant is None:
+                    continue
+                if user is not None:
+                    pairs.append((user, "user"))
+                if assistant is not None:
+                    pairs.append((assistant, "assistant"))
+                elif user is not None:
+                    # requete sans noeud de reponse monte : on garde un tour
+                    # vide pour ne pas fusionner avec la requete suivante
+                    pairs.append((None, "assistant"))
+        else:
+            user_nodes = self.select_all_any(soup, self.USER_SELECTORS[:6])
+            assistant_nodes = self.select_all_any(soup, self.ASSISTANT_SELECTORS[:4])
+            flat = [(n, "user") for n in user_nodes] + [
+                (n, "assistant") for n in assistant_nodes
+            ]
+            positions = {}
+            for el in soup.descendants:
+                positions.setdefault(id(el), len(positions))
+            flat.sort(key=lambda p: positions.get(id(p[0]), 1 << 30))
+            pairs = list(flat)
 
         messages: List[Any] = []
         model: Optional[str] = extra.get("model")
         for node, role in pairs:
+            if node is None:
+                messages.append(self.msg("assistant", "", None, {"tokens": None}))
+                continue
             if role == "user":
                 content_el = self.select_first(node, self.CONTENT_OF_USER)
             else:
@@ -194,7 +258,16 @@ class GeminiParser(BaseParser):
                 if attachments and attachments not in content:
                     content = f"{content}\n\n{attachments}".strip() if content else attachments
             if not content:
-                continue
+                # reponse vide d'un tour : on conserve la place pour ne pas
+                # fusionner deux requetes (seulement si elle suit une requete)
+                keep_empty = (
+                    allow_empty_assistant
+                    and role == "assistant"
+                    and messages
+                    and messages[-1].role == "user"
+                )
+                if not keep_empty:
+                    continue
             metadata: Dict[str, Any] = {}
             if role == "assistant":
                 metadata["tokens"] = None

@@ -7,7 +7,7 @@ sidebar : on le clique si present avant de scroller.
 from __future__ import annotations
 
 import json
-from typing import List
+from typing import List, Tuple
 
 from ..parsers.gemini import TURN_SELECTOR, GeminiParser, merge_turn_fragments
 from ..schema import ConversationRef
@@ -19,7 +19,12 @@ _RESET_TURNS_JS = (
     "window.__aicvOrder = [];"
     "return 0;"
 )
-#: memorise les tours visibles puis remonte le fil (Gemini lazy-loade le haut).
+#: memorise les tours visibles puis remonte le fil d'environ un ecran a chaque
+#: passage. Gemini virtualise l'historique : sauter directement en haut
+#: (`scrollTop = 0`) peut ne jamais rendre les fenetres intermediaires. On
+#: defile donc de proche en proche, en memorisant chaque tour des qu'il apparait.
+#: L'identite d'un tour est la requete utilisateur (stable d'un rendu a l'autre)
+#: et non l'`id` du conteneur (regenere a chaque re-rendu virtualise).
 #: Le DOM final peut manquer la reponse d'un tour encore en rendu : on ecrase
 #: alors l'exemplaire memorise des que la reponse apparait, et on renvoie une
 #: signature (tours repondus) pour ne pas conclure a la stabilite trop tot.
@@ -28,31 +33,38 @@ return (function(){
   const nodes = Array.from(document.querySelectorAll(__SELECTOR__));
   const fresh = [];
   const answered = nodes.map(function(n){
-    return n.querySelector('message-content') ? '1' : '0';
+    return n.querySelector('model-response message-content') ? '1' : '0';
   });
   for (const n of nodes) {
-    const key = n.getAttribute('id') || ('k' + n.textContent.trim().slice(0, 120));
+    const user = n.querySelector('user-query');
+    const label = user ? (user.innerText || user.textContent || '') : '';
+    const norm = label.replace(/\\s+/g, ' ').trim().slice(0, 200);
+    const key = norm ? ('u\u0000' + norm) : ('id\u0000' + (n.getAttribute('id') || ''));
     const html = n.outerHTML;
-    const hasAnswer = n.querySelector('message-content') ? true : false;
+    const hasAnswer = n.querySelector('model-response message-content') ? true : false;
     const previous = window.__aicvTurns[key];
     if (previous === undefined) {
       window.__aicvTurns[key] = html;
       window.__aicvOrder.push(key);
       fresh.push(key);
-    } else if (hasAnswer && previous.indexOf('<message-content') === -1) {
+    } else if (hasAnswer && previous.indexOf('<model-response') === -1) {
       window.__aicvTurns[key] = html;  // version complete (reponse rendue)
     }
   }
-  // Gemini scrolle dans <infinite-scroller> (pas la fenetre) : on remonte
-  // explicitement le conteneur scrollable pour declencher le chargement.
+  // Gemini scrolle dans <infinite-scroller> (pas la fenetre) : on remonte le
+  // conteneur scrollable par petits pas pour declencher le lazy-load.
   let scrollHost = nodes.length ? nodes[0].parentElement : null;
   while (scrollHost) {
     if (scrollHost.scrollHeight > scrollHost.clientHeight + 5) break;
     scrollHost = scrollHost.parentElement;
   }
-  if (scrollHost) scrollHost.scrollTop = 0;
-  if (nodes.length) nodes[0].scrollIntoView({block: 'start', inline: 'nearest'});
-  return [fresh.length, window.__aicvOrder.length, nodes.length, answered.join('')];
+  let atTop = true;
+  if (scrollHost) {
+    const step = Math.max(120, Math.round(scrollHost.clientHeight * 0.8));
+    scrollHost.scrollTop = Math.max(0, scrollHost.scrollTop - step);
+    atTop = scrollHost.scrollTop <= 0;
+  }
+  return [fresh.length, window.__aicvOrder.length, nodes.length, answered.join(''), atTop ? 1 : 0];
 })();
 """.replace("__SELECTOR__", json.dumps(TURN_SELECTOR))
 #: amene le fil en bas (certains fils s'ouvrent sur les premiers tours)
@@ -63,7 +75,8 @@ return (function(){
   return nodes.length;
 })();
 """.replace("__SELECTOR__", json.dumps(TURN_SELECTOR))
-#: ordre final du DOM (le virtualiseur conserve les tours charges)
+#: ordre final du DOM (le virtualiseur conserve les tours charges) : sert
+#: d'ordre de reference du fil, independamment de l'ordre de decouverte.
 _FINAL_TURNS_JS = """
 return (function(){
   const nodes = Array.from(document.querySelectorAll(__SELECTOR__));
@@ -137,19 +150,23 @@ class GeminiService(BaseService):
         les exemplaires virtualises, et on parse l'ensemble accumule.
         """
         page = super().scrape_conversation(ref)
-        fragments = self._collect_conversation_turns()
-        if fragments:
-            html = merge_turn_fragments(fragments)
+        seen, order = self._collect_conversation_turns()
+        if seen or order:
+            html = merge_turn_fragments(order, seen)
             if html:
                 page.html = html
         return page
 
-    def _collect_conversation_turns(self) -> List[str]:
-        """Remonte le fil en memorisant les tours, retourne l'ordre final."""
+    def _collect_conversation_turns(self) -> Tuple[List[str], List[str]]:
+        """Remonte le fil par increments en memorisant les tours.
+
+        Retourne ``(seen, order)`` : l'accumulateur des tours decouverts et
+        l'ordre logique du DOM final (reference pour la fusion).
+        """
         scroll_cfg = self.config.get("scroll", {})
         pause_ms = int(scroll_cfg.get("pause_ms", 700))
         max_rounds = max(20, int(scroll_cfg.get("max_rounds", 60)))
-        stable_rounds = 5
+        stable_rounds = 3
 
         self.session.eval_body(_RESET_TURNS_JS)
         # s'assure d'abord d'avoir le bas du fil (le fil peut s'ouvrir en haut)
@@ -164,21 +181,21 @@ class GeminiService(BaseService):
             self.session.wait_ms(pause_ms)
             total = int(result[1]) if result else 0
             signature = str(result[3]) if result and len(result) > 3 else ""
-            # stabilite = plus de tours charges ET plus de reponses rendues
-            if total == last_total and signature == last_signature:
+            at_top = bool(result[4]) if result and len(result) > 4 else False
+            # stabilite = en haut du fil ET plus de tours charges/repondus
+            if at_top and total == last_total and signature == last_signature:
                 stable += 1
             else:
                 stable = 0
             last_total = total
             last_signature = signature
-            if stable >= stable_rounds:
+            if at_top and stable >= stable_rounds:
                 break
 
         data = self.session.eval_body(_FINAL_TURNS_JS) or {}
         # `seen` = accumulateur (versions completes, ordre de decouverte) ;
-        # `order` = DOM final (ordre logique du fil). On donne `order` en
-        # dernier pour qu'a score egal la fusion retienne son exemplaire (donc
-        # l'ordre logique), tout en completant avec `seen` les tours absents.
-        fragments = [f for f in data.get("seen") or [] if f]
-        fragments += [f for f in data.get("order") or [] if f]
-        return fragments
+        # `order` = DOM final (ordre logique du fil). La fusion prend `order`
+        # comme reference d'ordre et complete avec `seen` les tours absents.
+        seen = [f for f in data.get("seen") or [] if f]
+        order = [f for f in data.get("order") or [] if f]
+        return seen, order
