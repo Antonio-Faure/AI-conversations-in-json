@@ -57,10 +57,14 @@ class FakeDriver(ChatDriver):
     file_input_selectors = ("input[type=file]",)
     stop_selectors = ("button.stop",)
 
+    def count_assistant_messages(self) -> int:
+        # simule la persistance : un message assistant par envoi
+        return getattr(self.session, "sent", 0)
+
 
 class LimitedDriver(FakeDriver):
     def is_rate_limited(self):
-        return self.session.sent >= 2
+        return self.session.sent >= 3
 
 
 class NoUploadDriver(FakeDriver):
