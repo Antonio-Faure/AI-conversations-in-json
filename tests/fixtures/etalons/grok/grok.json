@@ -1,0 +1,92 @@
+{
+  "conversation_id": "bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+  "platform": "grok",
+  "title": "Affiche uniquement un titre niveau 1 « Test Titre »",
+  "url": "https://grok.com/chat/bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+  "model": "grok-3",
+  "started_at": "2026-09-24T17:50:33Z",
+  "last_message_at": "2026-09-24T17:54:21Z",
+  "exported_at": "2026-09-25T15:45:00Z",
+  "messages": [
+    {
+      "conversation_id": "bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+      "message_id": "b19f31a6-3a71-4899-b3d7-87f9366239cc",
+      "role": "user",
+      "platform": "grok",
+      "model": null,
+      "timestamp": "2026-09-24T17:50:37Z",
+      "texte": "Affiche uniquement un titre niveau 1 « Test Titre » et un sous-titre niveau 2 « Sous-titre ». Aucune autre phrase.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+      "message_id": "ef16838a-1997-4cbb-aeda-e12685edc6b0",
+      "role": "assistant",
+      "platform": "grok",
+      "model": "grok-3",
+      "timestamp": "2026-09-24T17:50:37Z",
+      "texte": "# Test Titre\n## Sous-titre",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+      "message_id": "b9695a20-9198-4e9f-bf84-b4aee4b3f416",
+      "role": "user",
+      "platform": "grok",
+      "model": null,
+      "timestamp": "2026-09-24T17:50:52Z",
+      "texte": "Affiche uniquement : gras *italique* ~~barré~~. Rien d’autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+      "message_id": "89012bbf-aa5b-4ef5-b157-0ce0ca766841",
+      "role": "assistant",
+      "platform": "grok",
+      "model": "grok-3",
+      "timestamp": "2026-09-24T17:50:52Z",
+      "texte": "**gras** *italique* ~~barré~~",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+      "message_id": "a4059108-a192-413a-a43e-e1d654d515b8",
+      "role": "user",
+      "platform": "grok",
+      "model": null,
+      "timestamp": "2026-09-24T17:51:05Z",
+      "texte": "Affiche uniquement une liste numérotée de 3 éléments : un, deux, trois. Rien d’autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+      "message_id": "c7252ebb-2cff-4728-a217-5b36ae155c2c",
+      "role": "assistant",
+      "platform": "grok",
+      "model": "grok-3",
+      "timestamp": "2026-09-24T17:51:05Z",
+      "texte": "1. un\n2. deux\n3. trois",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+      "message_id": "9062409a-af79-49fd-8820-2c1b49bb00e5",
+      "role": "user",
+      "platform": "grok",
+      "model": null,
+      "timestamp": "2026-09-24T17:54:21Z",
+      "texte": "Affiche uniquement une checklist de 2 items : [ ] à faire et [x] fait. Rien d’autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "bb0c6155-00a9-4781-ab45-3a47d851a0f2",
+      "message_id": "64ba0593-6bb9-4673-929d-4186c58c93d7",
+      "role": "assistant",
+      "platform": "grok",
+      "model": "grok-3",
+      "timestamp": "2026-09-24T17:54:21Z",
+      "texte": "Service temporarily unavailable. Please try again later.",
+      "code_blocks": []
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+  "platform": "perplexity",
+  "title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+  "url": "https://www.perplexity.ai/search/345497b2-f088-4803-ad42-27a1442dc41c",
+  "model": "turbo",
+  "started_at": null,
+  "last_message_at": null,
+  "exported_at": "2026-09-25T15:42:49Z",
+  "messages": [
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "# Titre principal\n\n## Sous-titre 1\n\n## Sous-titre 2",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Écris une phrase contenant du texte en gras, en italique et barré. Réponds uniquement avec cette phrase.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Voici une phrase avec du texte en gras, en italique et barré.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Crée une liste à puces avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "- Premier élément\n- Deuxième élément\n- Troisième élément",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Crée une liste numérotée avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "1. Premier élément\n2. Deuxième élément\n3. Troisième élément",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Écris une citation Markdown avec le symbole >. Réponds uniquement avec la citation.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "> Ceci est une citation Markdown.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Écris le mot \"print\" en code inline. Réponds uniquement avec le code.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "print",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "345497b2-f088-4803-ad42-27a1442dc41c",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Insère une image Markdown avec l’URL [https://via.placeholder.com/100](https://via.placeholder.com/100) et l’alt \"Test\". Réponds uniquement avec l’image.",
+      "code_blocks": []
+    }
+  ]
+}

@@ -1,0 +1,312 @@
+{
+  "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+  "platform": "mistral",
+  "title": "Test calibration écran couleurs",
+  "url": "https://chat.mistral.ai/chat/cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+  "model": null,
+  "started_at": null,
+  "last_message_at": null,
+  "exported_at": "2026-09-25T15:44:55Z",
+  "messages": [
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "fadd57b2-385b-4444-9297-db6fac5a841b",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Décris ce que montre cette capture d'écran en une phrase.\n\n![image.png](images/e00657d1022637aa476a.png)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "c73ef33a-e241-4898-91c5-35793c947541",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Cette capture d'écran montre un test de calibration d'écran avec des couleurs vives (rouge, vert, bleu, cyan, magenta, jaune, noir, blanc) et un motif de cercle central.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "a6aceae3-a08c-48da-87ba-71ced83e3646",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Extrais les titres et les listes de ce fichier Markdown. Affiche uniquement les résultats.\n\n[notes.md](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/c133cb0a-63bb-4975-81e4-baf54cfee6ec/5b5ef077-2fd7-48fb-b338-4df39c7ff233/d6b41cc3-bc62-443d-9601-c5e99d85931f?sv=2025-01-05&spr=https&se=2026-09-25T16%3A44%3A35Z&skoid=c9baccad-3639-4379-a088-07b7e349293c&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e&skt=2026-09-25T15%3A44%3A35Z&ske=2026-09-25T16%3A44%3A35Z&sks=b&skv=2025-01-05&sr=b&sp=r&sig=Lbc4bIhmWqQCELdC5ipfBxfWXKoa4S2JMBBmelLeWrs%3D)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "a580e120-9f21-4121-af54-f472f37a077e",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "# Titre\n\n- premiere puce\n- deuxieme puce",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "bec4a29a-67e5-48e5-8ecf-ee75782ac839",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Valide ce fichier JSON et affiche son contenu. Réponds uniquement par \"Valide\" ou \"Invalide\" suivi du contenu.\n\n[donnees.json](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/c133cb0a-63bb-4975-81e4-baf54cfee6ec/5b5ef077-2fd7-48fb-b338-4df39c7ff233/93ded646-f14a-46e6-8e4d-8f06a0d7c39f?sv=2025-01-05&spr=https&se=2026-09-25T16%3A44%3A35Z&skoid=c9baccad-3639-4379-a088-07b7e349293c&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e&skt=2026-09-25T15%3A44%3A35Z&ske=2026-09-25T16%3A44%3A35Z&sks=b&skv=2025-01-05&sr=b&sp=r&sig=heTKzIDHNwCQRdSx1ieL8lPFQ%2BsYb%2FXfNOtPfvcc3zI%3D)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "e856b3fa-789e-4215-801d-9916d1abc16a",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Valide\n{\"etalon\": true, \"valeurs\": [1, 2, 3]}",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "4cbc9f7a-0ad7-491d-9b12-1b070f94567c",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Extrais les tâches de ce fichier audio et affiche-les sous forme de liste à puces.\n\n[audio.mp3](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/c133cb0a-63bb-4975-81e4-baf54cfee6ec/5b5ef077-2fd7-48fb-b338-4df39c7ff233/76dbc629-63cd-4530-9434-41e7bfd45ffc?sv=2025-01-05&spr=https&se=2026-09-25T16%3A44%3A35Z&skoid=c9baccad-3639-4379-a088-07b7e349293c&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e&skt=2026-09-25T15%3A44%3A35Z&ske=2026-09-25T16%3A44%3A35Z&sks=b&skv=2025-01-05&sr=b&sp=r&sig=uC%2FsB1%2FB4RF0V%2Foxk9Nnl%2FMBuYgd2hFGqmcKKyAmzxI%3D)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "25d8079f-e3fb-4f55-aafa-36e39d4b8c90",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Aucune tâche détectée dans l'audio.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "5071ac9f-f47f-4baf-9d18-f5f4e05d716e",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Résume cette vidéo en une phrase. Si la vidéo ne peut pas être analysée, réponds \"Non supporté\".",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "8ddf8c84-3c8d-40e4-964d-b6f63e0355f3",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Non supporté.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "2f10f1fb-1b2e-471f-b357-d2377ad86548",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Génère un fichier CSV avec les données suivantes : Nom, Âge\\nAlice, 25\\nBob, 30. Affiche uniquement le lien de téléchargement.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "d4461230-e47d-49c4-af5e-06b291c7a971",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "[Download the CSV file](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/tool/c1/33/cb/c133cb0a-63bb-4975-81e4-baf54cfee6ec/5b5ef077-2fd7-48fb-b338-4df39c7ff233/2597dbe5-959c-436f-9117-9afdcc928c5f/donnees.csv?sv=2025-01-05&spr=https&se=2026-09-25T16%3A44%3A35Z&skoid=c9baccad-3639-4379-a088-07b7e349293c&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e&skt=2026-09-25T15%3A44%3A35Z&ske=2026-09-25T16%3A44%3A35Z&sks=b&skv=2025-01-05&sr=b&sp=r&sig=L9gApLE3dwglBcUQZshn1OI3Y9DGxv6zlvaGkHjko6I%3D)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "48e8dcc3-9718-4e49-ac5f-5bc4faffd404",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Quel est mon nom ? Réponds uniquement avec le nom.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "37b7c0c1-1e25-4420-a4c2-59899c440193",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Antonio Faure",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "79feffcc-88be-4a60-a861-0fbbbd5b49e0",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Peux-tu consulter une API externe pour obtenir des données ? Réponds uniquement par \"Oui\" ou \"Non\".",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "4949cced-9cf9-4634-b6ff-34b48a95a0ba",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Non",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "1508da10-99d3-43e2-82eb-183e5a29b7c1",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Analyse ce fichier. Si c'est impossible, réponds \"Fichier trop volumineux\".\n\n[document.pdf](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/c133cb0a-63bb-4975-81e4-baf54cfee6ec/5b5ef077-2fd7-48fb-b338-4df39c7ff233/f88636c9-d272-4a91-8a46-0dfe40e63279?sv=2025-01-05&spr=https&se=2026-09-25T16%3A44%3A35Z&skoid=c9baccad-3639-4379-a088-07b7e349293c&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e&skt=2026-09-25T15%3A44%3A35Z&ske=2026-09-25T16%3A44%3A35Z&sks=b&skv=2025-01-05&sr=b&sp=r&sig=s4JAO%2BcuFu2XC6rfdAUNoJX56m8EtkI6SLIlgj6Vcrk%3D)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "eed8a633-2793-48e1-906d-fa3c879978ff",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Fichier trop volumineux.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "01e3f64f-2cd7-4075-94c4-860b86dd38b2",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "f6cd935f-c8ee-47c1-ab27-47b5578a50f8",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "- Élément 1\n  - Sous-élément 1\n  - Sous-élément 2\n- Élément 2\n  - Sous-élément 1\n  - Sous-élément 2",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "4b35a827-593c-49b3-a52c-25958c964f76",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche uniquement une image Markdown pointant vers https://placehold.co/120x60 avec le texte alternatif « test ».",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "8bfbf96d-df7d-418d-97a0-56162352a02f",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "[test](https://placehold.co/120x60)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "32d7b695-0c3d-4465-ab1f-e3eb01c6283e",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Génère une image d'un renard roux dans une forêt enneigée. Aucun texte.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "7f42251b-01f6-471b-b6db-22d34e7b1720",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "![image](images/5fc19cab336bafc9a0f5.jpg)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "ee08db89-8cf4-44d1-ab78-35ceb0e2002e",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "2f4feafc-9105-47cb-a82e-d1c69b28817a",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "# Titre\n\n- Élément 1\n- Élément 2",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "33b1c9ae-a516-4f7f-a401-35e87801c7be",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "41879287-1129-4b6c-a6ec-a2e74cecf5e4",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "🦊🌲❄️\nالثعلب في الغابة\n狐狸在森林里",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "92d3e32f-85ee-40c9-804b-1a7ad142ba76",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
+      "message_id": "19961a03-0be8-4a23-b5b2-30afcb47cfe4",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "1. Convertir 1 h 30 en heures : 1 h 30 = 1,5 heures.\n2. Vitesse moyenne = Distance / Temps = 120 km / 1,5 h = 80 km/h.\n\nRéponse : 80 km/h.",
+      "code_blocks": []
+    }
+  ]
+}

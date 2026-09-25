@@ -1,0 +1,537 @@
+{
+  "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+  "platform": "chatgpt",
+  "title": "Formatage de texte",
+  "url": "https://chatgpt.com/c/6ab3d353-7720-83ed-acf4-071071015321",
+  "model": "gpt-5-6-mini",
+  "started_at": "2026-09-23T13:25:39Z",
+  "last_message_at": "2026-09-23T13:30:11Z",
+  "exported_at": "2026-09-24T06:02:46Z",
+  "messages": [
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "b728fedc-93e3-43ea-81c1-18631cb4cb50",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:25:39Z",
+      "texte": "Affiche uniquement trois mots : le premier en gras, le deuxième en italique et le troisième barré.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "248f1869-7570-43b8-8e27-5d328f70aa4e",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6",
+      "timestamp": "2026-09-23T13:25:40Z",
+      "texte": "**Premier** *Deuxième* ~~Troisième~~",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "61b07d09-f8d8-430c-bf91-1da8ef121c29",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:25:48Z",
+      "texte": "Affiche exactement trois étapes numérotées : Lire, Analyser, Résumer. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "c67a9b58-27be-45b5-96f4-34e60a5d74d2",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6",
+      "timestamp": "2026-09-23T13:25:50Z",
+      "texte": "1. Lire\n2. Analyser\n3. Résumer",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "b7a30633-721e-4026-8a48-202a714b94fd",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:25:57Z",
+      "texte": "Affiche uniquement cette phrase sous forme de citation Markdown : « Ceci est un test. »",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "fc6d14e5-8824-4036-865e-4ee292eaa630",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6",
+      "timestamp": "2026-09-23T13:25:58Z",
+      "texte": "> Ceci est un test.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "77ac2eed-5246-4796-aa74-d9b1966289eb",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:26:05Z",
+      "texte": "Affiche « Avant », puis un séparateur horizontal Markdown, puis « Après ». Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "822fe4c4-f481-45d8-a098-3963d89c1e17",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6",
+      "timestamp": "2026-09-23T13:26:06Z",
+      "texte": "Avant\n\n---\n\nAprès",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "4a171ab3-1638-430b-91d9-e1141f33888f",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:26:14Z",
+      "texte": "Affiche uniquement la chaîne sorted(key=...) comme du code inline.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "a666cf5b-7e48-4d6c-ad39-4f8858500e85",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6",
+      "timestamp": "2026-09-23T13:26:15Z",
+      "texte": "`sorted(key=...)`",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "fd0de761-f62a-468f-bead-38813ce3ede4",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:26:23Z",
+      "texte": "Affiche uniquement une image Markdown utilisant [images/452160df8d44786ff6f7.svg](images/452160df8d44786ff6f7.svg) et le texte alternatif « test ».",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "ccdddf22-a714-4c5b-beed-c686139f8be9",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:26:25Z",
+      "texte": "![test](images/452160df8d44786ff6f7.svg)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "4cef3105-d387-4fed-9db6-176ad7459964",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:26:32Z",
+      "texte": "Crée une image cliquable : l'image [images/452160df8d44786ff6f7.svg](images/452160df8d44786ff6f7.svg) doit pointer vers [https://openai.com](https://openai.com).\n\nRéponds uniquement avec le résultat.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "c8745c01-ae0c-49e2-9f31-7630d41c8f06",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:26:34Z",
+      "texte": "[![image](images/452160df8d44786ff6f7.svg)](https://openai.com)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "8bf01494-7ca6-47e7-a7da-5bff52a6372f",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:26:40Z",
+      "texte": "Affiche la formule inline E = mc² et explique-la en une seule phrase.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "e0852745-7b8c-4a44-a8ab-ba78452d60ba",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:26:41Z",
+      "texte": "$E = mc^2$ signifie que l’énergie $E$ d’une masse $m$ au repos est égale à cette masse multipliée par le carré de la vitesse de la lumière $c$ .",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "685ec047-545b-4fec-b955-e61e07c2169e",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:26:48Z",
+      "texte": "Affiche le système x+y=5 et x-y=1, puis donne la solution en une phrase.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "e6723be5-e107-419e-a18b-495b9a3c2965",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:26:49Z",
+      "texte": "$$\\begin{cases}\nx+y=5\\\\\nx-y=1\n\\end{cases}$$\n\nLa solution est $x=3$ et $y=2$ .",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "fb1afbfa-4ce7-470c-a611-a1b4c0132c7b",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:26:56Z",
+      "texte": "Donne moins de 10 lignes de CSS qui rendent un titre rouge, avec coloration syntaxique, puis une phrase d'explication.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "f103ade1-d326-4d3d-931b-1414f2e364ca",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6",
+      "timestamp": "2026-09-23T13:26:57Z",
+      "texte": "```css\nh1 {\n  color: red;\n}\n```\n\nCe CSS applique la couleur rouge à tous les éléments `<h1>`.",
+      "code_blocks": [
+        {
+          "language": "css",
+          "code": "h1 {\n  color: red;\n}"
+        }
+      ]
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "45c70c41-4aa2-45cc-b453-7e2f6fb08496",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:27:04Z",
+      "texte": "Trouve l'erreur dans ce JSON et indique-la en moins de 20 mots :\n{\"name\":\"Alice\",\"age\":20,}",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "c7db21af-db86-4e1e-8e15-ae27dbebf23b",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6",
+      "timestamp": "2026-09-23T13:27:05Z",
+      "texte": "La virgule après `20` est interdite avant `}` en JSON strict.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "59478935-e7d3-47b8-b61b-f7ada88c1dce",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:27:14Z",
+      "texte": "Quels sont les trois boutons visibles ? Réponds uniquement avec leurs noms.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "6dfa79bc-d159-4a93-a135-a0ba10f68715",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6",
+      "timestamp": "2026-09-23T13:27:16Z",
+      "texte": "Je ne vois pas de boutons dans la conversation.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "10ac0a75-03e7-43da-bf04-b7adf838bb6a",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:27:24Z",
+      "texte": "Lis notes.txt et donne uniquement le nombre secret.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "47c66b83-34b6-47b6-ae5f-5e413f140610",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6",
+      "timestamp": "2026-09-23T13:27:31Z",
+      "texte": "2",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "b2ccd517-eced-477f-84e6-b9d1ae7d350c",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:27:40Z",
+      "texte": "Lis le PDF et donne uniquement le code.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "f96310c5-6e6e-4e70-ab81-bf2a1a0c7564",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:28:05Z",
+      "texte": "1",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "bcd6827d-ece1-4582-8a8c-e62aac246db3",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:28:12Z",
+      "texte": "Résume ce texte en exactement trois puces. N'ajoute aucune information extérieure.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "5b650193-9223-4a4b-8bf0-770939d884ef",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:28:14Z",
+      "texte": "Quel texte veux-tu que je résume ?",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "81c1c809-1e0b-4ccd-b46a-ebe98b0fd41e",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:28:21Z",
+      "texte": "Donne uniquement ALPHA, BETA et GAMMA avec leurs nombres.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "a4b6a71e-f362-4d23-a4e2-673454dc8e5e",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:28:28Z",
+      "texte": "ALPHA : nombre non fourni\n\nBETA : nombre non fourni\n\nGAMMA : nombre non fourni",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "a425858f-9f90-45d9-9973-a9f4ba7dc819",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:28:39Z",
+      "texte": "Quel nombre est prononcé ? Réponds uniquement avec le nombre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "eaae68ed-94c8-402f-92ad-5f1a69a41c2f",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:28:41Z",
+      "texte": "Aucun nombre n’est prononcé.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "ac73ea5b-1e83-41ba-ab39-61d420e68bc4",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:28:48Z",
+      "texte": "Compare ces deux pages et indique uniquement une différence factuelle. Cite les deux sources.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "d7381d8b-559e-4ebc-bc7e-9e3efe08f1e5",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:28:49Z",
+      "texte": "Je n’ai pas les deux pages à comparer dans la conversation.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "9ab228e6-7fe7-4379-bb91-f9878f688e84",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:28:56Z",
+      "texte": "Crée un fichier CSV contenant les colonnes name,score et trois lignes A,10 ; B,20 ; C,30. Fournis réellement le fichier.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "0308e7ea-5424-4651-a6f5-ca2af0f600dd",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:28:59Z",
+      "texte": "Data analysis isn't available right now. Do you want to continue without it?",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "5c4a0fa0-d3a5-464e-a42d-40b71a7baa3a",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:29:07Z",
+      "texte": "Exécute réellement ce Python et donne uniquement la sortie :\nprint(sum([4, 5, 6]))",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "6a120e63-4499-42b2-b493-36a0b5dc61f0",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:29:09Z",
+      "texte": "15",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "ec1f344b-1f2f-4ea1-8b0a-454d4e35de57",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:29:16Z",
+      "texte": "Indique uniquement si un plugin ou une application externe réellement disponible peut accomplir cette tâche. Si oui, nomme-le ; sinon dis « aucun disponible ».",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "9edf8c3c-56fa-4429-982e-cc1b0beb222a",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:29:19Z",
+      "texte": "aucun disponible",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "4ec79bb2-1e17-4e1e-91a4-6dc3513edccd",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:29:27Z",
+      "texte": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "10bfd4a7-482c-4a7e-b99e-11c585df9bc9",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:29:29Z",
+      "texte": "- Élément 1\n  - Sous-élément 1\n  - Sous-élément 2\n- Élément 2\n  - Sous-élément 1\n  - Sous-élément 2",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "2bf4e2da-c0aa-454b-935b-5c42a83ceb93",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:29:37Z",
+      "texte": "Lis le fichier donnees.json joint et donne uniquement la valeur de la clé « etalon ».",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "ba6523ed-2d07-40b0-9dc1-4d2dd3ff5717",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:29:40Z",
+      "texte": "fichier introuvable",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "4dfbf3f7-0b6f-4e3d-a674-b54c4b8d94fe",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:29:49Z",
+      "texte": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "557c98cd-cbf6-4dd7-b2bf-6025c906a9d5",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:29:51Z",
+      "texte": "# Titre\n\n- Élément 1\n- Élément 2\n- Élément 3",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "07555319-0500-425a-9d8a-0aea9c76ca5b",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:29:58Z",
+      "texte": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "8f0628b5-30db-40e8-be28-d5a6d801d8e1",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:29:59Z",
+      "texte": "😀 🚀 🌟\n\nمرحبا بالعالم\n\n你好，世界",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "3605071b-3681-4d5e-a7fe-8ef8f99876b8",
+      "role": "user",
+      "platform": "chatgpt",
+      "model": null,
+      "timestamp": "2026-09-23T13:30:06Z",
+      "texte": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "6ab3d353-7720-83ed-acf4-071071015321",
+      "message_id": "2d960a19-aae0-4edb-9add-9de3fed050a3",
+      "role": "assistant",
+      "platform": "chatgpt",
+      "model": "gpt-5-6-mini",
+      "timestamp": "2026-09-23T13:30:11Z",
+      "texte": "Je ne peux pas fournir mon raisonnement interne détaillé étape par étape, mais je peux montrer le calcul clairement :\n\n$$v=\\frac{d}{t}$$\n\n1. Distance : $d=120$ km\n2. Temps : $1\\,h\\,30=1{,}5$ h\n3. Calcul : $v=\\frac{120}{1{,}5}=80$\n\n**Réponse : 80 km/h.**",
+      "code_blocks": []
+    }
+  ]
+}

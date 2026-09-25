@@ -163,6 +163,9 @@ marquées indisponibles).
   manifeste (`scripts/etalons.json` accepte plusieurs entrées par plateforme).
 - Envoi (une seule fois) : sous-agent browser-use par bot, puis on gèle le
   HTML/JSON de la conversation obtenue.
+- **Fixtures gelées** : `.venv/bin/python scripts/freeze_etalon.py [--clean]`
+  copie HTML+JSON dans `tests/fixtures/etalons/`; `tests/test_etalon_fixtures.py`
+  reparse hors navigateur et compare (détecte une régression de parseur).
 
 ## Pièges connus
 

@@ -1,0 +1,272 @@
+{
+  "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+  "platform": "mistral",
+  "title": "Interaction sans texte",
+  "url": "https://chat.mistral.ai/work/d37eaec7-ec10-47e0-af48-f0c5675159ce",
+  "model": null,
+  "started_at": null,
+  "last_message_at": null,
+  "exported_at": "2026-09-25T15:47:11Z",
+  "messages": [
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "2c898bf2-0634-4cb9-9ebf-4e452d0bd1df",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Extrais le texte de cette image. Réponds UNIQUEMENT avec le texte extrait, sans guillemets ni autre texte.\n\n![image.png](images/8dfff5b3b0f4a76eb326.png)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "7cab7a88-42d9-4329-9279-8f44d489a8a9",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "L'image ne contient pas de texte lisible. Elle montre un dégradé de couleurs en cercle central entouré de bandes verticales colorées (rouge, orange, jaune, vert, bleu, violet) et un petit rectangle noir à bordure blanche. Aucun texte n'a pu être extrait.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "5814e2f6-fcce-4f20-8b83-c259aa86d7df",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Extrais le texte du fichier document.pdf. Réponds UNIQUEMENT avec le texte extrait, sans autre texte.\n\n[document.pdf](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/c133cb0a-63bb-4975-81e4-baf54cfee6ec/5b5ef077-2fd7-48fb-b338-4df39c7ff233/b91c38da-7548-48d3-ab3c-541288846ef9?sv=2025-01-05&spr=https&se=2026-09-25T16%3A46%3A51Z&skoid=c9baccad-3639-4379-a088-07b7e349293c&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e&skt=2026-09-25T15%3A46%3A51Z&ske=2026-09-25T16%3A46%3A51Z&sks=b&skv=2025-01-05&sr=b&sp=r&sig=xsLxtEBJTZjSpV7rZGN%2BahzEHh0CaslWzGKSXKyUIi4%3D)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "c9920602-d459-4011-8fcf-50ab9c375bd9",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d'étalonnage\n\nCe document teste le parsing des pieces jointes.\n\nCle a valeur : alpha=1, beta=2, gamma=3.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "db5f3a96-8480-400b-a8d0-5b5b8c7a1bf8",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Lis le fichier donnees.json et extrais les noms des personnes sous forme de liste JSON. Affiche UNIQUEMENT la liste, sans texte avant ou après.\n\n[donnees.json](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/c133cb0a-63bb-4975-81e4-baf54cfee6ec/5b5ef077-2fd7-48fb-b338-4df39c7ff233/dff29764-bb62-4bcf-9179-49682921504f?sv=2025-01-05&spr=https&se=2026-09-25T16%3A46%3A51Z&skoid=c9baccad-3639-4379-a088-07b7e349293c&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e&skt=2026-09-25T15%3A46%3A51Z&ske=2026-09-25T16%3A46%3A51Z&sks=b&skv=2025-01-05&sr=b&sp=r&sig=YMtVI7LGPcGb3vQU0y5zB2h%2BRQ8T7fx%2FUSwfgPDxt5U%3D)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "a123bacc-dea3-4eaf-a773-6152c9eb4885",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "[]",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "478065c2-5f88-41a7-835a-ee274be32759",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Dans ce texte : \"Section 1: Contenu A. Section 2: Contenu B. Section 3: Contenu C.\", liste les titres de section. Réponds avec une liste à puces de 3 éléments max.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "1cd9c897-0420-447b-b990-9c9870c49b18",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "- Section 1\n- Section 2\n- Section 3",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "830f7577-731d-41d6-a95d-3c0cc5b52467",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Transcris cet audio. Réponds UNIQUEMENT avec le texte transcrit, sans guillemets ni autre texte.\n\n[audio.mp3](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/c133cb0a-63bb-4975-81e4-baf54cfee6ec/5b5ef077-2fd7-48fb-b338-4df39c7ff233/436c418f-416d-4363-b8fc-19651e00c53f?sv=2025-01-05&spr=https&se=2026-09-25T16%3A46%3A51Z&skoid=c9baccad-3639-4379-a088-07b7e349293c&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e&skt=2026-09-25T15%3A46%3A51Z&ske=2026-09-25T16%3A46%3A51Z&sks=b&skv=2025-01-05&sr=b&sp=r&sig=rMsEDZqhqUUCbisi2HvyZi2K0vjvQSq3GsOyx2OJa%2B4%3D)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "ace73436-d3bf-4036-b357-05b5db78cfa9",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "La transcription est vide. Le fichier audio ne contient aucune piste audible (57 octets, aucun contenu transcrit).",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "4b653984-29e3-4700-be5f-382a0f9ea1fc",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Utilise du code pour lire le fichier notes.txt et afficher son contenu. Réponds UNIQUEMENT avec le contenu du fichier.\n\n[notes.txt](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/c133cb0a-63bb-4975-81e4-baf54cfee6ec/5b5ef077-2fd7-48fb-b338-4df39c7ff233/d507f451-3aee-493f-960a-84c4af55e324?sv=2025-01-05&spr=https&se=2026-09-25T16%3A46%3A51Z&skoid=c9baccad-3639-4379-a088-07b7e349293c&sktid=4fbc1168-2984-4d17-af19-ac5138c2378e&skt=2026-09-25T15%3A46%3A51Z&ske=2026-09-25T16%3A46%3A51Z&sks=b&skv=2025-01-05&sr=b&sp=r&sig=AIVBO8GmM%2BiZERitmD3RCbmnLHaaZAMdVEItKpOJznY%3D)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "905feadd-0e4c-4b1d-ae09-aec0caf34bef",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d'etalonnage.\n\n- premiere puce\n- deuxieme puce\n\n| Cle | Valeur |\n| --- | --- |\n| a | 1 |\n| b | 2 |",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "e4a0d7d7-2233-455d-8048-83e0e81dc73b",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Crée un Canvas de type text/markdown nommé \"rapport\" avec le contenu \"# Rapport de test\\n\\nCeci est un rapport.\". Confirme UNIQUEMENT par \"Canvas rapport créé\".",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "5e391a07-9455-4bc5-8d0c-dce982ce92e7",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Canvas rapport créé.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "51109def-8303-4027-a597-0564f96664d8",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "L'outil de génération d'images est-il disponible ? Si oui, génère une image avec le prompt \"cercle rouge\" et confirme par \"Image générée\". Sinon, réponds \"Non disponible\".",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "fb7190ca-0222-47ab-b97b-168c1cdd61b7",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Non disponible.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "41b4314c-f4e6-4c48-8716-d46b679e1847",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche une vidéo directement dans le chat. Réponds UNIQUEMENT avec \"Impossible\".",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "8b30a73c-2aa5-414e-a912-2debfe92b1ca",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Impossible.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "27ca1bf7-c5bb-4fd0-8230-66f6894df0c4",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "92d77030-fb8c-43ae-8c2a-75390f663219",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "- Élément 1\n  - Sous-élément 1a\n  - Sous-élément 1b\n- Élément 2\n  - Sous-élément 2a\n  - Sous-élément 2b",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "05791473-65e9-4142-b900-2563d0e7deca",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Crée un fichier texte téléchargeable nommé notes.txt contenant « Bonjour ». Fournis le fichier.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "e1b0f122-f5b1-463f-81fe-9225bf4cbfbe",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "J'ai créé le fichier notes.txt contenant « Bonjour », présenté dans un canvas. Utilisez le contrôle d'export ou de téléchargement du canvas pour récupérer le fichier. Il n'existe pas d'autre mécanisme de téléchargement direct dans ce chat.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "4f1fa6ec-1440-4c1d-ab3e-e63b22a286dc",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "da995a76-cfd6-4719-aeae-eaa14095b386",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "😀 🌟 🚀\nمرحبا بك\n你好，世界",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "b17e70ba-69e1-45e2-b2b7-26ca47dbc9ec",
+      "role": "user",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "d37eaec7-ec10-47e0-af48-f0c5675159ce",
+      "message_id": "0ecfd033-a517-4daf-b655-e98e8988af64",
+      "role": "assistant",
+      "platform": "mistral",
+      "model": null,
+      "timestamp": null,
+      "texte": "Étape 1 : convertir la durée en heures.\n1 h 30 = 1,5 h.\n\nÉtape 2 : appliquer la formule de la vitesse moyenne.\nv = distance / durée = 120 / 1,5.\n\nÉtape 3 : calculer.\n120 / 1,5 = 80.\n\nRéponse : la vitesse moyenne est de 80 km/h.",
+      "code_blocks": []
+    }
+  ]
+}

@@ -1,0 +1,502 @@
+{
+  "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+  "platform": "claude",
+  "title": "Formatting text with different styles",
+  "url": "https://claude.ai/chat/2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+  "model": "Sonnet 5 Moyen",
+  "started_at": null,
+  "last_message_at": null,
+  "exported_at": "2026-09-24T12:48:06Z",
+  "messages": [
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Écris le mot \"test\" trois fois : une fois en gras, une fois en italique, une fois barré. Une ligne par mot, rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "**test**\n\n*test*\n\n~~test~~",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Fais une liste numérotée de 3 étapes fictives pour \"ouvrir une boîte\". Aucun texte avant ou après.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "1. Attraper la boîte\n2. Ouvrir le couvercle\n3. Regarder à l'intérieur",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Fais une checklist de 3 tâches fictives, la 2e cochée comme faite. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "- [ ] Tâche 1\n- [x] Tâche 2\n- [ ] Tâche 3",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche la phrase fictive \"Ceci est une citation de test.\" en citation Markdown (>). Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "> Ceci est une citation de test.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche le mot \"Haut\", puis un séparateur horizontal, puis le mot \"Bas\". Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Haut\n\n---\n\nBas",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Écris la variable `total` en code en ligne dans une phrase courte. Une phrase maximum.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "La variable `total` stocke le résultat du calcul.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Écris l'équation E=mc² en LaTeX inline dans une phrase d'une ligne.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "L'équation $E=mc^2$ relie l'énergie et la masse.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche en LaTeX une matrice 2x2 avec 1,2,3,4. Une seule formule, rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "$$\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}$$",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Donne une requête SQL de moins de 10 lignes qui sélectionne les clients d'une table \"clients\" nés après 2000. Une phrase d'explication maximum.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "```sql\nSELECT *\nFROM clients\nWHERE YEAR(date_naissance) > 2000;\n```\n\nCette requête sélectionne tous les clients nés après l'année 2000.",
+      "code_blocks": [
+        {
+          "language": "sql",
+          "code": "SELECT *\nFROM clients\nWHERE YEAR(date_naissance) > 2000;"
+        }
+      ]
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Montre à quoi ressemble le code source Markdown (non rendu) d'un titre et d'une liste à puces, dans un bloc de code étiqueté markdown. Une phrase d'explication maximum.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "```markdown\n# Titre\n\n- Élément 1\n- Élément 2\n- Élément 3\n```\n\nVoici le code source Markdown brut, non rendu, d'un titre et d'une liste à puces.",
+      "code_blocks": [
+        {
+          "language": "markdown",
+          "code": "# Titre\n\n- Élément 1\n- Élément 2\n- Élément 3"
+        }
+      ]
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Quel texte exact vois-tu sur cette image ? Réponds uniquement par le texte lu.\n\n![image.png](images/a3c9acd98ec9cc919559.webp)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "\"0\"",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Liste uniquement les noms de personnes présents dans ce PDF.\n\ndocument.pdf",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Aucun nom de personne n'est présent dans ce document.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Trouve la ligne où le total ne correspond pas à la somme des deux colonnes précédentes. Réponds par le numéro de ligne.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Aucun tableau ou fichier n'a été fourni dans ce message — peux-tu partager les données à vérifier ?",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Transforme ce fichier JSON en tableau Markdown, rien d'autre.\n\ndonnees.json",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "| Clé | Valeur |\n| --- | --- |\n| etalon | true |\n| valeurs | 1, 2, 3 |",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Y a-t-il de la musique dans cette vidéo ? Réponds par oui ou non.\n\nvideo.mp4",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Je ne peux pas analyser le contenu audio/vidéo de ce fichier pour répondre par oui ou non.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Exécute du code pour générer un fichier CSV de 3 lignes (nom,score) avec des données fictives, et donne-moi le fichier.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Voici le fichier ci-dessous.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Exécute du code pour créer un fichier texte contenant \"Bonjour depuis le code\" et donne-moi le fichier.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Voici le fichier ci-dessous.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "As-tu accès en ce moment à un connecteur externe (email, agenda, Drive) dans cette conversation ? Réponds en une phrase.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Oui, j'ai accès à Gmail, Google Calendar et Google Drive dans cette conversation.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Explique ce qu'est la photosynthèse en moins de 20 mots.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "La photosynthèse permet aux plantes de transformer lumière, eau et CO2 en énergie et oxygène.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "- Élément 1\n  - Sous-élément 1.1\n  - Sous-élément 1.2\n- Élément 2\n  - Sous-élément 2.1\n  - Sous-élément 2.2",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche uniquement une image Markdown pointant vers [https://placehold.co/120x60](https://placehold.co/120x60) avec le texte alternatif « test ».\n\nGénère une image d'un renard roux dans une forêt enneigée. Aucun texte.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "(illustration ci-dessus)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "(artefact ci-dessus)",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "🎉🚀🌟\n\nمرحبا بك في هذا الاختبار\n\n你好,这是一个测试",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "user",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "code_blocks": []
+    },
+    {
+      "conversation_id": "2e6aa38c-170f-46b5-8cba-ec63c7d2cdef",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "claude",
+      "model": null,
+      "timestamp": null,
+      "texte": "Vitesse moyenne = distance ÷ temps.\n\n1. Distance = 120 km\n2. Temps = 1 h 30 = 1,5 h\n3. Vitesse = 120 ÷ 1,5 = 80\n\n**Réponse : 80 km/h**",
+      "code_blocks": []
+    }
+  ]
+}
