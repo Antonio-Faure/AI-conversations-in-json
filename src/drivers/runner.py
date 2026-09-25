@@ -146,20 +146,27 @@ class EtalonRunner:
             return False
         return needle in self._needle(page)
 
-    def _await_assistant_change(self, before: str, timeout_ms: int = 180000) -> str:
-        """Attend que le dernier message assistant change (reponse persistee).
+    def _await_assistant_change(
+        self, before_text: str, before_count: int, timeout_ms: int = 180000
+    ) -> str:
+        """Attend qu'une reponse soit persistee (persistee = rendue).
 
-        Retourne "ok", "rate_limited" ou "timeout".
+        Deux signaux : comptage de messages assistant en hausse OU dernier texte
+        assistant change. Retourne "ok", "rate_limited" ou "timeout".
         """
-        if self.driver.count_assistant_messages() < 0 and not before:
+        if before_count < 0 and not before_text:
             return "ok"
         elapsed = 0
         step = 800
         while elapsed < timeout_ms:
             if self.driver.is_rate_limited():
                 return "rate_limited"
-            now = self.driver.last_assistant_text()
-            if now and now != before:
+            if before_count >= 0:
+                now_count = self.driver.count_assistant_messages()
+                if now_count > before_count:
+                    return "ok"
+            now_text = self.driver.last_assistant_text()
+            if now_text and now_text != before_text:
                 return "ok"
             self.driver.session.wait_ms(step)
             elapsed += step
@@ -222,6 +229,7 @@ class EtalonRunner:
                     )
                     continue
                 before_text = self.driver.last_assistant_text()
+                before_count = self.driver.count_assistant_messages()
                 attachments = [
                     self.run_dir / "attachments" / name
                     for name in (item.get("attachments") or [])
@@ -253,7 +261,7 @@ class EtalonRunner:
                     self.state.status = STATUS_ERROR
                     break
                 # persistance : le dernier message assistant doit avoir change
-                verdict = self._await_assistant_change(before_text)
+                verdict = self._await_assistant_change(before_text, before_count)
                 if verdict == "rate_limited":
                     self.state.last_error = f"rate-limit (message {index + 1})"
                     self.state.status = STATUS_RATE_LIMITED
