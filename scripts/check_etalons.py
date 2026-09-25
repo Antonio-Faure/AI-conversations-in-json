@@ -2,9 +2,11 @@
 """Controle de regression des conversations d'etalonnage.
 
 Lit `scripts/etalons.json` (plateforme -> conversations etalons), retrouve
-chaque export dans `exports/<platform>/` par son id, ressort ses metriques et
-les compare a la baseline memorisee. Sortie non nulle si une conversation
-manque, si l'alternance des roles casse ou si une capacite a chute.
+chaque export dans `exports/<platform>/` par son id, ressort ses metriques,
+compare a la baseline, et verifie la couverture des capacites **par plateforme**
+(l'union des conversations d'une plateforme doit couvrir les capacites
+attendues). Sortie non nulle en cas de manque, de rupture d'alternance ou de
+capacite detectee disparue.
 
     .venv/bin/python scripts/check_etalons.py
     .venv/bin/python scripts/check_etalons.py --update   # memorise la baseline
@@ -16,7 +18,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -67,9 +69,12 @@ def main() -> int:
     problems = 0
     for platform, etalons in entries.items():
         print(f"{platform}:")
+        expected: Set[str] = set()
+        detected_union: Set[str] = set()
         for etalon in etalons:
             conv_id = etalon.get("id") or ""
             label = etalon.get("label") or conv_id[:8]
+            expected |= set(etalon.get("expected_capabilities") or [])
             path = _find_export(args.output, platform, conv_id)
             if path is None:
                 print(f"  [MANQUE] {label:22} aucun export pour {conv_id}")
@@ -77,27 +82,27 @@ def main() -> int:
                 continue
             payload = json.loads(path.read_text(encoding="utf-8"))
             metrics = conversation_metrics(payload)
+            detected = detect_capabilities(payload)
+            detected_union |= detected
             lost = regressions(metrics, etalon.get("baseline") or {})
             print(_format_row(label, metrics, lost))
             if metrics["messages"] == 0 or metrics["consecutive_roles"] > 0:
                 problems += 1
             if lost:
                 problems += 1
-            expected = set(etalon.get("expected_capabilities") or [])
-            if expected:
-                detected = detect_capabilities(payload)
-                verifiable = expected & DETECTABLE
-                missing = sorted(verifiable - detected)
-                if missing:
-                    print(f"    capacites absentes: {', '.join(missing)}")
-                    problems += 1
-                unchecked = sorted(expected - DETECTABLE)
-                if unchecked:
-                    print(f"    non verifiables auto ({len(unchecked)}): {', '.join(unchecked)}")
             if args.update:
                 etalon["baseline"] = metrics
-                if expected:
-                    etalon["detected_capabilities"] = sorted(detect_capabilities(payload))
+                etalon["detected_capabilities"] = sorted(detected)
+        verifiable = expected & DETECTABLE
+        missing = sorted(verifiable - detected_union)
+        unchecked = sorted(expected - DETECTABLE)
+        covered = len(verifiable & detected_union)
+        print(f"  couverture detectable: {covered}/{len(verifiable)}"
+              + (f" | manquantes: {', '.join(missing)}" if missing else " | complet"))
+        if unchecked:
+            print(f"  non verifiables auto ({len(unchecked)}): {', '.join(unchecked)}")
+        if missing:
+            problems += 1
     if args.update:
         args.config.write_text(
             json.dumps(entries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"

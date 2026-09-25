@@ -152,6 +152,15 @@ marquées indisponibles).
 - Fiche d'envoi (messages à poster dans l'ordre + pièces jointes) :
   `.venv/bin/python scripts/calibration_build.py --print <bot>`.
   Médias : `.venv/bin/python scripts/make_media.py --bot <bot>`.
+- File d'envoi : `--write-queue` (écrit `calibration_queue.json` dans le run dir) ;
+  envoi resumable : `scripts/etalon_run.py --bot <bot> --run-dir … --queue …`
+  (`--mode work|chat` pour Mistral).
+- **Audit d'intégrité** : `.venv/bin/python scripts/audit_etalon.py`
+  (file vs export, tours manquants par conversation).
+- **Complément** : `.venv/bin/python scripts/calibration_build.py --complement <bot>`
+  écrit `calibration_queue_supp.json` (tours manquants) → à envoyer dans une
+  **2e conversation** ; l'union des conversations d'une plateforme couvre le
+  manifeste (`scripts/etalons.json` accepte plusieurs entrées par plateforme).
 - Envoi (une seule fois) : sous-agent browser-use par bot, puis on gèle le
   HTML/JSON de la conversation obtenue.
 
