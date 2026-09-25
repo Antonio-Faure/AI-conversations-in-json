@@ -281,6 +281,12 @@
       ]
     },
     {
+      "id": "35e8c454-3cd9-473e-99d6-bdc93db192a0",
+      "label": "mistral-work-supp",
+      "url": "https://chat.mistral.ai/work/35e8c454-3cd9-473e-99d6-bdc93db192a0",
+      "expected_capabilities": []
+    },
+    {
       "id": "cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
       "label": "mistral-chat",
       "url": "https://chat.mistral.ai/chat/cd4a05e0-1d2f-485a-8ef4-fe7a864daa6f",
