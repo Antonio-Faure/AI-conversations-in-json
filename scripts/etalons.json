@@ -41,34 +41,6 @@
         "upload_text",
         "video",
         "web_search_citations"
-      ],
-      "baseline": {
-        "messages": 52,
-        "consecutive_roles": 0,
-        "images": 2,
-        "tables": 0,
-        "lists": 4,
-        "code_langs": 1,
-        "latex": 26
-      },
-      "detected_capabilities": [
-        "blockquote",
-        "code_block",
-        "code_languages",
-        "emoji_unicode",
-        "emphasis",
-        "headings",
-        "hr",
-        "image_markdown",
-        "inline_code",
-        "latex_display",
-        "latex_inline",
-        "latex_matrix",
-        "link",
-        "list_bullet",
-        "list_nested",
-        "list_numbered",
-        "refusal_error"
       ]
     }
   ],
@@ -114,37 +86,13 @@
         "upload_text",
         "video",
         "web_search_citations"
-      ],
-      "baseline": {
-        "messages": 48,
-        "consecutive_roles": 0,
-        "images": 1,
-        "tables": 1,
-        "lists": 5,
-        "code_langs": 2,
-        "latex": 6
-      },
-      "detected_capabilities": [
-        "blockquote",
-        "checklist",
-        "code_block",
-        "code_languages",
-        "emoji_unicode",
-        "emphasis",
-        "headings",
-        "hr",
-        "image_markdown",
-        "inline_code",
-        "latex_display",
-        "latex_inline",
-        "latex_matrix",
-        "link",
-        "list_bullet",
-        "list_nested",
-        "list_numbered",
-        "refusal_error",
-        "table"
       ]
+    },
+    {
+      "id": "f4bd4483-04b3-483e-8a5c-6ebd3d12c408",
+      "label": "claude-supp",
+      "url": "https://claude.ai/chat/f4bd4483-04b3-483e-8a5c-6ebd3d12c408",
+      "expected_capabilities": []
     }
   ],
   "gemini": [
@@ -189,36 +137,6 @@
         "upload_text",
         "video",
         "web_search_citations"
-      ],
-      "baseline": {
-        "messages": 60,
-        "consecutive_roles": 0,
-        "images": 2,
-        "tables": 1,
-        "lists": 8,
-        "code_langs": 14,
-        "latex": 38
-      },
-      "detected_capabilities": [
-        "blockquote",
-        "checklist",
-        "code_block",
-        "code_languages",
-        "code_long",
-        "emoji_unicode",
-        "emphasis",
-        "headings",
-        "image_markdown",
-        "inline_code",
-        "latex_display",
-        "latex_inline",
-        "latex_matrix",
-        "link",
-        "list_bullet",
-        "list_nested",
-        "list_numbered",
-        "long_message",
-        "table"
       ]
     }
   ],
@@ -264,21 +182,13 @@
         "upload_text",
         "video",
         "web_search_citations"
-      ],
-      "baseline": {
-        "messages": 8,
-        "consecutive_roles": 0,
-        "images": 0,
-        "tables": 0,
-        "lists": 1,
-        "code_langs": 0,
-        "latex": 0
-      },
-      "detected_capabilities": [
-        "emphasis",
-        "headings",
-        "list_numbered"
       ]
+    },
+    {
+      "id": "a0121d5b-b5d2-4c7c-8edd-ca9625f76fd1",
+      "label": "grok-supp",
+      "url": "https://grok.com/c/a0121d5b-b5d2-4c7c-8edd-ca9625f76fd1?rid=8a420812-52cb-4640-99db-1f3bd53bef22",
+      "expected_capabilities": []
     }
   ],
   "perplexity": [
@@ -323,22 +233,6 @@
         "upload_text",
         "video",
         "web_search_citations"
-      ],
-      "baseline": {
-        "messages": 13,
-        "consecutive_roles": 0,
-        "images": 0,
-        "tables": 0,
-        "lists": 2,
-        "code_langs": 0,
-        "latex": 0
-      },
-      "detected_capabilities": [
-        "blockquote",
-        "headings",
-        "link",
-        "list_bullet",
-        "list_numbered"
       ]
     }
   ],
@@ -384,24 +278,6 @@
         "upload_text",
         "video",
         "web_search_citations"
-      ],
-      "baseline": {
-        "messages": 26,
-        "consecutive_roles": 0,
-        "images": 1,
-        "tables": 1,
-        "lists": 3,
-        "code_langs": 0,
-        "latex": 0
-      },
-      "detected_capabilities": [
-        "emoji_unicode",
-        "image_markdown",
-        "link",
-        "list_bullet",
-        "list_nested",
-        "refusal_error",
-        "table"
       ]
     },
     {
@@ -445,25 +321,6 @@
         "upload_text",
         "video",
         "web_search_citations"
-      ],
-      "baseline": {
-        "messages": 30,
-        "consecutive_roles": 0,
-        "images": 2,
-        "tables": 0,
-        "lists": 4,
-        "code_langs": 0,
-        "latex": 0
-      },
-      "detected_capabilities": [
-        "emoji_unicode",
-        "headings",
-        "image_markdown",
-        "link",
-        "list_bullet",
-        "list_nested",
-        "list_numbered",
-        "refusal_error"
       ]
     }
   ]

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Audit d'integrite des conversations d'etalonnage.
+"""Audit d'integrite des conversations d'etalonnage (union par plateforme).
 
-Compare, pour chaque conversation declaree dans scripts/etalons.json :
-  - la file des messages envoyes (calibration_queue.json),
-  - l'export scrape (tours utilisateur presents).
-Sortie non nulle s'il manque des tours.
+Pour chaque plateforme, verifie que l'**union** des conversations declarees
+couvre la file envoyee (tours utilisateur retrouves). Une plateforme peut avoir
+plusieurs conversations (complements) : c'est l'union qui doit etre complete.
 
     .venv/bin/python scripts/audit_etalon.py
     .venv/bin/python scripts/audit_etalon.py --bot mistral-work
@@ -36,7 +35,7 @@ def _queue_texts(label: str) -> List[str]:
     return [m.get("text") or "" for m in data.get("messages") or []]
 
 
-def _find_export(platform: str, conv_id: str) -> Optional[Path]:
+def _export_users(platform: str, conv_id: str) -> Optional[List[str]]:
     directory = ROOT / "exports" / platform
     if not directory.is_dir():
         return None
@@ -48,7 +47,8 @@ def _find_export(platform: str, conv_id: str) -> Optional[Path]:
         except (OSError, json.JSONDecodeError):
             continue
         if payload.get("conversation_id") == conv_id:
-            return path
+            return [m.get("texte") or "" for m in payload.get("messages") or []
+                    if m.get("role") == "user"]
     return None
 
 
@@ -63,31 +63,35 @@ def main() -> int:
     )
     problems = 0
     for platform, entries in etalons.items():
+        seen_union: List[str] = []
+        for entry in entries:
+            seen = _export_users(platform, entry.get("id") or "")
+            if seen is not None:
+                seen_union.extend(seen)
         print(f"{platform}:")
         for entry in entries:
             label = entry.get("label") or entry.get("id", "")[:8]
             if args.bot and label not in args.bot:
                 continue
-            texts = _queue_texts(label)
-            path = _find_export(platform, entry.get("id") or "")
-            if path is None:
-                print(f"  [MANQUE] {label:14} aucun export pour {entry.get('id')}")
+            queue = _queue_texts(label)
+            seen = _export_users(platform, entry.get("id") or "")
+            if seen is None:
+                print(f"  [MANQUE] {label:18} aucun export pour {entry.get('id')}")
                 problems += 1
                 continue
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            seen = [m.get("texte") or "" for m in payload.get("messages") or [] if m.get("role") == "user"]
-            coverage = queue_coverage(texts, seen)
+            # couverture de la file de cette conversation par l'union plateforme
+            coverage = queue_coverage(queue, seen_union)
             status = "ok" if not coverage["missing"] else "INCOMPLET"
             print(
-                f"  [{status:8}] {label:14} export={len(payload.get('messages') or []):<4} "
-                f"tours={len(seen)}/{len(texts)} manquants={coverage['missing']}"
+                f"  [{status:8}] {label:18} tours={len(seen)}/{len(queue)} "
+                f"manquants(union)={coverage['missing']}"
             )
             if coverage["missing"]:
                 problems += 1
     if problems:
         print(f"{problems} conversation(s) incomplete(s)", file=sys.stderr)
         return 1
-    print("tous les etalons sont complets")
+    print("tous les etalons sont complets (union par plateforme)")
     return 0
 
 

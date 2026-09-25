@@ -100,13 +100,17 @@ def detect_capabilities(payload: Dict[str, Any]) -> Set[str]:
     return found
 
 
-def normalize_for_match(text: str, limit: int = 30) -> str:
-    """Cle de rapprochement d'un message (minuscule, sans accents, tronque)."""
+def normalize_for_match(text: str, limit: int = 25) -> str:
+    """Cle de rapprochement d'un message : alphanumerique pur, tronque.
+
+    Insensible aux accents, espaces et ponctuation (les clients rerendent le
+    markdown differemment d'une conversation a l'autre).
+    """
     import unicodedata
 
     normalized = unicodedata.normalize("NFKD", text or "")
     ascii_only = "".join(c for c in normalized if not unicodedata.combining(c))
-    return " ".join(ascii_only.lower().split())[:limit]
+    return "".join(c for c in ascii_only.lower() if c.isalnum())[:limit]
 
 
 def queue_coverage(
