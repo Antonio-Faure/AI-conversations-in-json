@@ -67,10 +67,15 @@ class FakeDriver(ChatDriver):
         # le transcript contient les messages envoyes
         return " ".join(getattr(self.session, "texts", []))
 
+    def last_assistant_text(self) -> str:
+        # chaque envoi produit une "reponse" (dernier texte envoye)
+        texts = getattr(self.session, "texts", [])
+        return texts[-1] if texts else ""
+
 
 class LimitedDriver(FakeDriver):
     def is_rate_limited(self):
-        return self.session.sent >= 2
+        return self.session.sent >= 3
 
 
 class NoUploadDriver(FakeDriver):

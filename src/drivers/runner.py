@@ -126,6 +126,45 @@ class EtalonRunner:
 
     # -- execution -------------------------------------------------------------
 
+    @staticmethod
+    def _needle(text: str) -> str:
+        """Extrait normalise (retrouver un message dans le fil)."""
+        import unicodedata
+
+        normalized = unicodedata.normalize("NFKD", text or "")
+        ascii_only = "".join(c for c in normalized if not unicodedata.combining(c))
+        return " ".join(ascii_only.lower().split())[:40]
+
+    def _already_present(self, text: str) -> bool:
+        """True si le message est deja dans le fil (reprise idempotente)."""
+        needle = self._needle(text)
+        if not needle:
+            return False
+        try:
+            page = self.driver.page_text()
+        except Exception:  # noqa: BLE001
+            return False
+        return needle in self._needle(page)
+
+    def _await_assistant_change(self, before: str, timeout_ms: int = 180000) -> str:
+        """Attend que le dernier message assistant change (reponse persistee).
+
+        Retourne "ok", "rate_limited" ou "timeout".
+        """
+        if self.driver.count_assistant_messages() < 0 and not before:
+            return "ok"
+        elapsed = 0
+        step = 800
+        while elapsed < timeout_ms:
+            if self.driver.is_rate_limited():
+                return "rate_limited"
+            now = self.driver.last_assistant_text()
+            if now and now != before:
+                return "ok"
+            self.driver.session.wait_ms(step)
+            elapsed += step
+        return "timeout"
+
     def _refresh_target_url(self) -> None:
         """Recapture l'URL apres envoi (un nouveau chat n'obtient son id qu'apres
         le 1er message : au depart l'URL peut etre `/` ou `/new`)."""
@@ -171,6 +210,18 @@ class EtalonRunner:
                     self.state.status = STATUS_RATE_LIMITED
                     break
                 item = self.messages[index]
+                text = item.get("text") or ""
+                if self._already_present(text):
+                    # reprise : le message est deja dans le fil, ne pas renvoyer
+                    self.state.next_index = index + 1
+                    self.save_state()
+                    log_fields(
+                        log, 20,
+                        f"{self.state.bot}: {self.state.next_index}/{total} (deja present)",
+                        extra={"bot": self.state.bot},
+                    )
+                    continue
+                before_text = self.driver.last_assistant_text()
                 attachments = [
                     self.run_dir / "attachments" / name
                     for name in (item.get("attachments") or [])
@@ -198,6 +249,18 @@ class EtalonRunner:
                 if not self.driver.confirm_sent():
                     self.state.last_error = (
                         f"envoi non confirme (champ non vide, message {index + 1})"
+                    )
+                    self.state.status = STATUS_ERROR
+                    break
+                # persistance : le dernier message assistant doit avoir change
+                verdict = self._await_assistant_change(before_text)
+                if verdict == "rate_limited":
+                    self.state.last_error = f"rate-limit (message {index + 1})"
+                    self.state.status = STATUS_RATE_LIMITED
+                    break
+                if verdict != "ok":
+                    self.state.last_error = (
+                        f"reponse non persistee (message {index + 1})"
                     )
                     self.state.status = STATUS_ERROR
                     break

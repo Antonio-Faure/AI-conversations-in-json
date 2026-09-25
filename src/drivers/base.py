@@ -104,6 +104,27 @@ class ChatDriver:
         except (TypeError, ValueError):
             return -1
 
+    def last_assistant_text(self) -> str:
+        """Texte du dernier message assistant monte (vide si indisponible)."""
+        if not self.assistant_selectors:
+            return ""
+        import json
+
+        body = (
+            "const sels = %s;"
+            "for (const s of sels) {"
+            "  try { const ns = document.querySelectorAll(s);"
+            "    if (ns.length) { const n = ns[ns.length - 1];"
+            "      return (n.innerText || n.textContent || '').trim(); }"
+            "  } catch (e) {}"
+            "}"
+            "return '';" % json.dumps(list(self.assistant_selectors))
+        )
+        try:
+            return str(self.session.eval_body(body) or "")
+        except Exception:  # noqa: BLE001
+            return ""
+
     # -- actions --------------------------------------------------------------
 
     def attach(self, paths: Sequence[Path | str]) -> bool:
