@@ -17,7 +17,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -31,6 +31,7 @@ from src.utils.calibration import (  # noqa: E402
     load_manifest,
     suite_from_path,
 )
+from src.utils.etalon import queue_coverage  # noqa: E402
 
 CAL_DIR = ROOT / "calibration"
 MANIFEST_PATH = CAL_DIR / "manifest.json"
@@ -197,6 +198,60 @@ def write_queue(name: str) -> int:
     return 0
 
 
+def _find_export(platform: str, conv_id: str) -> Optional[Path]:
+    directory = ROOT / "exports" / platform
+    if not directory.is_dir():
+        return None
+    for path in sorted(directory.glob("*.json")):
+        if path.name == "conversation_list.json":
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if payload.get("conversation_id") == conv_id:
+            return path
+    return None
+
+
+def write_complement(label: str) -> int:
+    """Ecrit `<run_dir>/calibration_queue_supp.json` avec les tours manquants.
+
+    Permet de completer un etalon incomplet par une 2e conversation (l'union
+    des conversations d'une plateforme couvre le manifeste).
+    """
+    etalons = json.loads((ROOT / "scripts" / "etalons.json").read_text(encoding="utf-8"))
+    platform = next(
+        (p for p, items in etalons.items() if any(i.get("label") == label for i in items)),
+        None,
+    )
+    entry = next(
+        (i for i in (etalons.get(platform) or []) if i.get("label") == label), None
+    ) if platform else None
+    queue_path = _run_root() / label / "calibration_queue.json"
+    if not queue_path.exists():
+        print(f"{label}: file absente ({queue_path})", file=sys.stderr)
+        return 2
+    messages = json.loads(queue_path.read_text(encoding="utf-8")).get("messages") or []
+    seen: List[str] = []
+    if platform and entry:
+        export = _find_export(platform, entry.get("id") or "")
+        if export is not None:
+            payload = json.loads(export.read_text(encoding="utf-8"))
+            seen = [m.get("texte") or "" for m in payload.get("messages") or []
+                    if m.get("role") == "user"]
+    coverage = queue_coverage([m.get("text") or "" for m in messages], seen)
+    missing = [messages[i - 1] for i in coverage["missing"]]
+    target = _run_root() / label / "calibration_queue_supp.json"
+    target.write_text(
+        json.dumps({"bot": label, "source": "complement", "messages": missing},
+                   ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(f"{label}: {len(missing)} tours manquants -> {target}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bot", action="append", help="ne traiter que ce(s) bot(s)")
@@ -205,6 +260,8 @@ def main() -> int:
                         help="afficher la fiche d'envoi (messages a poster) d'un bot")
     parser.add_argument("--write-queue", action="store_true",
                         help="ecrire la file d'envoi (calibration_queue.json) par bot")
+    parser.add_argument("--complement", action="append", metavar="BOT",
+                        help="ecrire la file des tours manquants (calibration_queue_supp.json)")
     args = parser.parse_args()
 
     if args.print_bot:
@@ -213,6 +270,9 @@ def main() -> int:
     if args.write_queue:
         names = args.bot or list(SOURCES)
         return max((write_queue(name) for name in names), default=0)
+
+    if args.complement:
+        return max((write_complement(name) for name in args.complement), default=0)
 
     manifest = load_manifest(MANIFEST_PATH)
     names = args.bot or list(SOURCES)

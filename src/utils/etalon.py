@@ -100,6 +100,33 @@ def detect_capabilities(payload: Dict[str, Any]) -> Set[str]:
     return found
 
 
+def normalize_for_match(text: str, limit: int = 30) -> str:
+    """Cle de rapprochement d'un message (minuscule, sans accents, tronque)."""
+    import unicodedata
+
+    normalized = unicodedata.normalize("NFKD", text or "")
+    ascii_only = "".join(c for c in normalized if not unicodedata.combining(c))
+    return " ".join(ascii_only.lower().split())[:limit]
+
+
+def queue_coverage(
+    queue_texts: List[str], export_user_texts: List[str]
+) -> Dict[str, List[int]]:
+    """Indices (1-based) de la file presents dans l'export, et manquants."""
+    keys = [normalize_for_match(t) for t in queue_texts]
+    present = set()
+    for text in export_user_texts:
+        seen = normalize_for_match(text)
+        for index, key in enumerate(keys, start=1):
+            if key and (key in seen or seen in key):
+                present.add(index)
+                break
+    return {
+        "present": sorted(present),
+        "missing": [i for i in range(1, len(queue_texts) + 1) if i not in present],
+    }
+
+
 def regressions(
     current: Dict[str, int], baseline: Dict[str, int], floor: float = 0.6
 ) -> List[str]:
