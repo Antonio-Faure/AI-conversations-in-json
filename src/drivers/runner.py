@@ -172,6 +172,21 @@ class EtalonRunner:
             elapsed += step
         return "timeout"
 
+    def _wait_thread_loaded(self, timeout_ms: int = 25000) -> bool:
+        """Attend que le fil soit rendu (sinon le skip idempotent lit la home)."""
+        elapsed = 0
+        while elapsed < timeout_ms:
+            try:
+                if self.driver.last_assistant_text():
+                    return True
+            except Exception:  # noqa: BLE001
+                return True
+            if self.driver.count_assistant_messages() > 0:
+                return True
+            self.driver.session.wait_ms(700)
+            elapsed += 700
+        return False
+
     def _refresh_target_url(self) -> None:
         """Recapture l'URL apres envoi (un nouveau chat n'obtient son id qu'apres
         le 1er message : au depart l'URL peut etre `/` ou `/new`)."""
@@ -208,6 +223,8 @@ class EtalonRunner:
             self.save_state()
             self.write_bilan("ouverture impossible")
             return self.state.status
+        # attendre le rendu du fil (le skip idempotent en depend)
+        self._wait_thread_loaded()
 
         total = len(self.messages)
         try:
