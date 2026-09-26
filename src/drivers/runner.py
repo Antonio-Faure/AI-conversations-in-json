@@ -127,13 +127,17 @@ class EtalonRunner:
     # -- execution -------------------------------------------------------------
 
     @staticmethod
-    def _needle(text: str) -> str:
-        """Extrait normalise (retrouver un message dans le fil)."""
+    def _needle(text: str, limit: Optional[int] = 40) -> str:
+        """Extrait normalise (retrouver un message dans le fil).
+
+        `limit=None` : ne pas tronquer (pour le texte de la page).
+        """
         import unicodedata
 
         normalized = unicodedata.normalize("NFKD", text or "")
         ascii_only = "".join(c for c in normalized if not unicodedata.combining(c))
-        return " ".join(ascii_only.lower().split())[:40]
+        joined = " ".join(ascii_only.lower().split())
+        return joined[:limit] if limit else joined
 
     def _already_present(self, text: str) -> bool:
         """True si le message est deja dans le fil (reprise idempotente)."""
@@ -144,7 +148,7 @@ class EtalonRunner:
             page = self.driver.page_text()
         except Exception:  # noqa: BLE001
             return False
-        return needle in self._needle(page)
+        return needle in self._needle(page, limit=None)
 
     def _await_assistant_change(
         self, before_text: str, before_count: int, timeout_ms: int = 180000
