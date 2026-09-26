@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from src.utils.etalon import conversation_metrics, detect_capabilities, regressions
+from src.utils.etalon import (
+    conversation_metrics,
+    detect_capabilities,
+    queue_coverage,
+    regressions,
+)
 
 PAYLOAD = {
     "conversation_id": "c",
@@ -59,6 +64,22 @@ def test_detecte_refus_et_unicode():
     caps = detect_capabilities(payload)
     assert "refusal_error" in caps
     assert "emoji_unicode" in caps
+
+
+def test_queue_coverage_par_similarite():
+    queue = [
+        "Affiche la phrase avec print('Hello') en code en ligne : Pour afficher un message",
+        "Affiche la phrase avec important en gras, secondaire en italique",
+        "Crée une image cliquable : l'image https://placehold.co/120x60 doit pointer vers openai",
+    ]
+    export = [
+        "Affiche la phrase avec important en gras, secondaire en italique et inutile barré",
+        "Crée une image cliquable : l'image images/452160d.png doit pointer vers openai",
+        "Affiche la phrase avec print('Hello') en code en ligne : Pour afficher un message",
+    ]
+    coverage = queue_coverage(queue, export)
+    assert coverage["missing"] == []
+    assert queue_coverage(queue, export[:2])["missing"] == [1]
 
 
 def test_regression_consecutive_roles_seulement_si_augmente():

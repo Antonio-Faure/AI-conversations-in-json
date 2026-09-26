@@ -116,15 +116,37 @@ def normalize_for_match(text: str, limit: int = 25) -> str:
 def queue_coverage(
     queue_texts: List[str], export_user_texts: List[str]
 ) -> Dict[str, List[int]]:
-    """Indices (1-based) de la file presents dans l'export, et manquants."""
-    keys = [normalize_for_match(t) for t in queue_texts]
+    """Indices (1-based) de la file presents dans l'export, et manquants.
+
+    Appariement un-a-un par similarite (les clients rerendent le markdown
+    differemment : URL d'image remplacee, espaces, troncatures).
+    """
+    from difflib import SequenceMatcher
+
+    keys_short = [normalize_for_match(t, limit=25) for t in queue_texts]
+    keys_long = [normalize_for_match(t, limit=120) for t in queue_texts]
+    seen_short = [normalize_for_match(t, limit=25) for t in export_user_texts]
+    seen_long = [normalize_for_match(t, limit=120) for t in export_user_texts]
+    used: set = set()
     present = set()
-    for text in export_user_texts:
-        seen = normalize_for_match(text)
-        for index, key in enumerate(keys, start=1):
-            if key and (key in seen or seen in key):
-                present.add(index)
-                break
+    for index, key in enumerate(keys_short, start=1):
+        if not key:
+            continue
+        candidates = [
+            j for j, candidate in enumerate(seen_short)
+            if j not in used and candidate and (key in candidate or candidate in key)
+        ]
+        if not candidates:
+            continue
+        if len(candidates) == 1:
+            best_j = candidates[0]
+        else:
+            best_j = max(
+                candidates,
+                key=lambda j: SequenceMatcher(None, keys_long[index - 1], seen_long[j]).ratio(),
+            )
+        present.add(index)
+        used.add(best_j)
     return {
         "present": sorted(present),
         "missing": [i for i in range(1, len(queue_texts) + 1) if i not in present],

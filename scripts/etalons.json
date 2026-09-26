@@ -328,6 +328,12 @@
         "video",
         "web_search_citations"
       ]
+    },
+    {
+      "id": "0924fbb5-b633-4b46-a0e9-bf9925b46c93",
+      "label": "mistral-chat-supp",
+      "url": "https://chat.mistral.ai/chat/0924fbb5-b633-4b46-a0e9-bf9925b46c93",
+      "expected_capabilities": []
     }
   ]
 }
