@@ -1,0 +1,42 @@
+{
+  "conversation_id": "f0000000-0000-4000-8000-a3aebf3bff64",
+  "platform": "perplexity",
+  "title": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+  "url": "https://www.perplexity.ai/search/f0000000-0000-4000-8000-a3aebf3bff64",
+  "model": "turbo",
+  "started_at": "2026-09-26T23:39:00Z",
+  "last_message_at": "2026-09-26T23:39:00Z",
+  "exported_at": "2026-09-27T22:04:56Z",
+  "messages": [
+    {
+      "conversation_id": "f0000000-0000-4000-8000-a3aebf3bff64",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T23:39:00Z",
+      "texte": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-a3aebf3bff64",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "---",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1789 @@
+{
+  "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+  "platform": "perplexity",
+  "title": "Crée une checklist avec 2 cases vides. Réponds uniquement avec la checklist.",
+  "url": "https://www.perplexity.ai/search/f0000000-0000-4000-8000-66c5457162a2",
+  "model": "turbo",
+  "started_at": "2026-09-25T19:01:00Z",
+  "last_message_at": "2026-09-26T20:56:00Z",
+  "exported_at": "2026-09-28T07:32:41Z",
+  "messages": [
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:01:00Z",
+      "texte": "Crée une checklist avec 2 cases vides. Réponds uniquement avec la checklist.\n\nInsère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "---",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:05:00Z",
+      "texte": "Crée une image cliquable Markdown : image [https://via.placeholder.com/100](https://via.placeholder.com/100) vers [https://exemple.com](https://exemple.com). Réponds uniquement avec l’élément.\n\n![image.jpg](image.jpg)",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "[",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:07:00Z",
+      "texte": "Écris la formule inline $E = mc^2$ . Réponds uniquement avec la formule.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "$E = mc^2$",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:09:00Z",
+      "texte": "Écris un système avec \\begin{cases} x+y=1 \\ x-y=0 \\end{cases} en bloc. Réponds uniquement avec la formule.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "$$\\begin{cases}\nx+y=1 \\\\\nx-y=0\n\\end{cases}$$",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:11:00Z",
+      "texte": "Génère un CSV avec 2 colonnes (nom, valeur) et 2 lignes. Ne mets aucun texte avant ou après.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "nom,valeur\nexemple1,1\nexemple2,2",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:13:00Z",
+      "texte": "Détecte l’erreur dans ce JSON : {\"x\": 1,}. Réponds uniquement par \"erreur détectée\" ou \"aucune erreur\".",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "erreur détectée",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:16:00Z",
+      "texte": "Décris cette image en 10 mots maximum.\n\n![image.jpg](image.jpg)",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Mire colorée avec barres verticales, cercle blanc et motif noir.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:18:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.\n\nnotes.txt",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:25:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T19:54:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T20:23:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T20:53:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T21:29:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T21:58:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T22:27:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T22:56:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T23:25:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-25T23:54:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T00:34:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T00:55:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T01:36:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T02:16:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T02:37:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T02:57:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T03:36:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T03:57:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T04:38:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage avec puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T04:58:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonneur, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T05:39:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T05:59:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T06:40:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T07:00:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T07:41:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T08:01:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T08:42:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T09:02:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T09:23:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T10:03:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T10:24:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T11:05:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T11:25:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.\n\nnotes.txt",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T12:06:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T12:26:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T13:07:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T13:27:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T14:08:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T15:09:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T15:26:00Z",
+      "texte": "Résume ce fichier en 5 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Document d’étalonnage, puces et tableau.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T16:12:00Z",
+      "texte": "Résume ce PDF en 10 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Aucun PDF n’est joint.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T16:32:00Z",
+      "texte": "Convertis ce fichier en YAML. Fournis le fichier YAML en sortie.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Le fichier YAML a été généré.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [
+        "notes.yaml"
+      ],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T16:53:00Z",
+      "texte": "Résume ce texte en 20 mots maximum.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Le document d’étalonnage contient deux puces et un tableau associant les clés a et b aux valeurs 1 et 2.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T17:33:00Z",
+      "texte": "Transcris l’audio de cette vidéo. Réponds uniquement avec la transcription.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Aucune vidéo n’est jointe.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T17:53:00Z",
+      "texte": "Recherche la dernière version de Python. Réponds uniquement avec le numéro de version.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "3.14.7",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T18:34:00Z",
+      "texte": "Exécute : print(\"Hello\"). Réponds uniquement avec la sortie.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Hello",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T18:54:00Z",
+      "texte": "Le skill utilise-t-il d’autres outils ? Réponds par \"oui\" ou \"non\".",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "non",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T19:35:00Z",
+      "texte": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "- Élément 1\n  - Sous-élément 1.1\n  - Sous-élément 1.2\n- Élément 2\n  - Sous-élément 2.1\n  - Sous-élément 2.2",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T19:55:00Z",
+      "texte": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "```xml\n<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Artefact</title>\n</head>\n<body>\n  <h1>Titre de l’artefact</h1>\n  <ul>\n    <li>Élément 1</li>\n    <li>Élément 2</li>\n  </ul>\n</body>\n</html>\n```",
+      "code_blocks": [
+        {
+          "language": "xml",
+          "code": "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Artefact</title>\n</head>\n<body>\n  <h1>Titre de l’artefact</h1>\n  <ul>\n    <li>Élément 1</li>\n    <li>Élément 2</li>\n  </ul>\n</body>\n</html>"
+        }
+      ],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T20:36:00Z",
+      "texte": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "😀 🎉 🚀\nمرحبًا\n你好",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-26T20:56:00Z",
+      "texte": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-66c5457162a2",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "On cherche la vitesse moyenne $v$ , donnée par :\n\n$$v = \\frac{\\text{distance}}{\\text{temps}}$$\n\n- Distance = 120 km\n- Temps = 1 h 30 = 1,5 h\n\nDonc :\n\n$$v = \\frac{120}{1{,}5} = 80 \\text{ km/h}$$\n\nVitesse moyenne : 80 km/h.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,282 @@
+{
+  "platform": "chatgpt",
+  "mode": null,
+  "source_conversation": null,
+  "generated_from": "calibration/sources/chatgpt.md",
+  "test_pool": 192,
+  "messages": [
+    {
+      "text": "Affiche uniquement trois mots : le premier en gras, le deuxième en italique et le troisième barré.",
+      "attachments": [],
+      "exposes": [
+        "emphasis"
+      ],
+      "source_test": "Rendu des principaux styles de texte Markdown."
+    },
+    {
+      "text": "Affiche exactement trois étapes numérotées : Lire, Analyser, Résumer. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "list_numbered"
+      ],
+      "source_test": "Génération d'une liste ordonnée."
+    },
+    {
+      "text": "Affiche uniquement cette phrase sous forme de citation Markdown : « Ceci est un test. »",
+      "attachments": [],
+      "exposes": [
+        "blockquote"
+      ],
+      "source_test": "Rendu d'un bloc de citation."
+    },
+    {
+      "text": "Affiche « Avant », puis un séparateur horizontal Markdown, puis « Après ». Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "hr"
+      ],
+      "source_test": "Affichage d'un séparateur horizontal."
+    },
+    {
+      "text": "Affiche uniquement la chaîne sorted(key=...) comme du code inline.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "inline_code"
+      ],
+      "source_test": "Rendu du code inline."
+    },
+    {
+      "text": "Affiche uniquement une image Markdown utilisant https://placehold.co/120x60 et le texte alternatif « test ».",
+      "attachments": [],
+      "exposes": [
+        "image_markdown"
+      ],
+      "source_test": "Rendu d'une image référencée par Markdown."
+    },
+    {
+      "text": "Crée une image cliquable : l'image https://placehold.co/120x60 doit pointer vers https://openai.com.\nRéponds uniquement avec le résultat.",
+      "attachments": [],
+      "exposes": [
+        "image_generation",
+        "link"
+      ],
+      "source_test": "Création d'une image servant de lien."
+    },
+    {
+      "text": "Affiche la formule inline E = mc² et explique-la en une seule phrase.",
+      "attachments": [],
+      "exposes": [
+        "latex_inline"
+      ],
+      "source_test": "Rendu d'une formule mathématique inline."
+    },
+    {
+      "text": "Affiche le système x+y=5 et x-y=1, puis donne la solution en une phrase.",
+      "attachments": [],
+      "exposes": [
+        "latex_display",
+        "latex_matrix"
+      ],
+      "source_test": "Rendu d'un système d'équations."
+    },
+    {
+      "text": "Donne moins de 10 lignes de CSS qui rendent un titre rouge, avec coloration syntaxique, puis une phrase d'explication.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "code_languages",
+        "headings"
+      ],
+      "source_test": "Génération de CSS."
+    },
+    {
+      "text": "Trouve l'erreur dans ce JSON et indique-la en moins de 20 mots :\n{\"name\":\"Alice\",\"age\":20,}",
+      "attachments": [],
+      "exposes": [
+        "code_languages",
+        "refusal_error"
+      ],
+      "source_test": "Détection d'une erreur de structure."
+    },
+    {
+      "text": "Quels sont les trois boutons visibles ? Réponds uniquement avec leurs noms.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "upload_image"
+      ],
+      "source_test": "Interprétation d'une interface."
+    },
+    {
+      "text": "Lis notes.txt et donne uniquement le nombre secret.",
+      "attachments": [
+        "notes.txt"
+      ],
+      "exposes": [
+        "upload_text"
+      ],
+      "source_test": "Lecture d'un fichier texte."
+    },
+    {
+      "text": "Lis le PDF et donne uniquement le code.",
+      "attachments": [
+        "document.pdf"
+      ],
+      "exposes": [
+        "code_block",
+        "upload_pdf"
+      ],
+      "source_test": "Lecture d'un PDF."
+    },
+    {
+      "text": "Résume ce texte en exactement trois puces. N'ajoute aucune information extérieure.",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "list_bullet",
+        "long_message"
+      ],
+      "source_test": "Résumé d'un texte long."
+    },
+    {
+      "text": "Donne uniquement ALPHA, BETA et GAMMA avec leurs nombres.",
+      "attachments": [],
+      "exposes": [
+        "thread_memory"
+      ],
+      "source_test": "Recherche dans différentes zones du contexte."
+    },
+    {
+      "text": "Quel nombre est prononcé ? Réponds uniquement avec le nombre.",
+      "attachments": [
+        "video.mp4"
+      ],
+      "exposes": [
+        "audio",
+        "video"
+      ],
+      "source_test": "Analyse de l'audio d'une vidéo."
+    },
+    {
+      "text": "Compare ces deux pages et indique uniquement une différence factuelle. Cite les deux sources.",
+      "attachments": [],
+      "exposes": [
+        "web_search_citations"
+      ],
+      "source_test": "Comparaison de deux sources Web."
+    },
+    {
+      "text": "Crée un fichier CSV contenant les colonnes name,score et trois lignes A,10 ; B,20 ; C,30. Fournis réellement le fichier.",
+      "attachments": [],
+      "exposes": [
+        "generated_file",
+        "table",
+        "upload_csv"
+      ],
+      "source_test": "Création de données CSV."
+    },
+    {
+      "text": "Exécute réellement ce Python et donne uniquement la sortie :\nprint(sum([4, 5, 6]))",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "code_execution",
+        "code_languages"
+      ],
+      "source_test": "Exécution réelle plutôt que simple génération de code."
+    },
+    {
+      "text": "Indique uniquement si un plugin ou une application externe réellement disponible peut accomplir cette tâche. Si oui, nomme-le ; sinon dis « aucun disponible ».",
+      "attachments": [],
+      "exposes": [
+        "checklist",
+        "connectors"
+      ],
+      "source_test": "Existence et disponibilité d'une intégration."
+    },
+    {
+      "text": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "list_nested"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Lis le fichier donnees.json joint et donne uniquement la valeur de la clé « etalon ».",
+      "attachments": [
+        "donnees.json"
+      ],
+      "exposes": [
+        "upload_json"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "artifact_canvas"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "emoji_unicode"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "attachments": [],
+      "exposes": [
+        "reasoning"
+      ],
+      "source_test": "supplement"
+    }
+  ],
+  "capabilities_covered": [
+    "artifact_canvas",
+    "audio",
+    "blockquote",
+    "checklist",
+    "code_block",
+    "code_execution",
+    "code_languages",
+    "code_long",
+    "connectors",
+    "emoji_unicode",
+    "emphasis",
+    "generated_file",
+    "headings",
+    "hr",
+    "image_generation",
+    "image_markdown",
+    "inline_code",
+    "latex_display",
+    "latex_inline",
+    "latex_matrix",
+    "link",
+    "list_bullet",
+    "list_nested",
+    "list_numbered",
+    "long_message",
+    "reasoning",
+    "refusal_error",
+    "table",
+    "thread_memory",
+    "upload_csv",
+    "upload_image",
+    "upload_json",
+    "upload_pdf",
+    "upload_text",
+    "video",
+    "web_search_citations"
+  ],
+  "capabilities_coverable_uncovered": [],
+  "capabilities_missing": []
+}

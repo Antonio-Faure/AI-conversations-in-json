@@ -1,0 +1,7 @@
+# Dependances de test / CI (sans le RAG : torch et sentence-transformers
+# sont lourds). Le WIP RAG se teste avec `requirements.txt` + torch CPU.
+pytest>=8.0
+pyflakes>=3.0
+PyYAML>=6.0
+beautifulsoup4>=4.12
+playwright>=1.45

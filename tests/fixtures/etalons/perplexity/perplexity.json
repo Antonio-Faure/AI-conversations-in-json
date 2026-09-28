@@ -1,0 +1,206 @@
+{
+  "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+  "platform": "perplexity",
+  "title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement...",
+  "url": "https://www.perplexity.ai/search/f0000000-0000-4000-8000-7d3b48b1fa63",
+  "model": "turbo",
+  "started_at": "2026-09-24T11:38:00Z",
+  "last_message_at": "2026-09-24T19:50:00Z",
+  "exported_at": "2026-09-28T07:31:25Z",
+  "messages": [
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-24T11:38:00Z",
+      "texte": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "# Titre principal\n\n## Sous-titre 1\n\n## Sous-titre 2",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-24T11:54:00Z",
+      "texte": "Écris une phrase contenant du texte en gras, en italique et barré. Réponds uniquement avec cette phrase.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "Voici une phrase avec du texte en gras, en italique et barré.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-24T12:17:00Z",
+      "texte": "Crée une liste à puces avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "- Premier élément\n- Deuxième élément\n- Troisième élément",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-24T12:48:00Z",
+      "texte": "Crée une liste numérotée avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "1. Premier élément\n2. Deuxième élément\n3. Troisième élément",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-24T13:20:00Z",
+      "texte": "Écris une citation Markdown avec le symbole >. Réponds uniquement avec la citation.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "> Ceci est une citation Markdown.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-24T13:52:00Z",
+      "texte": "Écris le mot \"print\" en code inline. Réponds uniquement avec le code.",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "assistant",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": null,
+      "texte": "print",
+      "code_blocks": [],
+      "reasoning": "Vérification des fichiers disponibles",
+      "artifacts": [],
+      "sources": [],
+      "tools": [
+        "Recherche"
+      ]
+    },
+    {
+      "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "message_id": "",
+      "role": "user",
+      "platform": "perplexity",
+      "model": null,
+      "timestamp": "2026-09-24T19:50:00Z",
+      "texte": "Insère une image Markdown avec l’URL [https://via.placeholder.com/100](https://via.placeholder.com/100) et l’alt \"Test\". Réponds uniquement avec l’image.\n\n![image.jpg](image.jpg)",
+      "code_blocks": [],
+      "reasoning": "",
+      "artifacts": [],
+      "sources": [],
+      "tools": []
+    }
+  ]
+}

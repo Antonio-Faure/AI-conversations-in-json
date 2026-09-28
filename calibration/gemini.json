@@ -1,0 +1,312 @@
+{
+  "platform": "gemini",
+  "mode": null,
+  "source_conversation": "https://gemini.google.com/app/f00d16dc409d2f56",
+  "generated_from": "exports/gemini/documentation-des-capacites-de-gemini.json",
+  "test_pool": 39,
+  "messages": [
+    {
+      "text": "Affiche la phrase suivante en appliquant les styles demandés : le mot 'A' en gras, le mot 'B' en italique et le mot 'C' en texte barré. Réponds en une seule ligne.",
+      "attachments": [],
+      "exposes": [
+        "emphasis"
+      ],
+      "source_test": "Vérifier le rendu des enrichissements typographiques de base."
+    },
+    {
+      "text": "Donne-moi une liste à puces de 3 fruits. Utilise au maximum 3 puces et aucun texte avant ou après.",
+      "attachments": [],
+      "exposes": [
+        "list_bullet"
+      ],
+      "source_test": "Vérifier le rendu des listes non ordonnées."
+    },
+    {
+      "text": "Affiche les 3 étapes pour faire un thé sous forme de liste numérotée. Aucun texte introductif.",
+      "attachments": [],
+      "exposes": [
+        "list_numbered"
+      ],
+      "source_test": "Vérifier l'alignement et la numérotation automatique d'une liste ordonnée."
+    },
+    {
+      "text": "Crée une checklist de 2 tâches : la première cochee, la seconde non cochee. Ne donne pas d'explication.",
+      "attachments": [],
+      "exposes": [
+        "checklist"
+      ],
+      "source_test": "Vérifier le rendu des cases à cocher Markdown."
+    },
+    {
+      "text": "Affiche la citation fictive : \"Le code est de la poésie logique\" dans un bloc de citation Markdown.",
+      "attachments": [],
+      "exposes": [
+        "blockquote",
+        "code_block"
+      ],
+      "source_test": "Vérifier le rendu visuel d'un bloc de citation."
+    },
+    {
+      "text": "Insère un lien Markdown pointant vers 'https://example.com' avec l'ancrage 'Site Test'. Réponds uniquement avec le lien.",
+      "attachments": [],
+      "exposes": [
+        "link"
+      ],
+      "source_test": "Vérifier l'insertion d'un lien Markdown cliquable."
+    },
+    {
+      "text": "Affiche le mot 'Haut', puis une ligne de séparation horizontale Markdown, puis le mot 'Bas'.",
+      "attachments": [],
+      "exposes": [
+        "hr"
+      ],
+      "source_test": "Vérifier l'affichage d'une ligne de séparation horizontale."
+    },
+    {
+      "text": "Intègre la commande `git status` en code en ligne dans une phrase de 10 mots.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "inline_code",
+        "web_search_citations"
+      ],
+      "source_test": "Vérifier la mise en valeur de code au sein d'un paragraphe."
+    },
+    {
+      "text": "Affiche un tableau Markdown de 2 colonnes (Nom, Âge) et 2 lignes de données. Ne rajoute aucun commentaire.",
+      "attachments": [],
+      "exposes": [
+        "table"
+      ],
+      "source_test": "Vérifier la structuration et le rendu visuel d'une grille/tableau."
+    },
+    {
+      "text": "Affiche la syntaxe d'une image Markdown pointant vers '[https://example.com/logo.png](https://example.com/logo.png)' avec le texte alternatif 'Logo'.",
+      "attachments": [],
+      "exposes": [
+        "image_markdown"
+      ],
+      "source_test": "Vérifier la capacité à formater une balise image standard."
+    },
+    {
+      "text": "Affiche $E=mc^2$ en inline, puis l'équation de Pythagore centrée $$a^2 + b^2 = c^2$$. Explique en une seule phrase.",
+      "attachments": [],
+      "exposes": [
+        "latex_display",
+        "latex_inline"
+      ],
+      "source_test": "Vérifier la distinction de rendu entre mathématiques en ligne et équation centrée block."
+    },
+    {
+      "text": "Affiche en LaTeX une matrice carrée 2x2 remplie de lettres (a, b en haut, c, d en bas). Aucun texte supplémentaire.",
+      "attachments": [],
+      "exposes": [
+        "latex_matrix"
+      ],
+      "source_test": "Vérifier l'alignement multi-lignes et tableaux mathématiques."
+    },
+    {
+      "text": "Identifie l'erreur dans ce JSON et donne la version corrigée : {\"titre\": \"Test\", \"prix\": 12,5}",
+      "attachments": [],
+      "exposes": [
+        "code_languages",
+        "headings",
+        "refusal_error"
+      ],
+      "source_test": "Identifier une faute de syntaxe dans une donnée structurée."
+    },
+    {
+      "text": "Transcris exactement le texte écrit dans cette image. Ne donne pas d'explication.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "upload_image"
+      ],
+      "source_test": "Transcrire le texte présent sur un fichier image."
+    },
+    {
+      "text": "Quel est le score de Bob d'après le fichier CSV joint ? Réponds en une seule phrase.",
+      "attachments": [
+        "donnees.csv"
+      ],
+      "exposes": [
+        "upload_csv"
+      ],
+      "source_test": "Extraire des données précises d'une pièce jointe."
+    },
+    {
+      "text": "Fais un résumé du fichier joint en 3 puces maximum.",
+      "attachments": [
+        "document.pdf"
+      ],
+      "exposes": [
+        "upload_pdf"
+      ],
+      "source_test": "Synthétiser le contenu d'un document téléversé."
+    },
+    {
+      "text": "Consigne : Lis ce texte et réponds aux 2 questions à la fin en moins de 30 mots au total.\n\n[Début du texte fictif]\nSection 1 : La réunion s'est tenue le 4 mai à Lyon. Le budget validé est de 50 000 euros.\nSection 2 : (Plusieurs paragraphes de remplissage sur la logistique, la restauration et les transports...)\nSection 3 : Le responsable désigné pour le suivi est Marc.\nSection 4 : (Autres paragraphes de remplissage...)\nSection 5 : En conclusion, la réunion du 4 mai à Paris a permis de valider le budget de 60 000 euros avec Paul.\n[Fin du texte fictif]\n\nQuestions :\n1. Qui est le responsable nommé en section 3 ?\n2. Quelle contradiction majeurs relèves-tu entre la section 1 et la section 5 ?",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "long_message"
+      ],
+      "source_test": "Traiter un texte volumineux, retrouver une aiguille dans une botte de foin et repérer une anomalie."
+    },
+    {
+      "text": "Transcris cet enregistrement audio en une phrase.",
+      "attachments": [
+        "audio.mp3"
+      ],
+      "exposes": [
+        "audio"
+      ],
+      "source_test": "Transcrire un enregistrement sonore."
+    },
+    {
+      "text": "Décris l'action principale exécutée dans cette vidéo en moins de 15 mots.",
+      "attachments": [
+        "video.mp4"
+      ],
+      "exposes": [
+        "video"
+      ],
+      "source_test": "Résumer la séquence visuelle d'une vidéo courte."
+    },
+    {
+      "text": "Recherche qui a remporté le dernier grand prix de Formule 1. Réponds en 2 phrases max avec la source.",
+      "attachments": [],
+      "exposes": [
+        "connectors",
+        "web_search_citations"
+      ],
+      "source_test": "Déclencher l'outil de recherche Web, trouver une donnée récente et citer la source."
+    },
+    {
+      "text": "Génère un fichier CSV téléchargeable nommé 'produits.csv' contenant 2 colonnes (Produit, Prix) et 2 lignes.",
+      "attachments": [],
+      "exposes": [
+        "generated_file"
+      ],
+      "source_test": "Créer un fichier binaire/texte réel et fournir un lien de téléchargement direct."
+    },
+    {
+      "text": "Mémorise dans mon profil que ma couleur préférée pour les interfaces est le violet. Réponds 'Mémorisé'.",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "thread_memory"
+      ],
+      "source_test": "Modifier la mémoire à long terme de l'utilisateur."
+    },
+    {
+      "text": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "list_nested"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Lis le fichier donnees.json joint et donne uniquement la valeur de la clé « etalon ».",
+      "attachments": [
+        "donnees.json"
+      ],
+      "exposes": [
+        "upload_json"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Résume le fichier notes.txt joint en une phrase.",
+      "attachments": [
+        "notes.txt"
+      ],
+      "exposes": [
+        "upload_text"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Génère une image d'un renard roux dans une forêt enneigée. Aucun texte.",
+      "attachments": [],
+      "exposes": [
+        "image_generation"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "artifact_canvas"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "emoji_unicode"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "attachments": [],
+      "exposes": [
+        "reasoning"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Exécute réellement ce Python et donne uniquement la sortie : print(sum([4, 5, 6]))",
+      "attachments": [],
+      "exposes": [
+        "code_execution"
+      ],
+      "source_test": "supplement"
+    }
+  ],
+  "capabilities_covered": [
+    "artifact_canvas",
+    "audio",
+    "blockquote",
+    "checklist",
+    "code_block",
+    "code_execution",
+    "code_languages",
+    "code_long",
+    "connectors",
+    "emoji_unicode",
+    "emphasis",
+    "generated_file",
+    "headings",
+    "hr",
+    "image_generation",
+    "image_markdown",
+    "inline_code",
+    "latex_display",
+    "latex_inline",
+    "latex_matrix",
+    "link",
+    "list_bullet",
+    "list_nested",
+    "list_numbered",
+    "long_message",
+    "reasoning",
+    "refusal_error",
+    "table",
+    "thread_memory",
+    "upload_csv",
+    "upload_image",
+    "upload_json",
+    "upload_pdf",
+    "upload_text",
+    "video",
+    "web_search_citations"
+  ],
+  "capabilities_coverable_uncovered": [],
+  "capabilities_missing": []
+}

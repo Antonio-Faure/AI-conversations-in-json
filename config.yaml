@@ -1,0 +1,64 @@
+# AI Conversations in JSON — configuration
+# Les valeurs omises reprennent DEFAULT_CONFIG (src/orchestrator.py) et sont
+# fusionnees ici.
+
+# Chemins relatifs a la racine du depot (portable).
+output_dir: exports
+profile_dir: profiles
+cookies_dir: cookies
+rag_db: rag/messages.db
+rag_model: BAAI/bge-m3          # embeddings locaux (offline, FR/EN)
+
+# Console uniquement : aucun log sur disque, aucun dossier par session.
+screenshot_dir: ""
+
+headless: true                 # false pour debugger ou pour la premiere connexion
+timeout_ms: 45000              # navigation + actions
+pacing_ms: 1500                # pause entre conversations (anti rate-limit ChatGPT)
+parallel: 1                    # 2 = un service par domaine en parallele (profils isoles)
+
+# Moteur navigateur : auto | playwright | botasaurus
+#   auto       = Playwright, avec bascule Botasaurus si challenge anti-bot
+#   playwright = Playwright seul
+#   botasaurus = Botasaurus seul (Chrome patche, contournement Cloudflare)
+engine: auto
+botasaurus:
+  chrome_executable_path: ""   # vide = auto-detection (Chromium Playwright, $AICV_CHROME_PATH)
+  enable_xvfb: true            # Chrome headful dans Xvfb : contourne les challenges
+                               # Cloudflare qui bloquent le headless pur. Requiert xvfb.
+
+# scroll infini (chargement complet des fils de discussion)
+scroll:
+  max_rounds: 60
+  pause_ms: 700
+  stable_rounds: 3
+# scroll de la sidebar (liste complete des conversations ; lazy-load exigeant)
+sidebar:
+  max_rounds: 40
+  pause_ms: 700
+  stable_rounds: 4
+
+services:
+  chatgpt:
+    enabled: true
+    url: https://chatgpt.com/
+  claude:
+    enabled: true
+    url: https://claude.ai/chats
+    engine: botasaurus         # Cloudflare bloque Playwright sur claude.ai
+  gemini:
+    enabled: true
+    url: https://gemini.google.com/app
+  perplexity:
+    enabled: true
+    url: https://www.perplexity.ai/
+    engine: botasaurus         # Cloudflare bloque Playwright + decouverte API GraphQL
+    pacing_ms: 3000            # le quota gratuit n'aimait pas les rafales de lecture
+  # Grok : API HTTP + cookies (Chromium bloque par Cloudflare, pas de navigateur)
+  grok:
+    enabled: true
+    url: https://grok.com/
+  mistral:
+    enabled: true
+    url: https://chat.mistral.ai/work
+    engine: botasaurus         # Cloudflare bloque Playwright

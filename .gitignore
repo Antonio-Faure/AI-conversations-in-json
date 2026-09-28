@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+
+# Cookies d'authentification (secrets locaux, jamais versionnes)
+cookies/*.json
+!cookies/README.md
+
+# Runtime (donnees locales, jamais versionnees)
+exports/*
+!exports/.gitkeep
+/rag/
+profiles/
+profiles-test/
+.state/
+logs/
+*.jsonl
+
+# Config locale des etalons (ids reels des conversations)
+scripts/etalons.json
+
+# Termes personnels a assainir (jamais versionne)
+scripts/sanitize.local.json
+
+# LibreOffice
+.~lock.*#
+
+# archive des exports avant etalonnage
+archive/

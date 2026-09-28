@@ -1,0 +1,204 @@
+# AGENTS.md
+
+Guide pour les agents IA qui travaillent sur ce dépôt.
+
+## En bref
+
+Scraping de 6 chatbots (**chatgpt, claude, gemini, perplexity, grok, mistral**)
+vers un **JSON standardisé + le HTML brut** de chaque conversation, plus un RAG
+et une page web de recherche. Le détail complet est dans [`README.md`](README.md) ;
+ce fichier donne les conventions et le mode opératoire.
+
+## Environnement
+
+- Python du venv **toujours** : `$AICV_ROOT/.venv/bin/python`.
+- Variables de chemins (a definir dans l'environnement) : `AICV_ROOT` = racine
+  du depot, `AICV_WT` = dossier des worktrees des sous-agents, `AICV_RUN` =
+  dossiers runtime hors depot.
+- Aucun secret commité : `cookies/*.json`, `profiles/`, `exports/`, `rag/`,
+  `logs/` sont gitignorés. Ne jamais afficher/copier un cookie ou un token.
+- Config : [`config.yaml`](config.yaml) (chemins relatifs au fichier) ; les
+  valeurs par défaut sont dans `DEFAULT_CONFIG` (`src/orchestrator.py`).
+
+## Commandes
+
+```bash
+# Tests + lint (obligatoire avant tout commit)
+.venv/bin/python -m pytest -q
+.venv/bin/python -m pyflakes src run.py scripts tests
+
+# Scraping
+.venv/bin/python run.py --daily
+.venv/bin/python run.py --monthly --service gemini
+.venv/bin/python run.py --monthly --match "conversation etalon"   # filtre titre (sans accents)
+.venv/bin/python run.py --daily --headful --limit 5 --verbose     # debug
+.venv/bin/python run.py --login claude                            # 1re connexion (profil)
+
+# Régénérer les JSON depuis les HTML (sans re-crawler), puis réindexer
+.venv/bin/python scripts/reparse_exports.py
+.venv/bin/python scripts/rag_index.py --force
+
+# RAG + web
+.venv/bin/python scripts/rag_index.py [--platform grok] [--force]
+.venv/bin/python scripts/rag_search.py "requête" -k 10
+.venv/bin/python scripts/serve_web.py            # http://127.0.0.1:8765
+
+# Utilitaires
+.venv/bin/python scripts/backfill_urls.py        # champ url manquant
+.venv/bin/python scripts/download_images.py      # images locales (best effort)
+.venv/bin/python scripts/random_conversation.py
+.venv/bin/python scripts/audit_exports.py exports
+
+# Contrôle de régression des conversations d'étalonnage (canaris des parseurs)
+.venv/bin/python scripts/check_etalons.py            # compare à la baseline
+.venv/bin/python scripts/check_etalons.py --update   # mémorise la baseline
+```
+
+Options récentes utiles : `--match TEXTE` (ne scraper que les titres/id
+correspondants), `--screenshots` (un PNG par tour, centré, dans
+`exports/<platform>/screenshots/<conv>/message-NN.png`), `--output DIR`
+(surcharge `output_dir`), `--retry-unavailable` (réessaie les conversations
+marquées indisponibles).
+
+## Architecture (points d'entrée)
+
+- **CLI** : `run.py` → `Orchestrator.run/run_service/_scrape_one`
+  (`src/orchestrator.py`). `_scrape_one` gère l'écriture JSON/HTML, la mise à
+  jour de `conversation_list.json`, le téléchargement d'images et les screenshots.
+- **Services** (navigation + découverte) : `src/services/<bot>.py`, façades
+  communes `scrape_conversation` / `parse_page` / `capture_message_screenshots`
+  dans `src/services/base.py`. Grok est **API + cookies** (`uses_browser=False`).
+- **Parseurs** (DOM → `Conversation`, testables sans navigateur) :
+  `src/parsers/<bot>.py`, helpers dans `src/parsers/base.py`.
+- **Schéma** : `src/schema.py` (`Conversation`, `Message`, `normalize_messages`).
+- **Navigateurs** : `src/browser.py` (Playwright) et
+  `src/browser_botasaurus.py` (anti-Cloudflare) — même façade ; les services ne
+  doivent pas accéder à `session.page`.
+- **RAG** : `src/rag/` (BGE-M3 + SQLite/sqlite-vec), page web `web/`, serveur
+  `scripts/serve_web.py`.
+
+## Invariants à ne pas casser
+
+- **Schéma JSON figé** : ordre des clés `conversation_id, platform, title, url,
+  model, started_at, last_message_at, exported_at, messages`. Ne jamais renommer
+  un champ.
+- **Alternance des rôles** : jamais deux `user` ni deux `assistant` consécutifs
+  (`normalize_messages`). Les tours éclatés sont fusionnés, les doublons retirés.
+- `texte` = markdown complet (fences incluses) ; `code_blocks` = vue structurée
+  `{language, code}` (le code reste aussi dans `texte`).
+- **Images** : markdown relatif `![alt](images/<hash>.<ext>)`, fichier téléchargé
+  dans `exports/<platform>/images/`, servi par `/media/<platform>/<fichier>`.
+- **Pièces jointes** (PDF/CSV/JSON/TXT/audio/vidéo) : lien relatif
+  `[nom](files/<hash>.<ext>)`, fichier téléchargé dans `exports/<platform>/files/`,
+  servi par la même route `/media/<platform>/<fichier>`.
+- **URL** de conversation toujours renseignée (`Conversation.url`).
+- Ajouter une capacité de parseur = fichier `<bot>.py` + tests, **sans** toucher
+  `base.py`/`schema.py`/serveur sans raison.
+
+## Tests
+
+- `pytest` (config `pytest.ini`, `pythonpath = .`). Fixtures HTML dans
+  `tests/fixtures/` (fixture `fixture_html` dans `tests/conftest.py`).
+- Tester les parseurs **sans navigateur** (HTML en dur) ; l'orchestrateur avec
+  des services/sessions factices (`tests/test_orchestrator.py`) ; le CLI sans
+  Chromium (`tests/test_cli.py`).
+- Toute correction de parseur doit venir avec un test qui reproduit le cas.
+
+## Sous-agents de correction de parseur
+
+- Agents : `.opencode/agent/parser-<bot>.md` (modèle vision
+  `opencode-go/deepseek-v4.1-flash`, outils complet).
+- Skill commune : `.opencode/skill/parser-loop/SKILL.md` — boucle
+  `scrape → screenshots → patch parseur → re-scrape`.
+- Chaque agent travaille dans son **worktree** `${AICV_WT}/<bot>`
+  et ne modifie que `src/parsers/<bot>.py` (+ service + tests). Les fichiers
+  partagés (`base.py`, `schema.py`, `orchestrator.py`, `scripts/`, `web/`) sont
+  réservés à l'agent principal.
+- Les agents/skill ne sont chargés qu'au **démarrage** d'opencode : redémarrer
+  après modification de `.opencode/`.
+
+## Envoi de messages (conversation d'étalonnage)
+
+- Drivers d'envoi : `src/drivers/<bot>.py` (saisie, upload, attente, rate-limit)
+  au-dessus de la façade `session` (`click_any`/`type_into`/`upload_any`/`press`).
+- Runner resumable : `src/drivers/runner.py` + `scripts/etalon_run.py`
+  (`queue.json` + `state.json` + `BILAN.md`, arrêt sur rate-limit).
+- Médias de test : `scripts/make_media.py` (`src/utils/media.py`, ffmpeg).
+- Skill `etalon-runner` et agents `.opencode/agent/runner-<bot>.md` (gemini, grok).
+- Dossiers runtime hors dépôt : `${AICV_RUN}/<bot>/`.
+
+## Conversation d'étalonnage (canari des parseurs)
+
+- Liste suivie dans `scripts/etalons.json` (plateforme → id/label + baseline),
+  non versionne ; modèle : `scripts/etalons.example.json`.
+- `scripts/check_etalons.py` compare les métriques (messages, alternance des
+  rôles, images, tableaux, listes, langues de code, LaTeX) à la baseline et sort
+  en erreur si une capacité chute → à lancer après chaque `--monthly`.
+- Quand une conversation d'étalonnage change (nouvel étalonnage), mettre à jour
+  les id dans `scripts/etalons.json` puis `check_etalons.py --update`.
+
+## Calibration (suite de tests compactée par bot)
+
+- `calibration/manifest.json` : taxonomie fermée des capacités à exposer
+  (`keywords` = taggage auto, `parsed_today` = déjà parsé ou non).
+- `calibration/<bot>.json` : la conversation d'étalonnage compactée — les
+  messages **générés par le bot lui-même** (« crée une suite de messages
+  utilisateur pour tester toutes ces capacités »), réduits au **minimum qui
+  couvre tout** (set-cover) et 100 % propres à ce bot.
+- `calibration/bootstraps.json` : les 2 amorces (documentation + génération de
+  suite) à envoyer **une fois** aux bots sans suite.
+- `calibration/sources/<bot>.md` : suites exportées depuis un canvas/document
+  (ChatGPT, Claude) quand le bot n'expose pas la suite dans un export JSON.
+- `calibration/supplements.json` : tests de complément pour les capacités que la
+  suite du bot ne couvre pas (marqués `source_test = "supplement"`) → couverture
+  36/36 ; retirer une entrée désactive le complément.
+- Régénérer : `.venv/bin/python scripts/calibration_build.py --report`.
+  L'extraction lit les exports `documentation-*` (JSON), le canvas (HTML
+  Mistral) ou `calibration/sources/<bot>.md` ; le rapport liste les capacités
+  non couvertes.
+- Fiche d'envoi (messages à poster dans l'ordre + pièces jointes) :
+  `.venv/bin/python scripts/calibration_build.py --print <bot>`.
+  Médias : `.venv/bin/python scripts/make_media.py --bot <bot>`.
+- File d'envoi : `--write-queue` (écrit `calibration_queue.json` dans le run dir) ;
+  envoi resumable : `scripts/etalon_run.py --bot <bot> --run-dir … --queue …`
+  (`--mode work|chat` pour Mistral).
+- **Audit d'intégrité** : `.venv/bin/python scripts/audit_etalon.py`
+  (file vs export, tours manquants par conversation).
+- **Complément** : `.venv/bin/python scripts/calibration_build.py --complement <bot>`
+  écrit `calibration_queue_supp.json` (tours manquants) → à envoyer dans une
+  **2e conversation** ; l'union des conversations d'une plateforme couvre le
+  manifeste (`scripts/etalons.json` accepte plusieurs entrées par plateforme).
+- Envoi (une seule fois) : sous-agent browser-use par bot, puis on gèle le
+  HTML/JSON de la conversation obtenue.
+- **Fixtures gelées** : `.venv/bin/python scripts/freeze_etalon.py [--clean]`
+  copie HTML+JSON dans `tests/fixtures/etalons/`; `tests/test_etalon_fixtures.py`
+  reparse hors navigateur et compare (détecte une régression de parseur).
+
+## Pièges connus
+
+- DOM des plateformes volatil → chaînes de sélecteurs de repli ; mettre à jour
+  `message_selectors` + parser en cas de rupture.
+- Cloudflare : Claude/Perplexity/Mistral forcent `engine: botasaurus` ; login et
+  export doivent utiliser **le même moteur** (cookies liés à l'UA).
+- Perplexity gratuit rate-limite → espacer (`--daily`), pas de scraping massif.
+- **Fils « collés en bas »** (Perplexity, parfois Claude/ChatGPT) : un `scrollTop`
+  programmatique est annulé. Utiliser `session.scroll_wheel` (molette réelle CDP)
+  pour remonter le conteneur, pas `scrollTop`.
+- Conversations **indisponibles** (supprimées/privées) : l'URL redirige vers
+  l'accueil ; elles sont marquées `unavailable` dans `conversation_list.json` et
+  plus retentées. `--retry-unavailable` lève le flag pour un nouvel essai.
+- Une **fusion JSON partielle** (scrape tronqué) ne remplace pas l'archive :
+  statut `kept` (préfixe/suffixe) → ne pas dégrader un export complet.
+- Mistral : **deux modes** `/chat` et `/work` (même titre possible) ; le mode est
+  activé par `_ensure_mode`. Timestamps non exposés (`null`).
+- Grok : pas de navigateur → pas de screenshots, HTML généré (`html_render.py`) ;
+  les pièces jointes sont téléchargées via un `fetch` authentifié par cookies.
+- Après un `reparse_exports.py` ou un `download_images.py`, relancer
+  `rag_index.py --force` (cache par empreinte de message).
+
+## Conventions
+
+- Commentaires/docstrings en **français**, code et noms en anglais ; type hints.
+- Pas de dépendance nouvelle sans la déclarer dans `requirements.txt`.
+- Commits : `type(scope): résumé` en français, minuscule (ex.
+  `fix(gemini): listes imbriquées`, `feat(web): ...`). Ne pas commit sans demande.

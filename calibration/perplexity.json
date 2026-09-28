@@ -1,0 +1,291 @@
+{
+  "platform": "perplexity",
+  "mode": null,
+  "source_conversation": "https://www.perplexity.ai/search/f0000000-0000-4000-8000-6d1981fd41a5",
+  "generated_from": "exports/perplexity/dresse-une-documentation-complete-et-structuree-de-tout-ce-que-tu-peux-faire-dan.json",
+  "test_pool": 201,
+  "messages": [
+    {
+      "text": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "headings"
+      ],
+      "source_test": "Génération de titres hiérarchisés en Markdown."
+    },
+    {
+      "text": "Écris une phrase contenant du texte en gras, en italique et barré. Réponds uniquement avec cette phrase.",
+      "attachments": [],
+      "exposes": [
+        "emphasis"
+      ],
+      "source_test": "Application des styles de base."
+    },
+    {
+      "text": "Crée une liste à puces avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "attachments": [],
+      "exposes": [
+        "list_bullet"
+      ],
+      "source_test": "Création d’une liste non ordonnée."
+    },
+    {
+      "text": "Crée une liste numérotée avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "attachments": [],
+      "exposes": [
+        "list_numbered"
+      ],
+      "source_test": "Création d’une liste ordonnée."
+    },
+    {
+      "text": "Crée une checklist avec 2 cases vides. Réponds uniquement avec la checklist.",
+      "attachments": [],
+      "exposes": [
+        "checklist"
+      ],
+      "source_test": "Création d’une checklist Markdown."
+    },
+    {
+      "text": "Écris une citation Markdown avec le symbole >. Réponds uniquement avec la citation.",
+      "attachments": [],
+      "exposes": [
+        "blockquote"
+      ],
+      "source_test": "Insertion d’une citation."
+    },
+    {
+      "text": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+      "attachments": [],
+      "exposes": [
+        "hr"
+      ],
+      "source_test": "Insertion d’une ligne horizontale."
+    },
+    {
+      "text": "Écris le mot \"print\" en code inline. Réponds uniquement avec le code.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "inline_code"
+      ],
+      "source_test": "Insertion de code inline."
+    },
+    {
+      "text": "Insère une image Markdown avec l’URL https://via.placeholder.com/100 et l’alt \"Test\". Réponds uniquement avec l’image.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "image_markdown"
+      ],
+      "source_test": "Insertion d’une image via syntaxe Markdown."
+    },
+    {
+      "text": "Crée une image cliquable Markdown : image https://via.placeholder.com/100 vers https://exemple.com. Réponds uniquement avec l’élément.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "image_generation",
+        "link"
+      ],
+      "source_test": "Lien autour d’une image."
+    },
+    {
+      "text": "Écris la formule inline \\( E = mc^2 \\). Réponds uniquement avec la formule.",
+      "attachments": [],
+      "exposes": [
+        "latex_inline"
+      ],
+      "source_test": "Affichage d’une formule inline."
+    },
+    {
+      "text": "Écris un système avec \\begin{cases} x+y=1 \\\\ x-y=0 \\end{cases} en bloc. Réponds uniquement avec la formule.",
+      "attachments": [],
+      "exposes": [
+        "latex_display",
+        "latex_matrix"
+      ],
+      "source_test": "Alignement d’équations."
+    },
+    {
+      "text": "Génère un CSV avec 2 colonnes (nom, valeur) et 2 lignes. Ne mets aucun texte avant ou après.",
+      "attachments": [],
+      "exposes": [
+        "table",
+        "upload_csv"
+      ],
+      "source_test": "Génération de CSV."
+    },
+    {
+      "text": "Détecte l’erreur dans ce JSON : {\"x\": 1,}. Réponds uniquement par \"erreur détectée\" ou \"aucune erreur\".",
+      "attachments": [],
+      "exposes": [
+        "code_languages",
+        "refusal_error"
+      ],
+      "source_test": "Détection d’erreur."
+    },
+    {
+      "text": "Décris cette image en 10 mots maximum.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "upload_image"
+      ],
+      "source_test": "Description d’une image fournie."
+    },
+    {
+      "text": "Résume ce fichier en 5 mots maximum.",
+      "attachments": [
+        "notes.txt"
+      ],
+      "exposes": [
+        "upload_text"
+      ],
+      "source_test": "Lecture de fichier texte."
+    },
+    {
+      "text": "Résume ce PDF en 10 mots maximum.",
+      "attachments": [
+        "document.pdf"
+      ],
+      "exposes": [
+        "upload_pdf"
+      ],
+      "source_test": "Lecture de PDF."
+    },
+    {
+      "text": "Convertis ce fichier en YAML. Fournis le fichier YAML en sortie.",
+      "attachments": [
+        "donnees.json"
+      ],
+      "exposes": [
+        "code_languages",
+        "generated_file",
+        "upload_json"
+      ],
+      "source_test": "Conversion de fichier."
+    },
+    {
+      "text": "Résume ce texte en 20 mots maximum.",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "long_message",
+        "thread_memory"
+      ],
+      "source_test": "Gestion de contexte étendu."
+    },
+    {
+      "text": "Transcris l’audio de cette vidéo. Réponds uniquement avec la transcription.",
+      "attachments": [
+        "audio.mp3",
+        "video.mp4"
+      ],
+      "exposes": [
+        "audio",
+        "video"
+      ],
+      "source_test": "Transcription vidéo."
+    },
+    {
+      "text": "Recherche la dernière version de Python. Réponds uniquement avec le numéro de version.",
+      "attachments": [],
+      "exposes": [
+        "web_search_citations"
+      ],
+      "source_test": "Recherche Web."
+    },
+    {
+      "text": "Exécute : print(\"Hello\"). Réponds uniquement avec la sortie.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "code_execution"
+      ],
+      "source_test": "Exécution de code."
+    },
+    {
+      "text": "Le skill utilise-t-il d’autres outils ? Réponds par \"oui\" ou \"non\".",
+      "attachments": [],
+      "exposes": [
+        "connectors"
+      ],
+      "source_test": "Skill utilisant outils."
+    },
+    {
+      "text": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "list_nested"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "artifact_canvas"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "emoji_unicode"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "attachments": [],
+      "exposes": [
+        "reasoning"
+      ],
+      "source_test": "supplement"
+    }
+  ],
+  "capabilities_covered": [
+    "artifact_canvas",
+    "audio",
+    "blockquote",
+    "checklist",
+    "code_block",
+    "code_execution",
+    "code_languages",
+    "code_long",
+    "connectors",
+    "emoji_unicode",
+    "emphasis",
+    "generated_file",
+    "headings",
+    "hr",
+    "image_generation",
+    "image_markdown",
+    "inline_code",
+    "latex_display",
+    "latex_inline",
+    "latex_matrix",
+    "link",
+    "list_bullet",
+    "list_nested",
+    "list_numbered",
+    "long_message",
+    "reasoning",
+    "refusal_error",
+    "table",
+    "thread_memory",
+    "upload_csv",
+    "upload_image",
+    "upload_json",
+    "upload_pdf",
+    "upload_text",
+    "video",
+    "web_search_citations"
+  ],
+  "capabilities_coverable_uncovered": [],
+  "capabilities_missing": []
+}

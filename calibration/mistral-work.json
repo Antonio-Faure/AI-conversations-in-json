@@ -1,0 +1,260 @@
+{
+  "platform": "mistral",
+  "mode": "work",
+  "source_conversation": "https://chat.mistral.ai/work/f0000000-0000-4000-8000-e5283a983180",
+  "generated_from": "exports/mistral/capacites-et-fonctionnalites-detaillees.json",
+  "test_pool": 181,
+  "messages": [
+    {
+      "text": "Affiche le mot \"important\" en gras, le mot \"optionnel\" en italique et le mot \"annulé\" en barré. Utilise uniquement ces trois mots, chacun sur une nouvelle ligne.",
+      "attachments": [],
+      "exposes": [
+        "emphasis"
+      ],
+      "source_test": "Mise en forme de texte (gras, italique, barré)."
+    },
+    {
+      "text": "Numérote ces étapes : première, deuxième, troisième. Utilise uniquement la liste numérotée, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "list_numbered"
+      ],
+      "source_test": "Création de listes ordonnées."
+    },
+    {
+      "text": "Cite cette phrase en bloc : \"La simplicité est la sophistication suprême.\" Utilise uniquement la citation, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "blockquote"
+      ],
+      "source_test": "Affichage de citations en bloc."
+    },
+    {
+      "text": "Crée un lien vers \"https://fr.wikipedia.org\" avec le texte \"Wikipédia\". Utilise uniquement le lien, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "link"
+      ],
+      "source_test": "Création de liens cliquables."
+    },
+    {
+      "text": "Affiche un séparateur horizontal. Utilise uniquement le séparateur, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "hr"
+      ],
+      "source_test": "Affichage d’un séparateur visuel."
+    },
+    {
+      "text": "Affiche le code \"print('Hello')\" en ligne. Utilise uniquement ce code, sans autre texte.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "inline_code",
+        "web_search_citations"
+      ],
+      "source_test": "Affichage de code en ligne."
+    },
+    {
+      "text": "Affiche la formule E=mc^2 en LaTeX inline, suivie de \" — Équation d'Einstein\". Utilise uniquement cette ligne.",
+      "attachments": [],
+      "exposes": [
+        "latex_display",
+        "latex_inline"
+      ],
+      "source_test": "Affichage d’une formule mathématique en ligne."
+    },
+    {
+      "text": "Affiche une matrice 2x2 avec les éléments a, b, c, d en LaTeX, suivie de \" — Matrice\". Utilise uniquement ces éléments.",
+      "attachments": [],
+      "exposes": [
+        "latex_matrix"
+      ],
+      "source_test": "Affichage d’une matrice en LaTeX."
+    },
+    {
+      "text": "Donne un exemple minimal de requête SQL (1 ligne) qui sélectionne tout depuis une table \"users\". Utilise un bloc de code avec coloration syntaxique. Pas d'explication.",
+      "attachments": [],
+      "exposes": [
+        "code_block",
+        "code_languages",
+        "table"
+      ],
+      "source_test": "Génération de code SQL avec coloration syntaxique."
+    },
+    {
+      "text": "Génère un CSV avec 2 colonnes (Nom,Âge) et 2 lignes (Alice,30) et (Bob,25). Affiche UNIQUEMENT le CSV, sans texte avant ou après.",
+      "attachments": [],
+      "exposes": [
+        "table",
+        "upload_csv"
+      ],
+      "source_test": "Génération de données au format CSV."
+    },
+    {
+      "text": "Extrais le texte de cette image. Réponds UNIQUEMENT avec le texte extrait, sans guillemets ni autre texte.",
+      "attachments": [
+        "image.png"
+      ],
+      "exposes": [
+        "image_markdown",
+        "upload_image"
+      ],
+      "source_test": "Extraction de texte depuis une image via OCR."
+    },
+    {
+      "text": "Extrais le texte du fichier document.pdf. Réponds UNIQUEMENT avec le texte extrait, sans autre texte.",
+      "attachments": [
+        "document.pdf"
+      ],
+      "exposes": [
+        "upload_pdf"
+      ],
+      "source_test": "Extraction de texte depuis un PDF."
+    },
+    {
+      "text": "Lis le fichier donnees.json et extrais les noms des personnes sous forme de liste JSON. Affiche UNIQUEMENT la liste, sans texte avant ou après.",
+      "attachments": [
+        "donnees.json"
+      ],
+      "exposes": [
+        "code_languages",
+        "upload_json"
+      ],
+      "source_test": "Extraction de données depuis un fichier JSON."
+    },
+    {
+      "text": "Dans ce texte : \"Section 1: Contenu A. Section 2: Contenu B. Section 3: Contenu C.\", liste les titres de section. Réponds avec une liste à puces de 3 éléments max.",
+      "attachments": [],
+      "exposes": [
+        "code_long",
+        "headings",
+        "list_bullet",
+        "long_message"
+      ],
+      "source_test": "Identification de sections dans un texte long."
+    },
+    {
+      "text": "Transcris cet audio. Réponds UNIQUEMENT avec le texte transcrit, sans guillemets ni autre texte.",
+      "attachments": [
+        "audio.mp3"
+      ],
+      "exposes": [
+        "audio"
+      ],
+      "source_test": "Transcription d’un fichier audio en texte."
+    },
+    {
+      "text": "Utilise du code pour lire le fichier notes.txt et afficher son contenu. Réponds UNIQUEMENT avec le contenu du fichier.",
+      "attachments": [
+        "notes.txt"
+      ],
+      "exposes": [
+        "code_block",
+        "code_execution",
+        "thread_memory",
+        "upload_text"
+      ],
+      "source_test": "Lecture d’un fichier via exécution de code."
+    },
+    {
+      "text": "Crée un Canvas de type text/markdown nommé \"rapport\" avec le contenu \"# Rapport de test\\n\\nCeci est un rapport.\". Confirme UNIQUEMENT par \"Canvas rapport créé\".",
+      "attachments": [],
+      "exposes": [
+        "artifact_canvas"
+      ],
+      "source_test": "Création d’un document PDF via Canvas."
+    },
+    {
+      "text": "L'outil de génération d'images est-il disponible ? Si oui, génère une image avec le prompt \"cercle rouge\" et confirme par \"Image générée\". Sinon, réponds \"Non disponible\".",
+      "attachments": [],
+      "exposes": [
+        "connectors",
+        "image_generation"
+      ],
+      "source_test": "Vérification de la disponibilité de image_generation."
+    },
+    {
+      "text": "Affiche une vidéo directement dans le chat. Réponds UNIQUEMENT avec \"Impossible\".",
+      "attachments": [],
+      "exposes": [
+        "checklist",
+        "refusal_error",
+        "video"
+      ],
+      "source_test": "Signalement d’une tâche impossible."
+    },
+    {
+      "text": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "list_nested"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Crée un fichier texte téléchargeable nommé notes.txt contenant « Bonjour ». Fournis le fichier.",
+      "attachments": [],
+      "exposes": [
+        "generated_file"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "attachments": [],
+      "exposes": [
+        "emoji_unicode"
+      ],
+      "source_test": "supplement"
+    },
+    {
+      "text": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "attachments": [],
+      "exposes": [
+        "reasoning"
+      ],
+      "source_test": "supplement"
+    }
+  ],
+  "capabilities_covered": [
+    "artifact_canvas",
+    "audio",
+    "blockquote",
+    "checklist",
+    "code_block",
+    "code_execution",
+    "code_languages",
+    "code_long",
+    "connectors",
+    "emoji_unicode",
+    "emphasis",
+    "generated_file",
+    "headings",
+    "hr",
+    "image_generation",
+    "image_markdown",
+    "inline_code",
+    "latex_display",
+    "latex_inline",
+    "latex_matrix",
+    "link",
+    "list_bullet",
+    "list_nested",
+    "list_numbered",
+    "long_message",
+    "reasoning",
+    "refusal_error",
+    "table",
+    "thread_memory",
+    "upload_csv",
+    "upload_image",
+    "upload_json",
+    "upload_pdf",
+    "upload_text",
+    "video",
+    "web_search_citations"
+  ],
+  "capabilities_coverable_uncovered": [],
+  "capabilities_missing": []
+}
