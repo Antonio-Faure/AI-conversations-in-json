@@ -96,6 +96,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "screenshot_dir": "",
     # capture un screenshot par message (tour centre) dans exports/.../screenshots/
     "screenshots": False,
+    # capture les versions alternatives des messages (editions/regenerations)
+    "variants": False,
     "headless": True,
     "timeout_ms": 45000,
     "parallel": 1,

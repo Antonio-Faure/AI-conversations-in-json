@@ -1,6 +1,5 @@
 {
   "platform": "mistral",
-  "mode": "chat",
   "source_conversation": "https://chat.mistral.ai/chat/f0000000-0000-4000-8000-833c05da2bb7",
   "generated_from": "exports/mistral/capacites-et-fonctionnalites.html",
   "test_pool": 165,

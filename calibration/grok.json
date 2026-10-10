@@ -1,6 +1,5 @@
 {
   "platform": "grok",
-  "mode": null,
   "source_conversation": "https://grok.com/chat/f0000000-0000-4000-8000-46207f034f20",
   "generated_from": "exports/grok/documentation-capabilities-data-tools-memory.json",
   "test_pool": 61,

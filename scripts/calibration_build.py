@@ -58,13 +58,11 @@ SOURCES: Dict[str, Dict[str, Any]] = {
         "kind": "json",
         "path": "exports/mistral/capacites-et-fonctionnalites-detaillees.json",
         "platform": "mistral",
-        "mode": "work",
     },
     "mistral-chat": {
         "kind": "html",
         "path": "exports/mistral/capacites-et-fonctionnalites.html",
         "platform": "mistral",
-        "mode": "chat",
         "json": "exports/mistral/capacites-et-fonctionnalites.json",
     },
 }
@@ -99,7 +97,6 @@ def _build_bot(name: str, spec: Dict[str, Any], manifest: Dict[str, Any]) -> Dic
         platform=platform,
         tests=tests,
         manifest=manifest,
-        mode=spec.get("mode"),
         source_conversation=_conversation_ref(spec),
         generated_from=str(spec["path"]),
     )
@@ -150,8 +147,7 @@ def print_sheet(name: str) -> int:
     if not messages:
         print(f"{name}: aucune suite (statut {payload.get('status')})", file=sys.stderr)
         return 2
-    mode = f" [mode {payload['mode']}]" if payload.get("mode") else ""
-    print(f"\n# {name}{mode} — {len(messages)} messages a poster (dans l'ordre)")
+    print(f"\n# {name} — {len(messages)} messages a poster (dans l'ordre)")
     for i, message in enumerate(messages, 1):
         joint = f"   [PJ: {', '.join(message['attachments'])}]" if message.get("attachments") else ""
         print(f"{i:2}. {message['text']}{joint}")

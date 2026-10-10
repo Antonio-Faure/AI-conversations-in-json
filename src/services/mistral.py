@@ -1,11 +1,7 @@
 """Scraper Mistral (chat.mistral.ai) via navigateur (botasaurus anti-Cloudflare).
 
-Mistral a deux modes a scraper :
-  - /chat  : chatbot (historique principal)
-  - /work  : mode agentique
-
-Le contenu d'une conversation n'est rendu qu'apres activation du mode via
-l'« app switcher » ; `_ensure_mode` s'en charge avant chaque navigation.
+L'application /chat a fusionne dans /work : toutes les conversations vivent
+sous `/work/<id>` (les anciennes URLs `/chat/<id>` sont reecrites).
 Les fils longs etant virtualises (seule une fenetre de tours est montee), le
 fil est collecte de maniere incrementale en remontant le conteneur interne
 (voir `_collect_conversation`).
@@ -21,9 +17,12 @@ from typing import Any, Dict, List, Optional
 from ..parsers.mistral import MistralParser, merge_message_fragments
 from ..schema import ConversationRef
 from ..services.base import BaseService, ServiceNotLoggedIn
+from ..utils.logging import get_logger
+from ..utils.urls import normalize_conversation_url
+
+log = get_logger("services.mistral")
 
 BASE = "https://chat.mistral.ai"
-MODES = ("chat", "work")
 
 #: selecteur d'un tour (sert aussi de selecteur d'attente du rendu)
 TURN_SELECTOR = "div[data-message-author-role]"
@@ -115,6 +114,51 @@ return (function(){
 })();
 """
 
+# -- capture des versions alternatives (editions/regenerations) ---------------
+
+#: messages portant un switcher de versions (+ index de la version affichee)
+_VARIANTS_FIND_JS = """
+return (function(){
+  const out = [];
+  document.querySelectorAll('[data-message-version]').forEach(n => {
+    const prev = n.querySelector("button[aria-label*='précédente' i]");
+    const next = n.querySelector("button[aria-label*='suivante' i]");
+    if (prev || next) {
+      out.push({id: n.getAttribute('data-message-id') || '',
+                v: parseInt(n.getAttribute('data-message-version'), 10) || 0});
+    }
+  });
+  return out;
+})();
+"""
+
+#: lit la version affichee d'un message (index + HTML du conteneur)
+_VARIANTS_READ_JS = """
+return (function(){
+  const id = %s;
+  const n = [...document.querySelectorAll('[data-message-version]')]
+    .find(x => x.getAttribute('data-message-id') === id);
+  if (!n) return null;
+  return {v: parseInt(n.getAttribute('data-message-version'), 10) || 0,
+          html: n.outerHTML};
+})();
+"""
+
+#: clique « Version précédente / suivante » (false si absente ou desactivee)
+_VARIANTS_CLICK_JS = """
+return (function(){
+  const id = %s, label = %s;
+  const n = [...document.querySelectorAll('[data-message-version]')]
+    .find(x => x.getAttribute('data-message-id') === id);
+  if (!n) return false;
+  const b = [...n.querySelectorAll('button')]
+    .find(x => new RegExp(label, 'i').test(x.getAttribute('aria-label') || ''));
+  if (!b || b.disabled) return false;
+  b.click();
+  return true;
+})();
+"""
+
 
 class MistralService(BaseService):
     name = "mistral"
@@ -125,7 +169,7 @@ class MistralService(BaseService):
         "div.overflow-y-auto",
         "aside",
     )
-    sidebar_ready_selectors = ("a[href^='/chat/']", "a[href^='/work/']")
+    sidebar_ready_selectors = ("a[href^='/work/']", "a[href^='/chat/']")
     # pas de selecteur href*=login : les conversations peuvent contenir de tels
     # liens (faux positif -> "session perdue"). L'URL de login suffit.
     login_url_parts = (
@@ -141,78 +185,40 @@ class MistralService(BaseService):
         "input[type='password']",
     )
 
-    def __init__(self, session, config: Optional[Dict[str, Any]] = None):
-        super().__init__(session, config)
-        self._mode: Optional[str] = None
-
     def build_parser(self) -> MistralParser:
         return MistralParser()
 
     def conversation_url(self, ref: ConversationRef) -> str:
-        mode = (ref.raw or {}).get("mode", "work")
-        return ref.url or f"{BASE}/{mode}/{ref.id}"
+        return normalize_conversation_url(ref.url) or f"{BASE}/work/{ref.id}"
 
-    # -- activation du mode via l'app switcher ---------------------------------
+    # -- decouverte (work uniquement) ------------------------------------------
 
-    def _open_selected_app(self, mode: str) -> None:
-        """Ouvre l'app switcher puis clique le lien du mode."""
-        opened = self.session.eval_body(
-            "const b=[...document.querySelectorAll('button')].find("
-            "x=>/app switcher/i.test(x.getAttribute('aria-label')||''));"
-            "if(b){b.click();return true}return false;"
-        )
-        if not opened:
-            return
-        self.session.wait_ms(1200)
-        self.session.eval_body(
-            "const a=document.querySelector(\"a[href='/%s']\");"
-            "if(a){a.click();return true}return false;" % mode
-        )
-
-    def _ensure_mode(self, mode: str) -> None:
-        """Charge le shell puis active le mode demande (chat|work)."""
-        if self._mode == mode:
-            return
-        self.session.goto(self.home_url)
-        self.session.wait_ms(3000)
-        if mode != "work":
-            self._open_selected_app(mode)
-            self.session.wait_ms(4000)
-        self._mode = mode
-
-    # -- decouverte (chat + work) ----------------------------------------------
-
-    def _discover_mode(self, mode: str) -> Dict[str, ConversationRef]:
+    def _discover_once(self) -> Dict[str, ConversationRef]:
         collected: Dict[str, ConversationRef] = {}
         for attempt in range(3):
-            self._ensure_mode(mode)
+            self.session.goto(self.home_url)
             self.session.wait_ms(2000 if attempt == 0 else 3000)
-            self._assert_not_blocked(f"mistral/{mode}")
+            self._assert_not_blocked("mistral/work")
             if self.session.looks_logged_out(list(self.login_url_parts), list(self.login_selectors)):
                 raise ServiceNotLoggedIn(
                     "mistral: pas de session valide -> `run.py --login mistral`"
                 )
             refs = self._collect_sidebar_refs()
+            # /chat est legacy (fusion) : on accepte encore les deux prefixes
             collected = {
                 cid: ref
                 for cid, ref in refs.items()
-                if f"/{mode}/" in (ref.url or "")
+                if "/work/" in (ref.url or "") or "/chat/" in (ref.url or "")
             }
             if collected:
                 break
         for ref in collected.values():
-            ref.raw = dict(ref.raw or {})
-            ref.raw["mode"] = mode
+            ref.url = normalize_conversation_url(ref.url)
         return collected
 
     def list_conversations(self, limit: Optional[int] = None) -> List[ConversationRef]:
-        refs: Dict[str, ConversationRef] = {}
-        for mode in MODES:
-            for cid, ref in self._discover_mode(mode).items():
-                refs.setdefault(cid, ref)
-            if limit and len(refs) >= limit:
-                break
-        return list(refs.values())
+        refs = list(self._discover_once().values())
+        return refs[:limit] if limit else refs
 
     # -- scraping --------------------------------------------------------------
 
@@ -225,12 +231,98 @@ class MistralService(BaseService):
         conteneur, on reconstitue l'ordre, puis on remplace le HTML avant
         parsing si la collecte apporte des tours supplementaires.
         """
-        self._ensure_mode((ref.raw or {}).get("mode", "work"))
         page = super().scrape_conversation(ref)
         merged = self._collect_conversation()
         if merged and merged.count(TURN_SELECTOR) > page.html.count(TURN_SELECTOR):
             page.html = merged
+        if self.config.get("variants"):
+            try:
+                page.extra["variants"] = self._capture_variants()
+            except Exception:  # noqa: BLE001
+                log.debug("mistral: capture des variantes ignoree", exc_info=True)
         return page
+
+    # -- versions alternatives (editions/regenerations) ------------------------
+
+    def _variant_read(self, message_id: str) -> Optional[Dict[str, Any]]:
+        data = self.session.eval_body(_VARIANTS_READ_JS % json.dumps(message_id))
+        return data if isinstance(data, dict) else None
+
+    def _variant_click(self, message_id: str, label: str) -> bool:
+        return bool(
+            self.session.eval_body(
+                _VARIANTS_CLICK_JS % (json.dumps(message_id), json.dumps(label))
+            )
+        )
+
+    def _variant_wait(
+        self, message_id: str, want: int, timeout_ms: int = 8000
+    ) -> Optional[Dict[str, Any]]:
+        """Attend que la version affichee passe a `want` (sinon rend l'etat)."""
+        elapsed = 0
+        while elapsed < timeout_ms:
+            data = self._variant_read(message_id)
+            if data is not None and data.get("v") == want:
+                return data
+            self.session.wait_ms(400)
+            elapsed += 400
+        return self._variant_read(message_id)
+
+    def _capture_variants(self) -> Dict[str, Any]:
+        """Parcourt les switchers de versions et capture chaque rendu.
+
+        Retourne ``{message_id: {"active": position, "fragments": [html...]}}``
+        (premier = plus ancienne edition). Restaure la version affichee au
+        depart.
+        """
+        captured: Dict[str, Any] = {}
+        for item in self.session.eval_body(_VARIANTS_FIND_JS) or []:
+            message_id = str(item.get("id") or "")
+            if not message_id:
+                continue
+            original = int(item.get("v") or 0)
+            current = self._variant_read(message_id)
+            if current is None:
+                continue
+            fragments: Dict[int, str] = {int(current["v"]): str(current["html"])}
+            # monter jusqu'a la derniere version
+            for _ in range(50):
+                if not self._variant_click(message_id, "suivante"):
+                    break
+                nxt = self._variant_wait(message_id, int(current["v"]) + 1)
+                if nxt is None or int(nxt["v"]) <= int(current["v"]):
+                    break
+                current = nxt
+                fragments[int(current["v"])] = str(current["html"])
+            # redescendre jusqu'a la premiere
+            for _ in range(50):
+                if not self._variant_click(message_id, "précédente"):
+                    break
+                prev = self._variant_wait(message_id, int(current["v"]) - 1)
+                if prev is None or int(prev["v"]) >= int(current["v"]):
+                    break
+                current = prev
+                fragments[int(current["v"])] = str(current["html"])
+            # restaurer la version affichee au depart
+            for _ in range(original):
+                if not self._variant_click(message_id, "suivante"):
+                    break
+                nxt = self._variant_wait(message_id, int(current["v"]) + 1)
+                if nxt is None:
+                    break
+                current = nxt
+            ordered_versions = sorted(fragments)
+            if len(ordered_versions) >= 2:
+                active = (
+                    ordered_versions.index(original)
+                    if original in ordered_versions
+                    else 0
+                )
+                captured[message_id] = {
+                    "active": active,
+                    "fragments": [fragments[i] for i in ordered_versions],
+                }
+        return captured
 
     def _collect_conversation(self) -> str:
         """Remonte le fil en memorisant les tours, retourne le HTML accumule."""

@@ -24,7 +24,7 @@ import tempfile
 import threading
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
 
 from .utils.file_utils import now_iso_z, write_json_atomic
 
@@ -36,6 +36,19 @@ DEFAULT_TIMEOUT_S = 900
 
 def cookies_path(cookies_dir: Path | str, service: str) -> Path:
     return Path(cookies_dir) / f"{service}.json"
+
+
+def cookie_names_match(names: Iterable[str], auth_names: Sequence[str]) -> bool:
+    """Vrai si un nom de cookie correspond a un nom d'auth (exact ou prefixe).
+
+    Le prefixe couvre les cookies dont le suffixe varie (ex:
+    ``ory_session_<id>`` chez Mistral).
+    """
+    for name in names:
+        for wanted in auth_names:
+            if name == wanted or name.startswith(wanted):
+                return True
+    return False
 
 
 def _domain_matches(cookie_domain: str, wanted: str) -> bool:
@@ -98,7 +111,9 @@ def _capture_via_browser(service: str, app_url: str, wanted: str,
     def logged_in() -> bool:
         cookies = session.cookies()
         if auth_names:
-            return any(c.get("name") in auth_names for c in cookies)
+            return cookie_names_match(
+                (str(c.get("name") or "") for c in cookies), auth_names
+            )
         return any(_domain_matches(c.get("domain", ""), wanted) for c in cookies)
 
     captured: Dict[str, str] = {}
@@ -177,7 +192,7 @@ def _capture_via_firefox(service: str, app_url: str, wanted: str,
         cookies = _read_firefox_cookies(profile_dir, wanted)
         if not auth_names:
             return bool(cookies)
-        return any(name in cookies for name in auth_names)
+        return cookie_names_match(cookies.keys(), auth_names)
 
     print(f"[{service}] Firefox (reel) ouvert sur {app_url}. Connecte-toi "
           f"(fermeture auto une fois connecte, ou Entree).")

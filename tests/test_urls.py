@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from src.utils.urls import canonical_url_from_html, conversation_url
+from src.utils.urls import (
+    canonical_url_from_html,
+    conversation_url,
+    normalize_conversation_url,
+)
 
 
 def test_url_par_plateforme():
@@ -13,10 +17,24 @@ def test_url_par_plateforme():
     assert conversation_url("grok", "abc") == "https://grok.com/chat/abc"
 
 
-def test_url_mistral_mode():
-    assert conversation_url("mistral", "abc", "work") == "https://chat.mistral.ai/work/abc"
-    assert conversation_url("mistral", "abc", "chat") == "https://chat.mistral.ai/chat/abc"
-    assert conversation_url("mistral", "abc") == "https://chat.mistral.ai/chat/abc"
+def test_url_mistral_work_uniquement():
+    assert conversation_url("mistral", "abc") == "https://chat.mistral.ai/work/abc"
+    # `mode` est obsolete (fusion /chat -> /work) et ignore
+    assert conversation_url("mistral", "abc", "chat") == "https://chat.mistral.ai/work/abc"
+
+
+def test_normalize_conversation_url_mistral():
+    assert normalize_conversation_url(
+        "https://chat.mistral.ai/chat/abc"
+    ) == "https://chat.mistral.ai/work/abc"
+    assert normalize_conversation_url(
+        "https://chat.mistral.ai/chat/abc?x=1"
+    ) == "https://chat.mistral.ai/work/abc?x=1"
+    assert normalize_conversation_url(
+        "https://chat.mistral.ai/work/abc"
+    ) == "https://chat.mistral.ai/work/abc"
+    assert normalize_conversation_url("https://chatgpt.com/c/abc") == "https://chatgpt.com/c/abc"
+    assert normalize_conversation_url("") == ""
 
 
 def test_url_inconnue_ou_vide():

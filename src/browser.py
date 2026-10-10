@@ -50,6 +50,11 @@ if (origQuery) {
 """
 
 
+def stealth_js(languages: List[str]) -> str:
+    """Script d'init : langues navigator alignees sur le fingerprint."""
+    return STEALTH_JS.replace("['en-US', 'en']", json.dumps(list(languages)))
+
+
 @dataclass
 class ScrollResult:
     reached_bottom: bool
@@ -113,20 +118,34 @@ class BrowserSession:
             launch_kwargs["channel"] = self.channel
         # UA identique en headful et headless : indispensable pour que les
         # cookies Cloudflare (cf_clearance, lie a l'UA) survivent entre la
-        # connexion (--login) et l'export headless quotidien.
-        if fp.get("user_agent"):
-            launch_kwargs["user_agent"] = fp["user_agent"]
+        # connexion (--login) et l'export headless quotidien. L'UA doit aussi
+        # coller a la version REELLE du binaire, sinon Cloudflare detecte
+        # l'incoherence (boucle de captcha).
+        chrome_major = None
+        try:
+            chrome_major = self._pw.chromium.version.split(".")[0]
+        except Exception:  # noqa: BLE001
+            pass
+        user_agent = str(fp.get("user_agent") or "")
+        if user_agent and chrome_major and f"Chrome/{chrome_major}." not in user_agent:
+            log_fields(
+                log, 30,
+                "fingerprint UA obsolete -> maj sur la version installee",
+                extra={"service": self.service, "chrome_major": chrome_major},
+            )
+            user_agent = ""
+        if user_agent:
+            launch_kwargs["user_agent"] = user_agent
+        elif chrome_major:
+            launch_kwargs["user_agent"] = USER_AGENT_TEMPLATE.format(major=chrome_major)
         else:
-            try:
-                chrome_major = self._pw.chromium.version.split(".")[0]
-                launch_kwargs["user_agent"] = USER_AGENT_TEMPLATE.format(major=chrome_major)
-            except Exception:  # noqa: BLE001
-                launch_kwargs["user_agent"] = USER_AGENT
+            launch_kwargs["user_agent"] = USER_AGENT
         self._context = self._pw.chromium.launch_persistent_context(**launch_kwargs)
         self._context.set_default_timeout(self.timeout_ms)
         self._context.set_default_navigation_timeout(self.timeout_ms)
         try:
-            self._context.add_init_script(STEALTH_JS)
+            languages = list(fp.get("languages") or ["en-US", "en"])
+            self._context.add_init_script(stealth_js(languages))
         except Exception:  # noqa: BLE001
             log.debug("stealth init script skipped", exc_info=True)
         if fp:

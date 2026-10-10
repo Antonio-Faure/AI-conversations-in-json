@@ -11,21 +11,62 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import random
+import re
+import subprocess
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .utils.file_utils import ensure_dir, write_json_atomic
 
-#: User-Agents Linux/Chrome plausibles (le binaire Chrome est le meme partout)
+#: User-Agent construit sur la version majeure REELLE du navigateur local :
+#: un UA qui ne colle pas au binaire (ou aux Client Hints) est detecte par
+#: Cloudflare et provoque une boucle de captcha.
+USER_AGENT_TEMPLATE = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/{major}.0.0.0 Safari/537.36"
+)
+
+#: Repli si aucun binaire local n'est detectable (CI, machine sans navigateur).
 USER_AGENTS: List[str] = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
 ]
+
+_CHROME_MAJOR: Optional[str] = None
+_CHROME_MAJOR_RESOLVED = False
+
+
+def installed_chrome_major() -> Optional[str]:
+    """Version majeure du Chrome/Chromium local (cachee, sans lancer le moteur)."""
+    global _CHROME_MAJOR, _CHROME_MAJOR_RESOLVED
+    if _CHROME_MAJOR_RESOLVED:
+        return _CHROME_MAJOR
+    _CHROME_MAJOR_RESOLVED = True
+    candidates: List[Path] = []
+    env_path = os.environ.get("AICV_CHROME_PATH")
+    if env_path:
+        candidates.append(Path(env_path))
+    pw_path = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
+    root = Path(pw_path) if pw_path else Path.home() / ".cache" / "ms-playwright"
+    try:
+        candidates.extend(sorted(root.glob("chromium-*/chrome-linux*/chrome")))
+    except OSError:
+        pass
+    for binary in reversed(candidates):
+        try:
+            out = subprocess.run(
+                [str(binary), "--version"],
+                capture_output=True, text=True, timeout=10,
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            continue
+        match = re.search(r"(\d+)\.", out)
+        if match:
+            _CHROME_MAJOR = match.group(1)
+            return _CHROME_MAJOR
+    return None
 
 WINDOW_SIZES: List[Tuple[int, int]] = [
     (1440, 900),
@@ -53,9 +94,15 @@ def generate_fingerprint(service: str) -> Dict[str, Any]:
     rng = random.Random(_seed(service))
     width, height = rng.choice(WINDOW_SIZES)
     lang = rng.choice(LANGS)
+    major = installed_chrome_major()
+    user_agent = (
+        USER_AGENT_TEMPLATE.format(major=major)
+        if major
+        else rng.choice(USER_AGENTS)
+    )
     return {
         "service": service,
-        "user_agent": rng.choice(USER_AGENTS),
+        "user_agent": user_agent,
         "window_width": width,
         "window_height": height,
         "lang": lang,
@@ -66,13 +113,21 @@ def generate_fingerprint(service: str) -> Dict[str, Any]:
 
 
 def get_fingerprint(service: str, profile_dir: Path | str) -> Dict[str, Any]:
-    """Charge le fingerprint du profil, ou le cree puis le persiste."""
+    """Charge le fingerprint du profil, ou le cree puis le persiste.
+
+    Repare automatiquement un UA obsolete (majeure differente du navigateur
+    installe) : c'est indispensable pour cf_clearance, lie a l'UA.
+    """
     profile_path = Path(profile_dir)
     path = profile_path / FINGERPRINT_FILE
     if path.exists():
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(data, dict) and data.get("user_agent"):
+                major = installed_chrome_major()
+                if major and f"Chrome/{major}." not in str(data["user_agent"]):
+                    data["user_agent"] = USER_AGENT_TEMPLATE.format(major=major)
+                    write_json_atomic(path, data)
                 return data
         except json.JSONDecodeError:
             pass

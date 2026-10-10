@@ -23,10 +23,17 @@ Format de sortie (un fichier par conversation) :
       "reasoning": "...",           // raisonnement/thinking extrait (optionnel)
       "artifacts": ["..."],         // artefacts/canvas (optionnel)
       "sources": ["..."],           // sources/citations web (optionnel)
-      "tools": ["..."]              // outils/etapes utilises (optionnel)
+      "tools": ["..."],             // outils/etapes utilises (optionnel)
+      "variants": [                 // versions alternatives (optionnel)
+        {"kind": "edit", "texte": "...", "active": false}
+      ]
     }
   ]
 }
+
+``variants`` conserve toutes les versions d'un message, dans l'ordre de
+l'interface (1/2, 2/2...) ; ``texte`` reste la version active. ``kind`` vaut
+``edit`` (message utilisateur edite) ou ``regeneration`` (reponse regeneree).
 """
 
 from __future__ import annotations
@@ -38,6 +45,9 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional
 
 VALID_ROLES = ("user", "assistant", "system", "tool")
+
+#: types de versions alternatives conservees dans ``Message.variants``
+VALID_VARIANT_KINDS = ("edit", "regeneration")
 
 #: blocs ```lang ... ``` : cloture en debut de ligne (evite de fermer sur un
 #: ``` present dans le code lui-meme)
@@ -150,6 +160,14 @@ def normalize_messages(messages: List["Message"]) -> List["Message"]:
         for tool in message.tools:
             if tool not in previous.tools:
                 previous.tools.append(tool)
+        seen_variants = {
+            (v.kind, v.message_id, v.texte) for v in previous.variants
+        }
+        for variant in message.variants:
+            key = (variant.kind, variant.message_id, variant.texte)
+            if key not in seen_variants:
+                seen_variants.add(key)
+                previous.variants.append(variant)
         if not previous.timestamp:
             previous.timestamp = message.timestamp
         if not previous.model:
@@ -181,6 +199,76 @@ class CodeBlock:
 
 
 @dataclass
+class Variant:
+    """Version alternative d'un message (edition utilisateur, regeneration).
+
+    La version active reste portee par ``Message.texte`` ; ``Message.variants``
+    les conserve toutes dans l'ordre de l'interface (1/2, 2/2...).
+    """
+
+    kind: str = "regeneration"
+    texte: str = ""
+    code_blocks: List[CodeBlock] = field(default_factory=list)
+    model: Optional[str] = None
+    timestamp: Optional[str] = None
+    message_id: str = ""
+    #: True pour la version actuellement affichee (celle de ``Message.texte``)
+    active: bool = False
+
+    def __post_init__(self) -> None:
+        self.kind = str(self.kind) if self.kind else "regeneration"
+        self.texte = "" if self.texte is None else str(self.texte)
+        self.model = str(self.model) if self.model else None
+        self.timestamp = normalize_timestamp(self.timestamp)
+        self.message_id = "" if self.message_id is None else str(self.message_id)
+        converted: List[CodeBlock] = []
+        for block in self.code_blocks or []:
+            converted.append(
+                block if isinstance(block, CodeBlock) else CodeBlock.from_dict(block)
+            )
+        self.code_blocks = converted or extract_code_blocks(self.texte)
+        self.active = bool(self.active)
+
+    def validate(self) -> None:
+        if self.kind not in VALID_VARIANT_KINDS:
+            raise SchemaError(
+                f"kind de variante invalide {self.kind!r} "
+                f"(attendu: {', '.join(VALID_VARIANT_KINDS)})"
+            )
+        if not isinstance(self.texte, str):
+            raise SchemaError("texte de variante doit etre une chaine")
+        if not isinstance(self.code_blocks, list):
+            raise SchemaError("code_blocks de variante doit etre une liste")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "kind": self.kind,
+            "texte": self.texte,
+            "code_blocks": [b.to_dict() for b in self.code_blocks],
+            "model": self.model,
+            "timestamp": self.timestamp,
+            "message_id": self.message_id,
+            "active": self.active,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Variant":
+        variant = cls(
+            kind=data.get("kind") or "regeneration",
+            texte=data.get("texte", ""),
+            code_blocks=[
+                CodeBlock.from_dict(b) for b in (data.get("code_blocks") or [])
+            ],
+            model=data.get("model"),
+            timestamp=normalize_timestamp(data.get("timestamp")),
+            message_id=data.get("message_id", ""),
+            active=bool(data.get("active", False)),
+        )
+        variant.validate()
+        return variant
+
+
+@dataclass
 class Message:
     """Message standardise : role, texte, code_blocks, metadonnees d'identification."""
 
@@ -200,6 +288,8 @@ class Message:
     sources: List[str] = field(default_factory=list)
     #: outils/etapes utilises (recherche, code, connecteurs..., optionnel)
     tools: List[str] = field(default_factory=list)
+    #: versions alternatives du message (editions/regenerations, optionnel)
+    variants: List[Variant] = field(default_factory=list)
     #: extras internes (tokens, had_thinking...) non exportes
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -227,6 +317,12 @@ class Message:
             str(item) for item in (self.sources or []) if item is not None
         ]
         self.tools = [str(item) for item in (self.tools or []) if item is not None]
+        converted_variants: List[Variant] = []
+        for variant in self.variants or []:
+            converted_variants.append(
+                variant if isinstance(variant, Variant) else Variant.from_dict(variant)
+            )
+        self.variants = converted_variants
         if self.metadata is None:
             self.metadata = {}
 
@@ -251,6 +347,13 @@ class Message:
             raise SchemaError("sources doit etre une liste")
         if not isinstance(self.tools, list):
             raise SchemaError("tools doit etre une liste")
+        if not isinstance(self.variants, list):
+            raise SchemaError("variants doit etre une liste")
+        for i, variant in enumerate(self.variants):
+            try:
+                variant.validate()
+            except SchemaError as exc:
+                raise SchemaError(f"variants[{i}]: {exc}") from exc
         if self.timestamp is not None and parse_iso(self.timestamp) is None:
             raise SchemaError(f"timestamp invalide: {self.timestamp!r}")
 
@@ -269,6 +372,7 @@ class Message:
             "artifacts": list(self.artifacts),
             "sources": list(self.sources),
             "tools": list(self.tools),
+            "variants": [v.to_dict() for v in self.variants],
         }
 
     @classmethod
@@ -289,6 +393,7 @@ class Message:
                 artifacts=list(data.get("artifacts") or []),
                 sources=list(data.get("sources") or []),
                 tools=list(data.get("tools") or []),
+                variants=list(data.get("variants") or []),
                 metadata=dict(data.get("metadata") or {}),
             )
         except KeyError as exc:

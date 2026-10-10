@@ -1,6 +1,5 @@
 {
   "platform": "chatgpt",
-  "mode": null,
   "source_conversation": null,
   "generated_from": "calibration/sources/chatgpt.md",
   "test_pool": 192,

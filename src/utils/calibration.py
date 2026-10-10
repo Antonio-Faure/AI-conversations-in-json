@@ -355,7 +355,6 @@ def build_payload(
     platform: str,
     tests: Sequence[CalibrationTest],
     manifest: Dict[str, Any],
-    mode: Optional[str] = None,
     source_conversation: Optional[str] = None,
     generated_from: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -378,7 +377,6 @@ def build_payload(
     ]
     return {
         "platform": platform,
-        "mode": mode,
         "source_conversation": source_conversation,
         "generated_from": generated_from,
         "test_pool": len(tests),

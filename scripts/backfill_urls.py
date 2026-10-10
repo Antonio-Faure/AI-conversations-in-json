@@ -3,7 +3,8 @@
 
 Sans re-crawler : URL reconstruite par plateforme, et lue depuis le
 `<link rel="canonical">` du HTML sauvegarde quand il est disponible (Mistral
-permet ainsi de distinguer /chat de /work).
+permet ainsi de distinguer /chat de /work ; les URLs /chat sont desormais
+reecrites en /work par `normalize_conversation_url`).
 
     .venv/bin/python scripts/backfill_urls.py
     .venv/bin/python scripts/backfill_urls.py --platform mistral
@@ -21,7 +22,11 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.orchestrator import load_config  # noqa: E402
-from src.utils.urls import canonical_url_from_html, conversation_url  # noqa: E402
+from src.utils.urls import (  # noqa: E402
+    canonical_url_from_html,
+    conversation_url,
+    normalize_conversation_url,
+)
 
 
 def _resolve(value) -> Path:
@@ -38,8 +43,8 @@ def _url_for(platform: str, conversation_id: str, html_path: Path) -> str:
         except OSError:
             canonical = None
         if canonical and conversation_id in canonical:
-            return canonical
-    return conversation_url(platform, conversation_id)
+            return normalize_conversation_url(canonical)
+    return normalize_conversation_url(conversation_url(platform, conversation_id))
 
 
 def main() -> int:

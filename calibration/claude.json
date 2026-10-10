@@ -1,6 +1,5 @@
 {
   "platform": "claude",
-  "mode": null,
   "source_conversation": null,
   "generated_from": "calibration/sources/claude.md",
   "test_pool": 184,

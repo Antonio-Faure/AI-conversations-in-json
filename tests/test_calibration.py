@@ -145,9 +145,9 @@ def test_set_cover_couvre_tout():
 def test_build_payload_structure():
     manifest = _manifest()
     tests = extract_tests(SUITE)
-    payload = build_payload("demo", tests, manifest, mode="work", generated_from="x.json")
+    payload = build_payload("demo", tests, manifest, generated_from="x.json")
     assert payload["platform"] == "demo"
-    assert payload["mode"] == "work"
+    assert "mode" not in payload
     assert payload["messages"]
     ids = {c["id"] for c in manifest["capabilities"]}
     for message in payload["messages"]:

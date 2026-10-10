@@ -12,6 +12,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 from ..utils.file_utils import now_iso_z, write_json_atomic
 from ..utils.logging import get_logger, log_fields
@@ -191,27 +192,52 @@ class EtalonRunner:
             elapsed += 700
         return False
 
+    @staticmethod
+    def _is_conversation_url(url: str) -> bool:
+        """True si l'URL identifie une conversation (pas la home/composeur).
+
+        Un composeur (`/`, `/work`, `/chat`, `/app`, `/search`, `/new`...) n'a
+        qu'un segment de chemin, contre au moins deux pour une conversation
+        (`/c/<id>`, `/chat/<id>`, `/work/<id>`...).
+        """
+        if not url:
+            return False
+        segments = [s for s in urlparse(url).path.strip("/").split("/") if s]
+        if len(segments) < 2:
+            return False
+        return segments[-1].lower() != "new"
+
     def _refresh_target_url(self) -> None:
         """Recapture l'URL apres envoi (un nouveau chat n'obtient son id qu'apres
-        le 1er message : au depart l'URL peut etre `/` ou `/new`)."""
+        le 1er message : au depart l'URL peut etre `/`, `/work` ou `/new`).
+
+        Seules les URLs qui identifient une conversation sont memorisees : une
+        URL de composeur ferait croire, a la reprise, que la cible est un chat
+        neuf (c'est ce qui creait des conversations en double).
+        """
         try:
             url = self.driver.session.url()
         except Exception:  # noqa: BLE001
             return
-        if url and url != self.state.target_url:
+        if self._is_conversation_url(url) and url != self.state.target_url:
             self.state.target_url = url
 
     def _open_target(self) -> bool:
         if self.state.target_url:
             self.driver.open_conversation(self.state.target_url)
             return True
+        # Reprise d'un run deja commence : ne JAMAIS ouvrir un nouveau chat,
+        # sinon chaque reprise recree une conversation avec le meme message.
+        if self.state.next_index > 0 or self.state.sent:
+            self.state.last_error = (
+                "conversation cible introuvable (URL non memorisee) ; relancer "
+                "avec --url <conversation> plutot qu'une nouvelle conversation"
+            )
+            return False
         if not self.driver.new_conversation():
             self.state.last_error = "impossible d'ouvrir une nouvelle conversation"
             return False
-        try:
-            self.state.target_url = self.driver.session.url()
-        except Exception:  # noqa: BLE001
-            self.state.target_url = None
+        self._refresh_target_url()
         return True
 
     def run(self) -> str:
@@ -281,6 +307,9 @@ class EtalonRunner:
                     )
                     self.state.status = STATUS_ERROR
                     break
+                # memoriser l'URL des que l'envoi est confirme : le chat a
+                # desormais son id (avant meme la fin de la reponse)
+                self._refresh_target_url()
                 # persistance : le dernier message assistant doit avoir change
                 verdict = self._await_assistant_change(before_text, before_count)
                 if verdict == "rate_limited":
@@ -307,6 +336,17 @@ class EtalonRunner:
                     log, 20, f"{self.state.bot}: {self.state.next_index}/{total}",
                     extra={"bot": self.state.bot},
                 )
+                if not self.state.target_url:
+                    # le message est parti mais la conversation n'a pas d'URL
+                    # memorisable : continuer ferait perdre la cible a la
+                    # reprise (et re-creerait un chat avec le meme message).
+                    self.state.last_error = (
+                        f"URL de conversation non identifiee apres l'envoi "
+                        f"(message {index + 1}) ; reprendre avec --url <conversation>"
+                    )
+                    self.state.status = STATUS_ERROR
+                    self.save_state()
+                    break
                 self.driver.pause()
                 if self.driver.is_rate_limited():
                     self.state.status = STATUS_RATE_LIMITED

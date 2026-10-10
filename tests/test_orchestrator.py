@@ -562,6 +562,8 @@ class TestFingerprint:
         assert fp["user_agent"] and fp["window_width"] > 0
 
     def test_isole_par_service(self):
+        import json as _json
+
         from src.fingerprint import generate_fingerprint
 
         fingerprints = [
@@ -569,8 +571,16 @@ class TestFingerprint:
             for s in ("chatgpt", "claude", "gemini", "perplexity", "grok", "mistral")
         ]
         # au moins deux profils differents (profils isoles)
-        distinct = {f["user_agent"] for f in fingerprints}
+        distinct = {_json.dumps(f, sort_keys=True) for f in fingerprints}
         assert len(distinct) >= 2
+
+    def test_ua_suit_la_version_installee(self):
+        from src.fingerprint import generate_fingerprint, installed_chrome_major
+
+        major = installed_chrome_major()
+        fp = generate_fingerprint("chatgpt")
+        if major:
+            assert f"Chrome/{major}." in fp["user_agent"]
 
 
 class TestParallelism:

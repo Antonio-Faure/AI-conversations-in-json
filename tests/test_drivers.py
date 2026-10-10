@@ -58,6 +58,25 @@ class FakeDriver(ChatDriver):
     send_selectors = ("button.send",)
     file_input_selectors = ("input[type=file]",)
     stop_selectors = ("button.stop",)
+    #: URL affichee par le navigateur apres un envoi (simule l'app reelle qui
+    #: attribue un id a la conversation) ; None = reste un composeur.
+    sent_url = "https://fake.test/chat/c1"
+
+    def send(self, text: str) -> bool:
+        ok = super().send(text)
+        if ok and self.sent_url:
+            # ne remplace l'URL que si elle est encore celle d'un composeur
+            # (une session qui expose deja un id de conversation est gardee)
+            from urllib.parse import urlparse
+
+            segments = [
+                s
+                for s in urlparse(self.session.url_value).path.strip("/").split("/")
+                if s
+            ]
+            if len(segments) < 2:
+                self.session.url_value = self.sent_url
+        return ok
 
     def count_assistant_messages(self) -> int:
         # simule la persistance : un message assistant par envoi
@@ -396,16 +415,6 @@ def test_perplexity_rate_limit_sans_faux_positif():
     assert driver4.is_rate_limited() is True
 
 
-class MistralModeSession(FakeSession):
-    def __init__(self):
-        super().__init__()
-        self.eval_bodies = []
-
-    def eval_body(self, body):
-        self.eval_bodies.append(body)
-        return "clicked"
-
-
 def test_claude_rate_limit_sans_faux_positif():
     cls = get_driver("claude")
     # toast d'erreur transitoire apres un envoi : ne doit pas passer pour un
@@ -468,28 +477,67 @@ def test_claude_send_verifie_champ_vide():
     assert cls(RestoredDraftSession()).send("bonjour") is False
 
 
-def test_mistral_mode_of():
-    cls = get_driver("mistral")
-    assert cls.mode_of("https://chat.mistral.ai/chat/abc") == "chat"
-    assert cls.mode_of("https://chat.mistral.ai/work/abc") == "work"
-    assert cls.mode_of("https://chat.mistral.ai/") is None
-
-
-def test_mistral_open_conversation_force_le_mode_chat():
-    session = MistralModeSession()
+def test_mistral_open_conversation_normalise_chat_en_work():
+    """L'ancienne URL /chat/<id> est reecrite en /work/<id> (fusion)."""
+    session = FakeSession()
     driver = get_driver("mistral")(session)
-    driver.open_conversation("https://chat.mistral.ai/chat")
-    # le lien de l'app switcher chat doit avoir ete clique
-    assert any("a[href='/chat']" in b for b in session.eval_bodies)
-    assert session.url() == "https://chat.mistral.ai/chat"
+    driver.open_conversation("https://chat.mistral.ai/chat/abc")
+    assert session.url() == "https://chat.mistral.ai/work/abc"
+    driver.open_conversation("https://chat.mistral.ai/work/def")
+    assert session.url() == "https://chat.mistral.ai/work/def"
 
 
-def test_mistral_open_conversation_work_ne_bascule_pas():
-    session = MistralModeSession()
-    driver = get_driver("mistral")(session)
-    driver.open_conversation("https://chat.mistral.ai/work")
-    assert not any("a[href='/chat']" in b for b in session.eval_bodies)
-    assert session.url() == "https://chat.mistral.ai/work"
+def test_is_conversation_url():
+    is_conv = EtalonRunner._is_conversation_url
+    assert is_conv("https://chat.mistral.ai/work/abc")
+    assert is_conv("https://chat.mistral.ai/chat/abc")
+    assert is_conv("https://chatgpt.com/c/abc")
+    assert is_conv("https://claude.ai/chat/abc?artifact=x")
+    assert not is_conv("https://chat.mistral.ai/work")
+    assert not is_conv("https://chatgpt.com/")
+    assert not is_conv("https://claude.ai/chats")
+    assert not is_conv("https://gemini.google.com/app/new")
+    assert not is_conv("")
+
+
+def test_refresh_target_url_ignore_le_composeur(tmp_path):
+    session = FakeSession()
+    session.url_value = "https://chat.mistral.ai/work"
+    runner = make_runner(tmp_path, FakeDriver(session), [{"text": "m1"}])
+    runner._refresh_target_url()
+    assert runner.state.target_url is None
+    session.url_value = "https://chat.mistral.ai/work/abc"
+    runner._refresh_target_url()
+    assert runner.state.target_url == "https://chat.mistral.ai/work/abc"
+
+
+class ComposerDriver(FakeDriver):
+    """Driver dont l'URL reste un composeur (aucun id de conversation)."""
+
+    sent_url = None
+
+
+def test_reprise_apres_url_non_memorisee_ne_duplique_pas(tmp_path):
+    """Regression : une reprise sans URL cible ne doit PAS recreer un chat.
+
+    Avant le correctif, l'URL de composeur etait memorisee puis, a la reprise,
+    un nouveau chat etait ouvert et le meme message renvoye (conversations en
+    double constatees sur Mistral).
+    """
+    messages = [{"text": "m1"}, {"text": "m2"}]
+    status = make_runner(tmp_path, ComposerDriver(FakeSession()), messages).run()
+    state = load_state(tmp_path / "state.json", "fake", tmp_path)
+    # le 1er message est parti, mais la cible n'est pas memorisable -> arret
+    assert status == "error"
+    assert state.next_index == 1
+    assert state.target_url is None
+    assert "non identifiee" in (state.last_error or "")
+
+    driver2 = ComposerDriver(FakeSession())
+    status2 = EtalonRunner(driver2, tmp_path, messages, state).run()
+    assert status2 == "error"
+    assert driver2.session.sent == 0
+    assert "introuvable" in (state.last_error or "")
 
 
 class StreamingSession(FakeSession):

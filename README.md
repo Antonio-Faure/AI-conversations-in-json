@@ -96,6 +96,9 @@ pas réutilisable par Botasaurus, et inversement.
 
 # debug : navigateur visible, 5 conversations max, logs verbeux
 .venv/bin/python run.py --daily --service chatgpt --headful --limit 5 --verbose
+
+# capturer aussi les versions alternatives (editions, regenerations)
+.venv/bin/python run.py --monthly --service mistral --variants
 ```
 
 Codes de sortie : `0` OK, `1` au moins un échec, `2` erreur d'usage/config.
@@ -156,6 +159,10 @@ repasse en `daily` (si elle fait partie des 20 récentes) ou en `monthly`.
   `code_blocks` en est la vue structurée `{language, code}`.
 - timestamps ISO-8601 UTC (`...Z`) ou `null` quand la plateforme ne les expose pas.
 - Le fichier `.html` contient le DOM complet de la page de conversation.
+- `variants` (optionnel, capture avec `--variants`) : versions alternatives du
+  message — éditions d'un message utilisateur (`kind: "edit"`) ou réponses
+  régénérées (`kind: "regeneration"`) — dans l'ordre de l'interface ; `texte`
+  reste la version active, chaque variante porte `active`.
 
 ## conversation_list.json
 
@@ -448,10 +455,10 @@ avec des services et sessions factices ; le CLI sans lancer Chromium.
 - Grok : Cloudflare bloque le Chromium automatisé → scraping via l'**API REST +
   cookies** (`uses_browser=False`), et le HTML est **généré** depuis les données
   (la page officielle est un shell SPA vide). Modèle : `grok-3`.
-- Mistral : **deux modes scrapés** — `/chat` (chatbot) et `/work` (agentique) ;
-  la conversation n'est rendue qu'après activation du mode via l'app switcher
-  (`_ensure_mode`), puis navigation classique. Timestamps non exposés (`null`).
-  Cookies dans `profiles/mistral` (profil persistant) et `cookies/mistral.json`.
+- Mistral : application unique `/work` (l'ancien `/chat` a fusionné dedans) ;
+  les URLs `/chat/<id>` sont réécrites en `/work/<id>`. Timestamps non exposés
+  (`null`). Cookies dans `profiles/mistral` (profil persistant) et
+  `cookies/mistral.json`.
 - Perplexity : le forfait **gratuit** rate-limite la lecture en rafale
   (redirection vers l'accueil → conversations vides). `--daily` les reprend
   progressivement ; le modèle vient de l'API de découverte (`displayModel.modelID`).

@@ -36,12 +36,13 @@ from urllib.parse import urljoin
 
 from bs4 import NavigableString
 
-from ..schema import Conversation, parse_iso, to_iso_z
+from ..schema import Conversation, Variant, parse_iso, to_iso_z
 from .base import BaseParser, ParseError
 
-#{ deux modes : /chat (chatbot) et /work (agentique). Les projets
-# (/chat/projects/<id>) ne sont pas des conversations et sont exclus par le
-# motif d'id (uuid juste apres /chat/ ou /work/).
+#{ application unique depuis la fusion : /work. Le motif accepte encore le
+# prefixe legacy /chat/ (archives) ; les projets (/work/projects/<id>,
+# /chat/projects/<id>) ne sont pas des conversations et sont exclus par le
+# motif d'id (uuid juste apres /work/ ou /chat/).
 ID_RE = re.compile(r"/(?:chat|work)/([0-9a-fA-F-]{8,})")
 
 #: origine de l'app (les images generees sont referencees en chemin relatif
@@ -200,37 +201,10 @@ class MistralParser(BaseParser):
 
         messages: List[Any] = []
         for container in soup.select("[data-message-author-role]"):
-            role = (container.get("data-message-author-role") or "").lower()
-            if role not in ("user", "assistant", "system", "tool"):
-                role = "assistant"
-            message_id = str(container.get("data-message-id") or "")
-            data = message_data.get(message_id) or {}
-            files = data.get("files") if isinstance(data.get("files"), list) else None
-            text = self._text_of_turn(container, role, files)
-            reasoning = self._reasoning_of_turn(container) if role == "assistant" else ""
-            artifacts = self._artifacts_of_turn(container) if role == "assistant" else []
-            if not text and not reasoning and not artifacts:
-                continue
-            timestamp = self._timestamp_of(data, container, reference)
-            message = self.msg(
-                role,
-                text,
-                timestamp,
-                {"tokens": None} if role == "assistant" else {},
-                message_id=message_id,
-            )
-            if reasoning:
-                message.reasoning = reasoning
-            if artifacts:
-                message.artifacts = artifacts
-            if role == "assistant":
-                tools = self._tools_of(data, container)
-                if tools:
-                    message.tools = tools
-                sources = self._sources_of(data, container)
-                if sources:
-                    message.sources = sources
-            messages.append(message)
+            message = self._build_message(container, message_data, reference)
+            if message is not None:
+                messages.append(message)
+        self._attach_variants(messages, extra.get("variants") or {}, reference)
 
         if not messages:
             raise ParseError("mistral: aucun message extrait — session ou DOM modifie")
@@ -250,6 +224,78 @@ class MistralParser(BaseParser):
         )
         self.log_parse(conv, title=title, model=model)
         return self.check(conv)
+
+    def _build_message(self, container, message_data, reference):
+        """Construit un Message depuis un conteneur de tour (reutilisable)."""
+        role = (container.get("data-message-author-role") or "").lower()
+        if role not in ("user", "assistant", "system", "tool"):
+            role = "assistant"
+        message_id = str(container.get("data-message-id") or "")
+        data = message_data.get(message_id) or {}
+        files = data.get("files") if isinstance(data.get("files"), list) else None
+        text = self._text_of_turn(container, role, files)
+        reasoning = self._reasoning_of_turn(container) if role == "assistant" else ""
+        artifacts = self._artifacts_of_turn(container) if role == "assistant" else []
+        if not text and not reasoning and not artifacts:
+            return None
+        timestamp = self._timestamp_of(data, container, reference)
+        message = self.msg(
+            role,
+            text,
+            timestamp,
+            {"tokens": None} if role == "assistant" else {},
+            message_id=message_id,
+        )
+        if reasoning:
+            message.reasoning = reasoning
+        if artifacts:
+            message.artifacts = artifacts
+        if role == "assistant":
+            tools = self._tools_of(data, container)
+            if tools:
+                message.tools = tools
+            sources = self._sources_of(data, container)
+            if sources:
+                message.sources = sources
+        return message
+
+    def _attach_variants(self, messages, variants, reference) -> None:
+        """Attache les versions alternatives (editions/regenerations).
+
+        `variants` vient du service (capture live) :
+        ``{message_id: {"active": index, "fragments": [html_v0, ...]}}``.
+        """
+        for message in messages:
+            entry = variants.get(message.message_id)
+            if not isinstance(entry, dict):
+                continue
+            fragments = entry.get("fragments") or []
+            if len(fragments) < 2:
+                continue
+            active = int(entry.get("active") or 0)
+            kind = "edit" if message.role == "user" else "regeneration"
+            built: List[Variant] = []
+            for index, fragment in enumerate(fragments):
+                soup = self.make_soup(fragment)
+                container = soup.select_one("[data-message-author-role]")
+                if container is None:
+                    continue
+                sub = self._build_message(container, {}, reference)
+                if sub is None:
+                    continue
+                built.append(
+                    Variant(
+                        kind=kind,
+                        texte=sub.texte,
+                        code_blocks=sub.code_blocks,
+                        model=sub.model,
+                        timestamp=sub.timestamp,
+                        message_id=message.message_id,
+                        active=index == active,
+                    )
+                )
+            if len(built) >= 2:
+                message.variants = built
 
     # -- payload RSC (horodatages, modele, sources, outils) --------------------
 
@@ -324,10 +370,10 @@ class MistralParser(BaseParser):
     def _model_of(cls, payload: str, conversation: Dict[str, Any]) -> Optional[str]:
         """Modele de la conversation (nom affiche, repli alias puis defaut page).
 
-        En mode work, `modelConfig.model_alias` porte le modele choisi et
-        `model_display_name` son nom affiche ; en mode chat la conversation n'a
-        pas de modele propre -> on retombe sur le modele gere de la page, puis
-        sur `jarvis_model.name`.
+        Sur le rendu actuel `modelConfig.model_alias` porte le modele choisi et
+        `model_display_name` son nom affiche ; sur l'ancien rendu (archives
+        /chat) la conversation n'a pas de modele propre -> on retombe sur le
+        modele gere de la page, puis sur `jarvis_model.name`.
         """
         alias = ""
         config = (conversation or {}).get("modelConfig")

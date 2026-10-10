@@ -77,3 +77,63 @@ def test_collecte_absente_si_pas_de_conteneur():
     session = FakeSession()
     session.eval_body = lambda body: None
     assert _service(session)._collect_conversation() == ""
+
+
+class VariantSession:
+    """Session factice : switcher de versions d'un message (editions)."""
+
+    def __init__(self, htmls, active):
+        self.htmls = dict(htmls)
+        self.v = active
+
+    def eval_body(self, body):
+        if "if (prev || next)" in body:
+            return [{"id": "m1", "v": self.v}]
+        if "n.outerHTML" in body:
+            return {"v": self.v, "html": self.htmls[self.v]}
+        if "new RegExp(label" in body:
+            import re as _re
+
+            match = _re.search(r'const id = "([^"]+)", label = "([^"]+)"', body)
+            label = match.group(2) if match else ""
+            if label.startswith("suiv"):
+                if self.v < max(self.htmls):
+                    self.v += 1
+                    return True
+                return False
+            if self.v > min(self.htmls):
+                self.v -= 1
+                return True
+            return False
+        return None
+
+    def wait_ms(self, ms):
+        pass
+
+
+def test_capture_variants_parcourt_et_restaure():
+    session = VariantSession({0: "<div>v0</div>", 1: "<div>v1</div>", 2: "<div>v2</div>"}, active=2)
+    captured = MistralService(session, {})._capture_variants()
+    assert captured == {
+        "m1": {"active": 2, "fragments": ["<div>v0</div>", "<div>v1</div>", "<div>v2</div>"]}
+    }
+    assert session.v == 2  # version affichee restauree
+
+
+def test_capture_variants_active_au_milieu():
+    session = VariantSession({0: "h0", 1: "h1", 2: "h2"}, active=1)
+    captured = MistralService(session, {})._capture_variants()
+    assert captured["m1"]["active"] == 1
+    assert captured["m1"]["fragments"] == ["h0", "h1", "h2"]
+    assert session.v == 1
+
+
+def test_capture_variants_sans_switcher():
+    class NoVariantSession:
+        def eval_body(self, body):
+            return []
+
+        def wait_ms(self, ms):
+            pass
+
+    assert MistralService(NoVariantSession(), {})._capture_variants() == {}

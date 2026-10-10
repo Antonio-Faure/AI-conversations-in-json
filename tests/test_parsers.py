@@ -3166,3 +3166,59 @@ class TestTousLesParsers:
         import json
 
         json.loads(json.dumps(data))  # roundtrip sans exception
+
+
+class TestMistralVariantes:
+    """Versions alternatives (editions/regenerations) issues de la capture live."""
+
+    HTML = """
+    <html><body><main>
+      <div data-message-author-role="user" data-message-id="u-1" data-message-version="1">
+        <div class="select-text"><span>question editee</span></div>
+      </div>
+      <div data-message-author-role="assistant" data-message-id="a-1" data-message-version="0">
+        <div data-message-part-type="answer">
+          <div class="markdown-container-style"><p>reponse active</p></div>
+        </div>
+      </div>
+    </main></body></html>
+    """
+
+    EDITIONS = [
+        '<div data-message-author-role="user" data-message-id="u-1" data-message-version="0">'
+        '<div class="select-text"><span>question originale</span></div></div>',
+        '<div data-message-author-role="user" data-message-id="u-1" data-message-version="1">'
+        '<div class="select-text"><span>question editee</span></div></div>',
+    ]
+
+    def test_editions_utilisateur(self):
+        extra = {"variants": {"u-1": {"active": 1, "fragments": self.EDITIONS}}}
+        conv = MistralParser().parse(self.HTML, conversation_id="d-1", extra=extra)
+        msg = conv.messages[0]
+        assert [v.kind for v in msg.variants] == ["edit", "edit"]
+        assert [v.texte for v in msg.variants] == [
+            "question originale", "question editee",
+        ]
+        assert [v.active for v in msg.variants] == [False, True]
+        assert all(v.message_id == "u-1" for v in msg.variants)
+
+    def test_regenerations_assistant(self):
+        fragments = [
+            '<div data-message-author-role="assistant" data-message-id="a-1" data-message-version="0">'
+            '<div data-message-part-type="answer">'
+            '<div class="markdown-container-style"><p>v1</p></div></div></div>',
+            '<div data-message-author-role="assistant" data-message-id="a-1" data-message-version="1">'
+            '<div data-message-part-type="answer">'
+            '<div class="markdown-container-style"><p>v2</p></div></div></div>',
+        ]
+        extra = {"variants": {"a-1": {"active": 0, "fragments": fragments}}}
+        conv = MistralParser().parse(self.HTML, conversation_id="d-1", extra=extra)
+        msg = conv.messages[1]
+        assert [v.kind for v in msg.variants] == ["regeneration", "regeneration"]
+        assert [v.texte for v in msg.variants] == ["v1", "v2"]
+        assert [v.active for v in msg.variants] == [True, False]
+
+    def test_sans_capture_aucune_variante(self):
+        conv = MistralParser().parse(self.HTML, conversation_id="d-1")
+        assert conv.messages[0].variants == []
+        assert conv.messages[1].variants == []

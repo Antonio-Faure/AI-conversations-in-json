@@ -29,9 +29,12 @@ ${AICV_ROOT}/.venv/bin/python \
 
    ```json
    "cookies": {
-     "next-auth.session-token": "COLLE_TA_VALEUR_ICI"
+     "ory_session_<identifiant>": "COLLE_TA_VALEUR_ICI"
    }
    ```
+
+   `auth_cookies` accepte un nom exact ou un **préfixe** (ex. `ory_session_`,
+   dont le suffixe varie) pour la détection automatique de connexion.
 
 ### Vérification
 

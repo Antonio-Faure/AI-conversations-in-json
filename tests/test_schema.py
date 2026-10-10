@@ -13,6 +13,7 @@ from src.schema import (
     ConversationRef,
     Message,
     SchemaError,
+    Variant,
     build_conversation,
     extract_code_blocks,
     normalize_messages,
@@ -123,6 +124,7 @@ class TestMessage:
             "artifacts",
             "sources",
             "tools",
+            "variants",
         ]
         assert data["conversation_id"] == "c1"
         assert data["message_id"] == "m1"
@@ -158,6 +160,36 @@ class TestMessage:
     def test_from_dict_champ_manquant(self):
         with pytest.raises(SchemaError):
             Message.from_dict({"texte": "x"})
+
+    def test_sans_variants_par_defaut(self):
+        """Les anciens JSON (sans champ variants) restent lisibles."""
+        data = Message(role="user", texte="x").to_dict()
+        data.pop("variants")
+        msg = Message.from_dict(data)
+        assert msg.variants == []
+
+    def test_variants_roundtrip(self):
+        msg = Message(
+            role="assistant",
+            texte="version active",
+            variants=[
+                Variant(kind="regeneration", texte="version 1",
+                        message_id="m1", timestamp="2026-01-15T10:30:05Z"),
+                Variant(kind="regeneration", texte="version active",
+                        message_id="m1", active=True),
+                Variant(kind="edit", texte="question editee",
+                        message_id="m0"),
+            ],
+        )
+        back = Message.from_dict(msg.to_dict())
+        assert back == msg
+        assert [v.kind for v in back.variants] == ["regeneration", "regeneration", "edit"]
+        assert back.variants[1].active is True
+
+    def test_variante_kind_invalide_rejete(self):
+        msg = Message(role="user", texte="x", variants=[Variant(kind="autre", texte="y")])
+        with pytest.raises(SchemaError, match="kind de variante invalide"):
+            msg.validate()
 
 
 class TestConversation:
@@ -271,3 +303,40 @@ class TestNormalizeMessages:
 
         msgs = [Message("user", "a"), Message("assistant", "b")]
         assert normalize_messages(msgs) == msgs
+
+    def test_fusion_conserve_et_etend_les_variants(self):
+        first = Message("assistant", "r1", variants=[Variant("regeneration", "v1")])
+        second = Message("assistant", "r1", variants=[
+            Variant("regeneration", "v1"),
+            Variant("regeneration", "v2", active=True),
+        ])
+        out = normalize_messages([first, second])
+        assert len(out) == 1
+        assert [v.texte for v in out[0].variants] == ["v1", "v2"]
+
+    def test_extension_garde_les_variants(self):
+        out = normalize_messages([
+            Message("user", "salut", variants=[Variant("edit", "salut v1")]),
+            Message("user", "salut et bonjour"),
+        ])
+        assert len(out) == 1
+        assert out[0].texte == "salut et bonjour"
+        assert [v.texte for v in out[0].variants] == ["salut v1"]
+
+
+class TestVariant:
+    def test_kind_par_defaut_et_code_blocks_derives(self):
+        variant = Variant(texte="```python\nprint(1)\n```")
+        assert variant.kind == "regeneration"
+        assert variant.code_blocks[0].language == "python"
+
+    def test_timestamp_normalise(self):
+        variant = Variant(texte="x", timestamp="2026-01-15T11:30:00+01:00")
+        assert variant.timestamp == "2026-01-15T10:30:00Z"
+
+    def test_to_dict_ordre_des_cles(self):
+        data = Variant(kind="edit", texte="x").to_dict()
+        assert list(data.keys()) == [
+            "kind", "texte", "code_blocks", "model",
+            "timestamp", "message_id", "active",
+        ]

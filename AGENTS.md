@@ -56,9 +56,11 @@ ce fichier donne les conventions et le mode opératoire.
 
 Options récentes utiles : `--match TEXTE` (ne scraper que les titres/id
 correspondants), `--screenshots` (un PNG par tour, centré, dans
-`exports/<platform>/screenshots/<conv>/message-NN.png`), `--output DIR`
-(surcharge `output_dir`), `--retry-unavailable` (réessaie les conversations
-marquées indisponibles).
+`exports/<platform>/screenshots/<conv>/message-NN.png`), `--variants` (capture
+les versions alternatives des messages : éditions/régénérations, champ
+`variants` du JSON ; navigation de l'historique côté service, opt-in car plus
+lent), `--output DIR` (surcharge `output_dir`), `--retry-unavailable` (réessaie
+les conversations marquées indisponibles).
 
 ## Architecture (points d'entrée)
 
@@ -106,9 +108,9 @@ marquées indisponibles).
 
 ## Sous-agents de correction de parseur
 
-- Agents : `.opencode/agent/parser-<bot>.md` (modèle vision
+- Agents : `.opencode/agents/parser-<bot>.md` (modèle vision
   `opencode-go/deepseek-v4.1-flash`, outils complet).
-- Skill commune : `.opencode/skill/parser-loop/SKILL.md` — boucle
+- Skill commune : `.opencode/skills/parser-loop/SKILL.md` — boucle
   `scrape → screenshots → patch parseur → re-scrape`.
 - Chaque agent travaille dans son **worktree** `${AICV_WT}/<bot>`
   et ne modifie que `src/parsers/<bot>.py` (+ service + tests). Les fichiers
@@ -124,7 +126,8 @@ marquées indisponibles).
 - Runner resumable : `src/drivers/runner.py` + `scripts/etalon_run.py`
   (`queue.json` + `state.json` + `BILAN.md`, arrêt sur rate-limit).
 - Médias de test : `scripts/make_media.py` (`src/utils/media.py`, ffmpeg).
-- Skill `etalon-runner` et agents `.opencode/agent/runner-<bot>.md` (gemini, grok).
+- Skill `etalon-runner` et agents `.opencode/agents/runner-<bot>.md` (gemini, grok).
+- Définitions au format natif OpenCode V2 (`agents/`, `skills/`, `permissions:`).
 - Dossiers runtime hors dépôt : `${AICV_RUN}/<bot>/`.
 
 ## Conversation d'étalonnage (canari des parseurs)
@@ -160,8 +163,7 @@ marquées indisponibles).
   `.venv/bin/python scripts/calibration_build.py --print <bot>`.
   Médias : `.venv/bin/python scripts/make_media.py --bot <bot>`.
 - File d'envoi : `--write-queue` (écrit `calibration_queue.json` dans le run dir) ;
-  envoi resumable : `scripts/etalon_run.py --bot <bot> --run-dir … --queue …`
-  (`--mode work|chat` pour Mistral).
+  envoi resumable : `scripts/etalon_run.py --bot <bot> --run-dir … --queue …`.
 - **Audit d'intégrité** : `.venv/bin/python scripts/audit_etalon.py`
   (file vs export, tours manquants par conversation).
 - **Complément** : `.venv/bin/python scripts/calibration_build.py --complement <bot>`
@@ -189,8 +191,9 @@ marquées indisponibles).
   plus retentées. `--retry-unavailable` lève le flag pour un nouvel essai.
 - Une **fusion JSON partielle** (scrape tronqué) ne remplace pas l'archive :
   statut `kept` (préfixe/suffixe) → ne pas dégrader un export complet.
-- Mistral : **deux modes** `/chat` et `/work` (même titre possible) ; le mode est
-  activé par `_ensure_mode`. Timestamps non exposés (`null`).
+- Mistral : application unique `/work` (l'ancien `/chat` a fusionné dedans) ;
+  les URLs `/chat/<id>` sont réécrites en `/work/<id>`. Timestamps non exposés
+  (`null`).
 - Grok : pas de navigateur → pas de screenshots, HTML généré (`html_render.py`) ;
   les pièces jointes sont téléchargées via un `fetch` authentifié par cookies.
 - Après un `reparse_exports.py` ou un `download_images.py`, relancer

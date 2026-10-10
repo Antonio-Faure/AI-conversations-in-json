@@ -31,7 +31,11 @@ from src.orchestrator import load_config  # noqa: E402
 from src.parsers import PARSER_CLASSES  # noqa: E402
 from src.schema import Conversation, Message, extract_code_blocks, normalize_messages  # noqa: E402
 from src.utils.cleanup import clean_text  # noqa: E402
-from src.utils.urls import canonical_url_from_html, conversation_url  # noqa: E402
+from src.utils.urls import (  # noqa: E402
+    canonical_url_from_html,
+    conversation_url,
+    normalize_conversation_url,
+)
 
 
 def _url_for(platform: str, conversation_id: str, html_path: Path) -> str:
@@ -40,8 +44,8 @@ def _url_for(platform: str, conversation_id: str, html_path: Path) -> str:
             html_path.read_text(encoding="utf-8", errors="replace")
         )
         if canonical and conversation_id in canonical:
-            return canonical
-    return conversation_url(platform, conversation_id)
+            return normalize_conversation_url(canonical)
+    return normalize_conversation_url(conversation_url(platform, conversation_id))
 
 DOM_PLATFORMS = ("chatgpt", "claude", "gemini", "mistral", "perplexity")
 

@@ -1,6 +1,5 @@
 {
   "platform": "gemini",
-  "mode": null,
   "source_conversation": "https://gemini.google.com/app/f00d16dc409d2f56",
   "generated_from": "exports/gemini/documentation-des-capacites-de-gemini.json",
   "test_pool": 39,

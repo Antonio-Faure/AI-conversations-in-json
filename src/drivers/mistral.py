@@ -1,19 +1,15 @@
-"""Driver Mistral (envoi de messages et de pieces jointes ; modes work/chat).
+"""Driver Mistral (envoi de messages et de pieces jointes).
 
-Mistral expose deux modes (`/work` et `/chat`) qui sont deux applications
-distinctes ; la navigation directe vers `/chat` est redirigee vers `/work`
-selon le dernier mode utilise. On force donc le mode via les liens de l'« app
-switcher » (`a[href='/chat']`, `a[href='/work']`) avant d'ouvrir la
-conversation cible. Passer l'URL de la conversation (`--url`) reste la facon
-fiable de reprendre un etalon dans le bon mode.
+L'application /chat a fusionne dans /work : il n'y a plus qu'un seul mode.
+Les URLs anciennes `/chat/<id>` sont reecrites vers `/work/<id>`.
 """
 
 from __future__ import annotations
 
 import json
 import logging
-from urllib.parse import urlparse
 
+from ..utils.urls import normalize_conversation_url
 from .base import ChatDriver
 
 log = logging.getLogger("aicv.drivers.mistral")
@@ -23,15 +19,9 @@ class MistralDriver(ChatDriver):
     name = "mistral"
     home_url = "https://chat.mistral.ai/work"
 
-    #: liens de l'app switcher pour forcer le mode (chat|work)
-    mode_selectors = {
-        "chat": "a[href='/chat']",
-        "work": "a[href='/work']",
-    }
     new_chat_selectors = (
         "button[aria-label*='Nouveau']",
         "button[aria-label*='New']",
-        "a[href='/chat']",
         "a[href='/work']",
     )
     input_selectors = (
@@ -81,42 +71,14 @@ class MistralDriver(ChatDriver):
 
     def __init__(self, session, config=None):
         super().__init__(session, config)
-        self._mode = None
-        #: mode ouvert pour une nouvelle conversation (« work » par defaut)
-        self.preferred_mode = "work"
         # etat capture juste avant l'envoi, pour detecter la reponse meme si
         # elle apparait pendant la saisie/le clic
         self._pre_count = 0
         self._pre_len = -1
 
-    @staticmethod
-    def mode_of(url: str) -> "str | None":
-        """Deduit le mode (chat|work) porte par le chemin de l'URL.
-
-        On parse le chemin : le domaine `chat.mistral.ai` contient lui-meme
-        `/chat`, une recherche de sous-chaine serait donc trompeuse.
-        """
-        if not url:
-            return None
-        segments = urlparse(url).path.strip("/").split("/")
-        first = segments[0] if segments and segments[0] else None
-        return first if first in ("chat", "work") else None
-
-    def ensure_mode(self, mode: str) -> None:
-        """Force le mode demande via l'app switcher (le shell par defaut est /work)."""
-        if mode not in self.mode_selectors or self._mode == mode:
-            return
-        self.session.goto(self.home_url)
-        self.session.wait_ms(3000)
-        if mode != "work":
-            selector = self.mode_selectors[mode]
-            clicked = self.session.eval_body(
-                "const a=document.querySelector(%s);"
-                "if(a){a.click();return true}return false;" % json.dumps(selector)
-            )
-            if clicked:
-                self.session.wait_ms(4000)
-        self._mode = mode
+    def open_conversation(self, url: str) -> None:
+        """Ouvre une conversation en normalisant les anciennes URLs /chat."""
+        super().open_conversation(normalize_conversation_url(url))
 
     def is_rate_limited(self) -> bool:
         """Detecte un quota epuise et journalise le marqueur exact.
@@ -132,20 +94,6 @@ class MistralDriver(ChatDriver):
                 log.warning("mistral: marqueur rate-limit %r -> %r", marker, snippet)
                 return True
         return False
-
-    def open_home(self) -> None:
-        self.ensure_mode(self.preferred_mode)
-
-    def open_conversation(self, url: str) -> None:
-        mode = self.mode_of(url)
-        if mode:
-            self.ensure_mode(mode)
-        self.session.goto(url)
-        self.session.wait_ms(1500)
-
-    def new_conversation(self) -> bool:
-        self.ensure_mode(self.preferred_mode)
-        return super().new_conversation()
 
     # -- pieces jointes -------------------------------------------------------
 
