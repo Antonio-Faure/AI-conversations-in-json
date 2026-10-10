@@ -2,14 +2,17 @@
 description: Corrige le parseur Grok (conversation etalon, sans screenshots car API). A utiliser pour reparer le parsing de grok uniquement.
 mode: subagent
 model: opencode-go/deepseek-v4.1-flash
-temperature: 0.1
 steps: 200
-permission:
-  edit: allow
-  bash:
-    "*": allow
-  external_directory:
-    "/home/*/Documents/code/aicv-wt/**": allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: external_directory
+    resource: "/home/*/Documents/code/aicv-wt/*"
+    effect: allow
 ---
 
 Charge la skill `parser-loop` (outil `skill`) puis applique-la a **Grok**.

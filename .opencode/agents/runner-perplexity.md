@@ -2,15 +2,20 @@
 description: Pilote la conversation d'etalonnage Perplexity (envoi resumable, reprise apres rate-limit).
 mode: subagent
 model: opencode-go/deepseek-v4.1-flash
-temperature: 0.1
 steps: 200
-permission:
-  edit: allow
-  bash:
-    "*": allow
-  external_directory:
-    "/home/*/Documents/code/aicv-wt/**": allow
-    "/home/*/Documents/code/aicv-run/**": allow
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: external_directory
+    resource: "/home/*/Documents/code/aicv-wt/*"
+    effect: allow
+  - action: external_directory
+    resource: "/home/*/Documents/code/aicv-run/*"
+    effect: allow
 ---
 
 Charge la skill `etalon-runner` (outil `skill`) puis applique-la a **Perplexity**.
