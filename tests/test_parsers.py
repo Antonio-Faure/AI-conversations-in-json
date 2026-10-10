@@ -379,6 +379,82 @@ class TestChatGPTParser:
         assert "document(1).pdf" in texte
 
 
+class TestChatGPTNewUI:
+    """Nouvelle UI « DIL » (2026) : unites de message sans data-message-author-role."""
+
+    def test_structure_et_roles(self, fixture_html):
+        conv = ChatGPTParser().parse(
+            fixture_html("chatgpt_new_ui.html"),
+            conversation_id="f0000000-0000-4000-8000-6a6e7700aa11",
+            extra={"title_hint": "Nouvelle UI ChatGPT"},
+        )
+        assert conv.title == "Nouvelle UI ChatGPT"
+        assert [m.role for m in conv.messages] == [
+            "user",
+            "assistant",
+            "user",
+            "assistant",
+        ]
+        assert conv.messages[0].message_id == "u1"
+        assert conv.messages[1].message_id == "a1"
+
+    def test_texte_utilisateur_et_assistant_markdown(self, fixture_html):
+        conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
+        assert "Montre un exemple complet." in conv.messages[0].texte
+        texte = conv.messages[1].texte
+        assert "**Gras**" in texte
+        assert "*italique*" in texte
+        assert "- Un" in texte and "- Deux" in texte
+        # nouvelle UI : le code inline est un `<span>` (pas un `<code>`)
+        assert "`sorted(key=...)`" in texte
+
+    def test_code_language_et_en_tete_retire(self, fixture_html):
+        conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
+        message = conv.messages[1]
+        assert message.code_blocks[0].language == "python"
+        assert "```python" in message.texte
+        assert "print(1)" in message.texte
+        # le libelle de langue (en-tete de carte) ne pollue pas le texte
+        assert "Python" not in message.texte.replace("```python", "")
+
+    def test_latex_display_via_data_math_display(self, fixture_html):
+        conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
+        assert "$$\\begin{cases}" in conv.messages[1].texte
+
+    def test_image_openai_conservee(self, fixture_html):
+        conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
+        assert (
+            "![photo](https://images.openai.com/static-rsc-4/abcdef123456)"
+            in conv.messages[1].texte
+        )
+
+    def test_reasoning_et_tools_en_tetes_activite(self, fixture_html):
+        conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
+        message = conv.messages[1]
+        assert message.reasoning == "Worked for 5s"
+        assert message.tools == ["Searched files and read the requested file"]
+        # le raisonnement n'est pas injecte dans le texte du message
+        assert "Worked for" not in message.texte
+
+    def test_tour_image_placeholder_conserve(self, fixture_html):
+        """Un tour image externe non resolu (bouton placeholder) reste un tour.
+
+        Sans cela, deux messages `user` consecutifs seraient fusionnes et
+        l'alternance des roles (et le compte de messages) casserait.
+        """
+        conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
+        assert len(conv.messages) == 4
+        assert conv.messages[3].role == "assistant"
+        assert conv.messages[3].texte == ""
+
+    def test_sidebar_nouvelle_ui(self, fixture_html):
+        refs = ChatGPTParser().parse_links(
+            fixture_html("chatgpt_new_ui.html"), "https://chatgpt.com/"
+        )
+        assert [r.id for r in refs] == ["f0000000-0000-4000-8000-6a6e7700aa11"]
+        assert refs[0].title == "Nouvelle UI ChatGPT"
+
+
 class TestChatGPTTurnMerge:
     """Fusion incrementale des fenetres de tours (virtualisation ChatGPT)."""
 

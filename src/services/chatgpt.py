@@ -1,10 +1,12 @@
-"""Scraper ChatGPT / OpenAI (chatgpt.com) via Playwright.
+"""Scraper ChatGPT / OpenAI (chatgpt.com) via Playwright / Botasaurus.
 
 Particularites :
   - sidebar scrollable infinie (nav[aria-label="Chat history"])
-  - timestamps absents du DOM : recuperes depuis les props React
-    (`memoizedProps.message.create_time`) via page.evaluate
-  - modele par message : attribut data-message-model-slug (+ props React)
+  - UI « DIL » (2026) : un tour par `[data-turn-key]`, messages dans
+    `[data-chatgpt-search-unit-key="...:user|assistant"]` ; l'historique n'est
+    charge qu'a la **molette reelle** (`scroll_wheel`, un `scrollTop` programme
+    est annule)
+  - timestamps/modele : plus exposes dans le DOM ni les props React -> `None`
 """
 
 from __future__ import annotations
@@ -34,9 +36,15 @@ EXTRACT_REACT_META_JS = """
       return ct.t + (ct.s || 0) / 1e9 + (ct.ns || 0) / 1e9;
     return null;
   };
-  const nodes = document.querySelectorAll('[data-message-id]');
+  const nodes = document.querySelectorAll(
+    '[data-chatgpt-search-unit-key], [data-chatgpt-selection-message-id], [data-message-id]');
   nodes.forEach((el) => {
-    const id = el.getAttribute('data-message-id');
+    let id = el.getAttribute('data-chatgpt-search-message-ids');
+    if (id) id = id.split(/\\s+/)[0];
+    if (!id) id = el.getAttribute('data-chatgpt-selection-message-id');
+    if (!id) id = el.getAttribute('data-dil-message-id');
+    if (!id) id = el.getAttribute('data-message-id');
+    if (!id) return;
     const entry = {
       time: null,
       model: el.getAttribute('data-message-model-slug') || null,
@@ -47,7 +55,9 @@ EXTRACT_REACT_META_JS = """
       let fiber = key ? el[key] : null;
       for (let hops = 0; fiber && hops < 40; hops++) {
         const props = fiber.memoizedProps || {};
-        const msg = props.message || (props.data && props.data.message) || props.node;
+        const msg = props.message || (props.data && props.data.message) || props.node
+          || (Array.isArray(props.messages)
+              ? props.messages.find((m) => m && m.id === id) : null);
         if (msg && msg.author && msg.author.role) {
           const t = normTime(msg.create_time || msg.timestamp || msg.created_at);
           if (t) entry.time = t;
@@ -67,8 +77,8 @@ EXTRACT_REACT_META_JS = """
 }
 """
 
-#: selecteur des tours ChatGPT (conversation-turn-N, images generees incluses)
-TURN_SELECTOR = "[data-testid^='conversation-turn']"
+#: selecteur des tours ChatGPT (UI « DIL » 2026 : un tour par `data-turn-key`)
+TURN_SELECTOR = "[data-turn-key]"
 
 #: remise a zero de l'accumulateur JS des tours
 _RESET_TURNS_JS = """
@@ -103,7 +113,13 @@ return (function(){
   if (!acc) return null;
   const nodes = document.querySelectorAll(__SELECTOR__);
   const keyOf = function(n){
-    let mid = n.getAttribute('data-message-id');
+    let mid = n.getAttribute('data-turn-key');
+    if (mid) return 't:' + mid;
+    mid = n.getAttribute('data-chatgpt-search-message-ids');
+    if (mid) return 'm:' + mid.split(/\\s+/)[0];
+    mid = n.getAttribute('data-chatgpt-selection-message-id');
+    if (mid) return 'm:' + mid;
+    mid = n.getAttribute('data-message-id');
     if (!mid) {
       const holder = n.querySelector('[data-message-id]');
       if (holder) mid = holder.getAttribute('data-message-id');
@@ -131,6 +147,16 @@ return (function(){
   }
   if (fresh > 0 && keys.length) acc.snaps.push(keys);
   const s = acc.scroller;
+  // « Loading older messages… » : l'historique est encore en cours de fetch
+  let loading = false;
+  const sr = document.querySelectorAll('span.sr-only');
+  for (let i = 0; i < sr.length; i++) {
+    const t = sr[i].textContent || '';
+    if (t.indexOf('Loading older') >= 0 || t.indexOf('Chargement') >= 0) {
+      loading = true;
+      break;
+    }
+  }
   return {
     dom: nodes.length,
     fresh: fresh,
@@ -138,6 +164,7 @@ return (function(){
     top: s ? Math.round(s.scrollTop) : 0,
     client: s ? s.clientHeight : 0,
     height: s ? s.scrollHeight : 0,
+    loading: loading,
   };
 })();
 """.replace("__SELECTOR__", json.dumps(TURN_SELECTOR))
@@ -165,18 +192,37 @@ return (function(){
 })();
 """
 
-#: deploie les panneaux de raisonnement/COT visibles ('Thought for Xs').
-#: Replie, le panneau n'expose pas le raisonnement dans le DOM : on clique une
-#: fois (aria-expanded=false) pour que le contenu entre dans l'outerHTML capte.
+#: coordonnees du centre du conteneur scrollable (pour la molette reelle)
+_SCROLLER_RECT_JS = """
+return (function(){
+  const acc = window.__aicvChatgpt;
+  const s = acc && acc.scroller;
+  if (!s) return null;
+  const r = s.getBoundingClientRect();
+  return {
+    x: Math.round(r.left + r.width / 2),
+    y: Math.round(r.top + r.height / 2),
+    client: s.clientHeight,
+  };
+})();
+"""
+
+#: deploie les panneaux d'activite visibles (raisonnement/outils).
+#: Replie, le panneau n'expose pas les etapes d'outil dans le DOM : on clique
+#: les boutons `aria-expanded=false` des en-tetes d'activite pour que le
+#: contenu entre dans l'outerHTML capte (nouvelle UI : le libelle « Worked for
+#: Xs » est dans un span frere, pas dans le bouton).
 _EXPAND_COT_JS = """
 return (function(){
   const re = /^(thought for|worked for|reasoned for|thinking|réflexion|raisonnement|a réfléchi|a travaillé|travail pendant|réfléchi pendant)[\\s:]/i;
   let count = 0;
   document.querySelectorAll('button[aria-expanded="false"]').forEach(function(b){
+    const header = b.closest("[class*='activity']");
     const text = (b.innerText || b.textContent || '').trim();
-    if (!re.test(text)) return;
-    b.click();
-    count++;
+    if (header || (text && re.test(text))) {
+      b.click();
+      count++;
+    }
   });
   return count;
 })();
@@ -286,6 +332,23 @@ class ChatGPTService(BaseService):
                 meta.setdefault(message_id, entry)
             return info
 
+        def scroll_up(info: Dict[str, Any]) -> None:
+            """Remonte le fil d'un cran.
+
+            La nouvelle UI annule un `scrollTop` programme : on envoie une vraie
+            molette au centre du conteneur (`thread-scroll-container`) pour
+            declencher le chargement des tours anciens.
+            """
+            if hasattr(self.session, "scroll_wheel"):
+                rect = self.session.eval_body(_SCROLLER_RECT_JS) or {}
+                x = int(rect.get("x") or 0)
+                y = int(rect.get("y") or 0)
+                if x or y:
+                    client = int(rect.get("client") or info.get("client") or 700)
+                    self.session.scroll_wheel(x, y, -max(300, client // 2))
+                    return
+            self.session.eval_body(_SCROLL_UP_JS)
+
         # s'assurer d'etre au bas du fil (les tours recents s'y chargent)
         for _ in range(4):
             self.session.eval_body(_SCROLL_BOTTOM_JS)
@@ -298,15 +361,18 @@ class ChatGPTService(BaseService):
             info = collect()
             total = int(info.get("total") or 0)
             top = int(info.get("top") or 0)
-            if total == last_total:
+            loading = bool(info.get("loading"))
+            if total == last_total and not loading:
                 stable += 1
             else:
                 stable = 0
             last_total = total
             at_top = top <= 1
-            if at_top and stable >= top_stable_rounds:
+            # tant que « Loading older messages… » est affiche, l'historique
+            # n'est pas complet : on continue a envoyer la molette.
+            if at_top and stable >= top_stable_rounds and not loading:
                 break
-            self.session.eval_body(_SCROLL_UP_JS)
+            scroll_up(info)
             self.session.wait_ms(top_pause_ms if at_top else pause_ms)
 
         data = self.session.eval_body(_FINAL_TURNS_JS) or {}

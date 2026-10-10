@@ -1,11 +1,20 @@
 """Parser DOM ChatGPT (chatgpt.com).
 
-Structure reelle observee (2024-2026):
-  - sidebar : <nav aria-label="Chat history"> avec <a href="/c/<uuid>"> par conversation
-  - messages : <div data-message-id="<uuid>" data-message-author-role="user|assistant"
-               data-message-model-slug="gpt-4o"> <div class="markdown ...">...</div>
-  - timestamps : absents du DOM visible -> injectes par le service via les donnees
-    internes React (`memoizedProps.message.create_time`), passees en `extra`.
+Deux generations de DOM sont gerees :
+
+- **UI historique** : <div data-message-id="<uuid>" data-message-author-role="user|assistant"
+  data-message-model-slug="gpt-4o"> <div class="markdown ...">...</div>, tours
+  `[data-testid^='conversation-turn']`. Timestamps injectes par le service via
+  les donnees internes React, passees en `extra`.
+
+- **UI « DIL » (2026)** : plus de `data-message-author-role`/`data-message-id`.
+  Un tour `[data-turn-key]` contient des unites de message
+  `[data-chatgpt-search-unit-key="<turn>:<n>:user|assistant"]` ; le texte
+  assistant est dans `[data-markdown-text-style="assistant-message"]`, le texte
+  utilisateur dans `div.text-size-chat.whitespace-pre-wrap`. Le raisonnement et
+  les etapes d'outil vivent dans des en-tetes `[class*='activity-header']`
+  (« Worked for Xs ») rattaches au tour. Les images markdown distantes ne sont
+  plus rendues en `<img>` (bouton placeholder sans URL) : elles sont perdues.
 """
 
 from __future__ import annotations
@@ -34,6 +43,21 @@ REASONING_LABEL_RE = re.compile(
 
 #: cartes canvas/artefacts : conteneur texte editable titre par ChatGPT
 CANVAS_ID_PREFIX = "textdoc-message-"
+
+#: UI « DIL » (2026) : unites de message sans data-message-author-role
+NEW_UNIT_SELECTORS = (
+    "[data-chatgpt-search-unit-key]",
+    "[data-content-search-unit-key]",
+)
+#: role porte par l'attribut de l'en-tete assistant (nouvelle UI)
+NEW_ROLE_ATTR = "data-conversation-role"
+NEW_ASSISTANT_TEXT = "[data-markdown-text-style='assistant-message']"
+NEW_USER_BUBBLE = "[data-user-message-bubble]"
+NEW_USER_TEXT = "div.text-size-chat.whitespace-pre-wrap"
+#: conteneur de tour de la nouvelle UI
+NEW_TURN_ATTR = "data-turn-key"
+#: en-tetes d'activite (raisonnement « Worked for Xs » + etapes d'outil)
+NEW_ACTIVITY_HEADER_SELECTOR = "[class*='activity-header']"
 
 #: langage affiche par ChatGPT -> identifiant usuel de fence markdown
 _LANGUAGE_ALIASES = {
@@ -151,13 +175,15 @@ class ChatGPTParser(BaseParser):
     )
     conversation_id_pattern = CONVERSATION_ID_RE
 
-    message_selectors = (
+    message_selectors = NEW_UNIT_SELECTORS + (
         "div[data-message-author-role='assistant']",
         "div[data-message-id]",
         "[data-testid^='conversation-turn']",
     )
 
     TURN_SELECTORS = (
+        "[data-turn-key]",
+        "[data-chatgpt-search-unit-key]",
         "[data-message-author-role][data-message-id]",
         "[data-message-author-role]",
         "div[data-message-id]",
@@ -165,6 +191,8 @@ class ChatGPTParser(BaseParser):
         "main article[role='article']",
     )
     CONTENT_SELECTORS = (
+        NEW_ASSISTANT_TEXT,
+        NEW_USER_TEXT,
         "[data-testid^='conversation-turn-text']",
         ".markdown",
         "div.whitespace-pre-wrap",
@@ -197,30 +225,40 @@ class ChatGPTParser(BaseParser):
         models: List[str] = []
 
         for turn, role in turns:
-            # le panneau de raisonnement, le canvas et les pieces jointes vivent
-            # dans le tour complet, pas dans le seul bloc `[data-message-author-role]`
+            # le raisonnement/COT, le canvas et les sources vivent dans le tour
+            # complet ; les pieces jointes et l'image du message restent dans
+            # l'unite de message (ne pas melanger les deux messages du tour).
             scope = self._turn_container(turn)
             content_el = self.select_first(turn, self.CONTENT_SELECTORS)
             content = self._content_text(content_el)
-            # pieces jointes / images generees (souvent hors du .markdown)
+            # pieces jointes / images generees (souvent hors du markdown)
             attachments = self.attachments_markdown(
-                scope, url_filter=self._is_content_image
+                turn, url_filter=self._is_content_image
             )
-            for extra_block in (
-                attachments,
-                self._file_tiles(scope),
-                self._canvas_content(scope),
-            ):
+            extra_blocks = [attachments, self._file_tiles(turn)]
+            if role == "assistant":
+                # le canvas est un frere du message dans le tour : ne l'injecter
+                # que dans la reponse assistant (pas dans le message utilisateur)
+                extra_blocks.append(self._canvas_content(scope))
+            for extra_block in extra_blocks:
                 if extra_block and extra_block not in content:
                     content = f"{content}\n\n{extra_block}".strip() if content else extra_block
             if not content:
-                continue
+                # nouvelle UI : un tour image externe (markdown `![]()` non
+                # resolu) est rendu en bouton placeholder sans URL ; on garde
+                # le message vide plutot que de fusionner les roles voisins.
+                is_new_unit = (
+                    turn.get("data-chatgpt-search-unit-key") is not None
+                    or turn.get("data-content-search-unit-key") is not None
+                )
+                if not is_new_unit:
+                    continue
             # raisonnement/COT, artefacts/canvas, sources et outils (hors .markdown)
             reasoning = self._reasoning_text(scope) if role == "assistant" else ""
             artifacts = self._canvas_artifacts(scope) if role == "assistant" else []
             sources = self._sources(scope) if role == "assistant" else []
             tools = self._tools(scope) if role == "assistant" else []
-            mid = turn.get("data-message-id")
+            mid = self._message_id_of(turn)
             meta: Dict[str, Any] = {}
             timestamp = None
             slug = turn.get("data-message-model-slug")
@@ -305,17 +343,40 @@ class ChatGPTParser(BaseParser):
         return False
 
     def _collect_turns(self, soup):
-        """Tours dans l'ordre du document, images generees incluses.
+        """Tours dans l'ordre du document (nouvelles et anciennes UI).
 
-        ChatGPT rend parfois un tour image (assistant) sans
-        `data-message-author-role` : le role est alors porte par le conteneur
-        `[data-testid^='conversation-turn'][data-turn]`. On conserve ces tours
-        pour ne pas fusionner deux messages du meme role consecutifs.
+        Nouvelle UI « DIL » : chaque message est une unite
+        `[data-chatgpt-search-unit-key="<tour>:<n>:user|assistant"]` (le role
+        est le dernier segment). Ancienne UI : `[data-message-author-role]` et
+        les tours image `[data-testid^='conversation-turn'][data-turn]`.
         """
         positions: Dict[Any, int] = {}
         for element in soup.descendants:
             positions.setdefault(id(element), len(positions))
+
         turns = []
+        seen: set = set()
+        for el in soup.select(", ".join(NEW_UNIT_SELECTORS)):
+            if id(el) in seen or el.get("style") == "display: none;":
+                continue
+            # une unite peut etre imbriquee dans une autre (l'unite utilisateur
+            # porte `data-chatgpt-search-unit-key`, le bloc interne seulement
+            # `data-content-search-unit-key`) : garder la plus externe.
+            if el.find_parent(
+                attrs={"data-chatgpt-search-unit-key": True}
+            ) is not None or el.find_parent(
+                attrs={"data-content-search-unit-key": True}
+            ) is not None:
+                continue
+            role = self._new_role_of(el)
+            if role is None:
+                continue
+            seen.add(id(el))
+            turns.append((positions.get(id(el), 0), el, role))
+        if turns:
+            turns.sort(key=lambda item: item[0])
+            return [(turn, role) for _, turn, role in turns]
+
         for el in soup.select("[data-message-author-role]"):
             if el.get("style") == "display: none;":
                 continue
@@ -334,17 +395,56 @@ class ChatGPTParser(BaseParser):
         turns.sort(key=lambda item: item[0])
         return [(turn, role) for _, turn, role in turns]
 
+    @classmethod
+    def _new_role_of(cls, el) -> Optional[str]:
+        """Role d'une unite de message de la nouvelle UI, sinon None."""
+        for attr in ("data-chatgpt-search-unit-key", "data-content-search-unit-key"):
+            key = el.get(attr)
+            if not key:
+                continue
+            role = str(key).rsplit(":", 1)[-1].lower()
+            if role in ("user", "assistant", "system", "tool"):
+                return role
+        heading = el.select_one(f"[{NEW_ROLE_ATTR}]")
+        if heading is not None:
+            role = (heading.get(NEW_ROLE_ATTR) or "").lower()
+            if role in ("user", "assistant", "system", "tool"):
+                return role
+        if el.select_one(NEW_ASSISTANT_TEXT) is not None:
+            return "assistant"
+        if el.select_one(NEW_USER_BUBBLE) is not None:
+            return "user"
+        return None
+
+    @staticmethod
+    def _message_id_of(el) -> Optional[str]:
+        """Identifiant de message (nouvelle UI puis ancienne)."""
+        ids = el.get("data-chatgpt-search-message-ids") or ""
+        if ids:
+            return ids.split()[0]
+        if el.get("data-dil-message-id"):
+            return el.get("data-dil-message-id")
+        holder = el.select_one("[data-chatgpt-selection-message-id]")
+        if holder is not None:
+            return holder.get("data-chatgpt-selection-message-id")
+        if el.get("data-message-id"):
+            return el.get("data-message-id")
+        return None
+
     # -- raisonnement, artefacts et pieces jointes ----------------------------
 
     @staticmethod
     def _turn_container(el):
-        """Remonte au tour complet ``conversation-turn`` d'un element message.
+        """Remonte au tour complet d'un element message.
 
-        Raisonnement, canvas et pieces jointes sont des freres du bloc
-        ``[data-message-author-role]`` : on doit les chercher sur ce conteneur.
+        Nouvelle UI : ``[data-turn-key]``. Ancienne UI :
+        ``[data-testid^='conversation-turn']``. Raisonnement, canvas et sources
+        sont des freres du message dans ce conteneur.
         """
         node = el
         while node is not None:
+            if node.get(NEW_TURN_ATTR):
+                return node
             testid = node.get("data-testid") or ""
             if testid.startswith("conversation-turn"):
                 return node
@@ -355,12 +455,18 @@ class ChatGPTParser(BaseParser):
     def _reasoning_text(cls, turn) -> str:
         """Raisonnement/COT d'un tour assistant ('Thought for Xs').
 
-        ChatGPT rend le bloc de reflexion comme un panneau repliable : un
-        ``<button>`` dont le libelle commence par ``Thought for``/``Worked for``
-        (localise), suivi du contenu une fois deploye. On collecte le contenu
-        deploye ; a defaut (panneau replie), on garde le libelle.
+        Nouvelle UI : les en-tetes d'activite ``[class*='activity-header']``
+        portent le libelle « Worked for Xs » (deploye ou replie). Ancienne UI :
+        un ``<button>`` dont le libelle commence par ``Thought for``/``Worked
+        for`` suivi du contenu deploye ; a defaut (panneau replie), le libelle.
         """
         parts: List[str] = []
+        for header in turn.select(NEW_ACTIVITY_HEADER_SELECTOR):
+            label = cls._activity_label(header)
+            if label and REASONING_LABEL_RE.match(label) and label not in parts:
+                parts.append(label)
+        if parts:
+            return "\n\n".join(parts)
         for button in turn.find_all("button"):
             label = re.sub(r"\s+", " ", button.get_text(" ", strip=True)).strip()
             if not label or not REASONING_LABEL_RE.match(label):
@@ -373,6 +479,19 @@ class ChatGPTParser(BaseParser):
             if text and text not in parts:
                 parts.append(text)
         return "\n\n".join(parts)
+
+    @classmethod
+    def _activity_label(cls, header) -> str:
+        """Libelle d'un en-tete d'activite (cible de ``aria-labelledby``)."""
+        label_el = None
+        button = header.find("button")
+        if button is not None and button.get("aria-labelledby"):
+            label_el = header.find(id=button.get("aria-labelledby"))
+        if label_el is None:
+            label_el = header.select_one("span.truncate") or header.select_one("span")
+        if label_el is None:
+            return ""
+        return re.sub(r"\s+", " ", label_el.get_text(" ", strip=True)).strip()
 
     @staticmethod
     def _normalize_reasoning(text: str) -> str:
@@ -522,6 +641,13 @@ class ChatGPTParser(BaseParser):
             else:
                 markdown = f"~~{inner}~~"
             tag.replace_with(NavigableString(markdown))
+        # nouvelle UI : le code inline est un `<span>` (pas un `<code>`)
+        for span in node.select("[data-markdown-copy='inline-code']"):
+            if span.find_parent("pre") is not None:
+                continue
+            code = span.get_text()
+            if code:
+                span.replace_with(NavigableString(f"`{code}`"))
 
     @classmethod
     def _latex_to_markdown(cls, node) -> None:
@@ -566,7 +692,14 @@ class ChatGPTParser(BaseParser):
     def _math_is_display(element) -> bool:
         style = (element.get("style") or "").replace(" ", "").lower()
         classes = " ".join(element.get("class") or [])
+        display_attr = (element.get("data-math-display") or "").lower()
+        if display_attr in ("true", "block"):
+            return True
+        if display_attr == "false":
+            return False
         if "display:block" in style or "mathBlock" in classes:
+            return True
+        if "Display-" in classes:  # nouvelle UI : wrapper KaTeX en bloc
             return True
         return (
             element.find_parent(class_="katex-display") is not None
@@ -654,12 +787,27 @@ class ChatGPTParser(BaseParser):
     def _tools(cls, turn) -> List[str]:
         """Etapes d'appel d'outil -> ``Message.tools``.
 
-        ChatGPT regroupe les appels d'outils du panneau de raisonnement en
-        cartes ``cot-v5-tool-icon-pile`` : le libelle de l'etape (fichiers,
-        recherche web, code...) est porte par le ``<button aria-label>`` du
-        groupe, sinon par son texte visible.
+        Nouvelle UI : les etapes sont des en-tetes d'activite imbriques
+        ``[class*='activity-header']`` dont le resume est rendu en markdown.
+        Ancienne UI : cartes ``cot-v5-tool-icon-pile`` (libelle dans le
+        ``<button aria-label>`` du groupe, sinon son texte visible).
         """
         tools: List[str] = []
+        for header in turn.select(NEW_ACTIVITY_HEADER_SELECTOR):
+            label = cls._activity_label(header)
+            if label and REASONING_LABEL_RE.match(label):
+                continue  # en-tete racine = raisonnement, pas une etape
+            md = header.select_one(NEW_ASSISTANT_TEXT) or header.select_one(
+                "[class*='MarkdownRoot']"
+            )
+            text = cls.text_of(md) if md is not None else ""
+            if not text:
+                text = label
+            text = re.sub(r"\s+", " ", text).strip()
+            if text and text not in tools:
+                tools.append(text)
+        if tools:
+            return tools
         for pile in turn.select("[data-testid='cot-v5-tool-icon-pile']"):
             group = pile.find_parent("div", class_="group")
             label = ""
@@ -676,20 +824,35 @@ class ChatGPTParser(BaseParser):
 
     @classmethod
     def _code_languages(cls, node) -> None:
-        """Injecte la langue des blocs de code ChatGPT (en-tete de la carte)."""
+        """Injecte la langue des blocs de code ChatGPT (en-tete de la carte).
+
+        Nouvelle UI : l'en-tete ``div.font-sans`` (libelle dans ``div.truncate``)
+        est un frere du ``<pre>`` a l'interieur de ``[class*='CodeBlock']`` ;
+        on retire l'en-tete du texte pour ne pas polluer le markdown.
+        Ancienne UI : l'en-tete est un descendant du ``<pre>``.
+        """
         for pre in node.find_all("pre"):
             if pre.get("data-language"):
                 continue
             header = pre.select_one("div.font-sans")
             if header is None:
+                block = pre.find_parent(attrs={"data-markdown-copy": "code-block"})
+                if block is not None:
+                    header = block.select_one("div.font-sans")
+            if header is None:
                 continue
-            label_el = header.find("div", recursive=False)
+            label_el = header.find("div", recursive=False) or header.select_one(
+                "div.truncate, div.min-w-0"
+            )
             if label_el is None:
                 continue
             label = re.sub(r"\s+", " ", label_el.get_text(" ", strip=True)).strip()
             if not label or len(label) > 30:
                 continue
             pre["data-language"] = cls._normalize_language(label)
+            # l'en-tete (langue + boutons de copie) ne doit pas entrer dans le texte
+            if header.find_parent("pre") is None:
+                header.decompose()
 
     @staticmethod
     def _normalize_language(label: str) -> str:
