@@ -33,6 +33,7 @@ from urllib.parse import urlparse
 import yaml
 
 from .fingerprint import get_fingerprint
+from .http_client import CookieAuthError
 
 from .browser import BrowserSession
 from .parsers.base import ParseError
@@ -323,9 +324,14 @@ class Orchestrator:
                     )
                     attempt_engine = "botasaurus"
                     self._close(session)
-                    session, service = self._new_session(
-                        name, self.registry[name], svc_config, attempt_engine
-                    )
+                    try:
+                        session, service = self._new_session(
+                            name, self.registry[name], svc_config, attempt_engine
+                        )
+                    except Exception as exc2:  # noqa: BLE001
+                        log.exception(f"{name}: echec d'initialisation (botasaurus)")
+                        result.failed.append(f"session: {exc2}")
+                        return None
                     continue
                 log.warning(str(exc))
                 result.skipped_reason = str(exc)
@@ -533,7 +539,17 @@ class Orchestrator:
 
         engine = resolve_engine(name, self.config)
         attempt_engine = "playwright" if engine == "auto" else engine
-        session, service = self._new_session(name, cls, svc_config, attempt_engine)
+        try:
+            session, service = self._new_session(name, cls, svc_config, attempt_engine)
+        except CookieAuthError as exc:
+            # cookies absents/invalides (grok, mistral) : a recapturer via --login
+            log.warning(str(exc))
+            result.skipped_reason = str(exc)
+            return result
+        except Exception as exc:  # noqa: BLE001
+            log.exception(f"{name}: echec d'initialisation de session")
+            result.failed.append(f"session: {exc}")
+            return result
 
         list_path = conversation_list_path(self.output_dir, name)
         index = load_conversation_list(list_path)

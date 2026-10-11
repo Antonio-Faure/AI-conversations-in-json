@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from src.http_client import CookieAuthError
 from src.orchestrator import (
     DEFAULT_CONFIG,
     Orchestrator,
@@ -122,6 +123,15 @@ class AuthLostService(FakeService):
 
     def list_conversations(self, limit=None):
         raise ServiceNotLoggedIn("session expiree")
+
+
+class CookieAuthLostService(FakeService):
+    """Cookies absents des la construction (grok/mistral) : le run doit continuer."""
+
+    name = "cookielost"
+
+    def __init__(self, session, config):
+        raise CookieAuthError("cookielost: cookies absents -> run.py --login cookielost")
 
 
 class BlockedDiscoveryService(FakeService):
@@ -421,6 +431,17 @@ class TestRunPipeline:
         assert result.skipped_reason
         assert "session expiree" in result.skipped_reason
         assert summary.has_failures
+
+    def test_cookies_absents_skip_service(self, workdir):
+        """Un CookieAuthError ne doit pas tuer le run : service saute, autres OK."""
+        orch, _ = make_orchestrator(
+            workdir, {"cookielost": CookieAuthLostService, "fake": FakeService}
+        )
+        summary = orch.run(mode="monthly")
+        result = summary.services["cookielost"]
+        assert result.skipped_reason
+        assert "cookies absents" in result.skipped_reason
+        assert summary.services["fake"].exported
 
     def test_services_desactives_sautes(self, workdir):
         orch, _ = make_orchestrator(workdir, {"fake": FakeService})
