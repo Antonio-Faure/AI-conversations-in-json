@@ -1770,6 +1770,22 @@ class TestPerplexityParser:
         )
         assert conv.messages[0].timestamp == "2025-12-31T23:30:00Z"
 
+    def test_horodatage_annee_deduite_de_la_maj_du_fil(self):
+        # sans `now` (production) : la date de derniere mise a jour du fil sert
+        # de reference, sinon une conversation ancienne serait datee de l'annee
+        # du scrape.
+        html = self._user(
+            '<div class="opacity-0">'
+            '<span class="whitespace-nowrap text-tertiary">25 sept., 19:01</span>'
+            "</div><span>Question.</span>"
+        )
+        conv = PerplexityParser().parse(
+            html,
+            conversation_id="c",
+            extra={"thread_updated_at": "2025-09-30T12:00:00Z"},
+        )
+        assert conv.messages[0].timestamp == "2025-09-25T19:01:00Z"
+
     def test_horodatage_non_reconnu_ignore(self):
         html = self._user(
             '<div class="opacity-0"><span class="text-tertiary">bientôt</span></div>'
@@ -2123,6 +2139,52 @@ class TestPerplexityParser:
         assert "| Colonne 1 | Colonne 2 |" in text
         assert "| --- | --- |" in text
         assert "| Ligne 1 | Donnée A |" in text
+
+    def test_emphase_gras_italique_barre_en_markdown(self):
+        # UI 2026 : <strong>/<em>/<s> sont rendus visibles (cf. screenshot) ;
+        # `BaseParser.text_of` les aplatit, d'ou la conversion en marqueurs.
+        html = self._assistant(
+            "<p>Voici une phrase avec du texte <strong>en gras</strong>, "
+            "<em>en italique</em> et <s>barré</s>.</p>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        text = conv.messages[0].texte
+        assert "**en gras**" in text
+        assert "*en italique*" in text
+        assert "~~barré~~" in text
+
+    def test_emphase_imbriquee_dans_une_liste(self):
+        html = self._assistant(
+            "<ul><li><strong>Parent</strong><ul><li><em>Enfant</em></li></ul></li></ul>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        text = conv.messages[0].texte
+        assert "- **Parent**" in text
+        assert "  - *Enfant*" in text
+
+    def test_emphase_non_appliquee_au_code(self):
+        html = self._assistant(
+            "<pre data-language='html'><code>&lt;strong&gt;x&lt;/strong&gt;</code></pre>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        assert "<strong>x</strong>" in conv.messages[0].texte
+
+    def test_code_inline_en_backticks(self):
+        # UI 2026 : le code inline est rendu en <code> ; `text_of` l'aplatit.
+        html = self._assistant(
+            "<p>Écris le mot <code>print</code> en code inline.</p>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        assert "`print`" in conv.messages[0].texte
+
+    def test_code_inline_non_applique_au_bloc_pre(self):
+        html = self._assistant(
+            "<pre data-language='python'><code>print(1)</code></pre>"
+        )
+        conv = PerplexityParser().parse(html, conversation_id="c")
+        text = conv.messages[0].texte
+        assert "```python\nprint(1)\n```" in text
+        assert "`print(1)`" not in text
 
     def test_latex_inline_et_display(self):
         inline = (
