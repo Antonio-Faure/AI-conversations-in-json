@@ -90,6 +90,29 @@ function stripFences(text) {
   return String(text || "").replace(/```[\s\S]*?```/g, "").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+/* Markdown -> texte simple (sommaire lateral : pas de syntaxe brute). */
+function mdPlain(text) {
+  return String(text || "")
+    .replace(/```[\w-]*\n?([\s\S]*?)```/g, "$1")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/~~([^~]+)~~/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/(^|\s)_([^_\n]+)_(?=\s|$)/g, "$1$2")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s{0,3}>\s?/gm, "")
+    .replace(/^\s{0,3}[-*+]\s+/gm, "")
+    .replace(/^\s{0,3}\d+[.)]\s+/gm, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/^\s{0,3}[|\s:-]*-{2,}[|\s:-]*$/gm, "")
+    .replace(/\|/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function renderMarkdown(text) {
   const { text: protectedText, store } = protectMath(text);
   let html;
@@ -419,7 +442,7 @@ function renderSidebar() {
       <div class="side-sep"></div>
       <h2>Messages</h2>` + (conv.messages || []).map((m, i) =>
         `<div class="anchor" data-mid="${escapeHtml(m.message_id || "")}" data-i="${i}" role="button" tabindex="0">
-          ${escapeHtml(roleLabel(m.role))} · ${escapeHtml((m.texte || "").replace(/\s+/g, " ").slice(0, 48))}
+          ${escapeHtml(roleLabel(m.role))} · ${escapeHtml(mdPlain(m.texte).slice(0, 48))}
         </div>`).join("");
     $("backToResults").addEventListener("click", backToResults);
     sidebar.querySelectorAll(".anchor").forEach((a) =>
