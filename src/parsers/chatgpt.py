@@ -13,8 +13,10 @@ Deux generations de DOM sont gerees :
   assistant est dans `[data-markdown-text-style="assistant-message"]`, le texte
   utilisateur dans `div.text-size-chat.whitespace-pre-wrap`. Le raisonnement et
   les etapes d'outil vivent dans des en-tetes `[class*='activity-header']`
-  (« Worked for Xs ») rattaches au tour. Les images markdown distantes ne sont
-  plus rendues en `<img>` (bouton placeholder sans URL) : elles sont perdues.
+  (« Worked for Xs ») rattaches au tour. Les fichiers joints sont des
+  `[class*='resource-card']` et certains blocs de code n'ont pas de `<pre>`
+  (`CodeSurface` > `code.whitespace-pre!`). Les images markdown distantes ne
+  sont plus rendues en `<img>` (bouton placeholder sans URL) : elles sont perdues.
 """
 
 from __future__ import annotations
@@ -320,6 +322,7 @@ class ChatGPTParser(BaseParser):
             title=title or "ChatGPT conversation",
             messages=messages,
             started_at=extra.get("created_at"),
+            last_message_at=extra.get("last_message_at"),
             model=model,
         )
         self.log_parse(conv, model=model, title=title)
@@ -530,20 +533,34 @@ class ChatGPTParser(BaseParser):
     def _file_tiles(cls, turn) -> str:
         """Pieces jointes (PDF/TXT/CSV/JSON...) -> markdown detectable.
 
-        ChatGPT place les fichiers joints dans des ``button.group/file-tile``
-        (nom dans ``aria-label`` / ``.font-semibold``) que ``text_of`` supprime :
-        on les reinjecte comme liens pour qu'ils restent dans ``texte``.
+        Ancienne UI : ``button.group/file-tile`` (nom dans ``aria-label`` /
+        ``.font-semibold``). Nouvelle UI : ``span[class*='resource-card']`` avec
+        un ``button[aria-label="<nom>"][aria-busy]`` et un ``span[title]``.
+        Ces noms sont supprimes par ``text_of`` : on les reinjecte comme liens
+        (ou texte) pour qu'ils restent dans ``texte``.
         """
         parts: List[str] = []
-        for tile in turn.select("[class*='group/file-tile']"):
+        seen: set = set()
+        tiles = turn.select("[class*='group/file-tile']") + turn.select(
+            "[class*='resource-card']"
+        )
+        for tile in tiles:
             label = (tile.get("aria-label") or "").strip()
-            name_el = tile.select_one(".truncate.font-semibold") or tile.select_one(
-                ".font-semibold"
+            button = tile.find("button", attrs={"aria-label": True})
+            if button is not None and not label:
+                label = (button.get("aria-label") or "").strip()
+            name_el = (
+                tile.select_one("span[title]")
+                or tile.select_one(".truncate.font-semibold")
+                or tile.select_one(".font-semibold")
             )
-            name = name_el.get_text(" ", strip=True) if name_el is not None else ""
+            name = ""
+            if name_el is not None:
+                name = (name_el.get("title") or name_el.get_text(" ", strip=True) or "").strip()
             name = re.sub(r"\s+", " ", label or name).strip()
-            if not name:
+            if not name or name in seen:
                 continue
+            seen.add(name)
             link = tile.select_one("a[href]")
             href = (link.get("href") or "").strip() if link is not None else ""
             markdown = f"[{name}]({href})" if href and href.startswith(("http", "/")) else name
@@ -853,6 +870,33 @@ class ChatGPTParser(BaseParser):
             # l'en-tete (langue + boutons de copie) ne doit pas entrer dans le texte
             if header.find_parent("pre") is None:
                 header.decompose()
+        # nouvelle UI : certains blocs n'ont pas de <pre> (CodeSurface >
+        # `code.whitespace-pre!`) : on les rend en fence markdown pour ne pas
+        # les perdre (sinon « Plain text » + code inline en backticks).
+        for surface in node.select("[data-markdown-copy='code-block']"):
+            if surface.find("pre") is not None:
+                continue  # deja traite via <pre>
+            code = surface.find("code")
+            if code is None:
+                continue
+            header = surface.select_one("div.font-sans")
+            label = ""
+            if header is not None:
+                label_el = header.find("div", recursive=False) or header.select_one(
+                    "div.truncate, div.min-w-0"
+                )
+                if label_el is not None:
+                    label = re.sub(
+                        r"\s+", " ", label_el.get_text(" ", strip=True)
+                    ).strip()
+            if not label or label.lower() == "plain text":
+                language = ""
+            else:
+                language = cls._normalize_language(label)
+            code_text = code.get_text()
+            surface.replace_with(
+                NavigableString(f"\n```{language}\n{code_text}\n```\n")
+            )
 
     @staticmethod
     def _normalize_language(label: str) -> str:

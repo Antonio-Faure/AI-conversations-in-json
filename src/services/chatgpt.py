@@ -6,12 +6,15 @@ Particularites :
     `[data-chatgpt-search-unit-key="...:user|assistant"]` ; l'historique n'est
     charge qu'a la **molette reelle** (`scroll_wheel`, un `scrollTop` programme
     est annule)
-  - timestamps/modele : plus exposes dans le DOM ni les props React -> `None`
+  - timestamps : plus de `create_time` par message ; on recupere le
+    `create_time`/`update_time` de conversation du script bootstrap
+    (approximation de `started_at`/`last_message_at`). Modele : plus expose -> `None`
 """
 
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, Dict, List, Tuple
 
 from ..parsers.chatgpt import (
@@ -79,6 +82,38 @@ EXTRACT_REACT_META_JS = """
 
 #: selecteur des tours ChatGPT (UI « DIL » 2026 : un tour par `data-turn-key`)
 TURN_SELECTOR = "[data-turn-key]"
+
+#: JS d'extraction des timestamps de conversation depuis le script bootstrap.
+#: La nouvelle UI n'expose plus `create_time` par message, mais le flux
+#: react-router contient le `create_time`/`update_time` de la conversation
+#: (approximation de started_at/last_message_at). Present meme apres hydratation.
+EXTRACT_CONVERSATION_TIMES_JS = """
+() => {
+  const out = { created_at: null, last_message_at: null };
+  const read = (name) => {
+    const re = new RegExp(name + '[^0-9]{0,4}([0-9]+(?:[.][0-9]+)?)');
+    for (const s of document.querySelectorAll('script')) {
+      const t = s.textContent || '';
+      if (t.indexOf(name) < 0) continue;
+      const m = t.match(re);
+      if (m) {
+        let v = parseFloat(m[1]);
+        if (v > 1e12) v = v / 1000;
+        return v;
+      }
+    }
+    return null;
+  };
+  out.created_at = read('create_time');
+  out.last_message_at = read('update_time');
+  return out;
+}
+"""
+
+#: timestamps de conversation lus dans le HTML SSR (repli quand le script
+#: bootstrap a ete retire apres hydratation)
+CONVERSATION_CREATE_RE = re.compile(r"create_time[^0-9]{0,6}([0-9]+(?:\.[0-9]+)?)")
+CONVERSATION_UPDATE_RE = re.compile(r"update_time[^0-9]{0,6}([0-9]+(?:\.[0-9]+)?)")
 
 #: remise a zero de l'accumulateur JS des tours
 _RESET_TURNS_JS = """
@@ -276,7 +311,43 @@ class ChatGPTService(BaseService):
             extra["title_hint"] = data["title"]
         if ref.title:
             extra.setdefault("title_hint", ref.title)
+        # timestamps de conversation (approximation, plus de create_time par message)
+        times = self._conversation_times(ref)
+        if times.get("created_at"):
+            extra["created_at"] = times["created_at"]
+        if times.get("last_message_at"):
+            extra["last_message_at"] = times["last_message_at"]
         return extra
+
+    def _conversation_times(self, ref: ConversationRef) -> Dict[str, Any]:
+        """`create_time`/`update_time` de conversation (script bootstrap puis SSR).
+
+        Le script inline est retire a l'hydratation (surtout sur les fils courts)
+        : on refetch le HTML SSR en repli, qui contient toujours ces valeurs.
+        """
+        times = self.session.evaluate(EXTRACT_CONVERSATION_TIMES_JS) or {}
+        if times.get("created_at") or times.get("last_message_at"):
+            return times
+        try:
+            fetched = self.session.fetch(self.conversation_url(ref))
+        except Exception:  # noqa: BLE001
+            fetched = None
+        if not fetched:
+            return times
+        body = fetched[0]
+        text = (
+            body.decode("utf-8", "replace")
+            if isinstance(body, (bytes, bytearray))
+            else str(body)
+        )
+        out: Dict[str, Any] = {}
+        create = CONVERSATION_CREATE_RE.search(text)
+        if create:
+            out["created_at"] = float(create.group(1))
+        update = CONVERSATION_UPDATE_RE.search(text)
+        if update:
+            out["last_message_at"] = float(update.group(1))
+        return out
 
     def scrape_conversation(self, ref: ConversationRef) -> ScrapedPage:
         """Charge le fil complet en accumulant les tours pendant le scroll.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.schema import ConversationRef
 from src.services.chatgpt import (
     TURN_SELECTOR,
     _COLLECT_TURNS_JS,
@@ -112,3 +113,58 @@ def test_collecte_utilise_la_molette_reelle():
     assert session.wheel_calls, "la molette reelle doit etre utilisee"
     assert all(delta < 0 for _, _, delta in session.wheel_calls)
     assert fragments
+
+
+class TimesSession(FakeSession):
+    """Session factice exposant les timestamps du script bootstrap."""
+
+    def evaluate(self, script):
+        if "last_message_at" in script:
+            return {
+                "created_at": 1790169940.075207,
+                "last_message_at": 1790170216.609211,
+            }
+        return {"messages": {}}
+
+
+def test_extract_extras_timestamps_conversation():
+    service = ChatGPTService(TimesSession(), {})
+    ref = ConversationRef(
+        service="chatgpt", id="x", url="https://chatgpt.com/c/x"
+    )
+    extra = service.extract_extras(ref)
+    assert extra["created_at"] == 1790169940.075207
+    assert extra["last_message_at"] == 1790170216.609211
+
+
+class FetchTimesSession(FakeSession):
+    """Session dont le script bootstrap a disparu : repli SSR via fetch."""
+
+    def __init__(self):
+        self.fetched = []
+
+    def evaluate(self, script):
+        if "last_message_at" in script:
+            return {}
+        return {"messages": {}}
+
+    def fetch(self, url):
+        self.fetched.append(url)
+        html = (
+            b'...\\"create_time\\",1779209172.134841,\\"update_time\\",'
+            b'1779219159.105229,...'
+        )
+        return html, "text/html"
+
+
+def test_extract_extras_timestamps_fallback_ssr():
+    session = FetchTimesSession()
+    service = ChatGPTService(session, {})
+    ref = ConversationRef(
+        service="chatgpt", id="x", url="https://chatgpt.com/c/x"
+    )
+    extra = service.extract_extras(ref)
+    assert extra["created_at"] == 1779209172.134841
+    assert extra["last_message_at"] == 1779219159.105229
+    assert session.fetched == ["https://chatgpt.com/c/x"]
+

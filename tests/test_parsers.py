@@ -417,6 +417,22 @@ class TestChatGPTNewUI:
         # le libelle de langue (en-tete de carte) ne pollue pas le texte
         assert "Python" not in message.texte.replace("```python", "")
 
+    def test_code_surface_sans_pre_rendu_en_fence(self, fixture_html):
+        """Bloc CodeSurface sans <pre> (nouvelle UI) -> fence markdown."""
+        conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
+        message = conv.messages[1]
+        assert [b.language for b in message.code_blocks] == ["python", ""]
+        assert message.code_blocks[1].code.strip() == "~ ~ ~"
+        assert "```\n~ ~ ~\n```" in message.texte
+        # le libelle « Plain text » n'apparait pas dans le texte
+        assert "Plain text" not in message.texte
+
+    def test_piece_jointe_resource_card(self, fixture_html):
+        """Fichier joint nouvelle UI (span.resource-card) -> nom dans texte."""
+        conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
+        assert "notes.txt" in conv.messages[0].texte
+        assert conv.messages[0].texte.startswith("Montre un exemple complet.")
+
     def test_latex_display_via_data_math_display(self, fixture_html):
         conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
         assert "$$\\begin{cases}" in conv.messages[1].texte
@@ -446,6 +462,15 @@ class TestChatGPTNewUI:
         assert len(conv.messages) == 4
         assert conv.messages[3].role == "assistant"
         assert conv.messages[3].texte == ""
+
+    def test_timestamps_conversation_via_extra(self, fixture_html):
+        """create_time/update_time de conversation -> started_at/last_message_at."""
+        extra = {"created_at": 1790169940.075207, "last_message_at": 1790170216.609211}
+        conv = ChatGPTParser().parse(
+            fixture_html("chatgpt_new_ui.html"), conversation_id="c", extra=extra
+        )
+        assert conv.started_at == "2026-09-23T13:25:40Z"
+        assert conv.last_message_at == "2026-09-23T13:30:16Z"
 
     def test_sidebar_nouvelle_ui(self, fixture_html):
         refs = ChatGPTParser().parse_links(
