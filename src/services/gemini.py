@@ -16,6 +16,7 @@ from .base import BaseService, ScrapedPage
 #: remise a zero de l'accumulateur JS des tours de conversation
 _RESET_TURNS_JS = (
     "window.__aicvTurns = Object.create(null);"
+    "window.__aicvLen = Object.create(null);"
     "window.__aicvOrder = [];"
     "return 0;"
 )
@@ -41,14 +42,25 @@ return (function(){
     const norm = label.replace(/\\s+/g, ' ').trim().slice(0, 200);
     const key = norm ? ('u\u0000' + norm) : ('id\u0000' + (n.getAttribute('id') || ''));
     const html = n.outerHTML;
-    const hasAnswer = n.querySelector('model-response message-content') ? true : false;
+    const answer = n.querySelector('model-response message-content');
+    const hasAnswer = answer ? true : false;
+    // longueur du texte de reponse : sert a reconnaitre une version plus
+    // complete quand le rendu (listes, tableaux) arrive apres le 1er passage.
+    const answerLen = answer ? (answer.innerText || answer.textContent || '').length : 0;
     const previous = window.__aicvTurns[key];
     if (previous === undefined) {
       window.__aicvTurns[key] = html;
+      window.__aicvLen[key] = answerLen;
       window.__aicvOrder.push(key);
       fresh.push(key);
-    } else if (hasAnswer && previous.indexOf('<model-response') === -1) {
-      window.__aicvTurns[key] = html;  // version complete (reponse rendue)
+    } else if (
+      hasAnswer &&
+      (previous.indexOf('<model-response') === -1 || answerLen > (window.__aicvLen[key] || 0))
+    ) {
+      // version plus complete (reponse rendue, contenu enrichi) : on ecrase
+      // l'exemplaire memorise pour ne pas garder une reponse partielle.
+      window.__aicvTurns[key] = html;
+      window.__aicvLen[key] = answerLen;
     }
   }
   // Gemini scrolle dans <infinite-scroller> (pas la fenetre) : on remonte le

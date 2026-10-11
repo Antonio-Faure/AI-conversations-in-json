@@ -27,8 +27,15 @@ from bs4 import BeautifulSoup, NavigableString
 from ..schema import Conversation, normalize_timestamp
 from .base import BaseParser, ParseError, clean_ui_title
 
+#: segments de route sous /app/ qui ne sont pas des identifiants de conversation
+#: (ex. /app/download = page de telechargement de l'application). Le selecteur
+#: large ``a[href*='/app/']`` les attrape : il faut les exclure de la decouverte.
+RESERVED_APP_SEGMENTS = ("download",)
 # IDs Gemini observes : 16 caracteres hexa (/app/892fb59332022e2a)
-CONV_ID_RE = re.compile(r"/app/([a-zA-Z0-9_-]{8,})")
+CONV_ID_RE = re.compile(
+    r"/app/(?!(?:" + "|".join(RESERVED_APP_SEGMENTS) + r")(?![a-zA-Z0-9_-]))"
+    r"([a-zA-Z0-9_-]{8,})"
+)
 MODEL_TEXT_RE = re.compile(
     r"(Answered by\s+|Model:?\s+|)(Gemini(?:\s+Ultra|\s+\d[\d.]*\s*\w*)?(?:\s+(?:Pro|Flash|Live|Thinking|Deep Research))?)",
     re.IGNORECASE,

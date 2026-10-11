@@ -18,7 +18,7 @@ from src.parsers import (
 from src.parsers.base import ParseError
 from src.parsers.chatgpt import merge_turn_snapshots, order_fragments_by_time
 from src.parsers.claude import merge_transcript_rows
-from src.parsers.gemini import merge_turn_fragments
+from src.parsers.gemini import CONV_ID_RE, merge_turn_fragments
 from src.parsers.mistral import merge_message_fragments
 from src.parsers.perplexity import merge_thread_messages
 from src.schema import Conversation
@@ -51,6 +51,18 @@ class TestParseLinks:
         ids = [r.id for r in refs]
         assert "1a2b3c4d5e6f7g8h9i0j12kl34" in ids
         assert all("settings" not in r.url for r in refs)
+
+    def test_gemini_sidebar_ignore_download(self):
+        # le lien de pied de sidebar `/app/download` ne doit pas etre pris
+        # pour une conversation (id parasite "download").
+        html = (
+            "<html><body><aside>"
+            "<a href='/app/download'>Telecharger l'appli Gemini</a>"
+            "<a href='/app/706a00030f2723df'>Application de styles textuels</a>"
+            "</aside></body></html>"
+        )
+        refs = GeminiParser().parse_links(html, "https://gemini.google.com/app")
+        assert [r.id for r in refs] == ["706a00030f2723df"]
 
     def test_perplexity_sidebar_ignore_library(self, fixture_html):
         refs = PerplexityParser().parse_links(
@@ -1173,6 +1185,18 @@ class TestGeminiParser:
         assert conv.model == "Gemini 2.5 Pro"
         assert [m.role for m in conv.messages] == ["user", "assistant", "user", "assistant"]
 
+    def test_identifiant_ignore_la_route_download(self):
+        # `/app/download` (page de telechargement de l'appli) ne doit jamais
+        # etre pris pour un identifiant de conversation.
+        assert CONV_ID_RE.search("/app/download") is None
+        assert CONV_ID_RE.search("/app/download?hl=fr") is None
+        assert CONV_ID_RE.search('href="/app/download"') is None
+        match = CONV_ID_RE.search("/app/706a00030f2723df")
+        assert match is not None and match.group(1) == "706a00030f2723df"
+        # un vrai id qui commence par "download" reste valide
+        match = CONV_ID_RE.search("/app/downloadabc12345")
+        assert match is not None and match.group(1) == "downloadabc12345"
+
     def test_contenu_et_ordre(self, fixture_html):
         conv = GeminiParser().parse(fixture_html("gemini_conversation.html"), conversation_id="c")
         assert "10 jours au Japon" in conv.messages[0].texte
@@ -1598,6 +1622,29 @@ class TestGeminiMergeTurns:
         )
         assert len(conv.messages) == 2
         assert conv.messages[0].texte.strip() == "Question A"
+
+    def test_dom_final_complet_prime_sur_accumule_partiel(self):
+        # un tour capture en cours de rendu (reponse sans liste) puis retrouve
+        # complet dans le DOM final : la version complete doit rester.
+        def block(turn_id: str, answer: str) -> str:
+            return (
+                f'<div class="conversation-container" id="{turn_id}">'
+                "<user-query><div class='query-text'>Liste</div></user-query>"
+                f"<model-response><message-content>{answer}</message-content>"
+                "</model-response></div>"
+            )
+
+        partial = block("seen", "Voici :")
+        complete = block(
+            "final", "<ul><li><p>Pomme</p></li><li><p>Banane</p></li></ul>"
+        )
+        # le service appelle merge_turn_fragments(ordre_final, accumule)
+        conv = GeminiParser().parse(
+            merge_turn_fragments([complete], [partial]), conversation_id="c"
+        )
+        assert len(conv.messages) == 2
+        assert "- Pomme" in conv.messages[1].texte
+        assert "- Banane" in conv.messages[1].texte
 
     def test_fragments_vides(self):
         assert merge_turn_fragments([]) == ""
