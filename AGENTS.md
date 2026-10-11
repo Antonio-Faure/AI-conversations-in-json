@@ -186,6 +186,13 @@ les conversations marquées indisponibles).
 - **Fils « collés en bas »** (Perplexity, parfois Claude/ChatGPT) : un `scrollTop`
   programmatique est annulé. Utiliser `session.scroll_wheel` (molette réelle CDP)
   pour remonter le conteneur, pas `scrollTop`.
+- ChatGPT (UI « DIL » 2026) : plus de `data-message-author-role`/`data-message-id` ;
+  tours `[data-turn-key]`, messages `[data-chatgpt-search-unit-key]`, historique
+  chargé à la molette réelle (accumulateur JS). Limites plateforme : images markdown
+  distantes rendues en placeholder sans URL (perdues), canvas plus exposé dans la
+  page (`artifacts` vide), modèle absent du DOM (`null`). Timestamps de
+  conversation : script bootstrap `create_time`/`update_time` (retiré à
+  l'hydratation → repli fetch SSR).
 - Conversations **indisponibles** (supprimées/privées) : l'URL redirige vers
   l'accueil ; elles sont marquées `unavailable` dans `conversation_list.json` et
   plus retentées. `--retry-unavailable` lève le flag pour un nouvel essai.
