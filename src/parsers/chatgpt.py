@@ -70,6 +70,115 @@ _LANGUAGE_ALIASES = {
     "plain text": "text",
 }
 
+# -- mapping API (`/backend-api/conversations/<id>`) --------------------------
+
+#: types de contenu qui ne sont jamais des messages visibles du fil
+API_CONTEXT_TYPES = ("model_editable_context",)
+API_INTERNAL_TYPES = ("code", "execution_output", "system_error")
+
+#: delimiteurs LaTeX bruts de l'API -> convention `$`/`$$` des parseurs
+API_DISPLAY_MATH_RE = re.compile(r"\\\[(.+?)\\\]", re.DOTALL)
+API_INLINE_MATH_RE = re.compile(r"\\\((.+?)\\\)", re.DOTALL)
+
+
+def _dedupe(items: List[str]) -> List[str]:
+    """Valeurs non vides, uniques, dans l'ordre d'apparition."""
+    out: List[str] = []
+    for item in items:
+        if item and item not in out:
+            out.append(item)
+    return out
+
+
+def _api_parts_text(content: Dict[str, Any]) -> str:
+    """Texte markdown des `parts` d'un message API (chaine vide sinon).
+
+    Les `parts` sont des chaines pour le texte ; les contenus structures
+    (multimodaux) sont ignores pour ne rien inventer.
+    """
+    chunks: List[str] = []
+    for part in content.get("parts") or []:
+        if isinstance(part, str):
+            chunks.append(part)
+        elif isinstance(part, dict) and isinstance(part.get("text"), str):
+            chunks.append(part["text"])
+    return "\n".join(chunks)
+
+
+def _normalize_api_math(text: str) -> str:
+    """`\\(...\\)` / `\\[...\\]` -> `$...$` / `$$...$$` (convention du depot)."""
+    if not text:
+        return text
+    text = API_DISPLAY_MATH_RE.sub(lambda m: f"$${m.group(1).strip()}$$", text)
+    return API_INLINE_MATH_RE.sub(lambda m: f"${m.group(1)}$", text)
+
+
+def _api_reasoning(content: Dict[str, Any], metadata: Dict[str, Any]) -> List[str]:
+    """Textes de raisonnement d'un message interne (`thoughts`/`reasoning_recap`).
+
+    `reasoning_recap` ne compte que si son `reasoning_recap_type` est `collapse`
+    (le type `hide_all` correspond au libelle masque dans le fil).
+    """
+    parts: List[str] = []
+    if content.get("content_type") == "reasoning_recap":
+        if metadata.get("reasoning_recap_type") == "collapse":
+            text = str(content.get("content") or "").strip()
+            if text:
+                parts.append(text)
+        return parts
+    for thought in content.get("thoughts") or []:
+        if isinstance(thought, dict):
+            text = str(thought.get("content") or "").strip()
+            if text:
+                parts.append(text)
+    return parts
+
+
+def _api_tools(content: Dict[str, Any]) -> List[str]:
+    """Resumes d'etapes d'outil d'un message `thoughts` (libelles du fil)."""
+    tools: List[str] = []
+    for thought in content.get("thoughts") or []:
+        if isinstance(thought, dict):
+            summary = str(thought.get("summary") or "").strip()
+            if summary:
+                tools.append(summary)
+    return tools
+
+
+def _api_source_entry(title: Any, url: Any) -> str:
+    """Entree de source « titre — url » (ou url seule), vide si pas d'URL."""
+    url = str(url or "").strip()
+    title = str(title or "").strip()
+    if not url:
+        return ""
+    return f"{title} — {url}" if title and title != url else url
+
+
+def _api_sources(metadata: Dict[str, Any]) -> List[str]:
+    """Sources web d'un message API (`content_references` puis `citations`)."""
+    sources: List[str] = []
+    for ref in metadata.get("content_references") or []:
+        if not isinstance(ref, dict):
+            continue
+        for source in ref.get("sources") or []:
+            if isinstance(source, dict):
+                sources.append(
+                    _api_source_entry(source.get("title"), source.get("url"))
+                )
+        if str(ref.get("type") or "") in ("url", "source", "file"):
+            sources.append(_api_source_entry(ref.get("title"), ref.get("url")))
+    for citation in metadata.get("citations") or []:
+        if not isinstance(citation, dict):
+            continue
+        meta = citation.get("metadata") or {}
+        sources.append(
+            _api_source_entry(
+                meta.get("title") or citation.get("title"),
+                meta.get("url") or citation.get("url"),
+            )
+        )
+    return _dedupe([entry for entry in sources if entry])
+
 
 def merge_turn_snapshots(
     snapshots: List[List[str]], html_by_key: Dict[str, str]
@@ -219,6 +328,12 @@ class ChatGPTParser(BaseParser):
         extra: Optional[Dict[str, Any]] = None,
     ) -> Conversation:
         extra = extra or {}
+        if extra.get("api"):
+            # chemin API (`/backend-api/conversations/<id>`) : le service passe le
+            # payload JSON brut dans `extra["api"]`, le HTML est ignore.
+            return self.parse_api(
+                extra["api"], conversation_id=conversation_id, extra=extra
+            )
         soup = self.make_soup(html)
         message_meta: Dict[str, Dict[str, Any]] = extra.get("messages") or {}
 
@@ -326,6 +441,140 @@ class ChatGPTParser(BaseParser):
             started_at=extra.get("created_at"),
             last_message_at=extra.get("last_message_at"),
             model=model,
+        )
+        self.log_parse(conv, model=model, title=title)
+        return self.check(conv)
+
+    def parse_api(
+        self,
+        data: Dict[str, Any],
+        *,
+        conversation_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Conversation:
+        """Construit la conversation depuis le JSON de l'API backend.
+
+        ``data`` est la reponse de ``/backend-api/conversations/<id>`` :
+        ``{conversation_id, title, create_time, update_time, default_model_slug,
+        messages[]}``. Les messages non visibles (`is_visually_hidden_from_
+        conversation`, `model_editable_context`, role `system`) sont filtres ;
+        les tours internes (raisonnement `thoughts`/`reasoning_recap`, appels
+        d'outil, sorties d'execution) sont regroupes dans les extras du tour
+        assistant visible avec les memes cles que le parseur DOM (`reasoning`,
+        `tools`, `sources`). Les timestamps viennent des epoch `create_time`.
+        """
+        extra = extra or {}
+        raw_messages = data.get("messages") or []
+        if not raw_messages:
+            raise ParseError("chatgpt api: aucune donnee de conversation")
+
+        messages: List[Any] = []
+        models: List[str] = []
+        pending: Dict[str, List[str]] = {"reasoning": [], "tools": []}
+
+        def reset() -> None:
+            for key in pending:
+                pending[key] = []
+
+        for raw in raw_messages:
+            if not isinstance(raw, dict):
+                continue
+            author = raw.get("author") or {}
+            role = str(author.get("role") or "").lower()
+            content = raw.get("content") or {}
+            ctype = str(content.get("content_type") or "")
+            metadata = raw.get("metadata") or {}
+            hidden = bool(metadata.get("is_visually_hidden_from_conversation"))
+
+            if role == "system" or ctype in API_CONTEXT_TYPES:
+                continue
+            if ctype == "reasoning_recap":
+                pending["reasoning"].extend(_api_reasoning(content, metadata))
+                continue
+            if ctype == "thoughts":
+                pending["reasoning"].extend(_api_reasoning(content, metadata))
+                pending["tools"].extend(_api_tools(content))
+                continue
+            if role == "tool" or ctype in API_INTERNAL_TYPES:
+                continue
+            if ctype != "text" or hidden:
+                continue
+
+            text = _normalize_api_math(_api_parts_text(content))
+            message_id = str(raw.get("id") or "")
+            if role == "user":
+                messages.append(
+                    self.msg(
+                        "user", text, raw.get("create_time"), {},
+                        message_id=message_id,
+                    )
+                )
+                reset()
+                continue
+            if role != "assistant":
+                continue
+            if str(raw.get("recipient") or "all") != "all":
+                # reponse intermediaire (appel d'outil) : jamais un message du fil
+                continue
+
+            slug = metadata.get("model_slug")
+            slug = str(slug) if slug else None
+            if slug:
+                models.append(slug)
+            message = self.msg(
+                "assistant", text, raw.get("create_time"), {"tokens": None},
+                message_id=message_id, model=slug,
+            )
+            reasoning = "\n\n".join(_dedupe(pending["reasoning"])).strip()
+            if reasoning:
+                message.reasoning = reasoning
+            tools = _dedupe(pending["tools"])
+            if tools:
+                message.tools = tools
+            sources = _api_sources(metadata)
+            if sources:
+                message.sources = sources
+            messages.append(message)
+            reset()
+
+        if not messages:
+            raise ParseError("chatgpt api: aucun message exploitable")
+
+        # tour assistant reduit a des extras (erreur/quota) : on le garde vide
+        # pour ne pas fusionner les deux messages `user` encadrants.
+        if any(pending.values()) and messages[-1].role == "user":
+            message = self.msg("assistant", "", None, {"tokens": None})
+            reasoning = "\n\n".join(_dedupe(pending["reasoning"])).strip()
+            if reasoning:
+                message.reasoning = reasoning
+            tools = _dedupe(pending["tools"])
+            if tools:
+                message.tools = tools
+            messages.append(message)
+
+        conv_id = (
+            conversation_id
+            or data.get("conversation_id")
+            or extra.get("conversation_id")
+        )
+        if not conv_id:
+            raise ParseError("chatgpt api: conversation_id manquant")
+
+        model = extra.get("model") or self.majority(models)
+        if not model:
+            default_slug = str(data.get("default_model_slug") or "")
+            model = default_slug if default_slug and default_slug != "auto" else None
+        title = str(
+            data.get("title") or extra.get("title_hint") or "ChatGPT conversation"
+        )
+        conv = Conversation(
+            platform=self.service_name,
+            conversation_id=str(conv_id),
+            title=title,
+            messages=messages,
+            model=model,
+            started_at=data.get("create_time"),
+            last_message_at=data.get("update_time"),
         )
         self.log_parse(conv, model=model, title=title)
         return self.check(conv)
