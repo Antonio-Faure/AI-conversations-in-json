@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 import urllib.error
 import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
@@ -44,12 +45,35 @@ API_BASE = "https://chatgpt.com"
 API_LIST_URL = API_BASE + "/backend-api/conversations"
 API_CONVERSATION_URL = API_BASE + "/backend-api/conversations/{cid}"
 API_SESSION_URL = API_BASE + "/api/auth/session"
+#: endpoint qui resout un asset en URL signee (voir le mapper `parse_api`)
+API_FILE_DOWNLOAD_PREFIX = API_BASE + "/backend-api/files/"
 #: taille de page de la decouverte (l'API pagine par offset)
 API_PAGE_SIZE = 100
 #: nombre maxi de pages parcourues (garde-fou)
 API_MAX_PAGES = 500
 #: nombre de tours demandes par conversation (plafond serveur ~100)
 API_NUM_TURNS = 100
+#: 429 : limite de rafale du backend (observee apres ~40 lectures en ~3 min ;
+#: la fenetre se rouvre en quelques minutes). On attend et on reessaie.
+API_RETRY_ATTEMPTS = 8
+#: attente de base sur 429 (secondes), doublee a chaque tentative
+API_RETRY_WAIT_S = 45
+#: plafond de l'attente sur 429 (secondes)
+API_RETRY_WAIT_MAX_S = 300
+
+
+def _is_file_download_url(url: str) -> bool:
+    """URL de l'endpoint de resolution d'asset (`files/<id>/download`)."""
+    return url.startswith(API_FILE_DOWNLOAD_PREFIX) and url.endswith("/download")
+
+
+def _retry_after_s(headers: Any) -> Optional[float]:
+    """`Retry-After` numerique d'une reponse HTTP (None sinon)."""
+    try:
+        value = (headers or {}).get("Retry-After")
+        return float(value) if value else None
+    except (TypeError, ValueError):
+        return None
 
 
 class _ChatGPTHttpClient:
@@ -91,19 +115,43 @@ class _ChatGPTHttpClient:
             headers["chatgpt-account-id"] = self.account_id
         return headers
 
+    def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
+        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
+
+        La fenetre de quota du backend se rouvre en quelques minutes : on
+        attend 45s, 90s... (plafonnee), en respectant `Retry-After` s'il est
+        present.
+        """
+        if attempt + 1 >= API_RETRY_ATTEMPTS:
+            return False
+        wait_s = _retry_after_s(headers) or min(
+            API_RETRY_WAIT_MAX_S, API_RETRY_WAIT_S * (2**attempt)
+        )
+        log.warning(
+            "chatgpt: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
+            wait_s, attempt + 1, API_RETRY_ATTEMPTS, url,
+        )
+        time.sleep(wait_s)
+        return True
+
     def get(
         self, url: str, accept: str = "application/json, text/plain, */*"
     ) -> Tuple[int, bytes]:
-        request = urllib.request.Request(url, headers=self._headers(accept))
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                return response.status, response.read()
-        except urllib.error.HTTPError as exc:
-            return exc.code, exc.read() or b""
-        except urllib.error.URLError as exc:
-            raise RuntimeError(
-                f"chatgpt: requete echouee ({url}): {exc}"
-            ) from exc
+        """GET authentifie ; sur 429, attend et reessaie (limite de rafale)."""
+        for attempt in range(API_RETRY_ATTEMPTS):
+            request = urllib.request.Request(url, headers=self._headers(accept))
+            try:
+                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+                    return response.status, response.read()
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
+                    continue
+                return exc.code, exc.read() or b""
+            except urllib.error.URLError as exc:
+                raise RuntimeError(
+                    f"chatgpt: requete echouee ({url}): {exc}"
+                ) from exc
+        raise RuntimeError(f"chatgpt: 429 persistant sur {url}")
 
     def get_json(self, url: str) -> Any:
         status, raw = self.get(url)
@@ -117,6 +165,60 @@ class _ChatGPTHttpClient:
             return json.loads(raw)
         except json.JSONDecodeError as exc:
             raise RuntimeError(f"chatgpt: reponse non-JSON sur {url}") from exc
+
+    def fetch(
+        self, url: str, accept: str = "*/*"
+    ) -> Optional[Tuple[bytes, Optional[str]]]:
+        """(octets, content-type) d'une URL authentifiee ; None si echec.
+
+        Utilise pour suivre l'URL signee renvoyee par
+        `/backend-api/files/<id>/download` (l'endpoint lui-meme ne renvoie que
+        du JSON). Sur 429, attend et reessaie comme `get`.
+        """
+        for attempt in range(API_RETRY_ATTEMPTS):
+            request = urllib.request.Request(url, headers=self._headers(accept))
+            try:
+                with urllib.request.urlopen(
+                    request, timeout=self.timeout_s
+                ) as response:
+                    ctype = (response.headers.get("Content-Type") or "").split(";")[0]
+                    return response.read(), (ctype.strip() or None)
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
+                    continue
+                log.debug("chatgpt: fetch asset echoue (%s): HTTP %s", url, exc.code)
+                return None
+            except (urllib.error.URLError, OSError) as exc:
+                log.debug("chatgpt: fetch asset echoue (%s): %s", url, exc)
+                return None
+        return None
+
+
+class _ApiFetchSession:
+    """Session facade : telechargement des assets via le client HTTP authentifie.
+
+    `download_service_images` telecharge les images du markdown via
+    `session.fetch`. En mode API, les URL `backend-api/files/<id>/download`
+    sont resolues (JSON -> URL signee) puis telechargees par le client HTTP
+    (cookies + Bearer + `chatgpt-account-id`), sans navigateur ; tout le reste
+    est delegue a la session d'origine.
+    """
+
+    def __init__(self, service: "ChatGPTService", inner: Any):
+        self._service = service
+        self._inner = inner
+
+    def fetch(self, url: str):
+        if _is_file_download_url(url):
+            return self._service.download_api_asset(url)
+        inner_fetch = getattr(self._inner, "fetch", None)
+        if callable(inner_fetch):
+            return inner_fetch(url)
+        return None
+
+    def __getattr__(self, name: str) -> Any:
+        inner = object.__getattribute__(self, "_inner")
+        return getattr(inner, name)
 
 
 #: JS de collecte des donnees internes React par message.
@@ -515,6 +617,10 @@ class ChatGPTService(BaseService):
         self._http: Optional[_ChatGPTHttpClient] = None
         #: payload brut de la derniere conversation exportee en mode API
         self._raw_payload: Optional[Dict[str, Any]] = None
+        if self.api_enabled:
+            # les assets du markdown (`files/<id>/download`) passent par le
+            # client HTTP authentifie, pas par le navigateur
+            self.session = _ApiFetchSession(self, session)
 
     def build_parser(self) -> ChatGPTParser:
         return ChatGPTParser()
@@ -592,6 +698,34 @@ class ChatGPTService(BaseService):
             "chatgpt: client API pret (account=%s)", bool(account_id)
         )
         return self._http
+
+    def download_api_asset(
+        self, url: str
+    ) -> Optional[Tuple[bytes, Optional[str]]]:
+        """Resout un asset (`files/<id>/download`) puis telecharge les octets.
+
+        L'endpoint renvoie ``{"download_url": <URL signee estuary>}`` : on suit
+        ce lien avec le meme client authentifie. Retourne ``(octets,
+        content-type)`` ou None (asset absent : l'URL reste dans le markdown).
+        """
+        client = self._api_client()
+        try:
+            status, raw = client.get(url)
+        except RuntimeError as exc:
+            log.debug("chatgpt: asset inaccessible (%s): %s", url, exc)
+            return None
+        if status != 200:
+            log.debug("chatgpt: resolution d'asset HTTP %s (%s)", status, url)
+            return None
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            log.debug("chatgpt: reponse non-JSON pour l'asset %s", url)
+            return None
+        download_url = str(data.get("download_url") or "")
+        if not download_url:
+            return None
+        return client.fetch(download_url)
 
     def _list_conversations_api(
         self, limit: Optional[int] = None

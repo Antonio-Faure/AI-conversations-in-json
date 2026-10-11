@@ -28,7 +28,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from bs4 import NavigableString
 
 from ..schema import Conversation, Variant
+from ..utils.logging import get_logger
 from .base import BaseParser, ParseError
+
+log = get_logger("parsers.chatgpt")
 
 CONVERSATION_ID_RE = re.compile(r"/c/([0-9a-fA-F-]{16,}|[A-Za-z0-9_-]{16,})")
 
@@ -76,6 +79,15 @@ _LANGUAGE_ALIASES = {
 API_CONTEXT_TYPES = ("model_editable_context",)
 API_INTERNAL_TYPES = ("code", "execution_output", "system_error")
 
+#: endpoint backend qui resout un asset (`sediment://`/`file-service://`) en
+#: URL signee ; le service le suit avec le client authentifie puis telecharge
+#: l'image (le mapper emet cet endpoint, pas une URL distante)
+API_FILE_DOWNLOAD_URL = "https://chatgpt.com/backend-api/files/{fid}/download"
+#: part multimodale d'image (telechargeable) ; les assets audio/video de la
+#: voix (`audio_asset_pointer`, `real_time_user_audio_video_asset_pointer`)
+#: ne sont pas telechargeables via l'API : ils sont signales comme non geres
+API_IMAGE_PART = "image_asset_pointer"
+
 #: delimiteurs LaTeX bruts de l'API -> convention `$`/`$$` des parseurs
 API_DISPLAY_MATH_RE = re.compile(r"\\\[(.+?)\\\]", re.DOTALL)
 API_INLINE_MATH_RE = re.compile(r"\\\((.+?)\\\)", re.DOTALL)
@@ -90,19 +102,98 @@ def _dedupe(items: List[str]) -> List[str]:
     return out
 
 
-def _api_parts_text(content: Dict[str, Any]) -> str:
+def _api_asset_id(pointer: Any) -> str:
+    """Identifiant de fichier d'un asset pointer (`sediment://file-...`)."""
+    text = str(pointer or "").strip()
+    return text.split("://", 1)[1] if "://" in text else text
+
+
+def _api_attachment_name(metadata: Dict[str, Any], fid: str) -> str:
+    """Nom de la piece jointe dont l'id correspond (sinon chaine vide)."""
+    for attachment in metadata.get("attachments") or []:
+        if isinstance(attachment, dict) and str(attachment.get("id") or "") == fid:
+            name = str(attachment.get("name") or "").strip()
+            if name:
+                return name
+    return ""
+
+
+def _api_image_markdown(
+    part: Dict[str, Any], metadata: Dict[str, Any], *, generated: bool = False
+) -> str:
+    """Image d'un asset pointer -> `![alt](<endpoint de telechargement>)`.
+
+    L'URL est l'endpoint backend (resolu et telecharge par le service avec le
+    client authentifie, puis reecrit en `images/<hash>.<ext>`), jamais l'URL
+    signee distante. L'alt vient du nom de la piece jointe (upload) ou du titre
+    de generation (« Generated image: ... », comme le DOM).
+    """
+    fid = _api_asset_id(part.get("asset_pointer"))
+    if not fid:
+        return ""
+    if generated:
+        title = str(metadata.get("image_gen_title") or "").strip()
+        alt = f"Generated image: {title}" if title else "Generated image"
+    else:
+        alt = _api_attachment_name(metadata, fid) or "image"
+    alt = alt.replace("[", "(").replace("]", ")").replace("\n", " ")
+    return f"![{alt}]({API_FILE_DOWNLOAD_URL.format(fid=fid)})"
+
+
+def _api_multimodal_images(
+    content: Dict[str, Any], metadata: Dict[str, Any]
+) -> List[str]:
+    """Images generees d'un message outil (le DOM les rend dans la reponse)."""
+    images: List[str] = []
+    for part in content.get("parts") or []:
+        if isinstance(part, dict) and part.get("content_type") == API_IMAGE_PART:
+            markdown = _api_image_markdown(part, metadata, generated=True)
+            if markdown and markdown not in images:
+                images.append(markdown)
+    return images
+
+
+def _api_parts_text(
+    content: Dict[str, Any],
+    metadata: Optional[Dict[str, Any]] = None,
+    *,
+    generated: bool = False,
+    unsupported: Optional[set] = None,
+) -> str:
     """Texte markdown des `parts` d'un message API (chaine vide sinon).
 
-    Les `parts` sont des chaines pour le texte ; les contenus structures
-    (multimodaux) sont ignores pour ne rien inventer.
+    Les `parts` melangent des chaines (texte), des transcriptions
+    (`audio_transcription`) et des assets. Les `image_asset_pointer` sont
+    rendus en images markdown vers l'endpoint de telechargement ; les autres
+    assets (audio/video de la voix, non telechargeables via l'API) sont
+    signales dans `unsupported` pour ne rien perdre silencieusement.
     """
-    chunks: List[str] = []
+    metadata = metadata or {}
+    texts: List[str] = []
+    images: List[str] = []
     for part in content.get("parts") or []:
         if isinstance(part, str):
-            chunks.append(part)
-        elif isinstance(part, dict) and isinstance(part.get("text"), str):
-            chunks.append(part["text"])
-    return "\n".join(chunks)
+            if part.strip():
+                texts.append(part)
+            continue
+        if not isinstance(part, dict):
+            continue
+        ptype = str(part.get("content_type") or "")
+        if ptype == API_IMAGE_PART:
+            markdown = _api_image_markdown(part, metadata, generated=generated)
+            if markdown:
+                images.append(markdown)
+            continue
+        text = part.get("text")
+        if isinstance(text, str) and text.strip():
+            texts.append(text.strip())  # transcription (espace de tete)
+        elif ptype and unsupported is not None:
+            unsupported.add(ptype)
+    text = "\n".join(texts).rstrip()
+    if images:
+        block = "\n\n".join(images)
+        text = f"{text}\n\n{block}" if text else block
+    return text.strip()
 
 
 def _normalize_api_math(text: str) -> str:
@@ -462,6 +553,11 @@ class ChatGPTParser(BaseParser):
         d'outil, sorties d'execution) sont regroupes dans les extras du tour
         assistant visible avec les memes cles que le parseur DOM (`reasoning`,
         `tools`, `sources`). Les timestamps viennent des epoch `create_time`.
+
+        Les messages `multimodal_text` (voix, images) sont mappes : texte +
+        transcriptions, images en markdown (endpoint de telechargement) ; les
+        images generees par l'outil sont rattachees au tour assistant, comme
+        le DOM.
         """
         extra = extra or {}
         raw_messages = data.get("messages") or []
@@ -470,11 +566,55 @@ class ChatGPTParser(BaseParser):
 
         messages: List[Any] = []
         models: List[str] = []
-        pending: Dict[str, List[str]] = {"reasoning": [], "tools": []}
+        pending: Dict[str, List[str]] = {"reasoning": [], "tools": [], "images": []}
+        #: types de parts non telechargeables rencontres (audio/video de la voix)
+        unsupported: set = set()
 
         def reset() -> None:
             for key in pending:
                 pending[key] = []
+
+        def flush_pending(*, before_user: bool = False) -> None:
+            """Ferme le tour assistant en attente (images generees puis extras).
+
+            Appele avant un message utilisateur (une image generee par l'outil
+            appartient au tour assistant precedent) et en fin de conversation.
+            Sans image, les extras seuls ne sont rattaches qu'en fin de
+            conversation : un tour reduit a des extras est garde vide pour ne
+            pas fusionner les deux messages `user` encadrants (historique).
+            """
+            images = _dedupe(pending["images"])
+            reasoning = "\n\n".join(_dedupe(pending["reasoning"])).strip()
+            tools = _dedupe(pending["tools"])
+            if before_user and not images:
+                reset()
+                return
+            if not images and not reasoning and not tools:
+                reset()
+                return
+            if messages and messages[-1].role == "assistant":
+                if not images:
+                    reset()
+                    return
+                message = messages[-1]
+                block = "\n\n".join(images)
+                message.texte = (
+                    f"{message.texte}\n\n{block}".strip() if message.texte else block
+                )
+                if reasoning and not message.reasoning:
+                    message.reasoning = reasoning
+                if tools:
+                    message.tools = _dedupe(list(message.tools or []) + tools)
+            else:
+                message = self.msg(
+                    "assistant", "\n\n".join(images), None, {"tokens": None}
+                )
+                if reasoning:
+                    message.reasoning = reasoning
+                if tools:
+                    message.tools = tools
+                messages.append(message)
+            reset()
 
         for raw in raw_messages:
             if not isinstance(raw, dict):
@@ -495,14 +635,24 @@ class ChatGPTParser(BaseParser):
                 pending["reasoning"].extend(_api_reasoning(content, metadata))
                 pending["tools"].extend(_api_tools(content))
                 continue
-            if role == "tool" or ctype in API_INTERNAL_TYPES:
+            if role == "tool":
+                # image generee par l'outil : le DOM la rend dans la reponse
+                if ctype == "multimodal_text":
+                    pending["images"].extend(
+                        _api_multimodal_images(content, metadata)
+                    )
                 continue
-            if ctype != "text" or hidden:
+            if ctype in API_INTERNAL_TYPES:
+                continue
+            if ctype not in ("text", "multimodal_text") or hidden:
                 continue
 
-            text = _normalize_api_math(_api_parts_text(content))
+            text = _normalize_api_math(
+                _api_parts_text(content, metadata, unsupported=unsupported)
+            )
             message_id = str(raw.get("id") or "")
             if role == "user":
+                flush_pending(before_user=True)
                 messages.append(
                     self.msg(
                         "user", text, raw.get("create_time"), {},
@@ -525,6 +675,12 @@ class ChatGPTParser(BaseParser):
                 "assistant", text, raw.get("create_time"), {"tokens": None},
                 message_id=message_id, model=slug,
             )
+            images = _dedupe(pending["images"])
+            if images:
+                block = "\n\n".join(images)
+                message.texte = (
+                    f"{message.texte}\n\n{block}".strip() if message.texte else block
+                )
             reasoning = "\n\n".join(_dedupe(pending["reasoning"])).strip()
             if reasoning:
                 message.reasoning = reasoning
@@ -540,17 +696,16 @@ class ChatGPTParser(BaseParser):
         if not messages:
             raise ParseError("chatgpt api: aucun message exploitable")
 
-        # tour assistant reduit a des extras (erreur/quota) : on le garde vide
-        # pour ne pas fusionner les deux messages `user` encadrants.
-        if any(pending.values()) and messages[-1].role == "user":
-            message = self.msg("assistant", "", None, {"tokens": None})
-            reasoning = "\n\n".join(_dedupe(pending["reasoning"])).strip()
-            if reasoning:
-                message.reasoning = reasoning
-            tools = _dedupe(pending["tools"])
-            if tools:
-                message.tools = tools
-            messages.append(message)
+        # tour assistant reduit a des extras (erreur/quota) ou a une image
+        # generee (fin de conversation) : on le garde pour ne pas fusionner les
+        # deux messages `user` encadrants.
+        flush_pending()
+        if unsupported:
+            log.debug(
+                "chatgpt api: parts non telechargeables ignorees %s (%s)",
+                sorted(unsupported),
+                data.get("conversation_id"),
+            )
 
         conv_id = (
             conversation_id

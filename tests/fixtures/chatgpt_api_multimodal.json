@@ -1,0 +1,169 @@
+{
+ "conversation_id": "f0000000-0000-4000-8000-f2f43feb5aaa",
+ "title": "Multimodal",
+ "create_time": 1790200000.5,
+ "update_time": 1790200300.5,
+ "default_model_slug": "auto",
+ "current_node": "n9",
+ "page_info": {"has_previous_page": false, "start_cursor": null},
+ "is_archived": false,
+ "conversation_origin": null,
+ "is_temporary_chat": false,
+ "messages": [
+  {
+   "id": "s1",
+   "author": {"role": "system", "name": null},
+   "create_time": null,
+   "recipient": "all",
+   "content": {"content_type": "text", "parts": [""]},
+   "metadata": {"is_visually_hidden_from_conversation": true}
+  },
+  {
+   "id": "f0000000-0000-4000-8000-000000000001",
+   "author": {"role": "user", "name": null},
+   "create_time": 1790200001.1,
+   "recipient": "all",
+   "content": {
+    "content_type": "multimodal_text",
+    "parts": [
+     {
+      "content_type": "image_asset_pointer",
+      "asset_pointer": "sediment://file_00000000aaaabbbb",
+      "size_bytes": 123456,
+      "width": 1024,
+      "height": 559,
+      "fovea": null,
+      "metadata": {"dalle": null, "generation": null, "sanitized": true}
+     },
+     "Regarde cette photo de mon projet."
+    ]
+   },
+   "metadata": {
+    "attachments": [
+     {
+      "id": "file_00000000aaaabbbb",
+      "size": 123456,
+      "name": "photo.png",
+      "mime_type": "image/png",
+      "width": 1024,
+      "height": 559
+     }
+    ]
+   }
+  },
+  {
+   "id": "f0000000-0000-4000-8000-000000000002",
+   "author": {"role": "assistant", "name": null},
+   "create_time": 1790200002.2,
+   "recipient": "all",
+   "content": {"content_type": "text", "parts": ["Elle est très bien cadrée."]},
+   "metadata": {"model_slug": "gpt-5-6"}
+  },
+  {
+   "id": "f0000000-0000-4000-8000-000000000003",
+   "author": {"role": "user", "name": null},
+   "create_time": 1790200003.3,
+   "recipient": "all",
+   "content": {
+    "content_type": "multimodal_text",
+    "parts": [
+     {
+      "content_type": "audio_transcription",
+      "text": " Et maintenant génère une image. ",
+      "direction": "in",
+      "decoding_id": null
+     },
+     {
+      "expiry_datetime": "2026-01-07T08:26:17.224866+00:00",
+      "content_type": "real_time_user_audio_video_asset_pointer",
+      "frames_asset_pointers": [],
+      "video_container_asset_pointer": null,
+      "audio_asset_pointer": {
+       "content_type": "audio_asset_pointer",
+       "asset_pointer": "sediment://file_00000000bbbbcccc",
+       "format": "wav"
+      }
+     }
+    ]
+   },
+   "metadata": {}
+  },
+  {
+   "id": "f0000000-0000-4000-8000-000000000004",
+   "author": {"role": "assistant", "name": null},
+   "create_time": 1790200004.4,
+   "recipient": "t2uay3k.sj1i4kz",
+   "content": {"content_type": "code", "language": "python3", "text": "{\"skipped_mainline\":true}"},
+   "metadata": {}
+  },
+  {
+   "id": "f0000000-0000-4000-8000-000000000005",
+   "author": {"role": "tool", "name": "t2uay3k.sj1i4kz"},
+   "create_time": 1790200005.5,
+   "recipient": "all",
+   "content": {
+    "content_type": "multimodal_text",
+    "parts": [
+     {
+      "content_type": "image_asset_pointer",
+      "asset_pointer": "sediment://file_00000000ccccdddd",
+      "size_bytes": 234567,
+      "width": 1474,
+      "height": 1067,
+      "fovea": null,
+      "metadata": {
+       "dalle": {"gen_id": "f0000000-0000-4000-8000-00000000dalle", "prompt": ""},
+       "generation": {"gen_id": "f0000000-0000-4000-8000-00000000dalle"}
+      }
+     }
+    ]
+   },
+   "metadata": {"image_gen_title": "Un chat astronaute"}
+  },
+  {
+   "id": "f0000000-0000-4000-8000-000000000006",
+   "author": {"role": "assistant", "name": null},
+   "create_time": 1790200006.6,
+   "recipient": "all",
+   "content": {"content_type": "text", "parts": ["Voilà le chat astronaute."]},
+   "metadata": {"model_slug": "gpt-5-6"}
+  },
+  {
+   "id": "f0000000-0000-4000-8000-000000000007",
+   "author": {"role": "user", "name": null},
+   "create_time": 1790200007.7,
+   "recipient": "all",
+   "content": {"content_type": "text", "parts": ["Parfait, merci !"]},
+   "metadata": {}
+  },
+  {
+   "id": "f0000000-0000-4000-8000-000000000008",
+   "author": {"role": "assistant", "name": null},
+   "create_time": 1790200008.8,
+   "recipient": "t2uay3k.sj1i4kz",
+   "content": {"content_type": "code", "language": "python3", "text": "{\"skipped_mainline\":true}"},
+   "metadata": {}
+  },
+  {
+   "id": "f0000000-0000-4000-8000-000000000009",
+   "author": {"role": "tool", "name": "t2uay3k.sj1i4kz"},
+   "create_time": 1790200009.9,
+   "recipient": "all",
+   "content": {
+    "content_type": "multimodal_text",
+    "parts": [
+     {
+      "content_type": "image_asset_pointer",
+      "asset_pointer": "sediment://file_00000000eeeeffff",
+      "size_bytes": 345678,
+      "width": 1024,
+      "height": 1024,
+      "fovea": null,
+      "metadata": {"dalle": null, "generation": null}
+     }
+    ]
+   },
+   "metadata": {"image_gen_title": "Une fusée"}
+  }
+ ]
+}

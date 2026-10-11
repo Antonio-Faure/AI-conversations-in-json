@@ -8,13 +8,14 @@ le DOM, libelle d'erreur d'outil propre au DOM).
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
 
 import pytest
 
-from src.parsers.chatgpt import ChatGPTParser
+from src.parsers.chatgpt import API_FILE_DOWNLOAD_URL, ChatGPTParser
 from src.schema import ConversationRef
 from src.services.base import ServiceNotLoggedIn
 from src.services.chatgpt import (
@@ -22,6 +23,7 @@ from src.services.chatgpt import (
     ChatGPTService,
     _ChatGPTHttpClient,
 )
+from src.utils.images import download_service_images
 
 FIXTURES = Path(__file__).parent / "fixtures"
 #: l'API recupere les images markdown distantes que le DOM rend en placeholder
@@ -266,6 +268,154 @@ def test_parse_api_payload_vide():
         ChatGPTParser().parse("", extra={"api": {"messages": []}})
 
 
+# -- multimodal (`multimodal_text` : voix + images) ---------------------------
+
+
+@pytest.fixture(scope="module")
+def multimodal_payload():
+    return load_fixture("chatgpt_api_multimodal.json")
+
+
+@pytest.fixture(scope="module")
+def multimodal_conversation(multimodal_payload):
+    return ChatGPTParser().parse(
+        "",
+        conversation_id=multimodal_payload["conversation_id"],
+        extra={"api": multimodal_payload},
+    )
+
+
+def test_parse_api_multimodal_images_et_transcriptions(multimodal_conversation):
+    """`multimodal_text` : texte + transcription, images vers l'endpoint API."""
+    msgs = multimodal_conversation.messages
+    assert [m.role for m in msgs] == [
+        "user", "assistant", "user", "assistant", "user", "assistant",
+    ]
+    photo = API_FILE_DOWNLOAD_URL.format(fid="file_00000000aaaabbbb")
+    assert msgs[0].texte == (
+        f"Regarde cette photo de mon projet.\n\n![photo.png]({photo})"
+    )
+    assert msgs[1].texte == "Elle est très bien cadrée."
+    # transcription nettoyee ; l'asset audio (non telechargeable) est ignore
+    assert msgs[2].texte == "Et maintenant génère une image."
+    # image generee rattachee au tour assistant, apres son texte (convention DOM)
+    chat = API_FILE_DOWNLOAD_URL.format(fid="file_00000000ccccdddd")
+    assert msgs[3].texte == (
+        f"Voilà le chat astronaute.\n\n![Generated image: Un chat astronaute]({chat})"
+    )
+    assert msgs[4].texte == "Parfait, merci !"
+    # image generee seule en fin de conversation : tour assistant conserve
+    fusee = API_FILE_DOWNLOAD_URL.format(fid="file_00000000eeeeffff")
+    assert msgs[5].texte == f"![Generated image: Une fusée]({fusee})"
+
+
+def test_parse_api_multimodal_aucune_url_distante(multimodal_conversation):
+    """Jamais d'URL distante ni de pointeur brut : endpoint API uniquement."""
+    for message in multimodal_conversation.messages:
+        assert "sediment://" not in message.texte
+        assert "estuary" not in message.texte
+        assert "file-service://" not in message.texte
+
+
+def test_parse_api_image_generee_avant_message_utilisateur():
+    """Image d'outil entre deux tours : tour assistant insere avant le user."""
+    payload = {
+        "conversation_id": "c1",
+        "messages": [
+            {
+                "id": "u1",
+                "author": {"role": "user"},
+                "recipient": "all",
+                "content": {"content_type": "text", "parts": ["q"]},
+            },
+            {
+                "id": "a1",
+                "author": {"role": "assistant"},
+                "recipient": "all",
+                "content": {"content_type": "text", "parts": ["r"]},
+            },
+            {
+                "id": "u2",
+                "author": {"role": "user"},
+                "recipient": "all",
+                "content": {"content_type": "text", "parts": ["q2"]},
+            },
+            {
+                "id": "t1",
+                "author": {"role": "tool"},
+                "recipient": "all",
+                "content": {
+                    "content_type": "multimodal_text",
+                    "parts": [
+                        {
+                            "content_type": "image_asset_pointer",
+                            "asset_pointer": "sediment://file-gen1",
+                        }
+                    ],
+                },
+                "metadata": {"image_gen_title": "Titre"},
+            },
+            {
+                "id": "u3",
+                "author": {"role": "user"},
+                "recipient": "all",
+                "content": {"content_type": "text", "parts": ["q3"]},
+            },
+            {
+                "id": "a3",
+                "author": {"role": "assistant"},
+                "recipient": "all",
+                "content": {"content_type": "text", "parts": ["r3"]},
+            },
+        ],
+    }
+    conv = ChatGPTParser().parse("", extra={"api": payload})
+    assert [m.role for m in conv.messages] == [
+        "user", "assistant", "user", "assistant", "user", "assistant",
+    ]
+    gen = API_FILE_DOWNLOAD_URL.format(fid="file-gen1")
+    assert conv.messages[3].texte == f"![Generated image: Titre]({gen})"
+    assert conv.messages[4].texte == "q3"
+
+
+def test_parse_api_multimodal_sans_image_generee_degradee():
+    """Un asset inconnu ne casse pas le mapping (type signale, texte garde)."""
+    payload = {
+        "conversation_id": "c1",
+        "messages": [
+            {
+                "id": "u1",
+                "author": {"role": "user"},
+                "recipient": "all",
+                "content": {
+                    "content_type": "multimodal_text",
+                    "parts": [
+                        {
+                            "content_type": "audio_asset_pointer",
+                            "asset_pointer": "sediment://file-audio1",
+                            "format": "wav",
+                        },
+                        {
+                            "content_type": "audio_transcription",
+                            "text": "bonjour",
+                            "direction": "in",
+                        },
+                    ],
+                },
+            },
+            {
+                "id": "a1",
+                "author": {"role": "assistant"},
+                "recipient": "all",
+                "content": {"content_type": "text", "parts": ["salut"]},
+            },
+        ],
+    }
+    conv = ChatGPTParser().parse("", extra={"api": payload})
+    assert conv.messages[0].texte == "bonjour"
+    assert "sediment://" not in conv.messages[0].texte
+
+
 # -- service -----------------------------------------------------------------
 
 
@@ -437,3 +587,124 @@ def test_export_conversation_api_sans_html_avec_payload_brut(api_payload):
     assert service.take_raw_payload() is None
     # pas de screenshots en mode API
     assert service.capture_message_screenshots(conv, Path("/tmp/unused")) == 0
+
+
+# -- telechargement des assets (images) ---------------------------------------
+
+PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+ASSET_SIGNED_URL = "https://chatgpt.com/backend-api/estuary/content?id=x"
+
+
+class FakeAssetClient:
+    """Client HTTP factice : resolution (`get`) + octets (`fetch`)."""
+
+    def __init__(self, status=200, download_url=ASSET_SIGNED_URL):
+        self.status = status
+        self.download_url = download_url
+        self.gets = []
+        self.fetches = []
+
+    def get(self, url, accept="application/json, text/plain, */*"):
+        self.gets.append(url)
+        if self.status != 200:
+            return self.status, b'{"detail":"File not found"}'
+        return 200, json.dumps(
+            {"status": "success", "download_url": self.download_url}
+        ).encode("utf-8")
+
+    def fetch(self, url, accept="*/*"):
+        self.fetches.append(url)
+        return PNG_BYTES, "image/png"
+
+
+def test_download_api_asset_resout_et_telecharge():
+    service = ChatGPTService(FakeSession(), {"services": {"chatgpt": {"api": True}}})
+    client = FakeAssetClient()
+    service._http = client
+    url = API_FILE_DOWNLOAD_URL.format(fid="file-abc")
+    assert service.download_api_asset(url) == (PNG_BYTES, "image/png")
+    assert client.gets == [url]
+    assert client.fetches == [ASSET_SIGNED_URL]
+
+
+def test_download_api_asset_absent_retourne_none():
+    service = ChatGPTService(FakeSession(), {"services": {"chatgpt": {"api": True}}})
+    service._http = FakeAssetClient(status=404)
+    url = API_FILE_DOWNLOAD_URL.format(fid="file-audio")
+    assert service.download_api_asset(url) is None
+
+
+def test_http_client_reessaie_sur_429(monkeypatch):
+    """429 (limite de rafale) : attente puis nouvel essai, sans erreur."""
+    import time as time_module
+    import urllib.error
+    import urllib.request
+
+    calls = {"n": 0}
+    sleeps = []
+
+    class FakeResponse:
+        status = 200
+        headers = {"Content-Type": "application/json"}
+
+        def read(self):
+            return b'{"ok": true}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def fake_urlopen(request, timeout=None):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise urllib.error.HTTPError(
+                request.full_url, 429, "Too Many Requests",
+                {"Retry-After": "7"}, None,
+            )
+        return FakeResponse()
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(time_module, "sleep", lambda s: sleeps.append(s))
+    client = _ChatGPTHttpClient("a=b", access_token="tok")
+    status, raw = client.get("https://chatgpt.com/backend-api/x")
+    assert status == 200
+    assert raw == b'{"ok": true}'
+    assert calls["n"] == 2
+    assert sleeps == [7.0]  # Retry-After respecte
+
+
+def test_session_api_intercepte_les_assets():
+    """En mode API, `session.fetch` des assets passe par le client HTTP."""
+    inner = FakeSession(session_body=b"{}")
+    service = ChatGPTService(inner, {"services": {"chatgpt": {"api": True}}})
+    client = FakeAssetClient()
+    service._http = client
+    url = API_FILE_DOWNLOAD_URL.format(fid="file-abc")
+    assert service.session.fetch(url) == (PNG_BYTES, "image/png")
+    assert inner.fetched == []  # le navigateur n'est pas sollicite
+    # une URL non-asset reste deleguee a la session navigateur
+    assert service.session.fetch("https://chatgpt.com/backend-api/estuary/content?id=z")
+    assert inner.fetched == ["https://chatgpt.com/backend-api/estuary/content?id=z"]
+
+
+def test_download_service_images_reecrit_le_markdown(tmp_path, multimodal_payload):
+    """Bout en bout : parser -> service -> markdown `images/<hash>.png` local."""
+    conv = ChatGPTParser().parse(
+        "",
+        conversation_id=multimodal_payload["conversation_id"],
+        extra={"api": multimodal_payload},
+    )
+    service = ChatGPTService(FakeSession(), {"services": {"chatgpt": {"api": True}}})
+    service._http = FakeAssetClient()
+    stats = download_service_images(conv, service, tmp_path)
+    assert stats == {"downloaded": 3, "cached": 0, "failed": 0}
+    url = API_FILE_DOWNLOAD_URL.format(fid="file_00000000aaaabbbb")
+    filename = hashlib.sha1(url.encode("utf-8")).hexdigest()[:20] + ".png"
+    assert f"![photo.png](images/{filename})" in conv.messages[0].texte
+    assert (tmp_path / filename).read_bytes() == PNG_BYTES
+    # plus aucune URL distante dans le JSON
+    assert all(
+        "chatgpt.com" not in message.texte for message in conv.messages
+    )
