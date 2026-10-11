@@ -433,6 +433,49 @@ class TestChatGPTNewUI:
         assert "notes.txt" in conv.messages[0].texte
         assert conv.messages[0].texte.startswith("Montre un exemple complet.")
 
+    def test_variants_regeneration_attachees(self, fixture_html):
+        """Fragments du dialogue « Versions » -> Message.variants."""
+        fragments = [
+            "<div data-chatgpt-selection-message-id='a1'>"
+            "<div data-markdown-text-style='assistant-message'><p>Version une</p>"
+            "</div></div>",
+            "<div data-chatgpt-selection-message-id='a2'>"
+            "<div data-markdown-text-style='assistant-message'>"
+            "<ul><li>Alpha</li><li>Beta</li></ul></div></div>",
+        ]
+        conv = ChatGPTParser().parse(
+            fixture_html("chatgpt_new_ui.html"),
+            extra={"variants": {"a1": {"active": 1, "fragments": fragments}}},
+        )
+        message = conv.messages[1]
+        assert len(message.variants) == 2
+        assert [v.texte for v in message.variants] == [
+            "Version une",
+            "- Alpha\n- Beta",
+        ]
+        assert message.variants[1].active and not message.variants[0].active
+        assert all(v.kind == "regeneration" for v in message.variants)
+        assert message.variants[1].message_id == "a2"
+
+    def test_variants_edition_utilisateur(self, fixture_html):
+        """Versions d'un message utilisateur -> kind « edit »."""
+        fragments = [
+            "<div data-chatgpt-selection-message-id='u1'>"
+            "<div data-markdown-text-tone='user-message'><p>Question une</p>"
+            "</div></div>",
+            "<div data-chatgpt-selection-message-id='u2'>"
+            "<div data-markdown-text-tone='user-message'><p>Question deux</p>"
+            "</div></div>",
+        ]
+        conv = ChatGPTParser().parse(
+            fixture_html("chatgpt_new_ui.html"),
+            extra={"variants": {"u1": {"active": 0, "fragments": fragments}}},
+        )
+        message = conv.messages[0]
+        assert [v.texte for v in message.variants] == ["Question une", "Question deux"]
+        assert message.variants[0].kind == "edit"
+        assert message.variants[0].active
+
     def test_latex_display_via_data_math_display(self, fixture_html):
         conv = ChatGPTParser().parse(fixture_html("chatgpt_new_ui.html"))
         assert "$$\\begin{cases}" in conv.messages[1].texte

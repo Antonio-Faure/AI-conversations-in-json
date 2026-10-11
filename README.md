@@ -98,7 +98,9 @@ pas réutilisable par Botasaurus, et inversement.
 .venv/bin/python run.py --daily --service chatgpt --headful --limit 5 --verbose
 
 # capturer aussi les versions alternatives (editions, regenerations)
+# (implemente pour mistral et chatgpt)
 .venv/bin/python run.py --monthly --service mistral --variants
+.venv/bin/python run.py --monthly --service chatgpt --variants
 ```
 
 Codes de sortie : `0` OK, `1` au moins un échec, `2` erreur d'usage/config.
@@ -162,7 +164,8 @@ repasse en `daily` (si elle fait partie des 20 récentes) ou en `monthly`.
 - `variants` (optionnel, capture avec `--variants`) : versions alternatives du
   message — éditions d'un message utilisateur (`kind: "edit"`) ou réponses
   régénérées (`kind: "regeneration"`) — dans l'ordre de l'interface ; `texte`
-  reste la version active, chaque variante porte `active`.
+  reste la version active, chaque variante porte `active`. Plateformes : mistral
+  (switcher du fil) et chatgpt (dialogue « Versions »).
 
 ## conversation_list.json
 

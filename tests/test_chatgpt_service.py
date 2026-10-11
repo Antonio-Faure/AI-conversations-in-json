@@ -168,3 +168,81 @@ def test_extract_extras_timestamps_fallback_ssr():
     assert extra["last_message_at"] == 1779219159.105229
     assert session.fetched == ["https://chatgpt.com/c/x"]
 
+
+class VersionsSession(FakeSession):
+    """Session factice : dialogue « Versions » avec deux versions."""
+
+    def __init__(self):
+        super().__init__()
+        self.clicks = []
+        self.dialog_open = False
+        self.opened_once = False
+        self.position = 0
+        self.fragments = [
+            "<div data-chatgpt-selection-message-id='m1'>v1</div>",
+            "<div data-chatgpt-selection-message-id='m2'>v2</div>",
+        ]
+        self.ids = ["m1", "m2"]
+
+    def click_at(self, x, y):
+        self.clicks.append((x, y))
+        if not self.opened_once:
+            self.opened_once = True
+            self.dialog_open = True
+
+    def eval_body(self, body):
+        if "voir les versions" in body and "let n = 0" in body:
+            return 1
+        if "scrollIntoView" in body:
+            return {"x": 10, "y": 20}
+        if "dlg ? dlg.outerHTML : null" in body:
+            if not self.dialog_open:
+                return None
+            return self.fragments[self.position]
+        if "new RegExp(" in body:
+            if "version suivante" in body and self.position < len(self.fragments) - 1:
+                self.position += 1
+                return {"x": 1, "y": 2}
+            if "version précédente" in body and self.position > 0:
+                self.position -= 1
+                return {"x": 1, "y": 2}
+            if "revenir" in body:
+                self.dialog_open = False
+                return {"x": 1, "y": 2}
+            return None
+        if "parseInt(m[1], 10)" in body:
+            if not self.dialog_open:
+                return None
+            return {
+                "ready": True,
+                "label": self.position + 1,
+                "prev": self.position > 0,
+                "next": self.position < len(self.fragments) - 1,
+                "ids": [self.ids[self.position]],
+                "head": "v",
+            }
+        if "data-chatgpt-search-message-ids" in body:
+            return ["m2", "u1"]
+        return super().eval_body(body)
+
+
+def test_capture_variants_dialogue_versions():
+    """La capture parcourt le dialogue et ordonne les fragments."""
+    session = VersionsSession()
+    service = ChatGPTService(session, {"variants": True})
+    captured = service._capture_variants()
+    assert captured == {
+        "m2": {
+            "active": 1,
+            "fragments": [session.fragments[0], session.fragments[1]],
+        }
+    }
+    assert session.clicks, "des clics reels doivent etre envoyes"
+    assert session.dialog_open is False, "le dialogue doit etre referme"
+
+
+def test_capture_variants_sans_bouton():
+    session = FakeSession()
+    service = ChatGPTService(session, {"variants": True})
+    assert service._capture_variants() == {}
+

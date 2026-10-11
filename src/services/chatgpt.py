@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..parsers.chatgpt import (
     ChatGPTParser,
@@ -23,7 +23,10 @@ from ..parsers.chatgpt import (
     order_fragments_by_time,
 )
 from ..schema import ConversationRef
+from ..utils.logging import get_logger
 from .base import BaseService, ScrapedPage
+
+log = get_logger("services.chatgpt")
 
 #: JS de collecte des donnees internes React par message.
 #: create_time est un epoch (secondes) ou {t: secondes, s: nanos} selon les builds.
@@ -272,6 +275,120 @@ return (function(){
 })();
 """
 
+#: messages portant un bouton « Voir les versions » (plusieurs versions).
+#: La nouvelle UI n'expose que la version active dans le fil : le dialogue
+#: « Versions » (Radix) liste les autres. Il ne s'ouvre que sur un vrai clic
+#: souris (`session.click_at`), pas sur un clic JS synthetique. La barre
+#: d'actions (et donc le bouton) vit dans l'unite du message utilisateur : on
+#: indexe les boutons plutot que de deduire l'id du message versionne. Le
+#: libelle est localise (FR « Voir les versions », EN « See versions ») : on
+#: repere aussi l'icone, stable (`clock-arrow-rotate-counterclockwise`).
+_VERSIONS_FIND_JS = """
+return (function(){
+  let n = 0;
+  document.querySelectorAll('button').forEach(function(b){
+    const lab = b.getAttribute('aria-label') || '';
+    const use = b.querySelector('svg use');
+    const href = use ? (use.getAttribute('href') || '') : '';
+    if (/voir les versions|see versions/i.test(lab)
+        || href.indexOf('clock-arrow-rotate-counterclockwise') >= 0) n++;
+  });
+  return n;
+})();
+"""
+
+#: centre le i-eme bouton « Voir les versions » et rend ses coordonnees
+_VERSIONS_POS_JS = """
+return (function(){
+  const all = [...document.querySelectorAll('button')].filter(function(b){
+    const lab = b.getAttribute('aria-label') || '';
+    const use = b.querySelector('svg use');
+    const href = use ? (use.getAttribute('href') || '') : '';
+    return /voir les versions|see versions/i.test(lab)
+        || href.indexOf('clock-arrow-rotate-counterclockwise') >= 0;
+  });
+  const b = all[__INDEX__];
+  if (!b) return null;
+  b.scrollIntoView({block: 'center', inline: 'nearest'});
+  const r = b.getBoundingClientRect();
+  return {x: Math.round(r.left + r.width / 2),
+          y: Math.round(r.top + r.height / 2)};
+})();
+"""
+
+#: identifiants de messages presents dans le fil (version active incluse)
+_VERSIONS_THREAD_IDS_JS = """
+return (function(){
+  const out = [];
+  document.querySelectorAll('[data-chatgpt-search-message-ids]').forEach(function(n){
+    (n.getAttribute('data-chatgpt-search-message-ids') || '').split(/\\s+/)
+      .forEach(function(id){ if (id) out.push(id); });
+  });
+  document.querySelectorAll('[data-chatgpt-selection-message-id], [data-dil-message-id]')
+    .forEach(function(n){
+      const id = n.getAttribute('data-chatgpt-selection-message-id')
+              || n.getAttribute('data-dil-message-id');
+      if (id) out.push(id);
+    });
+  return [...new Set(out)];
+})();
+"""
+
+#: etat du dialogue « Versions » : position, navigation, version affichee.
+#: `ready` = barre de navigation + contenu rendus (le dialogue s'affiche par
+#: etapes : lire trop tot donne un dialogue vide).
+_VERSIONS_DIALOG_JS = """
+return (function(){
+  const dlg = [...document.querySelectorAll('[role="dialog"]')]
+    .find(d => (d.innerText || '').indexOf('Versions') >= 0);
+  if (!dlg) return null;
+  const m = (dlg.innerText || '').match(/Version\\s+(\\d+)/);
+  const find = function(re){
+    return [...dlg.querySelectorAll('button')].find(b =>
+      re.test(b.getAttribute('aria-label') || '') || re.test((b.innerText || '').trim()));
+  };
+  const prev = find(/version précédente|previous version/i);
+  const next = find(/version suivante|next version/i);
+  const ids = [...new Set([...dlg.querySelectorAll(
+      '[data-dil-message-id], [data-chatgpt-selection-message-id]')]
+    .map(n => n.getAttribute('data-dil-message-id')
+           || n.getAttribute('data-chatgpt-selection-message-id'))
+    .filter(Boolean))];
+  const md = dlg.querySelector(
+    "[data-markdown-text-style='assistant-message'], [data-markdown-text-tone='user-message']");
+  const head = md ? (md.innerText || '').replace(/\\s+/g, ' ').trim().slice(0, 80) : '';
+  return {ready: !!(prev && next && md),
+          label: m ? parseInt(m[1], 10) : null,
+          prev: !!(prev && !prev.hasAttribute('disabled')),
+          next: !!(next && !next.hasAttribute('disabled')),
+          ids: ids, head: head};
+})();
+"""
+
+#: HTML complet du dialogue (la version affichee est dedans)
+_VERSIONS_FRAGMENT_JS = """
+return (function(){
+  const dlg = [...document.querySelectorAll('[role="dialog"]')]
+    .find(d => (d.innerText || '').indexOf('Versions') >= 0);
+  return dlg ? dlg.outerHTML : null;
+})();
+"""
+
+#: coordonnees d'un bouton du dialogue (navigation / fermeture)
+_VERSIONS_CLICK_JS = """
+return (function(){
+  const dlg = [...document.querySelectorAll('[role="dialog"]')]
+    .find(d => (d.innerText || '').indexOf('Versions') >= 0);
+  if (!dlg) return null;
+  const re = new RegExp(__RE__, 'i');
+  const b = [...dlg.querySelectorAll('button')].find(x =>
+    re.test(x.getAttribute('aria-label') || '') || re.test((x.innerText || '').trim()));
+  if (!b || b.hasAttribute('disabled')) return null;
+  const r = b.getBoundingClientRect();
+  return {x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2)};
+})();
+"""
+
 
 class ChatGPTService(BaseService):
     name = "chatgpt"
@@ -371,7 +488,146 @@ class ChatGPTService(BaseService):
             merged = dict(page.extra.get("messages") or {})
             merged.update(meta)
             page.extra["messages"] = merged
+        if self.config.get("variants"):
+            try:
+                page.extra["variants"] = self._capture_variants()
+            except Exception:  # noqa: BLE001
+                log.debug("chatgpt: capture des variantes ignoree", exc_info=True)
         return page
+
+    # -- versions alternatives (regenerations) ---------------------------------
+
+    def _versions_dialog(self) -> Optional[Dict[str, Any]]:
+        data = self.session.eval_body(_VERSIONS_DIALOG_JS)
+        return data if isinstance(data, dict) else None
+
+    def _versions_wait_dialog(self, timeout_ms: int = 8000) -> Optional[Dict[str, Any]]:
+        """Attend que le dialogue « Versions » soit rendu (navigation + contenu)."""
+        elapsed = 0
+        while elapsed < timeout_ms:
+            data = self._versions_dialog()
+            if data is not None and data.get("ready"):
+                return data
+            self.session.wait_ms(250)
+            elapsed += 250
+        return self._versions_dialog()
+
+    def _versions_wait_change(
+        self, previous: Optional[Dict[str, Any]], timeout_ms: int = 5000
+    ) -> Optional[Dict[str, Any]]:
+        """Attend que la version affichee dans le dialogue change."""
+        prev_key = (previous or {}).get("ids"), (previous or {}).get("head")
+        elapsed = 0
+        while elapsed < timeout_ms:
+            data = self._versions_dialog()
+            if data is not None and data.get("ready") and (
+                (data.get("ids"), data.get("head")) != prev_key
+            ):
+                return data
+            self.session.wait_ms(250)
+            elapsed += 250
+        return self._versions_dialog()
+
+    def _versions_pos(self, index: int) -> Optional[Dict[str, Any]]:
+        """Coordonnees du i-eme bouton « Voir les versions » (centre)."""
+        body = _VERSIONS_POS_JS.replace("__INDEX__", str(int(index)))
+        data = self.session.eval_body(body)
+        return data if isinstance(data, dict) else None
+
+    def _versions_click(self, pattern: str) -> bool:
+        """Clic reel sur un bouton du dialogue (navigation / fermeture)."""
+        pos = self.session.eval_body(
+            _VERSIONS_CLICK_JS.replace("__RE__", json.dumps(pattern))
+        )
+        if not isinstance(pos, dict):
+            return False
+        self.session.click_at(int(pos.get("x") or 0), int(pos.get("y") or 0))
+        self.session.wait_ms(300)
+        return True
+
+    def _capture_variants(self) -> Dict[str, Any]:
+        """Capture les versions alternatives via le dialogue « Versions ».
+
+        Retourne ``{message_id: {"active": index, "fragments": [html...]}}`` :
+        fragments ordonnes du plus ancien au plus recent, ``active`` pointe la
+        version affichee dans le fil (son id sert de cle). Le dialogue est
+        referme en revenant a la version actuelle (aucune modification du fil).
+        """
+        captured: Dict[str, Any] = {}
+        # le fil vient d'etre parcouru (collecte) : laisser le DOM se stabiliser
+        self.session.wait_ms(600)
+        count = int(self.session.eval_body(_VERSIONS_FIND_JS) or 0)
+        for index in range(count):
+            entry = self._capture_versions_at(index)
+            if entry is None:
+                # deuxieme tentative (rendu tardif, mise en page qui bouge)
+                self.session.wait_ms(700)
+                entry = self._capture_versions_at(index)
+            if entry is None:
+                log.info("chatgpt: versions non capturees (bouton %s/%s)", index + 1, count)
+                continue
+            key, data = entry
+            captured[key] = data
+        return captured
+
+    def _capture_versions_at(self, index: int) -> Optional[Tuple[str, Dict[str, Any]]]:
+        """Capture un message versionne (un bouton) ; None si echec."""
+        pos = self._versions_pos(index)
+        if pos is None:
+            return None
+        self.session.wait_ms(300)
+        pos = self._versions_pos(index) or pos
+        self.session.click_at(int(pos.get("x") or 0), int(pos.get("y") or 0))
+        dialog = self._versions_wait_dialog(4000)
+        if dialog is None:
+            pos = self._versions_pos(index)
+            if pos is None:
+                return None
+            self.session.click_at(int(pos.get("x") or 0), int(pos.get("y") or 0))
+            dialog = self._versions_wait_dialog(8000)
+        if dialog is None:
+            return None
+        # reculer jusqu'a la premiere version
+        for _ in range(50):
+            if not dialog.get("prev"):
+                break
+            if not self._versions_click("version précédente|previous version"):
+                break
+            dialog = self._versions_wait_change(dialog)
+            if dialog is None:
+                break
+        fragments: List[str] = []
+        ids: List[str] = []
+        for _ in range(50):
+            html = self.session.eval_body(_VERSIONS_FRAGMENT_JS)
+            if not html:
+                break
+            fragments.append(str(html))
+            ids.append(next((i for i in (dialog.get("ids") or []) if i), ""))
+            if not dialog.get("next"):
+                break
+            if not self._versions_click("version suivante|next version"):
+                break
+            dialog = self._versions_wait_change(dialog)
+            if dialog is None:
+                break
+        # refermer : « Revenir a la version actuelle » (version du fil)
+        self._versions_click("revenir à la version actuelle|return to current version")
+        for _ in range(20):
+            if self._versions_dialog() is None:
+                break
+            self.session.wait_ms(250)
+        if self._versions_dialog() is not None and hasattr(self.session, "press"):
+            self.session.press("Escape")
+            self.session.wait_ms(300)
+        if len(fragments) < 2:
+            return None
+        thread_ids = set(self.session.eval_body(_VERSIONS_THREAD_IDS_JS) or [])
+        active = next((i for i, vid in enumerate(ids) if vid and vid in thread_ids), 0)
+        key = ids[active] if active < len(ids) else ""
+        if not key:
+            return None
+        return key, {"active": active, "fragments": fragments}
 
     def _collect_conversation_turns(self) -> Tuple[List[str], Dict[str, Any]]:
         """Remonte le fil en memorisant les tours, retourne (fragments, meta)."""

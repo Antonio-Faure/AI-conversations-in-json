@@ -489,6 +489,17 @@ class BrowserSession:
         except PlaywrightError as exc:
             log.debug("scroll wheel failed: %s", exc)
 
+    def click_at(self, x: int, y: int) -> None:
+        """Clic souris reel aux coordonnees viewport (facade commune).
+
+        Certains widgets (menus Radix de ChatGPT) n'ouvrent que sur un vrai
+        `pointerdown` : un clic JS synthetique est ignore.
+        """
+        try:
+            self.page.mouse.click(int(x), int(y))
+        except PlaywrightError as exc:
+            log.debug("click at failed: %s", exc)
+
     def looks_logged_out(self, login_url_parts: List[str], login_selectors: List[str]) -> bool:
         """True si la page courante ressemble a un ecran de connexion."""
         url = self.url().lower()

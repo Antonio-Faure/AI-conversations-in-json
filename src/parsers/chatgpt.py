@@ -23,11 +23,11 @@ from __future__ import annotations
 
 import copy
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import NavigableString
 
-from ..schema import Conversation
+from ..schema import Conversation, Variant
 from .base import BaseParser, ParseError
 
 CONVERSATION_ID_RE = re.compile(r"/c/([0-9a-fA-F-]{16,}|[A-Za-z0-9_-]{16,})")
@@ -289,6 +289,8 @@ class ChatGPTParser(BaseParser):
             if tools:
                 message.tools = tools
             messages.append(message)
+
+        self._attach_variants(messages, extra.get("variants") or {})
 
         # le <title> du DOM reste "ChatGPT" tant que la page n'a pas hydrate :
         # le titre de la sidebar (title_hint, via ref) est fiable, on le
@@ -567,6 +569,69 @@ class ChatGPTParser(BaseParser):
             if markdown not in parts:
                 parts.append(markdown)
         return "\n\n".join(parts)
+
+    # -- versions alternatives (regenerations) ---------------------------------
+
+    def _attach_variants(
+        self, messages: List[Any], variants: Dict[str, Any]
+    ) -> None:
+        """Attache les versions alternatives (dialogue « Versions »).
+
+        `variants` vient du service (capture live) :
+        ``{message_id: {"active": index, "fragments": [html_v0, ...]}}``.
+        La version active reste ``Message.texte`` ; ``Message.variants`` les
+        conserve toutes dans l'ordre de l'interface.
+        """
+        for message in messages:
+            entry = variants.get(message.message_id)
+            if not isinstance(entry, dict):
+                continue
+            fragments = entry.get("fragments") or []
+            if len(fragments) < 2:
+                continue
+            active = int(entry.get("active") or 0)
+            kind = "edit" if message.role == "user" else "regeneration"
+            built: List[Variant] = []
+            for index, fragment in enumerate(fragments):
+                parsed = self._variant_content(str(fragment), message.role)
+                if parsed is None:
+                    continue
+                texte, mid = parsed
+                built.append(
+                    Variant(
+                        kind=kind,
+                        texte=texte,
+                        message_id=mid,
+                        active=index == active,
+                    )
+                )
+            if len(built) >= 2:
+                message.variants = built
+
+    def _variant_content(self, fragment: str, role: str) -> Optional[Tuple[str, str]]:
+        """(texte, message_id) d'une version du dialogue « Versions »."""
+        soup = self.make_soup(fragment)
+        container = soup.select_one("[data-chatgpt-selection-message-id]")
+        if container is None:
+            container = soup
+        mid = str(container.get("data-chatgpt-selection-message-id") or "")
+        if role == "assistant":
+            content_el = container.select_one(NEW_ASSISTANT_TEXT) or container.select_one(
+                ".markdown"
+            )
+        else:
+            content_el = container.select_one(
+                "[data-markdown-text-tone='user-message']"
+            ) or container.select_one(NEW_USER_TEXT)
+        if content_el is None:
+            return None
+        texte = self._content_text(content_el)
+        extra = self._file_tiles(container)
+        if extra and extra not in texte:
+            texte = f"{texte}\n\n{extra}".strip() if texte else extra
+        if not texte:
+            return None
+        return texte, mid
 
     # -- rendu markdown (titres, listes, tableaux, code, LaTeX) ----------------
 

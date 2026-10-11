@@ -452,6 +452,29 @@ class BotasaurusSession:
         except Exception as exc:  # noqa: BLE001
             log.debug("scroll wheel failed: %s", exc)
 
+    def click_at(self, x: int, y: int) -> None:
+        """Clic souris reel (CDP) aux coordonnees viewport (facade commune).
+
+        Certains widgets (menus Radix de ChatGPT) n'ouvrent que sur un vrai
+        `pointerdown` : un clic JS synthetique est ignore.
+        """
+        try:
+            from botasaurus_driver import cdp
+            from botasaurus_driver.cdp.input_ import MouseButton
+
+            drv = self.driver
+            drv.run_cdp_command(cdp.input_.dispatch_mouse_event(
+                "mouseMoved", float(x), float(y), pointer_type="mouse"))
+            drv.run_cdp_command(cdp.input_.dispatch_mouse_event(
+                "mousePressed", float(x), float(y), button=MouseButton.LEFT,
+                buttons=1, click_count=1, pointer_type="mouse"))
+            time.sleep(0.12)
+            drv.run_cdp_command(cdp.input_.dispatch_mouse_event(
+                "mouseReleased", float(x), float(y), button=MouseButton.LEFT,
+                buttons=0, click_count=1, pointer_type="mouse"))
+        except Exception as exc:  # noqa: BLE001
+            log.debug("click at failed: %s", exc)
+
     def looks_logged_out(
         self, login_url_parts: List[str], login_selectors: List[str]
     ) -> bool:

@@ -58,9 +58,11 @@ Options récentes utiles : `--match TEXTE` (ne scraper que les titres/id
 correspondants), `--screenshots` (un PNG par tour, centré, dans
 `exports/<platform>/screenshots/<conv>/message-NN.png`), `--variants` (capture
 les versions alternatives des messages : éditions/régénérations, champ
-`variants` du JSON ; navigation de l'historique côté service, opt-in car plus
-lent), `--output DIR` (surcharge `output_dir`), `--retry-unavailable` (réessaie
-les conversations marquées indisponibles).
+`variants` du JSON ; implémenté pour mistral et chatgpt — ChatGPT ouvre un
+dialogue « Versions » Radix qui exige un clic souris réel (`session.click_at`)
+et des libellés localisés FR/EN ; opt-in car plus lent), `--output DIR` (surcharge
+`output_dir`), `--retry-unavailable` (réessaie les conversations marquées
+indisponibles).
 
 ## Architecture (points d'entrée)
 
