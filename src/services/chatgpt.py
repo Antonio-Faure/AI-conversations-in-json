@@ -9,24 +9,115 @@ Particularites :
   - timestamps : plus de `create_time` par message ; on recupere le
     `create_time`/`update_time` de conversation du script bootstrap
     (approximation de `started_at`/`last_message_at`). Modele : plus expose -> `None`
+
+Chemin **API** (opt-in `services.chatgpt.api: true`) : les lectures passent par
+l'API backend (`/backend-api/conversations[...]`) avec les cookies du profil
+persistant ; le token (`accessToken`) et l'identifiant de compte sont recuperes
+une fois via la session navigateur (`/api/auth/session`), puis tout se fait en
+HTTP pur (comme Grok). Le HTML est **genere** depuis le JSON (`html_render`),
+pas de screenshots. Le DOM reste le chemin par defaut et le repli.
 """
 
 from __future__ import annotations
 
 import json
 import re
+import urllib.error
+import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 
+from ..http_client import DEFAULT_USER_AGENT
 from ..parsers.chatgpt import (
     ChatGPTParser,
     merge_turn_snapshots,
     order_fragments_by_time,
 )
 from ..schema import ConversationRef
+from ..utils.html_render import conversation_to_html
 from ..utils.logging import get_logger
-from .base import BaseService, ScrapedPage
+from .base import BaseService, ScrapedPage, ServiceNotLoggedIn
 
 log = get_logger("services.chatgpt")
+
+#: base de l'API backend de ChatGPT
+API_BASE = "https://chatgpt.com"
+API_LIST_URL = API_BASE + "/backend-api/conversations"
+API_CONVERSATION_URL = API_BASE + "/backend-api/conversations/{cid}"
+API_SESSION_URL = API_BASE + "/api/auth/session"
+#: taille de page de la decouverte (l'API pagine par offset)
+API_PAGE_SIZE = 100
+#: nombre maxi de pages parcourues (garde-fou)
+API_MAX_PAGES = 500
+#: nombre de tours demandes par conversation (plafond serveur ~100)
+API_NUM_TURNS = 100
+
+
+class _ChatGPTHttpClient:
+    """Requetes GET authentifiees sur l'API backend de ChatGPT.
+
+    Les cookies viennent de la session navigateur (profil persistant) ; le
+    token et l'identifiant de compte sont recuperes via `/api/auth/session`.
+    Aucun navigateur n'est utilise pour les lectures.
+    """
+
+    def __init__(
+        self,
+        cookie_header: str,
+        *,
+        access_token: Optional[str] = None,
+        account_id: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        accept_language: Optional[str] = None,
+        timeout_s: int = 45,
+    ):
+        self.cookie_header = cookie_header
+        self.access_token = access_token
+        self.account_id = account_id
+        self.user_agent = user_agent or DEFAULT_USER_AGENT
+        self.accept_language = accept_language or "en-US,en;q=0.9"
+        self.timeout_s = timeout_s
+
+    def _headers(self, accept: str) -> Dict[str, str]:
+        headers = {
+            "User-Agent": self.user_agent,
+            "Cookie": self.cookie_header,
+            "Accept": accept,
+            "Accept-Language": self.accept_language,
+            "Referer": API_BASE + "/",
+        }
+        if self.access_token:
+            headers["Authorization"] = f"Bearer {self.access_token}"
+        if self.account_id:
+            headers["chatgpt-account-id"] = self.account_id
+        return headers
+
+    def get(
+        self, url: str, accept: str = "application/json, text/plain, */*"
+    ) -> Tuple[int, bytes]:
+        request = urllib.request.Request(url, headers=self._headers(accept))
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+                return response.status, response.read()
+        except urllib.error.HTTPError as exc:
+            return exc.code, exc.read() or b""
+        except urllib.error.URLError as exc:
+            raise RuntimeError(
+                f"chatgpt: requete echouee ({url}): {exc}"
+            ) from exc
+
+    def get_json(self, url: str) -> Any:
+        status, raw = self.get(url)
+        if status in (401, 403):
+            raise ServiceNotLoggedIn(
+                f"chatgpt: non authentifie (HTTP {status}) -> `run.py --login chatgpt`"
+            )
+        if status != 200:
+            raise RuntimeError(f"chatgpt: HTTP {status} sur {url}")
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"chatgpt: reponse non-JSON sur {url}") from exc
+
 
 #: JS de collecte des donnees internes React par message.
 #: create_time est un epoch (secondes) ou {t: secondes, s: nanos} selon les builds.
@@ -418,8 +509,187 @@ class ChatGPTService(BaseService):
         "text=/ready to dive in/i",
     )
 
+    def __init__(self, session, config: Optional[Dict[str, Any]] = None):
+        super().__init__(session, config)
+        #: client HTTP de l'API (construit au premier appel en mode API)
+        self._http: Optional[_ChatGPTHttpClient] = None
+
     def build_parser(self) -> ChatGPTParser:
         return ChatGPTParser()
+
+    # -- chemin API (opt-in) ---------------------------------------------------
+
+    def _api_config(self) -> Dict[str, Any]:
+        """Config du service (`services.chatgpt` de la config globale)."""
+        services = (self.config or {}).get("services") or {}
+        return services.get(self.name) or {}
+
+    @property
+    def api_enabled(self) -> bool:
+        """True si le chemin API est active (`services.chatgpt.api: true`)."""
+        return bool(self._api_config().get("api"))
+
+    def _api_client(self) -> _ChatGPTHttpClient:
+        """Client HTTP de l'API, token mint une fois via la session navigateur.
+
+        `session.goto` ouvre la home connectee puis `/api/auth/session` fournit
+        `accessToken` et l'identifiant de compte ; les cookies (httpOnly inclus)
+        viennent du contexte persistant. Tout le reste est en HTTP pur.
+        """
+        if self._http is not None:
+            return self._http
+        self.session.goto(self.home_url)
+        self.session.wait_ms(1500)
+        cookies = self.session.cookies() or []
+        cookie_header = "; ".join(
+            f"{c.get('name')}={c.get('value')}"
+            for c in cookies
+            if c.get("name")
+        )
+        if not cookie_header:
+            raise ServiceNotLoggedIn(
+                "chatgpt: aucun cookie de session -> `run.py --login chatgpt`"
+            )
+        access_token: Optional[str] = None
+        account_id: Optional[str] = None
+        fetched = self.session.fetch(API_SESSION_URL)
+        if fetched:
+            body = fetched[0]
+            try:
+                session_data = json.loads(
+                    body.decode("utf-8", "replace")
+                    if isinstance(body, (bytes, bytearray))
+                    else str(body)
+                )
+            except json.JSONDecodeError:
+                session_data = {}
+            if isinstance(session_data, dict):
+                token = session_data.get("accessToken")
+                access_token = str(token) if token else None
+                account = session_data.get("account") or {}
+                account_id = str(account.get("id")) if account.get("id") else None
+        if not access_token:
+            raise ServiceNotLoggedIn(
+                "chatgpt: session invalide (accessToken absent) -> "
+                "`run.py --login chatgpt`"
+            )
+        # l'UA (et la langue) doivent coller au profil : les cookies sont lies
+        # a l'empreinte du navigateur (un UA divergent -> HTTP 403).
+        fingerprint = getattr(self.session, "fingerprint", None) or {}
+        user_agent = str(fingerprint.get("user_agent") or "") or None
+        lang = str(fingerprint.get("lang") or "")
+        accept_language = f"{lang},{lang.split('-')[0]};q=0.9" if lang else None
+        self._http = _ChatGPTHttpClient(
+            cookie_header,
+            access_token=access_token,
+            account_id=account_id,
+            user_agent=user_agent,
+            accept_language=accept_language,
+        )
+        log.debug(
+            "chatgpt: client API pret (account=%s)", bool(account_id)
+        )
+        return self._http
+
+    def _list_conversations_api(
+        self, limit: Optional[int] = None
+    ) -> List[ConversationRef]:
+        """Decouverte paginee par API (`offset += limit` tant que plein)."""
+        client = self._api_client()
+        refs: Dict[str, ConversationRef] = {}
+        offset = 0
+        for _ in range(API_MAX_PAGES):
+            url = (
+                f"{API_LIST_URL}?exclude_conversation_origin=tpp&expand=false"
+                f"&hide_snorlax=false&is_archived=false&is_starred=false"
+                f"&limit={API_PAGE_SIZE}&order=updated&offset={offset}"
+            )
+            data = client.get_json(url)
+            items = data.get("items") or []
+            for item in items:
+                cid = item.get("id")
+                if not cid:
+                    continue
+                refs[str(cid)] = ConversationRef(
+                    service=self.name,
+                    id=str(cid),
+                    url=f"{API_BASE}/c/{cid}",
+                    title=item.get("title") or None,
+                    raw={
+                        "started_at": item.get("create_time"),
+                        "last_message_at": item.get("update_time"),
+                    },
+                )
+                if limit and len(refs) >= limit:
+                    break
+            if limit and len(refs) >= limit:
+                break
+            if len(items) < API_PAGE_SIZE:
+                break
+            offset += API_PAGE_SIZE
+        log.debug("chatgpt api: %s conversations decouvertes", len(refs))
+        return list(refs.values())
+
+    def _fetch_conversation_api(
+        self, client: _ChatGPTHttpClient, conversation_id: str
+    ) -> Dict[str, Any]:
+        """Payload de conversation ; remonte les pages anciennes si besoin.
+
+        L'API renvoie une fenetre de tours (`num_turns`, plafond ~100). Pour les
+        longues conversations, `page_info.has_previous_page` signale des tours
+        plus anciens charges via `before=<start_cursor>` (best effort : ce
+        chemin n'a pas pu etre valide sur une conversation longue).
+        """
+        url = (
+            f"{API_CONVERSATION_URL.format(cid=conversation_id)}"
+            f"?num_turns={API_NUM_TURNS}&include_has_versions=true"
+        )
+        data = client.get_json(url)
+        messages = list(data.get("messages") or [])
+        page = data.get("page_info") or {}
+        seen_cursors: set = set()
+        for _ in range(API_MAX_PAGES):
+            if not (page.get("has_previous_page") and page.get("start_cursor")):
+                break
+            cursor = str(page["start_cursor"])
+            if cursor in seen_cursors:
+                break
+            seen_cursors.add(cursor)
+            older = client.get_json(url + f"&before={cursor}")
+            older_messages = older.get("messages") or []
+            known = {m.get("id") for m in messages}
+            new = [m for m in older_messages if m.get("id") not in known]
+            if not new:
+                break
+            messages = new + messages
+            page = older.get("page_info") or {}
+        merged = dict(data)
+        merged["messages"] = messages
+        return merged
+
+    def list_conversations(self, limit: Optional[int] = None) -> List[ConversationRef]:
+        if self.api_enabled:
+            return self._list_conversations_api(limit=limit)
+        return super().list_conversations(limit=limit)
+
+    def export_conversation_with_html(self, ref: ConversationRef) -> tuple:
+        """API (opt-in) : payload JSON -> Conversation + HTML genere."""
+        if not self.api_enabled:
+            return super().export_conversation_with_html(ref)
+        client = self._api_client()
+        data = self._fetch_conversation_api(client, ref.id)
+        conv = self.parser.parse(
+            "", conversation_id=ref.id, extra={"api": data}
+        )
+        if not conv.url:
+            conv.url = self.conversation_url(ref)
+        return conv, conversation_to_html(conv)
+
+    def capture_message_screenshots(self, conversation, out_dir) -> int:
+        """Pas de screenshots en mode API (le DOM n'est pas rendu)."""
+        if self.api_enabled:
+            return 0
+        return super().capture_message_screenshots(conversation, out_dir)
 
     def extract_extras(self, ref: ConversationRef) -> Dict[str, Any]:
         data = self.session.evaluate(EXTRACT_REACT_META_JS) or {}
