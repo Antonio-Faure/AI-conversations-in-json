@@ -349,6 +349,9 @@ navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
 - **Rendu riche** : markdown (gras, listes, tableaux, liens `target=_blank`),
   **LaTeX via KaTeX**, blocs de code séparés avec bouton copier
   (`marked` + `DOMPurify` + `KaTeX`, CDN).
+- **Versions alternatives** : un message à plusieurs versions (éditions ou
+  régénérations) porte un badge `N versions` et un bloc dépliable
+  `Versions alternatives` (version active marquée, `kind` affiché).
 - **Clic sur un message** → ouvre la conversation complète, positionnée et
   surlignée sur ce message ; bouton retour.
 - **🎲 Aléatoire** : ouvre une conversation au hasard (pour le jeu de correction).
