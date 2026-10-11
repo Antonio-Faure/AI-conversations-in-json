@@ -402,9 +402,23 @@ class BaseService(ABC):
         return conv
 
     def export_conversation_with_html(self, ref: ConversationRef) -> tuple:
-        """Retourne (Conversation, html complet de la page)."""
+        """Retourne (Conversation, html complet de la page).
+
+        `html` vaut None pour les services API (pas de page recuperable) : le
+        payload brut du dernier export est alors fourni par `take_raw_payload`.
+        """
         page = self.scrape_conversation(ref)
         return self.parse_page(page, ref), page.html
+
+    def take_raw_payload(self) -> Optional[Any]:
+        """Payload API brut du dernier export (None pour les services DOM).
+
+        Les services API (ChatGPT en mode API, Grok) le memorisent pendant
+        `export_conversation_with_html` ; l'orchestrateur l'archive alors dans
+        `exports/<platform>/raw/<slug>.json`, l'equivalent du HTML brut. La
+        methode consomme le payload : un export ulterieur ne le reecrit pas.
+        """
+        return None
 
     def capture_message_screenshots(
         self, conversation: Conversation, out_dir: Path

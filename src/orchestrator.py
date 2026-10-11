@@ -5,7 +5,8 @@ Architecture:
     chatgpt/
       conversation_list.json      # inventaire de toutes les conversations
       <nom conversation>.json     # messages standardises
-      <nom conversation>.html     # page complete (brut)
+      <nom conversation>.html     # page complete (brut) - plateformes DOM
+      raw/<nom conversation>.json # payload API brut - plateformes API
 
 Deux modes:
   - monthly (--full) : liste TOUTES les conversations et les scrape toutes
@@ -61,6 +62,7 @@ from .utils.file_utils import (
 )
 from .utils.images import download_service_media
 from .utils.logging import get_logger, log_fields
+from .utils.raw_payload import save_raw_payload
 
 log = get_logger("orchestrator")
 
@@ -375,12 +377,14 @@ class Orchestrator:
         index: Dict[str, Dict[str, Any]],
         used: Dict[str, str],
     ) -> Optional[str]:
-        """Scrape une conversation, ecrit JSON + HTML, met a jour l'inventaire.
+        """Scrape une conversation, ecrit JSON (+ HTML ou payload brut).
 
-        Retourne 'blocked', 'stop' ou None.
+        Met a jour l'inventaire. Retourne 'blocked', 'stop' ou None.
         """
         try:
             conv, html = service.export_conversation_with_html(ref)
+            # payload API brut (plateformes API) : equivalent du HTML brut
+            raw_payload = service.take_raw_payload()
         except BlockedError as exc:
             log_fields(
                 log, logging.ERROR, f"{service.name}: challenge anti-bot",
@@ -459,8 +463,16 @@ class Orchestrator:
             result.exported.append(json_path)
             if status == "patched":
                 result.patched.append(ref.id)
-        # HTML : toujours ecrase (rendu, aucune donnee perdue)
-        write_text_atomic(html_path, html)
+        # HTML : plateformes DOM uniquement, toujours ecrase (rendu). Les
+        # plateformes API n'en produisent plus (html=None) : un .html residuel
+        # d'un ancien scrape DOM est supprime (bascule propre vers le JSON).
+        if html is not None:
+            write_text_atomic(html_path, html)
+        elif html_path.exists():
+            html_path.unlink()
+        # payload API brut : archive a chaque scrape, comme l'etait le HTML
+        if raw_payload is not None:
+            save_raw_payload(self.output_dir, service.name, stem, raw_payload)
         # screenshots par message (optionnel ; session encore ouverte)
         if self.config.get("screenshots"):
             try:

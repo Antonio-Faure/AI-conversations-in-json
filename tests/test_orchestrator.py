@@ -92,6 +92,39 @@ class FakeService:
     def export_conversation(self, ref):
         return self.export_conversation_with_html(ref)[0]
 
+    def take_raw_payload(self):
+        """Plateforme DOM : aucun payload API brut."""
+        return None
+
+
+class RawPayloadService(FakeService):
+    """Plateforme API : pas de HTML, payload brut archive par l'orchestrateur."""
+
+    name = "api"
+
+    def __init__(self, session, config):
+        super().__init__(session, config)
+        self._raw = None
+
+    def export_conversation_with_html(self, ref):
+        conv = make_conversation(platform=self.name, conv_id=ref.id, title=ref.title)
+        self._raw = {"conversation_id": ref.id, "messages": [{"id": f"m-{ref.id}"}]}
+        return conv, None
+
+    def take_raw_payload(self):
+        payload, self._raw = self._raw, None
+        return payload
+
+
+class NoHtmlService(FakeService):
+    """Service sans HTML ni payload (garde-fou : rien ne doit planter)."""
+
+    name = "nohtml"
+
+    def export_conversation_with_html(self, ref):
+        conv = make_conversation(platform=self.name, conv_id=ref.id, title=ref.title)
+        return conv, None
+
 
 class ScreenshotService(FakeService):
     name = "fake"
@@ -279,6 +312,45 @@ class TestRunPipeline:
         assert entry["scraped"] is True
         assert entry["message_count"] == 2
         assert entry["file"] == "conversation-1"
+
+    def test_api_sans_html_ecrit_le_payload_brut(self, workdir):
+        tmp = workdir
+        orch, _ = make_orchestrator(tmp, {"api": RawPayloadService})
+        result = orch.run(mode="monthly").services["api"]
+        assert len(result.exported) == 3
+        # plateforme API : aucune page HTML, payload brut sous raw/
+        assert list((tmp / "exports" / "api").glob("*.html")) == []
+        raw_path = tmp / "exports" / "api" / "raw" / "conversation-1.json"
+        assert raw_path.exists()
+        assert json.loads(raw_path.read_text(encoding="utf-8")) == {
+            "conversation_id": "c01",
+            "messages": [{"id": "m-c01"}],
+        }
+
+    def test_bascule_api_supprime_le_html_existant(self, workdir):
+        tmp = workdir
+
+        class ApiDomService(FakeService):
+            name = "api"
+
+        # 1er passage : plateforme DOM -> HTML ecrit
+        orch, _ = make_orchestrator(tmp, {"api": ApiDomService})
+        orch.run(mode="monthly")
+        html_path = tmp / "exports" / "api" / "conversation-1.html"
+        assert html_path.exists()
+
+        # bascule DOM -> API : le HTML residuel est supprime, le raw ecrit
+        orch2, _ = make_orchestrator(tmp, {"api": RawPayloadService})
+        orch2.run(mode="monthly")
+        assert not html_path.exists()
+        assert (tmp / "exports" / "api" / "raw" / "conversation-1.json").exists()
+
+    def test_html_none_sans_payload_ne_plante_pas(self, workdir):
+        orch, _ = make_orchestrator(workdir, {"nohtml": NoHtmlService})
+        result = orch.run(mode="monthly").services["nohtml"]
+        assert len(result.exported) == 3
+        assert list((workdir / "exports" / "nohtml").glob("*.html")) == []
+        assert not (workdir / "exports" / "nohtml" / "raw").exists()
 
     def test_fold_insensible_accent_casse(self):
         assert _fold("Conversation Étalon") == "conversation etalon"

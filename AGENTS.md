@@ -5,9 +5,10 @@ Guide pour les agents IA qui travaillent sur ce dépôt.
 ## En bref
 
 Scraping de 6 chatbots (**chatgpt, claude, gemini, perplexity, grok, mistral**)
-vers un **JSON standardisé + le HTML brut** de chaque conversation, plus un RAG
-et une page web de recherche. Le détail complet est dans [`README.md`](README.md) ;
-ce fichier donne les conventions et le mode opératoire.
+vers un **JSON standardisé + l'artefact brut** de chaque conversation (HTML de
+la page pour les plateformes DOM, payload API brut pour les plateformes API),
+plus un RAG et une page web de recherche. Le détail complet est dans
+[`README.md`](README.md) ; ce fichier donne les conventions et le mode opératoire.
 
 ## Environnement
 
@@ -34,7 +35,7 @@ ce fichier donne les conventions et le mode opératoire.
 .venv/bin/python run.py --daily --headful --limit 5 --verbose     # debug
 .venv/bin/python run.py --login claude                            # 1re connexion (profil)
 
-# Régénérer les JSON depuis les HTML (sans re-crawler), puis réindexer
+# Régénérer les JSON depuis les artefacts bruts (HTML / payload API), puis réindexer
 .venv/bin/python scripts/reparse_exports.py
 .venv/bin/python scripts/rag_index.py --force
 
@@ -67,11 +68,14 @@ indisponibles).
 ## Architecture (points d'entrée)
 
 - **CLI** : `run.py` → `Orchestrator.run/run_service/_scrape_one`
-  (`src/orchestrator.py`). `_scrape_one` gère l'écriture JSON/HTML, la mise à
-  jour de `conversation_list.json`, le téléchargement d'images et les screenshots.
+  (`src/orchestrator.py`). `_scrape_one` gère l'écriture JSON + artefact brut
+  (HTML ou payload API via `src/utils/raw_payload.py`), la mise à jour de
+  `conversation_list.json`, le téléchargement d'images et les screenshots.
 - **Services** (navigation + découverte) : `src/services/<bot>.py`, façades
   communes `scrape_conversation` / `parse_page` / `capture_message_screenshots`
-  dans `src/services/base.py`. Grok est **API + cookies** (`uses_browser=False`).
+  dans `src/services/base.py`. Grok est **API + cookies** (`uses_browser=False`) ;
+  ChatGPT a un mode API opt-in (`services.chatgpt.api: true`). Les services API
+  renvoient `(conv, None)` et exposent `take_raw_payload()`.
 - **Parseurs** (DOM → `Conversation`, testables sans navigateur) :
   `src/parsers/<bot>.py`, helpers dans `src/parsers/base.py`.
 - **Schéma** : `src/schema.py` (`Conversation`, `Message`, `normalize_messages`).
@@ -96,6 +100,10 @@ indisponibles).
   `[nom](files/<hash>.<ext>)`, fichier téléchargé dans `exports/<platform>/files/`,
   servi par la même route `/media/<platform>/<fichier>`.
 - **URL** de conversation toujours renseignée (`Conversation.url`).
+- **Artefact brut** : HTML (`<stem>.html`) pour les plateformes DOM. Pour les
+  plateformes API (chatgpt en mode API, grok), le payload brut
+  `exports/<platform>/raw/<slug>.json` remplace le HTML (re-mapping sans
+  re-téléchargement) ; un `.html` résiduel est supprimé au prochain scrape.
 - Ajouter une capacité de parseur = fichier `<bot>.py` + tests, **sans** toucher
   `base.py`/`schema.py`/serveur sans raison.
 
@@ -203,8 +211,12 @@ indisponibles).
 - Mistral : application unique `/work` (l'ancien `/chat` a fusionné dedans) ;
   les URLs `/chat/<id>` sont réécrites en `/work/<id>`. Timestamps non exposés
   (`null`).
-- Grok : pas de navigateur → pas de screenshots, HTML généré (`html_render.py`) ;
-  les pièces jointes sont téléchargées via un `fetch` authentifié par cookies.
+- Grok : pas de navigateur → pas de screenshots, pas de HTML ; payload brut dans
+  `exports/grok/raw/`. Les pièces jointes sont téléchargées via un `fetch`
+  authentifié par cookies.
+- ChatGPT en mode API (`services.chatgpt.api: true`) : pas de HTML ni de
+  screenshots, payload brut dans `exports/chatgpt/raw/` ; `--variants` exige le
+  mode DOM.
 - Après un `reparse_exports.py` ou un `download_images.py`, relancer
   `rag_index.py --force` (cache par empreinte de message).
 

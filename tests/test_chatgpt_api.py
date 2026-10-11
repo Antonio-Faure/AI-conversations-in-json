@@ -416,7 +416,8 @@ def test_fetch_conversation_api_remonte_les_pages_anciennes():
     assert "before=m2" in client.calls[1]
 
 
-def test_export_conversation_api_genere_le_html(api_payload):
+def test_export_conversation_api_sans_html_avec_payload_brut(api_payload):
+    """Mode API : pas de HTML, payload brut disponible pour l'archivage."""
     service = ChatGPTService(FakeSession(), {"services": {"chatgpt": {"api": True}}})
     service._http = FakeClient([api_payload])
     ref = ConversationRef(
@@ -427,6 +428,12 @@ def test_export_conversation_api_genere_le_html(api_payload):
     conv, html = service.export_conversation_with_html(ref)
     assert len(conv.messages) == 52
     assert conv.url == ref.url
-    assert "<!DOCTYPE html>" in html and "Formatage de texte" in html
+    assert html is None
+    # le payload brut est le payload de l'API, non transforme
+    payload = service.take_raw_payload()
+    assert payload["conversation_id"] == api_payload["conversation_id"]
+    assert payload["messages"] == api_payload["messages"]
+    # consomme : un export ulterieur ne le reecrit pas
+    assert service.take_raw_payload() is None
     # pas de screenshots en mode API
     assert service.capture_message_screenshots(conv, Path("/tmp/unused")) == 0

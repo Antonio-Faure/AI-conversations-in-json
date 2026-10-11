@@ -4,14 +4,17 @@
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
 Export automatisé des conversations IA dans un **format JSON standardisé** +
-le **HTML complet** de chaque conversation. Plateformes actives : **ChatGPT**,
-**Claude**, **Gemini**, **Perplexity**, **Grok** (xAI) et **Mistral**.
+l'**artefact brut** de chaque conversation (HTML de la page pour les
+plateformes DOM, payload API brut pour ChatGPT en mode API et Grok).
+Plateformes actives : **ChatGPT**, **Claude**, **Gemini**, **Perplexity**,
+**Grok** (xAI) et **Mistral**.
 
 Chaque conversation produit :
 
 ```
-exports/<platform>/<nom de la conversation>.json   # messages standardisés
-exports/<platform>/<nom de la conversation>.html   # page complète (brut)
+exports/<platform>/<nom de la conversation>.json      # messages standardisés
+exports/<platform>/<nom de la conversation>.html      # page complète (brut, DOM)
+exports/<platform>/raw/<nom de la conversation>.json  # payload API brut (API)
 ```
 
 Plus un inventaire par chatbot :
@@ -28,16 +31,18 @@ run.py (CLI)
         └── registry des services (chatgpt, claude, gemini, perplexity, grok, mistral)
               1. ouvre la home -> sidebar -> liste des conversations
               2. sélectionne les cibles selon le mode (daily / monthly)
-              3. pour chacune : navigation + scroll -> HTML complet
+              3. pour chacune : navigation + scroll -> HTML complet (DOM) ou
+                 appels API -> payload brut (ChatGPT API, Grok)
               4. parsing -> Conversation standardisée (+ code_blocks)
-              5. écriture atomique de <nom>.json et <nom>.html
+              5. écriture atomique de <nom>.json et de l'artefact brut
+                 (.html pour le DOM, raw/<nom>.json pour l'API)
               6. mise à jour de conversation_list.json
 ```
 
 - **Écriture JSON intelligente** : si le contenu est identique, le fichier
   n'est **pas** réécrit ; si de nouveaux messages suivent, ils sont **patchés**
-  (ajoutés sans écraser l'existant) ; sinon réécriture complète. Le HTML est
-  toujours écrasé (rendu, aucune donnée perdue).
+  (ajoutés sans écraser l'existant) ; sinon réécriture complète. L'artefact
+  brut (HTML ou payload API) est toujours écrasé (aucune donnée perdue).
 - **Pas de logs sur disque, pas de dossiers par session** : seul l'export final
   est conservé (console uniquement).
 - **Profils persistants** : cookies de connexion dans `profiles/<service>/`.
@@ -112,8 +117,9 @@ Codes de sortie : `0` OK, `1` au moins un échec, `2` erreur d'usage/config.
 | `--daily` | liste les conversations | **inconnues** (jamais scrapées) ∪ **20 plus récentes** |
 | `--monthly` / `--full` | liste TOUTES les conversations | **toutes** (rafraîchissement complet) |
 
-Le HTML manquant (ex. après migration) est produit dès qu'une conversation
-repasse en `daily` (si elle fait partie des 20 récentes) ou en `monthly`.
+L'artefact brut manquant (HTML ou payload API, ex. après migration) est produit
+dès qu'une conversation repasse en `daily` (si elle fait partie des 20 récentes)
+ou en `monthly`.
 
 ## Format JSON d'une conversation
 
@@ -160,7 +166,9 @@ repasse en `daily` (si elle fait partie des 20 récentes) ou en `monthly`.
 - `texte` : markdown complet (le code en fences y figure **aussi**) ;
   `code_blocks` en est la vue structurée `{language, code}`.
 - timestamps ISO-8601 UTC (`...Z`) ou `null` quand la plateforme ne les expose pas.
-- Le fichier `.html` contient le DOM complet de la page de conversation.
+- Le fichier `.html` contient le DOM complet de la page de conversation
+  (plateformes DOM). ChatGPT en mode API et Grok n'écrivent plus de HTML : le
+  payload brut `raw/<nom>.json` le remplace comme artefact de re-mapping.
 - `variants` (optionnel, capture avec `--variants`) : versions alternatives du
   message — éditions d'un message utilisateur (`kind: "edit"`) ou réponses
   régénérées (`kind: "regeneration"`) — dans l'ordre de l'interface ; `texte`
@@ -247,7 +255,8 @@ Un script convertit l'ancien format (`exports/<date>/chatgpt/<id>.json` +
 ```
 
 Les anciens fichiers ne sont pas supprimés (les retirer après vérification).
-Le HTML n'existant pas dans l'ancien schéma, il est produit au prochain run.
+L'artefact brut n'existant pas dans l'ancien schéma, il est produit au prochain
+run (HTML ou payload API selon la plateforme).
 
 ## Audit
 
@@ -279,16 +288,20 @@ Correctifs appliqués aux parseurs et à la régénération :
   pour Mistral → distingue `/chat` de `/work`). Backfill sur l'existant :
   `.venv/bin/python scripts/backfill_urls.py`.
 
-Régénération **sans re-crawler** depuis les HTML sauvegardés :
+Régénération **sans re-crawler** depuis les artefacts bruts sauvegardés : HTML
+des plateformes DOM, payload API brut (`exports/<platform>/raw/`) pour ChatGPT
+en mode API et Grok.
 
 ```bash
 .venv/bin/python scripts/reparse_exports.py                 # toutes plateformes
 .venv/bin/python scripts/reparse_exports.py --platform gemini --no-backup
 ```
 
-Les métadonnées absentes du HTML (timestamps/modele) sont fusionnées depuis
-l'ancien JSON (`.json.bak` conservé). Re-lancer ensuite
-`scripts/rag_index.py --force` (les vecteurs inchangés sont repris du cache).
+Les métadonnées absentes de l'artefact (timestamps/modele) sont fusionnées
+depuis l'ancien JSON (`.json.bak` conservé). Une conversation sans HTML ni
+payload (export ancien, plateforme migrée) est nettoyée directement. Re-lancer
+ensuite `scripts/rag_index.py --force` (les vecteurs inchangés sont repris du
+cache).
 
 ## RAG (recherche sémantique des messages)
 
@@ -368,7 +381,7 @@ d'embeddings se charge au premier appel (quelques secondes).
 |---|---|
 | JSON identique → pas d'écriture | `merge_conversation_json` compare hors `exported_at` |
 | Nouveaux messages → patch | si les anciens messages sont un préfixe, seuls les nouveaux sont ajoutés |
-| HTML | toujours écrasé (rendu) |
+| Artefact brut (HTML ou payload API) | toujours écrasé (rendu/données brutes) |
 | Embeddings déjà calculés | cache par empreinte de message (`get_cached_vectors`) |
 | Pas de surcharge CPU | torch limité à `cpu-1` threads (`AICV_TORCH_THREADS` pour forcer) |
 
@@ -381,8 +394,10 @@ Tout est dans [`config.yaml`](config.yaml) : chemins **relatifs à la racine du
 dépôt** (ou absolus), services (les 6 `enabled: true`), headless, timeouts,
 scroll, `parallel`, `cookies_dir`, `rag_db`/`rag_model`. Claude,
 Perplexity et Mistral forcent `engine: botasaurus` (Cloudflare bloque
-Playwright) ; Grok utilise l'API HTTP + cookies (aucun navigateur). Les valeurs
-omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
+Playwright) ; Grok utilise l'API HTTP + cookies (aucun navigateur) ; ChatGPT
+peut basculer en lectures API pures (`services.chatgpt.api: true` : payload
+brut archivé au lieu du HTML). Les valeurs omises reprennent `DEFAULT_CONFIG`
+(`src/orchestrator.py`).
 
 ## Architecture
 
@@ -395,12 +410,12 @@ omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │   ├── capture_cookies.py     # capture les cookies (navigateur visible)
 │   ├── rag_index.py           # indexe les messages (BGE-M3 -> sqlite-vec)
 │   ├── rag_search.py          # recherche cosinus dans le RAG
-│   ├── reparse_exports.py     # régénère les JSON depuis les HTML (sans re-crawl)
+│   ├── reparse_exports.py     # régénère les JSON depuis les artefacts bruts (sans re-crawl)
 │   ├── backfill_urls.py       # ajoute le champ url (JSON + inventaire)
 │   ├── serve_web.py           # serveur local + API + ouverture navigateur
 │   └── audit_exports.py       # audit qualité des JSON exportés
 ├── src/
-│   ├── orchestrator.py        # workflow (modes, services, inventaire, JSON+HTML)
+│   ├── orchestrator.py        # workflow (modes, services, inventaire, JSON + artefact brut)
 │   ├── browser.py             # moteur Playwright (profil persistant, scroll)
 │   ├── browser_botasaurus.py  # moteur Botasaurus (anti-Cloudflare, même façade)
 │   ├── http_client.py         # client HTTP + cookies (services sans navigateur)
@@ -422,7 +437,8 @@ omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │   │   ├── indexer.py         #   indexation incrémentale par lots
 │   │   └── search.py          #   recherche combinée (cosinus + mots-clés)
 │   └── utils/
-│       ├── html_render.py     # HTML autonome (services sans page récupérable)
+│       ├── raw_payload.py     # payload API brut (exports/<platform>/raw/)
+│       ├── html_render.py     # HTML autonome (utilitaires/tests)
 │       ├── cleanup.py         # nettoyage texte par plateforme (Grok...)
 │       ├── logging.py         # logging console (pas de fichier)
 │       └── file_utils.py      # exports atomiques, noms, conversation_list
@@ -459,8 +475,8 @@ avec des services et sessions factices ; le CLI sans lancer Chromium.
 - ChatGPT : timestamps absents du DOM → récupérés depuis les props internes React
   (best effort) ; sinon `started_at`/`last_message_at` sont `null`.
 - Grok : Cloudflare bloque le Chromium automatisé → scraping via l'**API REST +
-  cookies** (`uses_browser=False`), et le HTML est **généré** depuis les données
-  (la page officielle est un shell SPA vide). Modèle : `grok-3`.
+  cookies** (`uses_browser=False`) ; aucun HTML n'est généré, le payload brut
+  de l'API est conservé dans `exports/grok/raw/`. Modèle : `grok-3`.
 - Mistral : application unique `/work` (l'ancien `/chat` a fusionné dedans) ;
   les URLs `/chat/<id>` sont réécrites en `/work/<id>`. Timestamps non exposés
   (`null`). Cookies dans `profiles/mistral` (profil persistant) et

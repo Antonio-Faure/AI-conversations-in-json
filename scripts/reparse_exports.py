@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Regenere les exports a partir des HTML sauvegardes (sans re-crawler).
+"""Regenere les exports a partir des artefacts bruts (sans re-crawler).
 
 - plateformes DOM (chatgpt, claude, gemini, mistral, perplexity) : re-parse le
   `.html` voisin avec le parser courant (correctifs LaTeX/code/nettoyage),
   puis fusionne les metadonnees absentes du HTML (timestamps/modele) depuis
   l'ancien JSON (par message_id, sinon par index) ;
-- Grok (pas de HTML exploitable) : nettoyage direct du JSON (balises xAI) ;
+- plateformes API (ChatGPT en mode API, Grok) : re-mappe depuis le payload brut
+  `raw/<stem>.json` (`exports/<platform>/raw/`) ; une conversation sans HTML ni
+  payload est nettoyee directement (normalisation, balises xAI) ;
 - toutes : normalisation de l'alternance user/assistant ;
 - met a jour conversation_list.json (message_count, has_code, last_message_at).
 
@@ -21,7 +23,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -31,6 +33,7 @@ from src.orchestrator import load_config  # noqa: E402
 from src.parsers import PARSER_CLASSES  # noqa: E402
 from src.schema import Conversation, Message, extract_code_blocks, normalize_messages  # noqa: E402
 from src.utils.cleanup import clean_text  # noqa: E402
+from src.utils.raw_payload import load_raw_payload  # noqa: E402
 from src.utils.urls import (  # noqa: E402
     canonical_url_from_html,
     conversation_url,
@@ -38,8 +41,10 @@ from src.utils.urls import (  # noqa: E402
 )
 
 
-def _url_for(platform: str, conversation_id: str, html_path: Path) -> str:
-    if html_path.exists():
+def _url_for(
+    platform: str, conversation_id: str, html_path: Optional[Path] = None
+) -> str:
+    if html_path is not None and html_path.exists():
         canonical = canonical_url_from_html(
             html_path.read_text(encoding="utf-8", errors="replace")
         )
@@ -48,6 +53,8 @@ def _url_for(platform: str, conversation_id: str, html_path: Path) -> str:
     return normalize_conversation_url(conversation_url(platform, conversation_id))
 
 DOM_PLATFORMS = ("chatgpt", "claude", "gemini", "mistral", "perplexity")
+#: plateformes sans HTML : payload brut dans raw/<stem>.json
+API_PLATFORMS = ("chatgpt", "grok")
 
 
 def _resolve(value) -> Path:
@@ -93,6 +100,35 @@ def _reparse(platform: str, old: Dict[str, Any], html_path: Path) -> Conversatio
     return conv
 
 
+def _reparse_api(platform: str, old: Dict[str, Any], raw: Any) -> Conversation:
+    """Re-mappe une conversation depuis le payload API brut (`raw/<stem>.json`).
+
+    ChatGPT : payload de `backend-api/conversations` (extra `api`) ; Grok :
+    `{conversation, responses}` (les deux reponses REST de l'API).
+    """
+    parser = PARSER_CLASSES[platform]()
+    payload = raw if isinstance(raw, dict) else {}
+    if platform == "chatgpt":
+        conv = parser.parse(
+            "",
+            conversation_id=str(old.get("conversation_id") or ""),
+            extra={"api": payload},
+        )
+    else:  # grok
+        conv = parser.parse(
+            "",
+            conversation_id=str(old.get("conversation_id") or ""),
+            extra={
+                "conversation": payload.get("conversation") or {},
+                "responses": payload.get("responses") or [],
+            },
+        )
+    conv = _merge_old_metadata(conv, old)
+    if not conv.url:
+        conv.url = old.get("url") or _url_for(platform, conv.conversation_id)
+    return conv
+
+
 def _clean_json(platform: str, old: Dict[str, Any]) -> Conversation:
     messages = [Message.from_dict(m) for m in old.get("messages") or []]
     for message in messages:
@@ -126,7 +162,7 @@ def main() -> int:
         if d.is_dir() and (d / "conversation_list.json").exists()
     )
 
-    totals = {"reparsed": 0, "cleaned": 0, "skipped": 0, "failed": 0}
+    totals = {"reparsed": 0, "remapped": 0, "cleaned": 0, "skipped": 0, "failed": 0}
     for platform in platforms:
         directory = exports / platform
         list_path = directory / "conversation_list.json"
@@ -136,7 +172,6 @@ def main() -> int:
             index = {
                 str(e.get("conversation_id")): e for e in data.get("conversations") or []
             }
-        html_stems = {p.stem for p in directory.glob("*.html")}
         for json_path in sorted(directory.glob("*.json")):
             if json_path.name == "conversation_list.json":
                 continue
@@ -157,11 +192,19 @@ def main() -> int:
             # l'URL peut n'exister que dans le JSON courant (backfill posterieur)
             if not old_meta.get("url") and old.get("url"):
                 old_meta["url"] = old["url"]
+            # artefact brut : HTML (plateformes DOM) ou payload API (raw/)
+            html_path = json_path.with_suffix(".html")
+            raw = load_raw_payload(exports, platform, json_path.stem)
             try:
-                if platform in DOM_PLATFORMS and json_path.stem in html_stems:
-                    conv = _reparse(platform, old_meta, json_path.with_suffix(".html"))
+                if platform in DOM_PLATFORMS and html_path.exists():
+                    conv = _reparse(platform, old_meta, html_path)
                     totals["reparsed"] += 1
+                elif platform in API_PLATFORMS and raw is not None:
+                    conv = _reparse_api(platform, old_meta, raw)
+                    totals["remapped"] += 1
                 else:
+                    # pas d'artefact brut (conversation migree, export ancien) :
+                    # nettoyage direct du JSON, sans planter
                     conv = _clean_json(platform, old_meta)
                     totals["cleaned"] += 1
             except Exception as exc:  # noqa: BLE001
@@ -196,8 +239,8 @@ def main() -> int:
         print(f"[{platform}] ok")
 
     print(
-        f"termine : {totals['reparsed']} re-parses, {totals['cleaned']} nettoyes, "
-        f"{totals['failed']} echecs"
+        f"termine : {totals['reparsed']} re-parses, {totals['remapped']} remappes "
+        f"(payload API), {totals['cleaned']} nettoyes, {totals['failed']} echecs"
     )
     return 0 if totals["failed"] == 0 else 1
 

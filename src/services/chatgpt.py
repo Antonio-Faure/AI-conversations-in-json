@@ -14,8 +14,9 @@ Chemin **API** (opt-in `services.chatgpt.api: true`) : les lectures passent par
 l'API backend (`/backend-api/conversations[...]`) avec les cookies du profil
 persistant ; le token (`accessToken`) et l'identifiant de compte sont recuperes
 une fois via la session navigateur (`/api/auth/session`), puis tout se fait en
-HTTP pur (comme Grok). Le HTML est **genere** depuis le JSON (`html_render`),
-pas de screenshots. Le DOM reste le chemin par defaut et le repli.
+HTTP pur (comme Grok). Aucun HTML n'est genere : le payload brut de l'API est
+archive par l'orchestrateur dans `exports/chatgpt/raw/<slug>.json`, pas de
+screenshots. Le DOM reste le chemin par defaut et le repli.
 """
 
 from __future__ import annotations
@@ -33,7 +34,6 @@ from ..parsers.chatgpt import (
     order_fragments_by_time,
 )
 from ..schema import ConversationRef
-from ..utils.html_render import conversation_to_html
 from ..utils.logging import get_logger
 from .base import BaseService, ScrapedPage, ServiceNotLoggedIn
 
@@ -513,6 +513,8 @@ class ChatGPTService(BaseService):
         super().__init__(session, config)
         #: client HTTP de l'API (construit au premier appel en mode API)
         self._http: Optional[_ChatGPTHttpClient] = None
+        #: payload brut de la derniere conversation exportee en mode API
+        self._raw_payload: Optional[Dict[str, Any]] = None
 
     def build_parser(self) -> ChatGPTParser:
         return ChatGPTParser()
@@ -673,7 +675,12 @@ class ChatGPTService(BaseService):
         return super().list_conversations(limit=limit)
 
     def export_conversation_with_html(self, ref: ConversationRef) -> tuple:
-        """API (opt-in) : payload JSON -> Conversation + HTML genere."""
+        """API (opt-in) : payload JSON -> Conversation ; pas de HTML.
+
+        Le payload brut de l'API est memorise (`take_raw_payload`) pour que
+        l'orchestrateur l'archive dans `exports/chatgpt/raw/<slug>.json` : il
+        remplace le HTML comme artefact de re-parse.
+        """
         if not self.api_enabled:
             return super().export_conversation_with_html(ref)
         client = self._api_client()
@@ -683,7 +690,13 @@ class ChatGPTService(BaseService):
         )
         if not conv.url:
             conv.url = self.conversation_url(ref)
-        return conv, conversation_to_html(conv)
+        self._raw_payload = data
+        return conv, None
+
+    def take_raw_payload(self) -> Optional[Dict[str, Any]]:
+        """Payload API de la derniere conversation exportee (consomme)."""
+        payload, self._raw_payload = self._raw_payload, None
+        return payload
 
     def capture_message_screenshots(self, conversation, out_dir) -> int:
         """Pas de screenshots en mode API (le DOM n'est pas rendu)."""

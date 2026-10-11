@@ -2,6 +2,8 @@
 
 Grok bloque le Chromium automatise (Cloudflare) mais accepte l'API HTTP avec
 les cookies de session. Aucun navigateur n'est donc necessaire (`uses_browser`).
+Aucun HTML n'est genere : le payload brut de l'API est archive dans
+`exports/grok/raw/<slug>.json` (artefact de re-parse).
 """
 
 from __future__ import annotations
@@ -12,7 +14,6 @@ from typing import Any, Dict, List, Optional
 from ..http_client import CookieAuthError, CookieClient
 from ..parsers.grok import GrokParser
 from ..schema import Conversation, ConversationRef
-from ..utils.html_render import conversation_to_html
 from .base import BaseService, ServiceNotLoggedIn
 
 API_BASE = "https://grok.com"
@@ -84,6 +85,8 @@ class GrokService(BaseService):
         cookies_dir = Path((self.config or {}).get("cookies_dir") or "cookies")
         self.http = CookieClient("grok", cookies_dir)
         self.session = _CookieFetchSession(self.http, session)
+        #: payload brut de la derniere conversation exportee (API REST)
+        self._raw_payload: Optional[Dict[str, Any]] = None
 
     def build_parser(self) -> GrokParser:
         return GrokParser()
@@ -131,11 +134,25 @@ class GrokService(BaseService):
     # -- scraping --------------------------------------------------------------
 
     def export_conversation_with_html(self, ref: ConversationRef) -> tuple:
+        """Charge conversation + reponses ; pas de HTML.
+
+        Le payload brut des deux appels REST (`conversation` + `responses`) est
+        memorise (`take_raw_payload`) pour que l'orchestrateur l'archive dans
+        `exports/grok/raw/<slug>.json` : il remplace le HTML comme artefact de
+        re-parse.
+        """
         meta = self.http.get_json(f"{API_BASE}/rest/app-chat/conversations/{ref.id}")
         data = self.http.get_json(RESPONSES_URL.format(cid=ref.id))
+        responses = data.get("responses") or []
         conv: Conversation = self.parser.parse(
             "",
             conversation_id=ref.id,
-            extra={"conversation": meta, "responses": data.get("responses") or []},
+            extra={"conversation": meta, "responses": responses},
         )
-        return conv, conversation_to_html(conv)
+        self._raw_payload = {"conversation": meta, "responses": responses}
+        return conv, None
+
+    def take_raw_payload(self) -> Optional[Dict[str, Any]]:
+        """Payload API de la derniere conversation exportee (consomme)."""
+        payload, self._raw_payload = self._raw_payload, None
+        return payload
