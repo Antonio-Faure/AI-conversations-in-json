@@ -184,6 +184,36 @@ def test_scrape_attache_les_sources_de_fil(monkeypatch):
     assert len(page.extra["thread_sources"]["sources"]) == 2
 
 
+class _StepsSession(WheelSession):
+    """Session factice qui compte les ouvertures d'en-tetes d'etapes replies."""
+
+    def __init__(self, infos, items):
+        super().__init__(infos, items)
+        self.expand_calls = 0
+
+    def eval_body(self, body):
+        if "step-header" in body and "aria-expanded" in body and ".click()" in body:
+            self.expand_calls += 1
+            return 1
+        return super().eval_body(body)
+
+
+def test_collecte_ouvre_les_etapes_replies():
+    # UI 2026 : le nom de l'etape n'est monte qu'apres un clic sur le chevron
+    # (`aria-expanded=false`) ; sans ouverture, `reasoning` est perdu.
+    from src.services.perplexity import _EXPAND_STEPS_JS
+
+    assert "step-header" in _EXPAND_STEPS_JS
+    assert "aria-expanded='false'" in _EXPAND_STEPS_JS
+    assert ".click()" in _EXPAND_STEPS_JS
+
+
+def test_collecte_clique_les_etapes_pendant_la_remontee():
+    session = _StepsSession(INFOS, ITEMS)
+    _service(session)._collect_thread()
+    assert session.expand_calls >= 2, "ouverture initiale puis a chaque remontee"
+
+
 class _UrlSession(WheelSession):
     def __init__(self, url):
         super().__init__(INFOS, ITEMS)
@@ -199,6 +229,16 @@ REF = ConversationRef(
     url="https://www.perplexity.ai/search/7ed85e4b",
     title="T",
 )
+
+
+def test_extras_passe_modele_et_date_de_maj():
+    service = _service(WheelSession(INFOS, ITEMS))
+    service._thread_models["7ed85e4b"] = "sonar-pro"
+    service._thread_updated["7ed85e4b"] = "2025-09-30T12:00:00Z"
+    extra = service.extract_extras(REF)
+    assert extra["model"] == "sonar-pro"
+    # reference de datation pour deduire l'annee des horodatages visibles
+    assert extra["thread_updated_at"] == "2025-09-30T12:00:00Z"
 
 
 def _raise_parse(self, ref):

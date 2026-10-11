@@ -97,6 +97,22 @@ return (function(){
 })();
 """
 
+#: ouvre les en-tetes d'etapes replies (UI 2026). Le nom de l'etape de workflow
+#: (« Verification des fichiers disponibles ») n'est monte qu'apres un clic sur
+#: le chevron du header « Recherche terminee » (`aria-expanded=false`) : sans
+#: ouverture, le parser ne lit que le libelle de statut et `reasoning` est perdu.
+_EXPAND_STEPS_JS = """
+return (function(){
+  const btns = Array.from(document.querySelectorAll(
+      "[class*='step-header'] button[aria-expanded='false']"));
+  let n = 0;
+  for (const b of btns) {
+    try { b.click(); n++; } catch (e) { /* bouton detache : ignore */ }
+  }
+  return n;
+})();
+"""
+
 #: remonte le fil : les messages plus anciens se prepent au-dessus
 _SCROLL_UP_JS = """
 return (function(){
@@ -291,12 +307,15 @@ class PerplexityService(BaseService):
     GRAPHQL_HASH = "e207cce86b2c9b67fca3ea7d8450d675ec86c0c429b38e42e88f3b027e7c8729"
 
     sidebar_scroll_selectors = (
+        # UI 2026 : plus de <aside> ; la liste est dans `group/sidebar-*`.
+        "[class*='sidebar']",
         "aside nav",
         "[data-testid='history']",
         "aside div.overflow-y-auto",
         "aside",
     )
     sidebar_ready_selectors = (
+        "[class*='sidebar'] a[href*='/search/']",
         "aside a[href*='/search/']",
         "a[href*='/search/']",
     )
@@ -310,6 +329,7 @@ class PerplexityService(BaseService):
     def __init__(self, session, config=None):
         super().__init__(session, config)
         self._thread_models: Dict[str, str] = {}
+        self._thread_updated: Dict[str, str] = {}
 
     def build_parser(self) -> PerplexityParser:
         return PerplexityParser()
@@ -364,6 +384,11 @@ class PerplexityService(BaseService):
                     model_id = display.get("modelID") or node.get("modelID")
                     if model_id:
                         self._thread_models[cid] = str(model_id)
+                    # date de derniere mise a jour : sert de reference au parser
+                    # pour deduire l'annee des horodatages visibles (sans annee).
+                    updated = node.get("updatedAt")
+                    if updated:
+                        self._thread_updated[cid] = str(updated)
                 info = threads.get("pageInfo") or {}
                 log_fields(
                     log, 20, f"{self.name}: page API {page + 1}",
@@ -409,6 +434,10 @@ class PerplexityService(BaseService):
         model = self._thread_models.get(ref.id)
         if model:
             extra["model"] = model
+        updated = self._thread_updated.get(ref.id)
+        if updated:
+            # reference de datation : les horodatages visibles n'ont pas l'annee.
+            extra["thread_updated_at"] = updated
         return extra
 
     # -- collecte incrementale du fil -------------------------------------------
@@ -536,6 +565,15 @@ class PerplexityService(BaseService):
             wheel, cx, cy, step, pause_ms, max_rounds, stable_rounds
         )
 
+        # 1bis) ouvrir les en-tetes d'etapes replies : le nom de l'etape n'est
+        #       monte qu'apres un clic, et la revelation est asynchrone (prise en
+        #       compte a la collecte suivante).
+        opened = self.session.eval_body(_EXPAND_STEPS_JS)
+        log_fields(log, 10, f"{self.name}: etapes de workflow ouvertes",
+                   extra={"opened": opened})
+        if opened:
+            self.session.wait_ms(pause_ms)
+
         # 2) remonter en memorisant chaque message jusqu'au haut stable.
         at_top = False
         stable = 0
@@ -549,6 +587,9 @@ class PerplexityService(BaseService):
                 extra={"top": info.get("top"), "height": info.get("height"),
                        "count": count, "fresh": fresh, "at_top": at_top},
             )
+            # ouvrir les etapes des tours fraichement montes (les plus anciens) :
+            # le nom sera repris a la collecte du tour suivant, avant demonte.
+            self.session.eval_body(_EXPAND_STEPS_JS)
             if at_top and fresh == 0 and count > 0:
                 stable += 1
                 if stable >= stable_rounds:
