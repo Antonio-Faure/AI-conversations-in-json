@@ -309,4 +309,12 @@ mark{background:var(--highlight);color:inherit;border-radius:3px;padding:0 2px}
 .extra-body{padding:10px 12px;font-size:.9rem;line-height:1.6;white-space:pre-wrap;word-wrap:break-word}
 .extra-list{margin:0;padding:10px 12px 12px 30px;font-size:.85rem}
 .extra-list li{margin:.2em 0;word-break:break-word}
+.msg .variants-body{padding:10px 12px;display:flex;flex-direction:column;gap:12px}
+.msg .variant{border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 10px;background:var(--bg)}
+.msg .variant.active{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.msg .variant-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.msg .variant-head .variant-active{background:var(--accent-strong);color:var(--accent-ink)}
+.msg .variant-body{font-size:.9rem;line-height:1.6;word-wrap:break-word}
+.msg .variant-body :first-child{margin-top:0}
+.msg .variant-body :last-child{margin-bottom:0}
 .extra-list a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}

@@ -524,6 +524,27 @@ function renderExtras(m, platform) {
   return blocks.join("");
 }
 
+function renderVariants(m, platform) {
+  const variants = (m.variants || []).filter((v) => v && String(v.texte || "").trim());
+  if (variants.length < 2) return "";
+  const rows = variants.map((v, vi) => {
+    const body = resolveLocalImages(renderMarkdown(stripFences(v.texte || "")), platform);
+    const label = v.kind === "edit" ? "édition" : "régénération";
+    return `<div class="variant${v.active ? " active" : ""}">
+      <div class="variant-head">
+        <span class="badge small">version ${vi + 1} · ${escapeHtml(label)}</span>
+        ${v.active ? '<span class="badge small variant-active">active</span>' : ""}
+        ${v.timestamp ? `<span class="muted">${escapeHtml(formatTs(v.timestamp))}</span>` : ""}
+      </div>
+      <div class="variant-body">${body}</div>
+    </div>`;
+  }).join("");
+  return `<details class="extra variants">
+    <summary>Versions alternatives <span class="count">${variants.length}</span></summary>
+    <div class="variants-body">${rows}</div>
+  </details>`;
+}
+
 function renderMessage(m, i) {
   const matched = state.matchedMid && m.message_id === state.matchedMid;
   const platform = state.conversation && state.conversation.platform;
@@ -532,15 +553,18 @@ function renderMessage(m, i) {
     `<div class="code-block"><div class="code-head"><span>${escapeHtml(b.language || "code")}</span>
       <button class="copy-btn" data-copy="${i}">copier</button></div>
       <pre><code>${escapeHtml(b.code || "")}</code></pre></div>`).join("");
+  const variantCount = (m.variants || []).length;
   return `<div class="msg ${m.role === "user" ? "user" : "assistant"}${matched ? " matched" : ""}"
       data-mid="${escapeHtml(m.message_id || "")}" data-i="${i}" id="msg-${i}">
     <div class="msg-head">
       <span class="badge role-${m.role === "user" ? "user" : "assistant"}">${escapeHtml(roleLabel(m.role))}</span>
       <span>${escapeHtml(formatTs(m.timestamp))}</span>
       ${m.model ? `<span>${escapeHtml(m.model)}</span>` : ""}
+      ${variantCount > 1 ? `<span class="badge small">${variantCount} versions</span>` : ""}
     </div>
     <div class="msg-text">${body}</div>
     ${code}
+    ${renderVariants(m, platform)}
     ${renderExtras(m, platform)}
   </div>`;
 }
