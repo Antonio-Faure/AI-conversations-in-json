@@ -26,6 +26,10 @@ Chaque agent travaille dans son **worktree git** :
 - `bash` : passer `workdir=${AICV_WT}/<bot>`.
 - Python : `${AICV_ROOT}/.venv/bin/python`.
 - Config (profils/cookies partages) : `-c ${AICV_ROOT}/config.yaml`.
+- **Donnees partagees** : symlinker `${AICV_WT}/<bot>/profiles` vers
+  `${AICV_ROOT}/profiles` (sinon un profil anonyme neuf est cree et la session
+  connectee est perdue -> decouverte 0 silencieuse) ; pour `cookies/` (dossier
+  suivi, contient README.md), symlinker les `*.json` a l'interieur.
 
 ## Perimetre STRICT
 
