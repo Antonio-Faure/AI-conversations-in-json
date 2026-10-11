@@ -42,6 +42,7 @@ services:
   chatgpt:
     enabled: true
     url: https://chatgpt.com/
+    api: true                  # backend-api (rapide) ; false = DOM (requis pour --variants)
   claude:
     enabled: true
     url: https://claude.ai/chats
