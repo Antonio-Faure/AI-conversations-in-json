@@ -208,7 +208,7 @@ input[type="range"]{width:100%;accent-color:var(--accent)}
   padding:16px 18px;box-shadow:var(--shadow-sm);animation:rise .4s var(--ease) both}
 .group-card.multi{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
 .group-hits{margin-top:12px;display:flex;flex-direction:column}
-.hit{padding:12px;border-top:1px solid var(--border);cursor:pointer;transition:background var(--dur) var(--ease)}
+.hit{padding:12px;border-radius:var(--r-sm);border-top:1px solid var(--border);cursor:pointer;transition:background var(--dur) var(--ease)}
 .hit:first-child{border-top:0}
 .hit:hover{background:var(--bg-hover)}
 .group-title{cursor:pointer}
