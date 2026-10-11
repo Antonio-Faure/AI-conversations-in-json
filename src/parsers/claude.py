@@ -48,8 +48,12 @@ THINKING_LABEL_RE = re.compile(
 USER_ATTRS = ("data-testid", "data-test", "data-testid")
 USER_VALUES = ("user-message", "user-editor", "user-message-content")
 ASSISTANT_VALUES = ("assistant-message-text", "collapsible-text")
-#: balise des tours user dans le DOM transcript 2026
+#: balises des tours dans le DOM transcript 2026 (data-cds)
 USER_CDS = "UserMessage"
+#: `data-testid='assistant-message'` n'est PAS un tour : dans l'ancien DOM il
+#: enveloppe `font-claude-response` (deux matchs imbriques) ; il sert seulement
+#: de selecteur de message (screenshots). Le tour 2026 est `data-cds`.
+ASSISTANT_CDS = "AssistantMessage"
 
 #: position absolue (0-based) d'une rangee du transcript virtualise
 ROW_INDEX_ATTR_RE = re.compile(r"data-index=['\"](\d+)['\"]")
@@ -109,6 +113,8 @@ class ClaudeParser(BaseParser):
 
     message_selectors = (
         "div[data-testid='user-message']",
+        "div[data-cds='AssistantMessage']",
+        "div[data-testid='assistant-message']",
         "div.font-claude-response",
         "div[data-testid='assistant-message-text']",
         "div[data-test='collapsible-text']",
@@ -118,7 +124,7 @@ class ClaudeParser(BaseParser):
     #: selecteur combine des deux roles (ordre de document preserve par bs4)
     TURN_SELECTOR = ", ".join(
         [f"div[{a}='{v}']" for a, v in zip(USER_ATTRS, USER_VALUES)]
-        + [f"div[data-cds='{USER_CDS}']"]
+        + [f"div[data-cds='{USER_CDS}']", f"div[data-cds='{ASSISTANT_CDS}']"]
         + [f"div[{a}='{v}']" for a in ("data-testid", "data-test") for v in ASSISTANT_VALUES]
         + ["div.font-claude-message", "div.font-claude-response"]
     )
@@ -138,6 +144,9 @@ class ClaudeParser(BaseParser):
         "[data-testid='thinking-block-content']",
         # DOM 2026 : etape de raisonnement dans le statut de tour (data-step-key)
         "[data-step-key^='thinking']",
+        # DOM 2026 (sept.) : le raisonnement est un groupe de statut de tour
+        # (data-item-key = ...:grp:th0), plus de data-step-key='thinking-*'
+        "[data-item-key*=':grp:th']",
     )
     #: cartes d'artefacts/canvas posees a cote du texte assistant
     ARTIFACT_SELECTORS = ("[data-sheet-kind]",)
@@ -610,7 +619,7 @@ class ClaudeParser(BaseParser):
         )
         if any(v in attrs for v in USER_VALUES) or USER_CDS in attrs:
             return "user"
-        if any(v in attrs for v in ASSISTANT_VALUES):
+        if any(v in attrs for v in ASSISTANT_VALUES) or ASSISTANT_CDS in attrs:
             return "assistant"
         return "assistant"
 

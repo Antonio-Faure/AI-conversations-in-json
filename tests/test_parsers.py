@@ -1092,6 +1092,127 @@ class TestClaudeParser:
         conv = ClaudeParser().parse(html, conversation_id="abc")
         assert conv.messages[0].timestamp == "2026-09-24T09:37:00Z"
 
+    def test_dom_2026_assistant_cds(self):
+        """DOM 2026 : reponses balisees data-cds=AssistantMessage.
+
+        `font-claude-response` a disparu du DOM (il ne reste qu'une variable
+        CSS) : sans le selecteur `data-cds='AssistantMessage'` les tours
+        assistant n'etaient pas vus et tous les messages fusionnaient en un
+        seul tour user.
+        """
+        html = """<html><body>
+          <div data-testid='transcript-list'>
+            <div data-testid='transcript-row' data-index='0' data-perf-row='human'>
+              <div data-cds='UserMessage'><div data-testid='user-message'>
+                <p>Question 1</p></div></div>
+            </div>
+            <div data-testid='transcript-row' data-index='1' data-perf-row='assistant'>
+              <div data-cds='AssistantMessage' data-testid='assistant-message'>
+                <h2 class="sr-only">Claude a repondu : Reponse 1</h2>
+                <div class="prose" data-cds="Prose">
+                  <div class="standard-markdown" data-perf-reply-text="">
+                    <p>Reponse 1</p></div></div>
+              </div>
+            </div>
+            <div data-testid='transcript-row' data-index='2' data-perf-row='human'>
+              <div data-cds='UserMessage'><div data-testid='user-message'>
+                <p>Question 2</p></div></div>
+            </div>
+            <div data-testid='transcript-row' data-index='3' data-perf-row='assistant'>
+              <div data-cds='AssistantMessage' data-testid='assistant-message'>
+                <h2 class="sr-only">Claude a repondu : Reponse 2</h2>
+                <div class="prose" data-cds="Prose">
+                  <div class="standard-markdown" data-perf-reply-text="">
+                    <p>Reponse 2</p></div></div>
+              </div>
+            </div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        assert [m.role for m in conv.messages] == [
+            "user", "assistant", "user", "assistant",
+        ]
+        assert conv.messages[0].texte == "Question 1"
+        assert conv.messages[1].texte == "Reponse 1"
+        assert conv.messages[3].texte == "Reponse 2"
+        assert "Claude a repondu" not in conv.messages[1].texte  # h2 sr-only exclu
+
+    def test_dom_2026_assistant_cds_horodatage(self):
+        """DOM 2026 : le <time> de la barre d'actions est rattache au tour."""
+        html = """<html><body>
+          <div data-testid='transcript-list'>
+            <div data-testid='transcript-row' data-index='0' data-perf-row='assistant'>
+              <div data-cds='AssistantMessage' data-testid='assistant-message'>
+                <h2 class="sr-only">Claude a repondu : Reponse.</h2>
+                <div class="prose" data-cds="Prose">
+                  <div class="standard-markdown"><p>Reponse.</p></div></div>
+                <div data-cds='MessageActions'>
+                  <time datetime='2026-09-24T09:37:00.093Z'>il y a 3 jours</time>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        assert conv.messages[0].timestamp == "2026-09-24T09:37:00Z"
+
+    def test_dom_2026_assistant_cds_outils_et_artefacts(self):
+        """DOM 2026 : TurnStatus et carte artefact du tour AssistantMessage."""
+        html = """<html><body>
+          <div data-testid='transcript-list'>
+            <div data-testid='transcript-row' data-index='0' data-perf-row='assistant'>
+              <div data-cds='AssistantMessage' data-testid='assistant-message'>
+                <div class="prose" data-cds="Prose">
+                  <div class="standard-markdown"><p>Voici le fichier.</p></div></div>
+                <div data-cds="TurnStatus" data-testid="TurnStatus">
+                  <span data-morph-key="done|A execute une commande, fichiers partages"></span>
+                </div>
+                <div data-sheet-kind="csv">
+                  <div class="text-heading">Scores</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        msg = conv.messages[0]
+        assert msg.tools == ["A execute une commande, fichiers partages"]
+        assert msg.artifacts == ["Scores (csv)"]
+        assert "A execute une commande" not in msg.texte
+        assert msg.texte == "Voici le fichier."
+
+    def test_dom_2026_thinking_group(self):
+        """DOM 2026 (sept.) : le raisonnement est un groupe data-item-key grp:th0."""
+        html = """<html><body>
+          <div data-testid='transcript-list'>
+            <div data-testid='transcript-row' data-index='0' data-perf-row='assistant'>
+              <div data-cds='AssistantMessage' data-testid='assistant-message'>
+                <div class="prose" data-cds="Prose">
+                  <div class="standard-markdown"><p>Voici le renard.</p></div></div>
+                <div data-cds="TurnStatus" data-testid="TurnStatus"
+                     data-item-key="01a0d2c1-7435-hub-reply:grp:th0" data-open="">
+                  <div data-cds-row="">
+                    <span data-morph-key="done|Checking available tools for generating the requested image.">
+                      <bdi>Checking available tools for generating the requested image.</bdi>
+                    </span>
+                  </div>
+                  <span class="sr-only" role="status">
+                    Checking available tools for generating the requested image.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body></html>"""
+        conv = ClaudeParser().parse(html, conversation_id="abc")
+        msg = conv.messages[0]
+        assert msg.reasoning == (
+            "Checking available tools for generating the requested image."
+        )
+        assert msg.metadata.get("had_thinking") is True
+        assert msg.texte == "Voici le renard."
+        assert "Checking available tools" not in msg.texte
+
 
 def _claude_transcript_row(index: int, role: str, text: str) -> str:
     """Rangee de transcript minimale (comme le DOM virtualise 2026)."""

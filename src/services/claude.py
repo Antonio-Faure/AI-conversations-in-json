@@ -94,6 +94,33 @@ return (function(){
 })();
 """
 
+#: va en haut du fil : charge les chunks precedents et corrige l'indexation.
+#: Claude monte d'abord le dernier chunk du transcript avec des `data-index`
+#: locaux (0..N) et un `aria-setsize` tronque ; atteindre le haut charge les
+#: chunks precedents et fait passer aux index globaux. Sans cette etape la
+#: collecte s'arrete au premier chunk (messages recents) et les index entrent
+#: en collision avec ceux des messages plus anciens.
+_SCROLL_TOP_JS = """
+return (function(){
+  const s = window.__aicvClaudeScroller;
+  if (!s) return null;
+  s.scrollTop = 0;
+  return 0;
+})();
+"""
+
+#: taille reelle du fil (aria-setsize) sans rien accumuler
+_PEEK_SETSIZE_JS = """
+return (function(){
+  const holder = document.querySelector(__SETSIZE__);
+  if (holder) return parseInt(holder.getAttribute('aria-setsize'), 10) || 0;
+  return 0;
+})();
+""".replace(
+    "__SETSIZE__",
+    json.dumps("[data-testid='transcript-row'] [aria-setsize]"),
+)
+
 #: remonte le fil de ~60% d'ecran : le virtualiseur rend la fenetre suivante
 _SCROLL_UP_JS = """
 return (function(){
@@ -209,6 +236,10 @@ class ClaudeService(BaseService):
         self.session.eval_body(_RESET_ROWS_JS)
         if self.session.eval_body(_FIND_SCROLLER_JS) is None:
             return []
+        # charger tout le fil (index globaux) avant de collecter : sinon seul le
+        # dernier chunk est vu et ses index locaux collisionnent avec les
+        # messages plus anciens.
+        self._load_full_transcript(pause_ms, max_rounds)
         self.session.eval_body(_SCROLL_BOTTOM_JS)
         self.session.wait_ms(pause_ms)
 
@@ -240,6 +271,32 @@ class ClaudeService(BaseService):
         rows = data.get("rows") or {}
         order = data.get("order") or []
         return [rows[key] for key in order if key in rows]
+
+    def _load_full_transcript(self, pause_ms: int, max_rounds: int) -> None:
+        """Charge tout le fil avant collecte (index globaux).
+
+        Claude monte d'abord le dernier chunk du transcript avec des
+        ``data-index`` locaux et un ``aria-setsize`` tronque (taille du chunk).
+        Atteindre le haut du fil charge les chunks precedents et corrige
+        l'indexation ; on repete tant que ``aria-setsize`` progresse, puis on
+        s'arrete une fois stabilise. Sans cette etape, la collecte s'arrete au
+        premier chunk et les index locaux entrent en collision avec ceux des
+        messages plus anciens (ordre fausse, messages perdus).
+        """
+        rounds = max(6, min(20, max_rounds))
+        last = -1
+        stable = 0
+        for _ in range(rounds):
+            self.session.eval_body(_SCROLL_TOP_JS)
+            self.session.wait_ms(pause_ms)
+            setsize = int(self.session.eval_body(_PEEK_SETSIZE_JS) or 0)
+            if setsize == last:
+                stable += 1
+                if stable >= 2:
+                    return
+            else:
+                stable = 0
+            last = setsize
 
     def _expand_statuses(self, wait_ms: int = 600, max_clicks: int = 12) -> int:
         """Deploie les panneaux de raisonnement/thinking visibles.

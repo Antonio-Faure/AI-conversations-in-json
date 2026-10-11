@@ -62,3 +62,77 @@ def test_collecte_deploie_le_raisonnement_avant_capture():
     assert session.expand_calls >= 1
     assert session.collect_saw_expanded is True
     assert fragments and "Raisonnement integral deploye." in fragments[0]
+
+
+def _chunked_row(index: int, role: str, text: str) -> str:
+    return (
+        f"<div data-testid='transcript-row' data-index='{index}' "
+        f"data-perf-row='{role}'>{text}</div>"
+    )
+
+
+class ChunkedSession:
+    """Simule le chargement par chunks du transcript Claude.
+
+    Avant d'atteindre le haut du fil, seul le dernier chunk est monte : 2
+    rangees avec des `data-index` locaux (0..1) et un `aria-setsize` tronque
+    (2). Une fois en haut, le fil complet est charge : 4 rangees en index
+    globaux (0..3) et `aria-setsize=4`.
+    """
+
+    def __init__(self):
+        self.rows = {}
+        self.at_top = False
+        self.top_scrolls = 0
+
+    def eval_body(self, body):
+        if "window.__aicvClaude = {rows" in body:
+            self.rows = {}
+            self.at_top = False
+            return 0
+        if "window.__aicvClaudeScroller = el" in body:
+            return {"tag": "DIV", "client": 800, "height": 4000}
+        if "acc.rows[key] = html" in body:
+            total = 4 if self.at_top else 2
+            for i in range(total):
+                role = "user" if i % 2 == 0 else "assistant"
+                self.rows[f"i:{i}"] = _chunked_row(i, role, f"Message {i}")
+            return {"dom": total, "total": len(self.rows), "setsize": total, "top": 0}
+        if "return {order: acc.order, rows: acc.rows}" in body:
+            return {"order": list(self.rows), "rows": self.rows}
+        if "s.scrollTop = s.scrollHeight" in body:
+            return 0
+        if "s.scrollTop = Math.max(0" in body:
+            return 0
+        if "s.scrollTop = 0" in body:  # _SCROLL_TOP_JS
+            self.top_scrolls += 1
+            self.at_top = True
+            return 0
+        if "parseInt(holder.getAttribute('aria-setsize')" in body:  # _PEEK_SETSIZE_JS
+            return 4 if self.at_top else 2
+        if "data-cds-row-toggle" in body:
+            return 0
+        return None
+
+    def wait_ms(self, ms):
+        pass
+
+
+def test_collecte_charge_tout_le_fil_avant_collecte():
+    """Sans remonter en haut, seul le dernier chunk (index locaux) est collecte.
+
+    Claude monte d'abord le dernier chunk avec des index locaux et un
+    aria-setsize tronque : la collecte doit forcer le chargement complet
+    (index globaux) pour ne pas perdre les messages anciens ni melanger les
+    index.
+    """
+    session = ChunkedSession()
+    service = ClaudeService(session, {"scroll": {"stable_rounds": 1}})
+    fragments = service._collect_conversation_rows()
+    assert session.top_scrolls >= 1
+    indices = sorted(
+        int(fragment.split("data-index='")[1].split("'")[0]) for fragment in fragments
+    )
+    assert indices == [0, 1, 2, 3]
+    assert len(fragments) == 4
+
