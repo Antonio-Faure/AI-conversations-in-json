@@ -1,0 +1,59 @@
+{
+ "conversation_id": "f0000000-0000-4000-8000-7d3b48b1fa63",
+ "title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement...",
+ "model": "turbo",
+ "messages": [
+  {
+   "role": "user",
+   "texte": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte."
+  },
+  {
+   "role": "assistant",
+   "texte": "# Titre principal\n\n## Sous-titre 1\n\n## Sous-titre 2"
+  },
+  {
+   "role": "user",
+   "texte": "Écris une phrase contenant du texte en gras, en italique et barré. Réponds uniquement avec cette phrase."
+  },
+  {
+   "role": "assistant",
+   "texte": "Voici une phrase avec du texte en gras, en italique et barré."
+  },
+  {
+   "role": "user",
+   "texte": "Crée une liste à puces avec exactement 3 éléments. Réponds uniquement avec la liste."
+  },
+  {
+   "role": "assistant",
+   "texte": "- Premier élément\n- Deuxième élément\n- Troisième élément"
+  },
+  {
+   "role": "user",
+   "texte": "Crée une liste numérotée avec exactement 3 éléments. Réponds uniquement avec la liste."
+  },
+  {
+   "role": "assistant",
+   "texte": "1. Premier élément\n2. Deuxième élément\n3. Troisième élément"
+  },
+  {
+   "role": "user",
+   "texte": "Écris une citation Markdown avec le symbole >. Réponds uniquement avec la citation."
+  },
+  {
+   "role": "assistant",
+   "texte": "> Ceci est une citation Markdown."
+  },
+  {
+   "role": "user",
+   "texte": "Écris le mot \"print\" en code inline. Réponds uniquement avec le code."
+  },
+  {
+   "role": "assistant",
+   "texte": "print"
+  },
+  {
+   "role": "user",
+   "texte": "Insère une image Markdown avec l’URL [https://via.placeholder.com/100](https://via.placeholder.com/100) et l’alt \"Test\". Réponds uniquement avec l’image.\n\n![image.jpg](image.jpg)"
+  }
+ ]
+}

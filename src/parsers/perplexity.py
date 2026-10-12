@@ -18,7 +18,10 @@ from typing import Any, Dict, List, Optional
 from bs4 import NavigableString, Tag
 
 from ..schema import Conversation, parse_iso, to_iso_z
+from ..utils.logging import get_logger
 from .base import BaseParser, ParseError, clean_ui_title
+
+log = get_logger("parsers.perplexity")
 
 CONV_ID_RE = re.compile(r"/search/([A-Za-z0-9_-]{10,})")
 MODEL_RE = re.compile(
@@ -80,6 +83,203 @@ def merge_thread_messages(items: List[Dict[str, Any]]) -> str:
         )
     parts.append("</div></body></html>")
     return "\n".join(parts)
+
+
+# -- mapping API (`/rest/thread/<id>`) ----------------------------------------
+
+#: blocs schematises ou vivent les sources web et les pieces jointes
+_API_WEB_BLOCK_KEYS = ("web_result_block", "sources_mode_block")
+
+#: LaTeX brut de l'API (`\(...\)`, `\[...\]`) -> convention `$`/`$$` du depot
+API_DISPLAY_MATH_RE = re.compile(r"\\\[(.+?)\\\]", re.DOTALL)
+API_INLINE_MATH_RE = re.compile(r"\\\((.+?)\\\)", re.DOTALL)
+
+
+def _normalize_api_math(text: str) -> str:
+    """`\\(...\\)` / `\\[...\\]` -> `$...$` / `$$...$$` (convention du depot)."""
+    if not text:
+        return text
+    text = API_DISPLAY_MATH_RE.sub(lambda m: f"$${m.group(1).strip()}$$", text)
+    return API_INLINE_MATH_RE.sub(lambda m: f"${m.group(1).strip()}$", text)
+
+
+def _api_workflow_items(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Items des etapes du `workflow_block` d'une entree API."""
+    items: List[Dict[str, Any]] = []
+    for block in entry.get("blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        workflow = block.get("workflow_block")
+        if not isinstance(workflow, dict):
+            continue
+        for step in workflow.get("steps") or []:
+            if not isinstance(step, dict):
+                continue
+            for item in step.get("items") or []:
+                if isinstance(item, dict):
+                    items.append(item)
+    return items
+
+
+def _api_answer(entry: Dict[str, Any]) -> str:
+    """Texte de la reponse assistant (`WORKFLOW_ITEM_TEXT` variant `answer`)."""
+    parts: List[str] = []
+    for item in _api_workflow_items(entry):
+        if item.get("type") != "WORKFLOW_ITEM_TEXT":
+            continue
+        text_payload = (item.get("payload") or {}).get("text_payload") or {}
+        if str(text_payload.get("variant") or "") != "answer":
+            continue
+        text = str(text_payload.get("text") or "").strip()
+        if text:
+            parts.append(text)
+    return "\n\n".join(parts)
+
+
+def _api_turn_results(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """`web_results` des blocs de reponse du tour (pieces jointes + sources).
+
+    Seuls ces blocs (`web_result_block` / `sources_mode_block`) correspondent
+    aux pieces jointes rendues dans le tour : le `sources_payload` du workflow
+    liste aussi les **fichiers du contexte** sur les tours suivants (le DOM ne
+    les y affiche pas), d'ou la distinction.
+    """
+    out: List[Dict[str, Any]] = []
+    seen: set = set()
+    for block in entry.get("blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        for key in _API_WEB_BLOCK_KEYS:
+            value = block.get(key)
+            if isinstance(value, dict):
+                for result in value.get("web_results") or []:
+                    if not isinstance(result, dict):
+                        continue
+                    url = str(result.get("url") or "").strip()
+                    key_ = url or str(result.get("name") or "")
+                    if not key_ or key_ in seen:
+                        continue
+                    seen.add(key_)
+                    out.append(result)
+    return out
+
+
+def _api_context_sources(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """`sources_payload` du workflow : sources/fichiers du contexte du tour."""
+    out: List[Dict[str, Any]] = []
+    seen: set = set()
+    for item in _api_workflow_items(entry):
+        if item.get("type") != "WORKFLOW_ITEM_SOURCES":
+            continue
+        payload = (item.get("payload") or {}).get("sources_payload") or {}
+        for result in payload.get("sources") or []:
+            if not isinstance(result, dict):
+                continue
+            url = str(result.get("url") or "").strip()
+            key = url or str(result.get("name") or "")
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            out.append(result)
+    return out
+
+
+def _api_web_results(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Union dedupliquee par URL des resultats du tour et du contexte."""
+    out: List[Dict[str, Any]] = []
+    seen: set = set()
+    for result in _api_turn_results(entry) + _api_context_sources(entry):
+        url = str(result.get("url") or "").strip()
+        key = url or str(result.get("name") or "")
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(result)
+    return out
+
+
+def _api_assets(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Assets produits par l'outil (`unified_assets_block.assets[]`)."""
+    out: List[Dict[str, Any]] = []
+    for block in entry.get("blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        unified = block.get("unified_assets_block")
+        if isinstance(unified, dict):
+            for asset in unified.get("assets") or []:
+                if isinstance(asset, dict):
+                    out.append(asset)
+    return out
+
+
+def _api_reasoning(entry: Dict[str, Any]) -> str:
+    """Etapes de workflow nommees d'une entree (« Verification des fichiers... »).
+
+    Les libelles viennent des `steps[].title` du `workflow_block` (le
+    `plan_block.goals[].description` porte le texte de la reponse sur les tours
+    simples : on ne s'en sert pas).
+    """
+    steps: List[str] = []
+    for block in entry.get("blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        workflow = block.get("workflow_block")
+        if not isinstance(workflow, dict):
+            continue
+        for step in workflow.get("steps") or []:
+            if not isinstance(step, dict):
+                continue
+            title = str(step.get("title") or "").strip()
+            if title and title not in steps:
+                steps.append(title)
+    return "\n\n".join(steps)
+
+
+def _api_artifacts(entry: Dict[str, Any]) -> List[str]:
+    """Fichiers generes (`code_file.filename`) d'une entree."""
+    names: List[str] = []
+    for asset in _api_assets(entry):
+        code_file = asset.get("code_file") or {}
+        if not isinstance(code_file, dict):
+            continue
+        name = str(code_file.get("filename") or code_file.get("name") or "").strip()
+        if name and name not in names:
+            names.append(name)
+    return names
+
+
+def _api_tools(entry: Dict[str, Any]) -> List[str]:
+    """Outils utilises (libelles du depot : Recherche, Code, Generation d'image)."""
+    tools: List[str] = []
+    sources = (entry.get("sources") or {}).get("sources") or []
+    if any(str(source).lower() == "web" for source in sources) or any(
+        not result.get("is_attachment") for result in _api_web_results(entry)
+    ):
+        tools.append("Recherche")
+    for asset in _api_assets(entry):
+        kind = str(asset.get("asset_type") or "")
+        if kind == "CODE_ASSET" and "Code" not in tools:
+            tools.append("Code")
+        elif "IMAGE" in kind and "Génération d'image" not in tools:
+            tools.append("Génération d'image")
+    return tools
+
+
+def _api_asset_images(entry: Dict[str, Any]) -> List[str]:
+    """Images produites par l'outil (`IMAGE_ASSET`), en markdown."""
+    images: List[str] = []
+    for asset in _api_assets(entry):
+        if "IMAGE" not in str(asset.get("asset_type") or ""):
+            continue
+        image = asset.get("image") if isinstance(asset.get("image"), dict) else {}
+        url = str(image.get("url") or asset.get("url") or "").strip()
+        if not url.startswith(("http://", "https://")):
+            continue
+        name = str(image.get("name") or asset.get("name") or "image").strip() or "image"
+        markdown = f"![{name}]({url})"
+        if markdown not in images:
+            images.append(markdown)
+    return images
 
 
 class PerplexityParser(BaseParser):
@@ -149,6 +349,12 @@ class PerplexityParser(BaseParser):
         extra: Optional[Dict[str, Any]] = None,
     ) -> Conversation:
         extra = extra or {}
+        if extra.get("api"):
+            # chemin API (`/rest/thread/<id>`) : le service passe le payload JSON
+            # brut dans `extra["api"]`, le HTML est ignore.
+            return self.parse_api(
+                extra["api"], conversation_id=conversation_id, extra=extra
+            )
         soup = self.make_soup(html)
 
         user_nodes = self.select_all_any(soup, self.USER_SELECTORS)
@@ -284,6 +490,166 @@ class PerplexityParser(BaseParser):
         )
         self.log_parse(conv, model=model, title=title)
         return self.check(conv)
+
+    def parse_api(
+        self,
+        data: Dict[str, Any],
+        *,
+        conversation_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Conversation:
+        """Construit la conversation depuis le JSON de `/rest/thread/<id>`.
+
+        ``data`` : ``{entries[], thread_metadata{}}``. Chaque entree est un tour
+        (``query_str`` = message utilisateur, reponse dans les items
+        ``WORKFLOW_ITEM_TEXT`` variant ``answer``), dans l'ordre chronologique
+        (`from_first=true`). Les pieces jointes (`is_attachment`) sont rendues en
+        markdown dans le message utilisateur, les sources web dans
+        ``Message.sources``, les etapes de workflow dans ``reasoning`` et les
+        fichiers generes dans ``artifacts``. Le LaTeX brut de l'API
+        (``\\(...\\)``/``\\[...\\]``) est normalise en ``$``/``$$``.
+
+        Un tour sans reponse textuelle mais avec du raisonnement (etape de
+        workflow) garde un message assistant vide : ne pas fusionner les deux
+        messages utilisateur encadrants.
+        """
+        extra = extra or {}
+        entries = data.get("entries") or []
+        if not entries:
+            raise ParseError("perplexity api: aucune entree de conversation")
+        background = data.get("background_entries") or []
+        if background:
+            log.debug(
+                "perplexity api: %s entrees d'arriere-plan ignorees", len(background)
+            )
+
+        messages: List[Any] = []
+        models: List[str] = []
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            uid = str(entry.get("uuid") or "")
+            model = str(
+                entry.get("display_model") or entry.get("user_selected_model") or ""
+            ).strip() or None
+            if model:
+                models.append(model)
+
+            query = _normalize_api_math(str(entry.get("query_str") or "").strip())
+            attachment_markdown = [
+                self._api_attachment_markdown(result)
+                for result in _api_turn_results(entry)
+                if result.get("is_attachment")
+            ]
+            attachment_markdown = [
+                block for block in dict.fromkeys(attachment_markdown) if block
+            ]
+            if attachment_markdown:
+                block = "\n\n".join(attachment_markdown)
+                query = f"{query}\n\n{block}".strip() if query else block
+            if query:
+                messages.append(
+                    self.msg(
+                        "user", query, entry.get("entry_created_datetime"), {},
+                        message_id=uid, model=model,
+                    )
+                )
+
+            answer = _normalize_api_math(_api_answer(entry))
+            images = _api_asset_images(entry)
+            if images:
+                block = "\n\n".join(images)
+                answer = f"{answer}\n\n{block}".strip() if answer else block
+            reasoning = _api_reasoning(entry)
+            artifacts = _api_artifacts(entry)
+            sources = self._api_sources(entry)
+            if not (answer or reasoning or artifacts or sources or images):
+                continue
+            message = self.msg(
+                "assistant", answer, entry.get("entry_updated_datetime"),
+                {"tokens": None}, message_id=uid, model=model,
+            )
+            if reasoning:
+                message.reasoning = reasoning
+            tools = _api_tools(entry)
+            if tools:
+                message.tools = tools
+            if artifacts:
+                message.artifacts = artifacts
+            if sources:
+                message.sources = sources
+            messages.append(message)
+
+        if not messages:
+            raise ParseError("perplexity api: aucun message exploitable")
+
+        metadata = data.get("thread_metadata") or {}
+        title = str(metadata.get("title") or extra.get("title_hint") or "").strip()
+        if title and len(title) > 120:
+            title = ""
+        if not title:
+            first_user = next(
+                (m.texte for m in messages if m.role == "user"), None
+            )
+            title = (first_user or "").strip().splitlines()[0][:80] if first_user else ""
+
+        conv_id = (
+            conversation_id
+            or data.get("conversation_id")
+            or extra.get("conversation_id")
+        )
+        if not conv_id:
+            raise ParseError("perplexity api: conversation_id manquant")
+
+        model = extra.get("model") or self.majority(models)
+        conv = Conversation(
+            platform=self.service_name,
+            conversation_id=str(conv_id),
+            title=title or "Perplexity conversation",
+            messages=messages,
+            model=model,
+            started_at=metadata.get("created_at"),
+            last_message_at=metadata.get("updated_at"),
+        )
+        self.log_parse(conv, model=model, title=title)
+        return self.check(conv)
+
+    @classmethod
+    def _api_attachment_markdown(cls, result: Dict[str, Any]) -> str:
+        """Piece jointe d'un tour -> markdown (image `![nom](url)` ou lien).
+
+        L'URL est signee (S3/CloudFront) et expire : le pipeline la telecharge
+        pendant le scrape puis reecrit le markdown en ``images/`` / ``files/``.
+        """
+        url = str(result.get("url") or "").strip()
+        name = str(result.get("name") or "").strip() or "fichier"
+        if not url:
+            return name
+        path = url.split("?", 1)[0]
+        is_image = (
+            bool(result.get("is_image"))
+            or bool(cls._IMAGE_EXT_RE.search(name))
+            or bool(cls._IMAGE_EXT_RE.search(path))
+        )
+        return f"![{name}]({url})" if is_image else f"[{name}]({url})"
+
+    @classmethod
+    def _api_sources(cls, entry: Dict[str, Any]) -> List[str]:
+        """Sources web d'un tour (« titre — url »), dedupliquees par URL."""
+        sources: List[str] = []
+        seen: set = set()
+        for result in _api_web_results(entry):
+            if result.get("is_attachment"):
+                continue
+            url = str(result.get("url") or "").strip()
+            if not url.startswith(("http://", "https://")) or url in seen:
+                continue
+            seen.add(url)
+            title = str(result.get("name") or "").strip()
+            sources.append(f"{title} — {url}" if title else url)
+            if len(sources) >= 40:
+                break
+        return sources
 
     # -- helpers ---------------------------------------------------------------
 
