@@ -17,6 +17,8 @@ from urllib.parse import urljoin
 from ..parsers.base import LOGIN_URL_PARTS, ParseError
 from ..schema import Conversation, ConversationRef
 from ..selectors import translate_selector
+from ..utils.api_shape import compare_shapes, shape_of
+from ..utils.file_utils import now_iso_z, read_json
 from ..utils.logging import get_logger, log_fields
 from ..utils.screenshots import (
     MAX_STEPS,
@@ -51,6 +53,131 @@ class ConversationUnavailableError(EmptyConversationError):
 
 class RateLimitedError(RuntimeError):
     """Limite de debit persistante : arreter le service proprement (reprise plus tard)."""
+
+
+class ApiShapeBreakError(RuntimeError):
+    """Rupture de forme API (`on_break: stop`) : arreter le service proprement."""
+
+
+#: dossier des references de forme versionnees (tests/fixtures/api_shapes)
+API_SHAPES_DIR = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "api_shapes"
+
+
+@dataclass
+class ShapeMonitor:
+    """Accumulateur de similarite de forme des payloads API d'un run.
+
+    Chaque payload de conversation est compare a la reference versionnee de la
+    plateforme (`tests/fixtures/api_shapes/<platform>.shape.json`) : l'ecart est
+    score (0-100) et cumule (n, matches, drifts, score min/moyen, cles en
+    drift). L'orchestrateur ecrit le bilan dans
+    `exports/<platform>/api_health.json` en fin de service.
+    """
+
+    platform: str
+    #: document de reference (`{"shape": ..., "signature": ...}`) ou None
+    reference: Optional[Dict[str, Any]] = None
+    threshold: float = 95.0
+    on_break: str = "warn"
+    enabled: bool = True
+    n: int = 0
+    matches: int = 0
+    drifts: int = 0
+    breaks: int = 0
+    min_score: Optional[float] = None
+    sum_score: float = 0.0
+    drift_keys: Dict[str, int] = field(default_factory=dict)
+
+    @classmethod
+    def for_service(
+        cls, platform: str, config: Optional[Dict[str, Any]] = None
+    ) -> "ShapeMonitor":
+        """Moniteur d'un service depuis `services.<platform>.api_health`.
+
+        Defauts : active, seuil 95, `on_break: warn`. Une reference absente
+        desactive de fait le monitoring (payload non compare).
+        """
+        svc = ((config or {}).get("services") or {}).get(platform) or {}
+        cfg = svc.get("api_health") or {}
+        enabled = bool(cfg.get("enabled", True))
+        threshold = float(cfg.get("threshold", 95.0) or 95.0)
+        on_break = str(cfg.get("on_break", "warn") or "warn").lower()
+        reference: Optional[Dict[str, Any]] = None
+        if enabled:
+            path = API_SHAPES_DIR / f"{platform}.shape.json"
+            doc = read_json(path, default=None)
+            if isinstance(doc, dict) and isinstance(doc.get("shape"), dict):
+                reference = doc
+            else:
+                log.debug(
+                    "%s: reference de forme absente (%s) -> monitoring inactif",
+                    platform, path,
+                )
+        return cls(
+            platform=platform,
+            reference=reference,
+            threshold=threshold,
+            on_break=on_break,
+            enabled=enabled,
+        )
+
+    @property
+    def mean_score(self) -> Optional[float]:
+        return round(self.sum_score / self.n, 2) if self.n else None
+
+    def record(self, payload: Any) -> Optional[Dict[str, Any]]:
+        """Compare un payload a la reference ; met a jour l'accumulateur.
+
+        Retourne le rapport `compare_shapes` (ou None si desactive/sans
+        reference).
+        """
+        if not self.enabled or not self.reference:
+            return None
+        report = compare_shapes(self.reference["shape"], shape_of(payload))
+        score = float(report["score"])
+        self.n += 1
+        self.sum_score += score
+        self.min_score = score if self.min_score is None else min(self.min_score, score)
+        if score >= self.threshold:
+            self.matches += 1
+        else:
+            self.drifts += 1
+            keys = (
+                report["added"]
+                + report["removed"]
+                + report["type_changes"]
+                + report["cardinality_changes"]
+                + report["format_changes"]
+            )
+            for key in keys[:50]:
+                self.drift_keys[key] = self.drift_keys.get(key, 0) + 1
+        if report["level"] == "BREAK":
+            self.breaks += 1
+        return report
+
+    def summary(self) -> Dict[str, Any]:
+        """Bilan compact (ligne de resume + `api_health.json`)."""
+        return {
+            "platform": self.platform,
+            "n": self.n,
+            "matches": self.matches,
+            "drifts": self.drifts,
+            "breaks": self.breaks,
+            "min_score": self.min_score,
+            "mean_score": self.mean_score,
+            "threshold": self.threshold,
+            "on_break": self.on_break,
+            "drift_keys": dict(
+                sorted(self.drift_keys.items(), key=lambda kv: (-kv[1], kv[0]))
+            ),
+        }
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Document `api_health.json` (bilan + horodatage + signature ref)."""
+        out = self.summary()
+        out["updated_at"] = now_iso_z()
+        out["signature"] = (self.reference or {}).get("signature")
+        return out
 
 
 #: textes des dialogs de rate limite (ChatGPT "Too many requests", etc.)
@@ -112,10 +239,54 @@ class BaseService(ABC):
     #: marqueurs d'ecran vide (conversation non chargeable : tache, supprimee...)
     empty_chat_selectors: tuple = ()
 
+    #: accumulateur de similarite de forme des payloads API (services API)
+    shape_monitor: Optional[ShapeMonitor] = None
+
     def __init__(self, session: BrowserSession, config: Optional[Dict[str, Any]] = None):
         self.session = session
         self.config = config or {}
         self.parser = self.build_parser()
+
+    # -- monitoring de forme API -----------------------------------------------
+
+    def _api_config(self) -> Dict[str, Any]:
+        """Config du service (`services.<name>` de la config globale)."""
+        services = (self.config or {}).get("services") or {}
+        return services.get(self.name) or {}
+
+    def record_api_shape(self, payload: Any) -> Optional[Dict[str, Any]]:
+        """Hook de monitoring : forme d'un payload API vs reference versionnee.
+
+        A appeler juste apres chaque fetch de conversation (services API). Met
+        a jour le `ShapeMonitor` du run ; WARN/BREAK sont journalises et
+        `on_break: "stop"` interrompt le service (`ApiShapeBreakError`).
+        """
+        if self.shape_monitor is None:
+            self.shape_monitor = ShapeMonitor.for_service(self.name, self.config)
+        monitor = self.shape_monitor
+        report = monitor.record(payload)
+        if report is None or report["level"] == "OK":
+            return report
+        log_fields(
+            log,
+            30 if report["level"] == "WARN" else 40,
+            f"{self.name}: forme API {report['level']} ({report['score']:.1f}%)",
+            extra={
+                "service": self.name,
+                "score": report["score"],
+                "added": report["added"][:10],
+                "removed": report["removed"][:10],
+                "type_changes": report["type_changes"][:10],
+                "cardinality_changes": report["cardinality_changes"][:10],
+                "format_changes": report["format_changes"][:10],
+            },
+        )
+        if report["level"] == "BREAK" and monitor.on_break == "stop":
+            raise ApiShapeBreakError(
+                f"{self.name}: rupture de forme API ({report['score']:.1f}%) "
+                f"-> service arrete (on_break: stop)"
+            )
+        return report
 
     # -- a implementer par service ---------------------------------------------
 

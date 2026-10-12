@@ -40,6 +40,7 @@ from .browser import BrowserSession
 from .parsers.base import ParseError
 from .schema import ConversationRef, SchemaError
 from .services.base import (
+    ApiShapeBreakError,
     BaseService,
     BlockedError,
     ConversationUnavailableError,
@@ -47,6 +48,7 @@ from .services.base import (
     NoopSession,
     RateLimitedError,
     ServiceNotLoggedIn,
+    ShapeMonitor,
 )
 from .utils.file_utils import (
     conversation_list_path,
@@ -54,6 +56,7 @@ from .utils.file_utils import (
     load_conversation_list,
     merge_conversation_json,
     now_iso_z,
+    platform_dir,
     read_json,
     save_conversation_list,
     slugify,
@@ -220,6 +223,8 @@ class ServiceResult:
     failed: List[str] = field(default_factory=list)
     skipped: List[str] = field(default_factory=list)
     skipped_reason: Optional[str] = None
+    #: bilan de forme API du run (`ShapeMonitor.summary`) si des fetchs ont eu lieu
+    api_health: Optional[Dict[str, Any]] = None
 
     @property
     def ok(self) -> bool:
@@ -277,7 +282,14 @@ class Orchestrator:
             if configured.get(name, {}).get("enabled", True)
         )
 
-    def _new_session(self, name: str, cls: type, svc_config: Dict[str, Any], engine: str) -> tuple:
+    def _new_session(
+        self,
+        name: str,
+        cls: type,
+        svc_config: Dict[str, Any],
+        engine: str,
+        monitor: Optional[ShapeMonitor] = None,
+    ) -> tuple:
         factory_config = self.config
         if engine:
             factory_config = dict(self.config)
@@ -290,6 +302,9 @@ class Orchestrator:
         service: BaseService = cls(session, self.config)
         if svc_config.get("url"):
             service.home_url = svc_config["url"]
+        if monitor is not None:
+            # la bascule de moteur recree le service : conserver l'accumulateur
+            service.shape_monitor = monitor
         return session, service
 
     @staticmethod
@@ -334,7 +349,8 @@ class Orchestrator:
                     self._close(session)
                     try:
                         session, service = self._new_session(
-                            name, self.registry[name], svc_config, attempt_engine
+                            name, self.registry[name], svc_config, attempt_engine,
+                            monitor=getattr(service, "shape_monitor", None),
                         )
                     except Exception as exc2:  # noqa: BLE001
                         log.exception(f"{name}: echec d'initialisation (botasaurus)")
@@ -426,6 +442,15 @@ class Orchestrator:
             log_fields(
                 log, logging.WARNING,
                 f"{service.name}: limite de debit (service arrete, reprise ulterieure)",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            result.skipped.append(ref.id)
+            result.skipped_reason = str(exc)
+            return "stop"
+        except ApiShapeBreakError as exc:
+            log_fields(
+                log, logging.WARNING,
+                f"{service.name}: rupture de forme API (service arrete)",
                 extra={"conversation_id": ref.id, "error": str(exc)},
             )
             result.skipped.append(ref.id)
@@ -566,8 +591,11 @@ class Orchestrator:
 
         engine = resolve_engine(name, self.config)
         attempt_engine = "playwright" if engine == "auto" else engine
+        monitor = ShapeMonitor.for_service(name, self.config)
         try:
-            session, service = self._new_session(name, cls, svc_config, attempt_engine)
+            session, service = self._new_session(
+                name, cls, svc_config, attempt_engine, monitor=monitor
+            )
         except CookieAuthError as exc:
             # cookies absents/invalides (grok, mistral) : a recapturer via --login
             log.warning(str(exc))
@@ -639,7 +667,7 @@ class Orchestrator:
                     attempt_engine = "botasaurus"
                     self._close(service.session)
                     session, service = self._new_session(
-                        name, cls, svc_config, attempt_engine
+                        name, cls, svc_config, attempt_engine, monitor=monitor
                     )
                     status = self._scrape_one(service, result, ref, index, used)
                 if status == "blocked":
@@ -658,7 +686,27 @@ class Orchestrator:
             self._close(session)
 
         save_conversation_list(list_path, name, index)
+        health = self._write_api_health(name, monitor)
+        if health:
+            result.api_health = health
         return result
+
+    def _write_api_health(
+        self, name: str, monitor: ShapeMonitor
+    ) -> Optional[Dict[str, Any]]:
+        """Ecrit `exports/<platform>/api_health.json` si des fetchs ont ete scores."""
+        if monitor.n <= 0:
+            return None
+        health = monitor.to_dict()
+        path = platform_dir(self.output_dir, name) / "api_health.json"
+        write_json_atomic(path, health)
+        log_fields(
+            log, 20,
+            f"{name}: api_health {health['mean_score']}% n={health['n']} "
+            f"drift={health['drifts']}",
+            extra={"service": name, "api_health": health},
+        )
+        return health
 
     @staticmethod
     def _refresh_inventory(
@@ -762,7 +810,7 @@ class Orchestrator:
                     n: {"discovered": r.discovered, "targets": r.targets,
                         "exported": len(r.exported), "unchanged": len(r.unchanged),
                         "patched": len(r.patched), "failed": len(r.failed),
-                        "skipped": r.skipped_reason}
+                        "skipped": r.skipped_reason, "api_health": r.api_health}
                     for n, r in summary.services.items()
                 },
             },

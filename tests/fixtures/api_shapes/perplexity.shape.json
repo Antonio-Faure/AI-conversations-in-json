@@ -1,0 +1,4960 @@
+{
+  "platform": "perplexity",
+  "scope": "corpus",
+  "etalon": null,
+  "sources": 387,
+  "signature": "c7a2e16541e111dc4be9a4f03d8a0a30944e0b5becc7c2f3412757e054ff6aa4",
+  "shape": {
+    "t": "object",
+    "c": {
+      "background_entries": {
+        "t": "list",
+        "n": "0"
+      },
+      "entries": {
+        "t": "list",
+        "n": "21-100",
+        "i": {
+          "t": "object",
+          "c": {
+            "access_level": {
+              "t": "str"
+            },
+            "answer_modes": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "object",
+                "c": {
+                  "answer_mode_type": {
+                    "t": "str"
+                  },
+                  "has_preview": {
+                    "t": "bool"
+                  }
+                }
+              }
+            },
+            "attachments": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "str",
+                "fmt": [
+                  "url"
+                ]
+              }
+            },
+            "author_id": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "author_image": {
+              "t": "str",
+              "fmt": [
+                "url"
+              ]
+            },
+            "author_username": {
+              "t": "str"
+            },
+            "backend_uuid": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "blocks": {
+              "t": "list",
+              "n": "6-20",
+              "i": {
+                "t": "object",
+                "c": {
+                  "answer_tabs_block": {
+                    "t": "object",
+                    "c": {
+                      "modes": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "answer_mode_type": {
+                              "t": "str"
+                            },
+                            "has_preview": {
+                              "t": "bool"
+                            }
+                          }
+                        }
+                      },
+                      "reformulated_queries": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "str",
+                          "fmt": [
+                            "url"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "assets_mode_block": {
+                    "t": "object",
+                    "c": {
+                      "answer_mode_type": {
+                        "t": "str"
+                      },
+                      "asset_uuids": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "str"
+                        }
+                      },
+                      "progress": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "image_mode_block": {
+                    "t": "object",
+                    "c": {
+                      "answer_mode_type": {
+                        "t": "str"
+                      },
+                      "media_items": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "caption": {
+                              "t": "str"
+                            },
+                            "citation_info": {
+                              "t": "object",
+                              "c": {
+                                "domain_name": {
+                                  "t": "str"
+                                },
+                                "favicon_url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            },
+                            "image": {
+                              "t": "str",
+                              "fmt": [
+                                "email",
+                                "url"
+                              ]
+                            },
+                            "image_height": {
+                              "t": "int"
+                            },
+                            "image_width": {
+                              "t": "int"
+                            },
+                            "medium": {
+                              "t": "str"
+                            },
+                            "name": {
+                              "t": "str"
+                            },
+                            "original_image_url": {
+                              "t": "str",
+                              "fmt": [
+                                "email",
+                                "url"
+                              ]
+                            },
+                            "source": {
+                              "t": "str"
+                            },
+                            "thumbnail": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_384": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_512": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_512_smart": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_height": {
+                              "t": "int"
+                            },
+                            "thumbnail_width": {
+                              "t": "int"
+                            },
+                            "url": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "progress": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "inline_entity_block": {
+                    "t": "object",
+                    "c": {
+                      "media_block": {
+                        "t": "object",
+                        "c": {
+                          "generated_media_items": {
+                            "t": "list",
+                            "n": "0"
+                          },
+                          "media_items": {
+                            "t": "list",
+                            "n": "6-20",
+                            "i": {
+                              "t": "object",
+                              "c": {
+                                "caption": {
+                                  "t": "str"
+                                },
+                                "citation_info": {
+                                  "t": "object",
+                                  "c": {
+                                    "domain_name": {
+                                      "t": "str"
+                                    },
+                                    "favicon_url": {
+                                      "t": "str",
+                                      "fmt": [
+                                        "url"
+                                      ]
+                                    },
+                                    "url": {
+                                      "t": "str",
+                                      "fmt": [
+                                        "url"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "duration": {
+                                  "t": "int"
+                                },
+                                "image": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "email",
+                                    "url"
+                                  ]
+                                },
+                                "image_height": {
+                                  "t": "int"
+                                },
+                                "image_width": {
+                                  "t": "int"
+                                },
+                                "medium": {
+                                  "t": "str"
+                                },
+                                "name": {
+                                  "t": "str"
+                                },
+                                "original_image_url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "email",
+                                    "url"
+                                  ]
+                                },
+                                "source": {
+                                  "t": "str"
+                                },
+                                "thumbnail": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "thumbnail_384": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "thumbnail_512": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "thumbnail_512_smart": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "thumbnail_height": {
+                                  "t": "int"
+                                },
+                                "thumbnail_width": {
+                                  "t": "int"
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "progress": {
+                            "t": "str"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "intended_usage": {
+                    "t": "str"
+                  },
+                  "markdown_block": {
+                    "t": "object",
+                    "c": {
+                      "answer": {
+                        "t": "str"
+                      },
+                      "chunk_starting_offset": {
+                        "t": "int"
+                      },
+                      "chunks": {
+                        "t": "list",
+                        "n": "100+",
+                        "i": {
+                          "t": "str"
+                        }
+                      },
+                      "inline_token_annotations": {
+                        "t": "list",
+                        "n": "0"
+                      },
+                      "media_items": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "caption": {
+                              "t": "str"
+                            },
+                            "citation_info": {
+                              "t": "object",
+                              "c": {
+                                "domain_name": {
+                                  "t": "str"
+                                },
+                                "favicon_url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            },
+                            "image": {
+                              "t": "str",
+                              "fmt": [
+                                "email",
+                                "url"
+                              ]
+                            },
+                            "image_height": {
+                              "t": "int"
+                            },
+                            "image_width": {
+                              "t": "int"
+                            },
+                            "medium": {
+                              "t": "str"
+                            },
+                            "name": {
+                              "t": "str"
+                            },
+                            "original_image_url": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "source": {
+                              "t": "str"
+                            },
+                            "thumbnail": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_512": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_512_smart": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_height": {
+                              "t": "int"
+                            },
+                            "thumbnail_width": {
+                              "t": "int"
+                            },
+                            "url": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "progress": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "media_block": {
+                    "t": "object",
+                    "c": {
+                      "generated_media_items": {
+                        "t": "list",
+                        "n": "0"
+                      },
+                      "media_items": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "caption": {
+                              "t": "str"
+                            },
+                            "citation_info": {
+                              "t": "object",
+                              "c": {
+                                "domain_name": {
+                                  "t": "str"
+                                },
+                                "favicon_url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            },
+                            "duration": {
+                              "t": "int"
+                            },
+                            "image": {
+                              "t": "str",
+                              "fmt": [
+                                "email",
+                                "url"
+                              ]
+                            },
+                            "image_height": {
+                              "t": "int"
+                            },
+                            "image_width": {
+                              "t": "int"
+                            },
+                            "medium": {
+                              "t": "str"
+                            },
+                            "name": {
+                              "t": "str"
+                            },
+                            "original_image_url": {
+                              "t": "str",
+                              "fmt": [
+                                "email",
+                                "url"
+                              ]
+                            },
+                            "source": {
+                              "t": "str"
+                            },
+                            "thumbnail": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_384": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_512": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_512_smart": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_height": {
+                              "t": "int"
+                            },
+                            "thumbnail_width": {
+                              "t": "int"
+                            },
+                            "url": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "navigation_block": {
+                    "t": "object",
+                    "c": {
+                      "web_results": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "is_attachment": {
+                              "t": "bool"
+                            },
+                            "is_client_context": {
+                              "t": "bool"
+                            },
+                            "is_code_interpreter": {
+                              "t": "bool"
+                            },
+                            "is_conversation_history": {
+                              "t": "bool"
+                            },
+                            "is_conversation_summary": {
+                              "t": "bool"
+                            },
+                            "is_focused_web": {
+                              "t": "bool"
+                            },
+                            "is_image": {
+                              "t": "bool"
+                            },
+                            "is_knowledge_card": {
+                              "t": "bool"
+                            },
+                            "is_memory": {
+                              "t": "bool"
+                            },
+                            "is_navigational": {
+                              "t": "bool"
+                            },
+                            "is_widget": {
+                              "t": "bool"
+                            },
+                            "meta_data": {
+                              "t": "object",
+                              "c": {
+                                "authors": {
+                                  "t": "list",
+                                  "n": "1",
+                                  "i": {
+                                    "t": "str"
+                                  }
+                                },
+                                "citation_domain_name": {
+                                  "t": "null+str"
+                                },
+                                "client": {
+                                  "t": "str"
+                                },
+                                "date": {
+                                  "t": "null"
+                                },
+                                "description": {
+                                  "t": "null+str"
+                                },
+                                "domain_name": {
+                                  "t": "null+str"
+                                },
+                                "images": {
+                                  "t": "list",
+                                  "n": "1",
+                                  "i": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  }
+                                },
+                                "published_date": {
+                                  "t": "null+str",
+                                  "fmt": [
+                                    "iso-date"
+                                  ]
+                                },
+                                "suffix": {
+                                  "t": "null+str"
+                                }
+                              }
+                            },
+                            "name": {
+                              "t": "str"
+                            },
+                            "original_snippet": {
+                              "t": "str"
+                            },
+                            "sitelinks": {
+                              "t": "list",
+                              "n": "6-20",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "title": {
+                                    "t": "str"
+                                  },
+                                  "url": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "snippet": {
+                              "t": "str"
+                            },
+                            "timestamp": {
+                              "t": "str",
+                              "fmt": [
+                                "iso-date"
+                              ]
+                            },
+                            "trust": {
+                              "t": "object",
+                              "c": {
+                                "description": {
+                                  "t": "str"
+                                },
+                                "level": {
+                                  "t": "int"
+                                },
+                                "name": {
+                                  "t": "str"
+                                },
+                                "type_of_trust": {
+                                  "t": "str"
+                                }
+                              }
+                            },
+                            "url": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "pending_followups_block": {
+                    "t": "object",
+                    "c": {
+                      "followups": {
+                        "t": "list",
+                        "n": "0"
+                      }
+                    }
+                  },
+                  "plan_block": {
+                    "t": "object",
+                    "c": {
+                      "final": {
+                        "t": "bool"
+                      },
+                      "goals": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "description": {
+                              "t": "str"
+                            },
+                            "final": {
+                              "t": "bool"
+                            },
+                            "id": {
+                              "t": "str"
+                            },
+                            "todo_task_status": {
+                              "t": "str"
+                            }
+                          }
+                        }
+                      },
+                      "progress": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "sources_mode_block": {
+                    "t": "object",
+                    "c": {
+                      "answer_mode_type": {
+                        "t": "str"
+                      },
+                      "progress": {
+                        "t": "str"
+                      },
+                      "result_count": {
+                        "t": "int"
+                      },
+                      "rows": {
+                        "t": "list",
+                        "n": "21-100",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "citation": {
+                              "t": "int"
+                            },
+                            "status": {
+                              "t": "str"
+                            },
+                            "web_result": {
+                              "t": "object",
+                              "c": {
+                                "file_metadata": {
+                                  "t": "object",
+                                  "c": {
+                                    "connector_type": {
+                                      "t": "str"
+                                    },
+                                    "file_repository_type": {
+                                      "t": "str"
+                                    },
+                                    "num_characters": {
+                                      "t": "int"
+                                    },
+                                    "raw_file_s3_key": {
+                                      "t": "str"
+                                    }
+                                  }
+                                },
+                                "is_attachment": {
+                                  "t": "bool"
+                                },
+                                "is_client_context": {
+                                  "t": "bool"
+                                },
+                                "is_code_interpreter": {
+                                  "t": "bool"
+                                },
+                                "is_conversation_history": {
+                                  "t": "bool"
+                                },
+                                "is_conversation_summary": {
+                                  "t": "bool"
+                                },
+                                "is_focused_web": {
+                                  "t": "bool"
+                                },
+                                "is_image": {
+                                  "t": "bool"
+                                },
+                                "is_knowledge_card": {
+                                  "t": "bool"
+                                },
+                                "is_memory": {
+                                  "t": "bool"
+                                },
+                                "is_navigational": {
+                                  "t": "bool"
+                                },
+                                "is_widget": {
+                                  "t": "bool"
+                                },
+                                "meta_data": {
+                                  "t": "object",
+                                  "c": {
+                                    "citation_domain_name": {
+                                      "t": "null+str"
+                                    },
+                                    "client": {
+                                      "t": "str"
+                                    },
+                                    "images": {
+                                      "t": "list",
+                                      "n": "6-20",
+                                      "i": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "email",
+                                          "url"
+                                        ]
+                                      }
+                                    }
+                                  }
+                                },
+                                "name": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "original_snippet": {
+                                  "t": "str"
+                                },
+                                "sitelinks": {
+                                  "t": "list",
+                                  "n": "6-20",
+                                  "i": {
+                                    "t": "object",
+                                    "c": {
+                                      "title": {
+                                        "t": "str"
+                                      },
+                                      "url": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "url"
+                                        ]
+                                      }
+                                    }
+                                  }
+                                },
+                                "snippet": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "timestamp": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "iso-date"
+                                  ]
+                                },
+                                "trust": {
+                                  "t": "object",
+                                  "c": {
+                                    "description": {
+                                      "t": "str"
+                                    },
+                                    "level": {
+                                      "t": "int"
+                                    },
+                                    "name": {
+                                      "t": "str"
+                                    },
+                                    "type_of_trust": {
+                                      "t": "str"
+                                    }
+                                  }
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "email",
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "web_results": {
+                        "t": "list",
+                        "n": "21-100",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "file_metadata": {
+                              "t": "object",
+                              "c": {
+                                "connector_type": {
+                                  "t": "str"
+                                },
+                                "file_repository_type": {
+                                  "t": "str"
+                                },
+                                "num_characters": {
+                                  "t": "int"
+                                },
+                                "raw_file_s3_key": {
+                                  "t": "str"
+                                }
+                              }
+                            },
+                            "is_attachment": {
+                              "t": "bool"
+                            },
+                            "is_client_context": {
+                              "t": "bool"
+                            },
+                            "is_code_interpreter": {
+                              "t": "bool"
+                            },
+                            "is_conversation_history": {
+                              "t": "bool"
+                            },
+                            "is_conversation_summary": {
+                              "t": "bool"
+                            },
+                            "is_focused_web": {
+                              "t": "bool"
+                            },
+                            "is_image": {
+                              "t": "bool"
+                            },
+                            "is_knowledge_card": {
+                              "t": "bool"
+                            },
+                            "is_memory": {
+                              "t": "bool"
+                            },
+                            "is_navigational": {
+                              "t": "bool"
+                            },
+                            "is_widget": {
+                              "t": "bool"
+                            },
+                            "meta_data": {
+                              "t": "object",
+                              "c": {
+                                "citation_domain_name": {
+                                  "t": "null+str"
+                                },
+                                "client": {
+                                  "t": "str"
+                                },
+                                "images": {
+                                  "t": "list",
+                                  "n": "6-20",
+                                  "i": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "email",
+                                      "url"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "name": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "original_snippet": {
+                              "t": "str"
+                            },
+                            "sitelinks": {
+                              "t": "list",
+                              "n": "6-20",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "title": {
+                                    "t": "str"
+                                  },
+                                  "url": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "snippet": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "timestamp": {
+                              "t": "str",
+                              "fmt": [
+                                "iso-date"
+                              ]
+                            },
+                            "trust": {
+                              "t": "object",
+                              "c": {
+                                "description": {
+                                  "t": "str"
+                                },
+                                "level": {
+                                  "t": "int"
+                                },
+                                "name": {
+                                  "t": "str"
+                                },
+                                "type_of_trust": {
+                                  "t": "str"
+                                }
+                              }
+                            },
+                            "url": {
+                              "t": "str",
+                              "fmt": [
+                                "email",
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "unified_assets_block": {
+                    "t": "object",
+                    "c": {
+                      "assets": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "asset_type": {
+                              "t": "str"
+                            },
+                            "code": {
+                              "t": "object",
+                              "c": {
+                                "error": {
+                                  "t": "str"
+                                },
+                                "final": {
+                                  "t": "bool"
+                                },
+                                "goal_id": {
+                                  "t": "str"
+                                },
+                                "images": {
+                                  "t": "list",
+                                  "n": "0"
+                                },
+                                "language": {
+                                  "t": "str"
+                                },
+                                "output": {
+                                  "t": "str"
+                                },
+                                "script": {
+                                  "t": "str"
+                                },
+                                "status": {
+                                  "t": "str"
+                                },
+                                "stderr": {
+                                  "t": "str"
+                                },
+                                "stdout": {
+                                  "t": "str"
+                                }
+                              }
+                            },
+                            "code_file": {
+                              "t": "object",
+                              "c": {
+                                "file_size": {
+                                  "t": "int"
+                                },
+                                "filename": {
+                                  "t": "str"
+                                },
+                                "mime_type": {
+                                  "t": "str"
+                                },
+                                "name": {
+                                  "t": "str"
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            },
+                            "download_info": {
+                              "t": "list",
+                              "n": "1",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "filename": {
+                                    "t": "str"
+                                  },
+                                  "is_exportable": {
+                                    "t": "bool"
+                                  },
+                                  "size": {
+                                    "t": "int"
+                                  },
+                                  "text_content": {
+                                    "t": "str"
+                                  },
+                                  "url": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "is_primary_asset": {
+                              "t": "bool"
+                            },
+                            "uuid": {
+                              "t": "str"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "video_mode_block": {
+                    "t": "object",
+                    "c": {
+                      "answer_mode_type": {
+                        "t": "str"
+                      },
+                      "media_items": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "citation_info": {
+                              "t": "object",
+                              "c": {
+                                "domain_name": {
+                                  "t": "str"
+                                },
+                                "favicon_url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            },
+                            "duration": {
+                              "t": "int"
+                            },
+                            "image": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "image_height": {
+                              "t": "int"
+                            },
+                            "image_width": {
+                              "t": "int"
+                            },
+                            "medium": {
+                              "t": "str"
+                            },
+                            "name": {
+                              "t": "str"
+                            },
+                            "source": {
+                              "t": "str"
+                            },
+                            "thumbnail": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "thumbnail_height": {
+                              "t": "int"
+                            },
+                            "thumbnail_width": {
+                              "t": "int"
+                            },
+                            "url": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "progress": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "web_result_block": {
+                    "t": "object",
+                    "c": {
+                      "progress": {
+                        "t": "str"
+                      },
+                      "web_results": {
+                        "t": "list",
+                        "n": "21-100",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "file_metadata": {
+                              "t": "object",
+                              "c": {
+                                "connector_type": {
+                                  "t": "str"
+                                },
+                                "file_repository_type": {
+                                  "t": "str"
+                                },
+                                "num_characters": {
+                                  "t": "int"
+                                },
+                                "raw_file_s3_key": {
+                                  "t": "str"
+                                }
+                              }
+                            },
+                            "is_attachment": {
+                              "t": "bool"
+                            },
+                            "is_client_context": {
+                              "t": "bool"
+                            },
+                            "is_code_interpreter": {
+                              "t": "bool"
+                            },
+                            "is_conversation_history": {
+                              "t": "bool"
+                            },
+                            "is_conversation_summary": {
+                              "t": "bool"
+                            },
+                            "is_focused_web": {
+                              "t": "bool"
+                            },
+                            "is_image": {
+                              "t": "bool"
+                            },
+                            "is_knowledge_card": {
+                              "t": "bool"
+                            },
+                            "is_memory": {
+                              "t": "bool"
+                            },
+                            "is_navigational": {
+                              "t": "bool"
+                            },
+                            "is_widget": {
+                              "t": "bool"
+                            },
+                            "meta_data": {
+                              "t": "object",
+                              "c": {
+                                "citation_domain_name": {
+                                  "t": "null+str"
+                                },
+                                "client": {
+                                  "t": "str"
+                                },
+                                "context_uuid": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "uuid"
+                                  ]
+                                },
+                                "created_us": {
+                                  "t": "int"
+                                },
+                                "images": {
+                                  "t": "list",
+                                  "n": "6-20",
+                                  "i": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "email",
+                                      "url"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "name": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "original_snippet": {
+                              "t": "str"
+                            },
+                            "sitelinks": {
+                              "t": "list",
+                              "n": "6-20",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "title": {
+                                    "t": "str"
+                                  },
+                                  "url": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "snippet": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "timestamp": {
+                              "t": "str",
+                              "fmt": [
+                                "iso-date"
+                              ]
+                            },
+                            "trust": {
+                              "t": "object",
+                              "c": {
+                                "description": {
+                                  "t": "str"
+                                },
+                                "level": {
+                                  "t": "int"
+                                },
+                                "name": {
+                                  "t": "str"
+                                },
+                                "type_of_trust": {
+                                  "t": "str"
+                                }
+                              }
+                            },
+                            "url": {
+                              "t": "str",
+                              "fmt": [
+                                "email",
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "widget_block": {
+                    "t": "object",
+                    "c": {
+                      "news_widget_block": {
+                        "t": "object",
+                        "c": {
+                          "web_results": {
+                            "t": "list",
+                            "n": "6-20",
+                            "i": {
+                              "t": "object",
+                              "c": {
+                                "is_attachment": {
+                                  "t": "bool"
+                                },
+                                "is_client_context": {
+                                  "t": "bool"
+                                },
+                                "is_code_interpreter": {
+                                  "t": "bool"
+                                },
+                                "is_conversation_history": {
+                                  "t": "bool"
+                                },
+                                "is_conversation_summary": {
+                                  "t": "bool"
+                                },
+                                "is_focused_web": {
+                                  "t": "bool"
+                                },
+                                "is_image": {
+                                  "t": "bool"
+                                },
+                                "is_knowledge_card": {
+                                  "t": "bool"
+                                },
+                                "is_memory": {
+                                  "t": "bool"
+                                },
+                                "is_navigational": {
+                                  "t": "bool"
+                                },
+                                "is_widget": {
+                                  "t": "bool"
+                                },
+                                "meta_data": {
+                                  "t": "object",
+                                  "c": {
+                                    "authors": {
+                                      "t": "list",
+                                      "n": "1",
+                                      "i": {
+                                        "t": "str"
+                                      }
+                                    },
+                                    "citation_domain_name": {
+                                      "t": "str"
+                                    },
+                                    "client": {
+                                      "t": "str"
+                                    },
+                                    "date": {
+                                      "t": "null+str",
+                                      "fmt": [
+                                        "iso-date"
+                                      ]
+                                    },
+                                    "description": {
+                                      "t": "null+str"
+                                    },
+                                    "domain_name": {
+                                      "t": "str"
+                                    },
+                                    "images": {
+                                      "t": "list",
+                                      "n": "1",
+                                      "i": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "email",
+                                          "url"
+                                        ]
+                                      }
+                                    },
+                                    "object": {
+                                      "t": "str"
+                                    },
+                                    "published_date": {
+                                      "t": "null+str",
+                                      "fmt": [
+                                        "iso-date"
+                                      ]
+                                    },
+                                    "suffix": {
+                                      "t": "str"
+                                    }
+                                  }
+                                },
+                                "name": {
+                                  "t": "str"
+                                },
+                                "sitelinks": {
+                                  "t": "list",
+                                  "n": "0"
+                                },
+                                "snippet": {
+                                  "t": "str"
+                                },
+                                "timestamp": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "iso-date"
+                                  ]
+                                },
+                                "trust": {
+                                  "t": "object",
+                                  "c": {
+                                    "description": {
+                                      "t": "str"
+                                    },
+                                    "level": {
+                                      "t": "int"
+                                    },
+                                    "name": {
+                                      "t": "str"
+                                    },
+                                    "type_of_trust": {
+                                      "t": "str"
+                                    }
+                                  }
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "widget_type": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "workflow_block": {
+                    "t": "object",
+                    "c": {
+                      "completed_at": {
+                        "t": "str",
+                        "fmt": [
+                          "iso-date"
+                        ]
+                      },
+                      "headline": {
+                        "t": "str"
+                      },
+                      "predicted_completion_at": {
+                        "t": "str"
+                      },
+                      "snapshots": {
+                        "t": "list",
+                        "n": "0"
+                      },
+                      "started_at": {
+                        "t": "str",
+                        "fmt": [
+                          "iso-date"
+                        ]
+                      },
+                      "status": {
+                        "t": "str"
+                      },
+                      "steps": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "batch_step_id": {
+                              "t": "str",
+                              "fmt": [
+                                "hash"
+                              ]
+                            },
+                            "completed_at": {
+                              "t": "str",
+                              "fmt": [
+                                "iso-date"
+                              ]
+                            },
+                            "icon": {
+                              "t": "str"
+                            },
+                            "id": {
+                              "t": "str",
+                              "fmt": [
+                                "hash",
+                                "uuid"
+                              ]
+                            },
+                            "items": {
+                              "t": "list",
+                              "n": "2-5",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "display_mode": {
+                                    "t": "str"
+                                  },
+                                  "id": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "hash",
+                                      "uuid"
+                                    ]
+                                  },
+                                  "payload": {
+                                    "t": "object",
+                                    "c": {
+                                      "queries_payload": {
+                                        "t": "object",
+                                        "c": {
+                                          "queries": {
+                                            "t": "list",
+                                            "n": "100+",
+                                            "cut": true
+                                          }
+                                        }
+                                      },
+                                      "sources_payload": {
+                                        "t": "object",
+                                        "c": {
+                                          "asset_uuids": {
+                                            "t": "list",
+                                            "n": "1",
+                                            "cut": true
+                                          },
+                                          "sources": {
+                                            "t": "list",
+                                            "n": "6-20",
+                                            "cut": true
+                                          }
+                                        }
+                                      },
+                                      "text_payload": {
+                                        "t": "object",
+                                        "c": {
+                                          "chunks": {
+                                            "t": "list",
+                                            "n": "100+",
+                                            "cut": true
+                                          },
+                                          "images": {
+                                            "t": "list",
+                                            "n": "1",
+                                            "cut": true
+                                          },
+                                          "is_streaming": {
+                                            "t": "bool"
+                                          },
+                                          "text": {
+                                            "t": "str"
+                                          },
+                                          "variant": {
+                                            "t": "str"
+                                          }
+                                        }
+                                      },
+                                      "widget_payload": {
+                                        "t": "object",
+                                        "c": {
+                                          "payload_json": {
+                                            "t": "str"
+                                          },
+                                          "widget_type": {
+                                            "t": "str"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "type": {
+                                    "t": "str"
+                                  },
+                                  "variant": {
+                                    "t": "str"
+                                  }
+                                }
+                              }
+                            },
+                            "source_tier": {
+                              "t": "str"
+                            },
+                            "started_at": {
+                              "t": "str",
+                              "fmt": [
+                                "iso-date"
+                              ]
+                            },
+                            "status": {
+                              "t": "str"
+                            },
+                            "title": {
+                              "t": "str"
+                            },
+                            "tool_name": {
+                              "t": "str"
+                            },
+                            "unnest_items": {
+                              "t": "bool"
+                            }
+                          }
+                        }
+                      },
+                      "version": {
+                        "t": "str"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "bookmark_state": {
+              "t": "str"
+            },
+            "classifier_results": {
+              "t": "object",
+              "c": {
+                "hide_nav": {
+                  "t": "bool"
+                },
+                "hide_sources": {
+                  "t": "bool"
+                },
+                "image_generation": {
+                  "t": "bool"
+                },
+                "mhe_predictions": {
+                  "t": "object",
+                  "c": {
+                    "calculator_widget": {
+                      "t": "bool"
+                    },
+                    "comet_nav_widget_combined_target": {
+                      "t": "bool"
+                    },
+                    "finance_agent_gating": {
+                      "t": "bool"
+                    },
+                    "finance_widget_gating": {
+                      "t": "bool"
+                    },
+                    "image_generation_intent": {
+                      "t": "bool"
+                    },
+                    "image_preview": {
+                      "t": "bool"
+                    },
+                    "personal_search": {
+                      "t": "bool"
+                    },
+                    "places_search_intent": {
+                      "t": "bool"
+                    },
+                    "shopping_intent": {
+                      "t": "bool"
+                    },
+                    "skip_search": {
+                      "t": "bool"
+                    },
+                    "study_intent": {
+                      "t": "null"
+                    },
+                    "time_widget": {
+                      "t": "bool"
+                    },
+                    "video_preview": {
+                      "t": "bool"
+                    },
+                    "weather_widget": {
+                      "t": "bool"
+                    }
+                  }
+                },
+                "mhe_predictions_full": {
+                  "t": "object",
+                  "c": {
+                    "calculator_widget": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "comet_nav_widget_combined_target": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "domain_subdomain": {
+                      "t": "object",
+                      "c": {
+                        "label": {
+                          "t": "str"
+                        },
+                        "probability": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "finance_agent_gating": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "finance_widget_gating": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "image_generation_intent": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "image_preview": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "personal_search": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "null"
+                        },
+                        "threshold": {
+                          "t": "null"
+                        }
+                      }
+                    },
+                    "places_search_intent": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "shopping_intent": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "skip_personal_search": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "skip_search": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "null"
+                        },
+                        "threshold": {
+                          "t": "null"
+                        }
+                      }
+                    },
+                    "study_intent": {
+                      "t": "null"
+                    },
+                    "time_widget": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "video_preview": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    },
+                    "weather_widget": {
+                      "t": "object",
+                      "c": {
+                        "is_true": {
+                          "t": "bool"
+                        },
+                        "probability": {
+                          "t": "float"
+                        },
+                        "threshold": {
+                          "t": "float"
+                        }
+                      }
+                    }
+                  }
+                },
+                "personal_search": {
+                  "t": "bool"
+                },
+                "skip_search": {
+                  "t": "bool"
+                },
+                "time_widget": {
+                  "t": "bool"
+                },
+                "widget_type": {
+                  "t": "null+str"
+                }
+              }
+            },
+            "collection_info": {
+              "t": "object",
+              "c": {
+                "access": {
+                  "t": "int"
+                },
+                "access_level": {
+                  "t": "str"
+                },
+                "can_join": {
+                  "t": "bool"
+                },
+                "can_join_as_viewer": {
+                  "t": "bool"
+                },
+                "can_share_threads": {
+                  "t": "bool"
+                },
+                "contributor_users": {
+                  "t": "list",
+                  "n": "0"
+                },
+                "description": {
+                  "t": "str"
+                },
+                "emoji": {
+                  "t": "str"
+                },
+                "enable_web_by_default": {
+                  "t": "bool"
+                },
+                "file_count": {
+                  "t": "int"
+                },
+                "focused_web_config": {
+                  "t": "object",
+                  "c": {
+                    "link_configs": {
+                      "t": "list",
+                      "n": "1",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "link": {
+                            "t": "str"
+                          },
+                          "user_email": {
+                            "t": "str",
+                            "fmt": [
+                              "email"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "has_next_page": {
+                  "t": "bool"
+                },
+                "instructions": {
+                  "t": "str"
+                },
+                "knowledge_enabled": {
+                  "t": "bool"
+                },
+                "max_contributors": {
+                  "t": "int"
+                },
+                "number": {
+                  "t": "int"
+                },
+                "owner_user": {
+                  "t": "object",
+                  "c": {
+                    "email": {
+                      "t": "str",
+                      "fmt": [
+                        "email"
+                      ]
+                    },
+                    "image": {
+                      "t": "str",
+                      "fmt": [
+                        "url"
+                      ]
+                    },
+                    "name": {
+                      "t": "str"
+                    },
+                    "permission": {
+                      "t": "int"
+                    },
+                    "username": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "page_count": {
+                  "t": "int"
+                },
+                "project_brain_auto_update_enabled": {
+                  "t": "bool"
+                },
+                "project_files_write_capability_active": {
+                  "t": "bool"
+                },
+                "slug": {
+                  "t": "str"
+                },
+                "template_id": {
+                  "t": "str",
+                  "fmt": [
+                    "uuid"
+                  ]
+                },
+                "thread_count": {
+                  "t": "int"
+                },
+                "title": {
+                  "t": "str"
+                },
+                "updated_datetime": {
+                  "t": "str",
+                  "fmt": [
+                    "iso-date"
+                  ]
+                },
+                "url": {
+                  "t": "str",
+                  "fmt": [
+                    "url"
+                  ]
+                },
+                "user_permission": {
+                  "t": "int"
+                },
+                "uuid": {
+                  "t": "str",
+                  "fmt": [
+                    "uuid"
+                  ]
+                }
+              }
+            },
+            "context_uuid": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "display_model": {
+              "t": "str"
+            },
+            "entry_created_datetime": {
+              "t": "str",
+              "fmt": [
+                "iso-date"
+              ]
+            },
+            "entry_updated_datetime": {
+              "t": "str",
+              "fmt": [
+                "iso-date"
+              ]
+            },
+            "featured_images": {
+              "t": "list",
+              "n": "0"
+            },
+            "frontend_context_uuid": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "frontend_uuid": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "gpt4": {
+              "t": "bool"
+            },
+            "mode": {
+              "t": "str"
+            },
+            "personalized": {
+              "t": "bool"
+            },
+            "privacy_state": {
+              "t": "str"
+            },
+            "query_language": {
+              "t": "str"
+            },
+            "query_source": {
+              "t": "str"
+            },
+            "query_str": {
+              "t": "str",
+              "fmt": [
+                "url"
+              ]
+            },
+            "read_write_token": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "reconnectable": {
+              "t": "bool"
+            },
+            "related_queries": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "str"
+              }
+            },
+            "related_query_items": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "object",
+                "c": {
+                  "display_text": {
+                    "t": "str"
+                  },
+                  "query_params": {
+                    "t": "object",
+                    "c": {
+                      "model_preference": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "text": {
+                    "t": "str"
+                  },
+                  "type": {
+                    "t": "str"
+                  },
+                  "upsell_type": {
+                    "t": "str"
+                  },
+                  "uuid": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  }
+                }
+              }
+            },
+            "search_focus": {
+              "t": "str"
+            },
+            "search_implementation_mode": {
+              "t": "str"
+            },
+            "search_mode": {
+              "t": "str"
+            },
+            "social_info": {
+              "t": "object",
+              "c": {
+                "fork_count": {
+                  "t": "int"
+                },
+                "like_count": {
+                  "t": "int"
+                },
+                "user_likes": {
+                  "t": "bool"
+                },
+                "view_count": {
+                  "t": "int"
+                }
+              }
+            },
+            "source": {
+              "t": "str"
+            },
+            "sources": {
+              "t": "object",
+              "c": {
+                "sources": {
+                  "t": "list",
+                  "n": "1",
+                  "i": {
+                    "t": "str"
+                  }
+                }
+              }
+            },
+            "status": {
+              "t": "str"
+            },
+            "step_type": {
+              "t": "str"
+            },
+            "structured_answer_block_usages": {
+              "t": "list",
+              "n": "6-20",
+              "i": {
+                "t": "str"
+              }
+            },
+            "thread_access": {
+              "t": "int"
+            },
+            "thread_title": {
+              "t": "str",
+              "fmt": [
+                "url"
+              ]
+            },
+            "thread_url_slug": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "updated_datetime": {
+              "t": "str",
+              "fmt": [
+                "iso-date"
+              ]
+            },
+            "upsell_information": {
+              "t": "object",
+              "c": {
+                "app_location": {
+                  "t": "str"
+                },
+                "backend_uuid": {
+                  "t": "str",
+                  "fmt": [
+                    "uuid"
+                  ]
+                },
+                "button_color": {
+                  "t": "str"
+                },
+                "button_text": {
+                  "t": "str"
+                },
+                "cta": {
+                  "t": "str"
+                },
+                "cta_information": {
+                  "t": "object",
+                  "c": {
+                    "permalink": {
+                      "t": "str"
+                    },
+                    "permalink_new_tab": {
+                      "t": "bool"
+                    }
+                  }
+                },
+                "description": {
+                  "t": "str"
+                },
+                "icon_reference": {
+                  "t": "str"
+                },
+                "is_persistent": {
+                  "t": "bool"
+                },
+                "name": {
+                  "t": "str"
+                },
+                "title": {
+                  "t": "str"
+                },
+                "upsell_type": {
+                  "t": "str"
+                },
+                "upsell_uuid": {
+                  "t": "str",
+                  "fmt": [
+                    "uuid"
+                  ]
+                }
+              }
+            },
+            "user_selected_model": {
+              "t": "str"
+            },
+            "uuid": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "widget_data": {
+              "t": "list",
+              "n": "0"
+            }
+          }
+        }
+      },
+      "first_entry": {
+        "t": "object",
+        "c": {
+          "access_level": {
+            "t": "str"
+          },
+          "answer_modes": {
+            "t": "list",
+            "n": "2-5",
+            "i": {
+              "t": "object",
+              "c": {
+                "answer_mode_type": {
+                  "t": "str"
+                },
+                "has_preview": {
+                  "t": "bool"
+                }
+              }
+            }
+          },
+          "attachments": {
+            "t": "list",
+            "n": "1",
+            "i": {
+              "t": "str",
+              "fmt": [
+                "url"
+              ]
+            }
+          },
+          "author_id": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "author_image": {
+            "t": "str",
+            "fmt": [
+              "url"
+            ]
+          },
+          "author_username": {
+            "t": "str"
+          },
+          "backend_uuid": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "blocks": {
+            "t": "list",
+            "n": "6-20",
+            "i": {
+              "t": "object",
+              "c": {
+                "answer_tabs_block": {
+                  "t": "object",
+                  "c": {
+                    "modes": {
+                      "t": "list",
+                      "n": "2-5",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "answer_mode_type": {
+                            "t": "str"
+                          },
+                          "has_preview": {
+                            "t": "bool"
+                          }
+                        }
+                      }
+                    },
+                    "reformulated_queries": {
+                      "t": "list",
+                      "n": "1",
+                      "i": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "assets_mode_block": {
+                  "t": "object",
+                  "c": {
+                    "answer_mode_type": {
+                      "t": "str"
+                    },
+                    "asset_uuids": {
+                      "t": "list",
+                      "n": "1",
+                      "i": {
+                        "t": "str"
+                      }
+                    },
+                    "progress": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "image_mode_block": {
+                  "t": "object",
+                  "c": {
+                    "answer_mode_type": {
+                      "t": "str"
+                    },
+                    "media_items": {
+                      "t": "list",
+                      "n": "6-20",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "caption": {
+                            "t": "str"
+                          },
+                          "citation_info": {
+                            "t": "object",
+                            "c": {
+                              "domain_name": {
+                                "t": "str"
+                              },
+                              "favicon_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          },
+                          "image": {
+                            "t": "str",
+                            "fmt": [
+                              "email",
+                              "url"
+                            ]
+                          },
+                          "image_height": {
+                            "t": "int"
+                          },
+                          "image_width": {
+                            "t": "int"
+                          },
+                          "medium": {
+                            "t": "str"
+                          },
+                          "name": {
+                            "t": "str"
+                          },
+                          "original_image_url": {
+                            "t": "str",
+                            "fmt": [
+                              "email",
+                              "url"
+                            ]
+                          },
+                          "source": {
+                            "t": "str"
+                          },
+                          "thumbnail": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_384": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_512": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_512_smart": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_height": {
+                            "t": "int"
+                          },
+                          "thumbnail_width": {
+                            "t": "int"
+                          },
+                          "url": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "progress": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "inline_entity_block": {
+                  "t": "object",
+                  "c": {
+                    "media_block": {
+                      "t": "object",
+                      "c": {
+                        "generated_media_items": {
+                          "t": "list",
+                          "n": "0"
+                        },
+                        "media_items": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "object",
+                            "c": {
+                              "caption": {
+                                "t": "str"
+                              },
+                              "citation_info": {
+                                "t": "object",
+                                "c": {
+                                  "domain_name": {
+                                    "t": "str"
+                                  },
+                                  "favicon_url": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  },
+                                  "url": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  }
+                                }
+                              },
+                              "duration": {
+                                "t": "int"
+                              },
+                              "image": {
+                                "t": "str",
+                                "fmt": [
+                                  "email",
+                                  "url"
+                                ]
+                              },
+                              "image_height": {
+                                "t": "int"
+                              },
+                              "image_width": {
+                                "t": "int"
+                              },
+                              "medium": {
+                                "t": "str"
+                              },
+                              "name": {
+                                "t": "str"
+                              },
+                              "original_image_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "email",
+                                  "url"
+                                ]
+                              },
+                              "source": {
+                                "t": "str"
+                              },
+                              "thumbnail": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "thumbnail_384": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "thumbnail_512": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "thumbnail_512_smart": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "thumbnail_height": {
+                                "t": "int"
+                              },
+                              "thumbnail_width": {
+                                "t": "int"
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "progress": {
+                          "t": "str"
+                        }
+                      }
+                    }
+                  }
+                },
+                "intended_usage": {
+                  "t": "str"
+                },
+                "markdown_block": {
+                  "t": "object",
+                  "c": {
+                    "answer": {
+                      "t": "str"
+                    },
+                    "chunk_starting_offset": {
+                      "t": "int"
+                    },
+                    "chunks": {
+                      "t": "list",
+                      "n": "100+",
+                      "i": {
+                        "t": "str"
+                      }
+                    },
+                    "inline_token_annotations": {
+                      "t": "list",
+                      "n": "0"
+                    },
+                    "media_items": {
+                      "t": "list",
+                      "n": "2-5",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "caption": {
+                            "t": "str"
+                          },
+                          "citation_info": {
+                            "t": "object",
+                            "c": {
+                              "domain_name": {
+                                "t": "str"
+                              },
+                              "favicon_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          },
+                          "image": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "image_height": {
+                            "t": "int"
+                          },
+                          "image_width": {
+                            "t": "int"
+                          },
+                          "medium": {
+                            "t": "str"
+                          },
+                          "name": {
+                            "t": "str"
+                          },
+                          "original_image_url": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "source": {
+                            "t": "str"
+                          },
+                          "thumbnail": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_512": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_512_smart": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_height": {
+                            "t": "int"
+                          },
+                          "thumbnail_width": {
+                            "t": "int"
+                          },
+                          "url": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "progress": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "media_block": {
+                  "t": "object",
+                  "c": {
+                    "generated_media_items": {
+                      "t": "list",
+                      "n": "0"
+                    },
+                    "media_items": {
+                      "t": "list",
+                      "n": "6-20",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "caption": {
+                            "t": "str"
+                          },
+                          "citation_info": {
+                            "t": "object",
+                            "c": {
+                              "domain_name": {
+                                "t": "str"
+                              },
+                              "favicon_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          },
+                          "duration": {
+                            "t": "int"
+                          },
+                          "image": {
+                            "t": "str",
+                            "fmt": [
+                              "email",
+                              "url"
+                            ]
+                          },
+                          "image_height": {
+                            "t": "int"
+                          },
+                          "image_width": {
+                            "t": "int"
+                          },
+                          "medium": {
+                            "t": "str"
+                          },
+                          "name": {
+                            "t": "str"
+                          },
+                          "original_image_url": {
+                            "t": "str",
+                            "fmt": [
+                              "email",
+                              "url"
+                            ]
+                          },
+                          "source": {
+                            "t": "str"
+                          },
+                          "thumbnail": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_384": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_512": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_512_smart": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_height": {
+                            "t": "int"
+                          },
+                          "thumbnail_width": {
+                            "t": "int"
+                          },
+                          "url": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "navigation_block": {
+                  "t": "object",
+                  "c": {
+                    "web_results": {
+                      "t": "list",
+                      "n": "1",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "is_attachment": {
+                            "t": "bool"
+                          },
+                          "is_client_context": {
+                            "t": "bool"
+                          },
+                          "is_code_interpreter": {
+                            "t": "bool"
+                          },
+                          "is_conversation_history": {
+                            "t": "bool"
+                          },
+                          "is_conversation_summary": {
+                            "t": "bool"
+                          },
+                          "is_focused_web": {
+                            "t": "bool"
+                          },
+                          "is_image": {
+                            "t": "bool"
+                          },
+                          "is_knowledge_card": {
+                            "t": "bool"
+                          },
+                          "is_memory": {
+                            "t": "bool"
+                          },
+                          "is_navigational": {
+                            "t": "bool"
+                          },
+                          "is_widget": {
+                            "t": "bool"
+                          },
+                          "meta_data": {
+                            "t": "object",
+                            "c": {
+                              "authors": {
+                                "t": "list",
+                                "n": "1",
+                                "i": {
+                                  "t": "str"
+                                }
+                              },
+                              "citation_domain_name": {
+                                "t": "null+str"
+                              },
+                              "client": {
+                                "t": "str"
+                              },
+                              "date": {
+                                "t": "null"
+                              },
+                              "description": {
+                                "t": "null+str"
+                              },
+                              "domain_name": {
+                                "t": "null+str"
+                              },
+                              "images": {
+                                "t": "list",
+                                "n": "1",
+                                "i": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              },
+                              "published_date": {
+                                "t": "null+str",
+                                "fmt": [
+                                  "iso-date"
+                                ]
+                              },
+                              "suffix": {
+                                "t": "null+str"
+                              }
+                            }
+                          },
+                          "name": {
+                            "t": "str"
+                          },
+                          "original_snippet": {
+                            "t": "str"
+                          },
+                          "sitelinks": {
+                            "t": "list",
+                            "n": "6-20",
+                            "i": {
+                              "t": "object",
+                              "c": {
+                                "title": {
+                                  "t": "str"
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "snippet": {
+                            "t": "str"
+                          },
+                          "timestamp": {
+                            "t": "str",
+                            "fmt": [
+                              "iso-date"
+                            ]
+                          },
+                          "trust": {
+                            "t": "object",
+                            "c": {
+                              "description": {
+                                "t": "str"
+                              },
+                              "level": {
+                                "t": "int"
+                              },
+                              "name": {
+                                "t": "str"
+                              },
+                              "type_of_trust": {
+                                "t": "str"
+                              }
+                            }
+                          },
+                          "url": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "pending_followups_block": {
+                  "t": "object",
+                  "c": {
+                    "followups": {
+                      "t": "list",
+                      "n": "0"
+                    }
+                  }
+                },
+                "plan_block": {
+                  "t": "object",
+                  "c": {
+                    "final": {
+                      "t": "bool"
+                    },
+                    "goals": {
+                      "t": "list",
+                      "n": "6-20",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "description": {
+                            "t": "str"
+                          },
+                          "final": {
+                            "t": "bool"
+                          },
+                          "id": {
+                            "t": "str"
+                          },
+                          "todo_task_status": {
+                            "t": "str"
+                          }
+                        }
+                      }
+                    },
+                    "progress": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "sources_mode_block": {
+                  "t": "object",
+                  "c": {
+                    "answer_mode_type": {
+                      "t": "str"
+                    },
+                    "progress": {
+                      "t": "str"
+                    },
+                    "result_count": {
+                      "t": "int"
+                    },
+                    "rows": {
+                      "t": "list",
+                      "n": "21-100",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "citation": {
+                            "t": "int"
+                          },
+                          "status": {
+                            "t": "str"
+                          },
+                          "web_result": {
+                            "t": "object",
+                            "c": {
+                              "file_metadata": {
+                                "t": "object",
+                                "c": {
+                                  "connector_type": {
+                                    "t": "str"
+                                  },
+                                  "file_repository_type": {
+                                    "t": "str"
+                                  }
+                                }
+                              },
+                              "is_attachment": {
+                                "t": "bool"
+                              },
+                              "is_client_context": {
+                                "t": "bool"
+                              },
+                              "is_code_interpreter": {
+                                "t": "bool"
+                              },
+                              "is_conversation_history": {
+                                "t": "bool"
+                              },
+                              "is_conversation_summary": {
+                                "t": "bool"
+                              },
+                              "is_focused_web": {
+                                "t": "bool"
+                              },
+                              "is_image": {
+                                "t": "bool"
+                              },
+                              "is_knowledge_card": {
+                                "t": "bool"
+                              },
+                              "is_memory": {
+                                "t": "bool"
+                              },
+                              "is_navigational": {
+                                "t": "bool"
+                              },
+                              "is_widget": {
+                                "t": "bool"
+                              },
+                              "meta_data": {
+                                "t": "object",
+                                "c": {
+                                  "citation_domain_name": {
+                                    "t": "null+str"
+                                  },
+                                  "client": {
+                                    "t": "str"
+                                  },
+                                  "images": {
+                                    "t": "list",
+                                    "n": "2-5",
+                                    "i": {
+                                      "t": "str",
+                                      "fmt": [
+                                        "email",
+                                        "url"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "name": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "original_snippet": {
+                                "t": "str"
+                              },
+                              "sitelinks": {
+                                "t": "list",
+                                "n": "6-20",
+                                "i": {
+                                  "t": "object",
+                                  "c": {
+                                    "title": {
+                                      "t": "str"
+                                    },
+                                    "url": {
+                                      "t": "str",
+                                      "fmt": [
+                                        "url"
+                                      ]
+                                    }
+                                  }
+                                }
+                              },
+                              "snippet": {
+                                "t": "str"
+                              },
+                              "timestamp": {
+                                "t": "str",
+                                "fmt": [
+                                  "iso-date"
+                                ]
+                              },
+                              "trust": {
+                                "t": "object",
+                                "c": {
+                                  "description": {
+                                    "t": "str"
+                                  },
+                                  "level": {
+                                    "t": "int"
+                                  },
+                                  "name": {
+                                    "t": "str"
+                                  },
+                                  "type_of_trust": {
+                                    "t": "str"
+                                  }
+                                }
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "email",
+                                  "url"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "web_results": {
+                      "t": "list",
+                      "n": "21-100",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "file_metadata": {
+                            "t": "object",
+                            "c": {
+                              "connector_type": {
+                                "t": "str"
+                              },
+                              "file_repository_type": {
+                                "t": "str"
+                              }
+                            }
+                          },
+                          "is_attachment": {
+                            "t": "bool"
+                          },
+                          "is_client_context": {
+                            "t": "bool"
+                          },
+                          "is_code_interpreter": {
+                            "t": "bool"
+                          },
+                          "is_conversation_history": {
+                            "t": "bool"
+                          },
+                          "is_conversation_summary": {
+                            "t": "bool"
+                          },
+                          "is_focused_web": {
+                            "t": "bool"
+                          },
+                          "is_image": {
+                            "t": "bool"
+                          },
+                          "is_knowledge_card": {
+                            "t": "bool"
+                          },
+                          "is_memory": {
+                            "t": "bool"
+                          },
+                          "is_navigational": {
+                            "t": "bool"
+                          },
+                          "is_widget": {
+                            "t": "bool"
+                          },
+                          "meta_data": {
+                            "t": "object",
+                            "c": {
+                              "citation_domain_name": {
+                                "t": "null+str"
+                              },
+                              "client": {
+                                "t": "str"
+                              },
+                              "images": {
+                                "t": "list",
+                                "n": "2-5",
+                                "i": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "email",
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "name": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "original_snippet": {
+                            "t": "str"
+                          },
+                          "sitelinks": {
+                            "t": "list",
+                            "n": "6-20",
+                            "i": {
+                              "t": "object",
+                              "c": {
+                                "title": {
+                                  "t": "str"
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "snippet": {
+                            "t": "str"
+                          },
+                          "timestamp": {
+                            "t": "str",
+                            "fmt": [
+                              "iso-date"
+                            ]
+                          },
+                          "trust": {
+                            "t": "object",
+                            "c": {
+                              "description": {
+                                "t": "str"
+                              },
+                              "level": {
+                                "t": "int"
+                              },
+                              "name": {
+                                "t": "str"
+                              },
+                              "type_of_trust": {
+                                "t": "str"
+                              }
+                            }
+                          },
+                          "url": {
+                            "t": "str",
+                            "fmt": [
+                              "email",
+                              "url"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "unified_assets_block": {
+                  "t": "object",
+                  "c": {
+                    "assets": {
+                      "t": "list",
+                      "n": "1",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "asset_type": {
+                            "t": "str"
+                          },
+                          "code": {
+                            "t": "object",
+                            "c": {
+                              "error": {
+                                "t": "str"
+                              },
+                              "final": {
+                                "t": "bool"
+                              },
+                              "goal_id": {
+                                "t": "str"
+                              },
+                              "images": {
+                                "t": "list",
+                                "n": "0"
+                              },
+                              "language": {
+                                "t": "str"
+                              },
+                              "output": {
+                                "t": "str"
+                              },
+                              "script": {
+                                "t": "str"
+                              },
+                              "status": {
+                                "t": "str"
+                              },
+                              "stderr": {
+                                "t": "str"
+                              },
+                              "stdout": {
+                                "t": "str"
+                              }
+                            }
+                          },
+                          "download_info": {
+                            "t": "list",
+                            "n": "1",
+                            "i": {
+                              "t": "object",
+                              "c": {
+                                "filename": {
+                                  "t": "str"
+                                },
+                                "size": {
+                                  "t": "int"
+                                },
+                                "text_content": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          },
+                          "uuid": {
+                            "t": "str"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "video_mode_block": {
+                  "t": "object",
+                  "c": {
+                    "answer_mode_type": {
+                      "t": "str"
+                    },
+                    "media_items": {
+                      "t": "list",
+                      "n": "6-20",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "citation_info": {
+                            "t": "object",
+                            "c": {
+                              "domain_name": {
+                                "t": "str"
+                              },
+                              "favicon_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          },
+                          "duration": {
+                            "t": "int"
+                          },
+                          "image": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "image_height": {
+                            "t": "int"
+                          },
+                          "image_width": {
+                            "t": "int"
+                          },
+                          "medium": {
+                            "t": "str"
+                          },
+                          "name": {
+                            "t": "str"
+                          },
+                          "source": {
+                            "t": "str"
+                          },
+                          "thumbnail": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "thumbnail_height": {
+                            "t": "int"
+                          },
+                          "thumbnail_width": {
+                            "t": "int"
+                          },
+                          "url": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "progress": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "web_result_block": {
+                  "t": "object",
+                  "c": {
+                    "progress": {
+                      "t": "str"
+                    },
+                    "web_results": {
+                      "t": "list",
+                      "n": "21-100",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "file_metadata": {
+                            "t": "object",
+                            "c": {
+                              "connector_type": {
+                                "t": "str"
+                              },
+                              "file_repository_type": {
+                                "t": "str"
+                              }
+                            }
+                          },
+                          "is_attachment": {
+                            "t": "bool"
+                          },
+                          "is_client_context": {
+                            "t": "bool"
+                          },
+                          "is_code_interpreter": {
+                            "t": "bool"
+                          },
+                          "is_conversation_history": {
+                            "t": "bool"
+                          },
+                          "is_conversation_summary": {
+                            "t": "bool"
+                          },
+                          "is_focused_web": {
+                            "t": "bool"
+                          },
+                          "is_image": {
+                            "t": "bool"
+                          },
+                          "is_knowledge_card": {
+                            "t": "bool"
+                          },
+                          "is_memory": {
+                            "t": "bool"
+                          },
+                          "is_navigational": {
+                            "t": "bool"
+                          },
+                          "is_widget": {
+                            "t": "bool"
+                          },
+                          "meta_data": {
+                            "t": "object",
+                            "c": {
+                              "citation_domain_name": {
+                                "t": "null+str"
+                              },
+                              "client": {
+                                "t": "str"
+                              },
+                              "images": {
+                                "t": "list",
+                                "n": "2-5",
+                                "i": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "email",
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "name": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "original_snippet": {
+                            "t": "str"
+                          },
+                          "sitelinks": {
+                            "t": "list",
+                            "n": "6-20",
+                            "i": {
+                              "t": "object",
+                              "c": {
+                                "title": {
+                                  "t": "str"
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "snippet": {
+                            "t": "str"
+                          },
+                          "timestamp": {
+                            "t": "str",
+                            "fmt": [
+                              "iso-date"
+                            ]
+                          },
+                          "trust": {
+                            "t": "object",
+                            "c": {
+                              "description": {
+                                "t": "str"
+                              },
+                              "level": {
+                                "t": "int"
+                              },
+                              "name": {
+                                "t": "str"
+                              },
+                              "type_of_trust": {
+                                "t": "str"
+                              }
+                            }
+                          },
+                          "url": {
+                            "t": "str",
+                            "fmt": [
+                              "email",
+                              "url"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "widget_block": {
+                  "t": "object",
+                  "c": {
+                    "news_widget_block": {
+                      "t": "object",
+                      "c": {
+                        "web_results": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "object",
+                            "c": {
+                              "is_attachment": {
+                                "t": "bool"
+                              },
+                              "is_client_context": {
+                                "t": "bool"
+                              },
+                              "is_code_interpreter": {
+                                "t": "bool"
+                              },
+                              "is_conversation_history": {
+                                "t": "bool"
+                              },
+                              "is_conversation_summary": {
+                                "t": "bool"
+                              },
+                              "is_focused_web": {
+                                "t": "bool"
+                              },
+                              "is_image": {
+                                "t": "bool"
+                              },
+                              "is_knowledge_card": {
+                                "t": "bool"
+                              },
+                              "is_memory": {
+                                "t": "bool"
+                              },
+                              "is_navigational": {
+                                "t": "bool"
+                              },
+                              "is_widget": {
+                                "t": "bool"
+                              },
+                              "meta_data": {
+                                "t": "object",
+                                "c": {
+                                  "authors": {
+                                    "t": "list",
+                                    "n": "1",
+                                    "i": {
+                                      "t": "str"
+                                    }
+                                  },
+                                  "citation_domain_name": {
+                                    "t": "str"
+                                  },
+                                  "client": {
+                                    "t": "str"
+                                  },
+                                  "date": {
+                                    "t": "null+str",
+                                    "fmt": [
+                                      "iso-date"
+                                    ]
+                                  },
+                                  "description": {
+                                    "t": "null+str"
+                                  },
+                                  "domain_name": {
+                                    "t": "str"
+                                  },
+                                  "images": {
+                                    "t": "list",
+                                    "n": "1",
+                                    "i": {
+                                      "t": "str",
+                                      "fmt": [
+                                        "email",
+                                        "url"
+                                      ]
+                                    }
+                                  },
+                                  "object": {
+                                    "t": "str"
+                                  },
+                                  "published_date": {
+                                    "t": "null+str",
+                                    "fmt": [
+                                      "iso-date"
+                                    ]
+                                  },
+                                  "suffix": {
+                                    "t": "str"
+                                  }
+                                }
+                              },
+                              "name": {
+                                "t": "str"
+                              },
+                              "sitelinks": {
+                                "t": "list",
+                                "n": "0"
+                              },
+                              "snippet": {
+                                "t": "str"
+                              },
+                              "timestamp": {
+                                "t": "str",
+                                "fmt": [
+                                  "iso-date"
+                                ]
+                              },
+                              "trust": {
+                                "t": "object",
+                                "c": {
+                                  "description": {
+                                    "t": "str"
+                                  },
+                                  "level": {
+                                    "t": "int"
+                                  },
+                                  "name": {
+                                    "t": "str"
+                                  },
+                                  "type_of_trust": {
+                                    "t": "str"
+                                  }
+                                }
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "widget_type": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "workflow_block": {
+                  "t": "object",
+                  "c": {
+                    "completed_at": {
+                      "t": "str",
+                      "fmt": [
+                        "iso-date"
+                      ]
+                    },
+                    "headline": {
+                      "t": "str"
+                    },
+                    "predicted_completion_at": {
+                      "t": "str"
+                    },
+                    "snapshots": {
+                      "t": "list",
+                      "n": "0"
+                    },
+                    "started_at": {
+                      "t": "str",
+                      "fmt": [
+                        "iso-date"
+                      ]
+                    },
+                    "status": {
+                      "t": "str"
+                    },
+                    "steps": {
+                      "t": "list",
+                      "n": "6-20",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "batch_step_id": {
+                            "t": "str",
+                            "fmt": [
+                              "hash"
+                            ]
+                          },
+                          "completed_at": {
+                            "t": "str",
+                            "fmt": [
+                              "iso-date"
+                            ]
+                          },
+                          "icon": {
+                            "t": "str"
+                          },
+                          "id": {
+                            "t": "str",
+                            "fmt": [
+                              "hash",
+                              "uuid"
+                            ]
+                          },
+                          "items": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "object",
+                              "c": {
+                                "display_mode": {
+                                  "t": "str"
+                                },
+                                "id": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "hash",
+                                    "uuid"
+                                  ]
+                                },
+                                "payload": {
+                                  "t": "object",
+                                  "c": {
+                                    "queries_payload": {
+                                      "t": "object",
+                                      "c": {
+                                        "queries": {
+                                          "t": "list",
+                                          "n": "100+",
+                                          "i": {
+                                            "t": "str",
+                                            "fmt": [
+                                              "url"
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "sources_payload": {
+                                      "t": "object",
+                                      "c": {
+                                        "asset_uuids": {
+                                          "t": "list",
+                                          "n": "1",
+                                          "i": {
+                                            "t": "str"
+                                          }
+                                        },
+                                        "sources": {
+                                          "t": "list",
+                                          "n": "6-20",
+                                          "i": {
+                                            "t": "object",
+                                            "c": {},
+                                            "cut": true
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "text_payload": {
+                                      "t": "object",
+                                      "c": {
+                                        "chunks": {
+                                          "t": "list",
+                                          "n": "100+",
+                                          "i": {
+                                            "t": "str"
+                                          }
+                                        },
+                                        "is_streaming": {
+                                          "t": "bool"
+                                        },
+                                        "text": {
+                                          "t": "str"
+                                        },
+                                        "variant": {
+                                          "t": "str"
+                                        }
+                                      }
+                                    },
+                                    "widget_payload": {
+                                      "t": "object",
+                                      "c": {
+                                        "payload_json": {
+                                          "t": "str"
+                                        },
+                                        "widget_type": {
+                                          "t": "str"
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "type": {
+                                  "t": "str"
+                                },
+                                "variant": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          },
+                          "source_tier": {
+                            "t": "str"
+                          },
+                          "started_at": {
+                            "t": "str",
+                            "fmt": [
+                              "iso-date"
+                            ]
+                          },
+                          "status": {
+                            "t": "str"
+                          },
+                          "title": {
+                            "t": "str"
+                          },
+                          "tool_name": {
+                            "t": "str"
+                          },
+                          "unnest_items": {
+                            "t": "bool"
+                          }
+                        }
+                      }
+                    },
+                    "version": {
+                      "t": "str"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "bookmark_state": {
+            "t": "str"
+          },
+          "classifier_results": {
+            "t": "object",
+            "c": {
+              "hide_nav": {
+                "t": "bool"
+              },
+              "hide_sources": {
+                "t": "bool"
+              },
+              "image_generation": {
+                "t": "bool"
+              },
+              "mhe_predictions": {
+                "t": "object",
+                "c": {
+                  "calculator_widget": {
+                    "t": "bool"
+                  },
+                  "comet_nav_widget_combined_target": {
+                    "t": "bool"
+                  },
+                  "finance_agent_gating": {
+                    "t": "bool"
+                  },
+                  "finance_widget_gating": {
+                    "t": "bool"
+                  },
+                  "image_generation_intent": {
+                    "t": "bool"
+                  },
+                  "image_preview": {
+                    "t": "bool"
+                  },
+                  "personal_search": {
+                    "t": "bool"
+                  },
+                  "places_search_intent": {
+                    "t": "bool"
+                  },
+                  "shopping_intent": {
+                    "t": "bool"
+                  },
+                  "skip_search": {
+                    "t": "bool"
+                  },
+                  "study_intent": {
+                    "t": "null"
+                  },
+                  "time_widget": {
+                    "t": "bool"
+                  },
+                  "video_preview": {
+                    "t": "bool"
+                  },
+                  "weather_widget": {
+                    "t": "bool"
+                  }
+                }
+              },
+              "mhe_predictions_full": {
+                "t": "object",
+                "c": {
+                  "calculator_widget": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "comet_nav_widget_combined_target": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "domain_subdomain": {
+                    "t": "object",
+                    "c": {
+                      "label": {
+                        "t": "str"
+                      },
+                      "probability": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "finance_agent_gating": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "finance_widget_gating": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "image_generation_intent": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "image_preview": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "personal_search": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "null"
+                      },
+                      "threshold": {
+                        "t": "null"
+                      }
+                    }
+                  },
+                  "places_search_intent": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "shopping_intent": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "skip_personal_search": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "skip_search": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "null"
+                      },
+                      "threshold": {
+                        "t": "null"
+                      }
+                    }
+                  },
+                  "study_intent": {
+                    "t": "null"
+                  },
+                  "time_widget": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "video_preview": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  },
+                  "weather_widget": {
+                    "t": "object",
+                    "c": {
+                      "is_true": {
+                        "t": "bool"
+                      },
+                      "probability": {
+                        "t": "float"
+                      },
+                      "threshold": {
+                        "t": "float"
+                      }
+                    }
+                  }
+                }
+              },
+              "personal_search": {
+                "t": "bool"
+              },
+              "skip_search": {
+                "t": "bool"
+              },
+              "time_widget": {
+                "t": "bool"
+              },
+              "widget_type": {
+                "t": "null+str"
+              }
+            }
+          },
+          "collection_info": {
+            "t": "object",
+            "c": {
+              "access": {
+                "t": "int"
+              },
+              "access_level": {
+                "t": "str"
+              },
+              "can_join": {
+                "t": "bool"
+              },
+              "can_join_as_viewer": {
+                "t": "bool"
+              },
+              "can_share_threads": {
+                "t": "bool"
+              },
+              "contributor_users": {
+                "t": "list",
+                "n": "0"
+              },
+              "description": {
+                "t": "str"
+              },
+              "emoji": {
+                "t": "str"
+              },
+              "enable_web_by_default": {
+                "t": "bool"
+              },
+              "file_count": {
+                "t": "int"
+              },
+              "focused_web_config": {
+                "t": "object",
+                "c": {
+                  "link_configs": {
+                    "t": "list",
+                    "n": "1",
+                    "i": {
+                      "t": "object",
+                      "c": {
+                        "link": {
+                          "t": "str"
+                        },
+                        "user_email": {
+                          "t": "str",
+                          "fmt": [
+                            "email"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "has_next_page": {
+                "t": "bool"
+              },
+              "instructions": {
+                "t": "str"
+              },
+              "knowledge_enabled": {
+                "t": "bool"
+              },
+              "max_contributors": {
+                "t": "int"
+              },
+              "number": {
+                "t": "int"
+              },
+              "owner_user": {
+                "t": "object",
+                "c": {
+                  "email": {
+                    "t": "str",
+                    "fmt": [
+                      "email"
+                    ]
+                  },
+                  "image": {
+                    "t": "str",
+                    "fmt": [
+                      "url"
+                    ]
+                  },
+                  "name": {
+                    "t": "str"
+                  },
+                  "permission": {
+                    "t": "int"
+                  },
+                  "username": {
+                    "t": "str"
+                  }
+                }
+              },
+              "page_count": {
+                "t": "int"
+              },
+              "project_brain_auto_update_enabled": {
+                "t": "bool"
+              },
+              "project_files_write_capability_active": {
+                "t": "bool"
+              },
+              "slug": {
+                "t": "str"
+              },
+              "template_id": {
+                "t": "str",
+                "fmt": [
+                  "uuid"
+                ]
+              },
+              "thread_count": {
+                "t": "int"
+              },
+              "title": {
+                "t": "str"
+              },
+              "updated_datetime": {
+                "t": "str",
+                "fmt": [
+                  "iso-date"
+                ]
+              },
+              "url": {
+                "t": "str",
+                "fmt": [
+                  "url"
+                ]
+              },
+              "user_permission": {
+                "t": "int"
+              },
+              "uuid": {
+                "t": "str",
+                "fmt": [
+                  "uuid"
+                ]
+              }
+            }
+          },
+          "context_uuid": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "display_model": {
+            "t": "str"
+          },
+          "entry_created_datetime": {
+            "t": "str",
+            "fmt": [
+              "iso-date"
+            ]
+          },
+          "entry_updated_datetime": {
+            "t": "str",
+            "fmt": [
+              "iso-date"
+            ]
+          },
+          "featured_images": {
+            "t": "list",
+            "n": "0"
+          },
+          "frontend_context_uuid": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "frontend_uuid": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "gpt4": {
+            "t": "bool"
+          },
+          "mode": {
+            "t": "str"
+          },
+          "personalized": {
+            "t": "bool"
+          },
+          "privacy_state": {
+            "t": "str"
+          },
+          "query_language": {
+            "t": "str"
+          },
+          "query_source": {
+            "t": "str"
+          },
+          "query_str": {
+            "t": "str",
+            "fmt": [
+              "url"
+            ]
+          },
+          "read_write_token": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "reconnectable": {
+            "t": "bool"
+          },
+          "related_queries": {
+            "t": "list",
+            "n": "2-5",
+            "i": {
+              "t": "str"
+            }
+          },
+          "related_query_items": {
+            "t": "list",
+            "n": "2-5",
+            "i": {
+              "t": "object",
+              "c": {
+                "display_text": {
+                  "t": "str"
+                },
+                "query_params": {
+                  "t": "object",
+                  "c": {
+                    "model_preference": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "text": {
+                  "t": "str"
+                },
+                "type": {
+                  "t": "str"
+                },
+                "upsell_type": {
+                  "t": "str"
+                },
+                "uuid": {
+                  "t": "str",
+                  "fmt": [
+                    "uuid"
+                  ]
+                }
+              }
+            }
+          },
+          "search_focus": {
+            "t": "str"
+          },
+          "search_implementation_mode": {
+            "t": "str"
+          },
+          "search_mode": {
+            "t": "str"
+          },
+          "social_info": {
+            "t": "object",
+            "c": {
+              "fork_count": {
+                "t": "int"
+              },
+              "like_count": {
+                "t": "int"
+              },
+              "user_likes": {
+                "t": "bool"
+              },
+              "view_count": {
+                "t": "int"
+              }
+            }
+          },
+          "source": {
+            "t": "str"
+          },
+          "sources": {
+            "t": "object",
+            "c": {
+              "sources": {
+                "t": "list",
+                "n": "1",
+                "i": {
+                  "t": "str"
+                }
+              }
+            }
+          },
+          "status": {
+            "t": "str"
+          },
+          "step_type": {
+            "t": "str"
+          },
+          "structured_answer_block_usages": {
+            "t": "list",
+            "n": "6-20",
+            "i": {
+              "t": "str"
+            }
+          },
+          "thread_access": {
+            "t": "int"
+          },
+          "thread_title": {
+            "t": "str",
+            "fmt": [
+              "url"
+            ]
+          },
+          "thread_url_slug": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "updated_datetime": {
+            "t": "str",
+            "fmt": [
+              "iso-date"
+            ]
+          },
+          "upsell_information": {
+            "t": "object",
+            "c": {
+              "app_location": {
+                "t": "str"
+              },
+              "backend_uuid": {
+                "t": "str",
+                "fmt": [
+                  "uuid"
+                ]
+              },
+              "button_color": {
+                "t": "str"
+              },
+              "button_text": {
+                "t": "str"
+              },
+              "cta": {
+                "t": "str"
+              },
+              "cta_information": {
+                "t": "object",
+                "c": {
+                  "permalink": {
+                    "t": "str"
+                  },
+                  "permalink_new_tab": {
+                    "t": "bool"
+                  }
+                }
+              },
+              "description": {
+                "t": "str"
+              },
+              "icon_reference": {
+                "t": "str"
+              },
+              "is_persistent": {
+                "t": "bool"
+              },
+              "name": {
+                "t": "str"
+              },
+              "title": {
+                "t": "str"
+              },
+              "upsell_type": {
+                "t": "str"
+              },
+              "upsell_uuid": {
+                "t": "str",
+                "fmt": [
+                  "uuid"
+                ]
+              }
+            }
+          },
+          "user_selected_model": {
+            "t": "str"
+          },
+          "uuid": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "widget_data": {
+            "t": "list",
+            "n": "0"
+          }
+        }
+      },
+      "has_next_page": {
+        "t": "bool"
+      },
+      "latest_entry": {
+        "t": "null"
+      },
+      "next_cursor": {
+        "t": "null"
+      },
+      "status": {
+        "t": "str"
+      },
+      "thread_metadata": {
+        "t": "object",
+        "c": {
+          "author_id": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "author_image": {
+            "t": "str",
+            "fmt": [
+              "url"
+            ]
+          },
+          "author_name": {
+            "t": "str"
+          },
+          "author_username": {
+            "t": "str"
+          },
+          "bookmark_state": {
+            "t": "str"
+          },
+          "collection_info": {
+            "t": "null+object",
+            "c": {
+              "access": {
+                "t": "int"
+              },
+              "appearance": {
+                "t": "null"
+              },
+              "emoji": {
+                "t": "str"
+              },
+              "organization_uuid": {
+                "t": "null"
+              },
+              "slug": {
+                "t": "str"
+              },
+              "title": {
+                "t": "str"
+              },
+              "user_permission": {
+                "t": "int"
+              },
+              "uuid": {
+                "t": "str",
+                "fmt": [
+                  "uuid"
+                ]
+              }
+            }
+          },
+          "created_at": {
+            "t": "str",
+            "fmt": [
+              "iso-date"
+            ]
+          },
+          "crons": {
+            "t": "null"
+          },
+          "is_ask_asset_task": {
+            "t": "bool"
+          },
+          "is_ask_deep_research": {
+            "t": "bool"
+          },
+          "is_frozen_thread": {
+            "t": "bool"
+          },
+          "local_workspace_directories": {
+            "t": "null"
+          },
+          "locked_reason": {
+            "t": "null"
+          },
+          "mode": {
+            "t": "str"
+          },
+          "parent_info": {
+            "t": "null"
+          },
+          "sensitive_claims_visibility": {
+            "t": "null"
+          },
+          "subscribe_entry_uuids": {
+            "t": "null"
+          },
+          "thread_status": {
+            "t": "str"
+          },
+          "thread_status_summary": {
+            "t": "null"
+          },
+          "thread_status_summary_enum": {
+            "t": "null"
+          },
+          "title": {
+            "t": "str",
+            "fmt": [
+              "url"
+            ]
+          },
+          "unread": {
+            "t": "bool"
+          },
+          "updated_at": {
+            "t": "str",
+            "fmt": [
+              "iso-date"
+            ]
+          },
+          "wake_at": {
+            "t": "null"
+          },
+          "workflow_snapshots": {
+            "t": "null"
+          }
+        }
+      }
+    }
+  }
+}

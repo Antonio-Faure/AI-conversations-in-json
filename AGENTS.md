@@ -39,6 +39,14 @@ plus un RAG et une page web de recherche. Le détail complet est dans
 .venv/bin/python scripts/reparse_exports.py
 .venv/bin/python scripts/rag_index.py --force
 
+# Moniteur de similarité des API internes (forme value-free des payloads)
+.venv/bin/python scripts/api_bench.py shape --platform chatgpt        # diff vs référence
+.venv/bin/python scripts/api_bench.py shape --platform grok --live    # fetch étalon live
+.venv/bin/python scripts/api_bench.py update-ref --platform claude    # réf. = étalons
+.venv/bin/python scripts/api_bench.py update-ref --platform claude --all  # réf. = corpus
+.venv/bin/python scripts/api_bench.py bench --platform chatgpt --n 3  # bench live
+.venv/bin/python scripts/api_bench.py report                          # api_health.json
+
 # RAG + web
 .venv/bin/python scripts/rag_index.py [--platform grok] [--force]
 .venv/bin/python scripts/rag_search.py "requête" -k 10
@@ -82,6 +90,11 @@ indisponibles).
 - **Parseurs** (DOM → `Conversation`, testables sans navigateur) :
   `src/parsers/<bot>.py`, helpers dans `src/parsers/base.py`.
 - **Schéma** : `src/schema.py` (`Conversation`, `Message`, `normalize_messages`).
+- **Moniteur de forme API** : `src/utils/api_shape.py` (arbre value-free +
+  `compare_shapes`), `ShapeMonitor` dans `src/services/base.py` (hook
+  `record_api_shape` après chaque fetch API des 6 services), références
+  versionnées `tests/fixtures/api_shapes/<bot>.shape.json`, CLI
+  `scripts/api_bench.py` (`shape`/`update-ref`/`bench`/`report`).
 - **Navigateurs** : `src/browser.py` (Playwright) et
   `src/browser_botasaurus.py` (anti-Cloudflare) — même façade ; les services ne
   doivent pas accéder à `session.page`.

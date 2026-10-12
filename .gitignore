@@ -46,6 +46,9 @@ logs/
 # Config locale des etalons (ids reels des conversations)
 scripts/etalons.json
 
+# Rapports du mini benchmark des API internes (moniteur de forme)
+/bench/
+
 # Termes personnels a assainir (jamais versionne)
 scripts/sanitize.local.json
 

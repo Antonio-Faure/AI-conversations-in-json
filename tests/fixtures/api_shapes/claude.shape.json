@@ -1,0 +1,1174 @@
+{
+  "platform": "claude",
+  "scope": "corpus",
+  "etalon": null,
+  "sources": 38,
+  "signature": "3f7e8fb72a8ed032c01c9c848192543ba5794e1b7412c78eb9ee68960635369c",
+  "shape": {
+    "t": "object",
+    "c": {
+      "chat_messages": {
+        "t": "list",
+        "n": "100+",
+        "i": {
+          "t": "object",
+          "c": {
+            "attachments": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "object",
+                "c": {
+                  "created_at": {
+                    "t": "str",
+                    "fmt": [
+                      "iso-date"
+                    ]
+                  },
+                  "extracted_content": {
+                    "t": "str"
+                  },
+                  "file_name": {
+                    "t": "str"
+                  },
+                  "file_size": {
+                    "t": "int"
+                  },
+                  "file_type": {
+                    "t": "str"
+                  },
+                  "id": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  }
+                }
+              }
+            },
+            "content": {
+              "t": "list",
+              "n": "21-100",
+              "i": {
+                "t": "object",
+                "c": {
+                  "alternative_display_type": {
+                    "t": "null"
+                  },
+                  "approval_key": {
+                    "t": "null"
+                  },
+                  "approval_key_legacy": {
+                    "t": "null"
+                  },
+                  "approval_options": {
+                    "t": "null"
+                  },
+                  "citations": {
+                    "t": "list",
+                    "n": "6-20",
+                    "i": {
+                      "t": "object",
+                      "c": {
+                        "end_index": {
+                          "t": "int"
+                        },
+                        "metadata": {
+                          "t": "object",
+                          "c": {
+                            "favicon_url": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "site_domain": {
+                              "t": "str"
+                            },
+                            "site_name": {
+                              "t": "str"
+                            },
+                            "type": {
+                              "t": "str"
+                            }
+                          }
+                        },
+                        "origin_tool_name": {
+                          "t": "str"
+                        },
+                        "sources": {
+                          "t": "list",
+                          "n": "1",
+                          "i": {
+                            "t": "object",
+                            "c": {
+                              "icon_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "source": {
+                                "t": "str"
+                              },
+                              "title": {
+                                "t": "str"
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "uuid": {
+                                "t": "str",
+                                "fmt": [
+                                  "uuid"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "start_index": {
+                          "t": "int"
+                        },
+                        "title": {
+                          "t": "str"
+                        },
+                        "url": {
+                          "t": "str",
+                          "fmt": [
+                            "url"
+                          ]
+                        },
+                        "uuid": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "citations_grouping_mode": {
+                    "t": "str"
+                  },
+                  "content": {
+                    "t": "list",
+                    "n": "6-20",
+                    "i": {
+                      "t": "object",
+                      "c": {
+                        "artifact_publishable": {
+                          "t": "bool"
+                        },
+                        "file_path": {
+                          "t": "str"
+                        },
+                        "file_uuid": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        },
+                        "images": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "object",
+                            "c": {
+                              "height": {
+                                "t": "int"
+                              },
+                              "id": {
+                                "t": "str"
+                              },
+                              "page_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "source": {
+                                "t": "str"
+                              },
+                              "telemetry": {
+                                "t": "str"
+                              },
+                              "thumbnail_height": {
+                                "t": "int"
+                              },
+                              "thumbnail_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "thumbnail_width": {
+                                "t": "int"
+                              },
+                              "title": {
+                                "t": "str"
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "width": {
+                                "t": "int"
+                              }
+                            }
+                          }
+                        },
+                        "is_expired": {
+                          "t": "bool"
+                        },
+                        "is_missing": {
+                          "t": "bool"
+                        },
+                        "metadata": {
+                          "t": "object",
+                          "c": {
+                            "favicon_url": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "site_domain": {
+                              "t": "str"
+                            },
+                            "site_name": {
+                              "t": "str"
+                            },
+                            "type": {
+                              "t": "str"
+                            }
+                          }
+                        },
+                        "mime_type": {
+                          "t": "str"
+                        },
+                        "name": {
+                          "t": "str"
+                        },
+                        "preview_url": {
+                          "t": "str"
+                        },
+                        "spare_images": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "object",
+                            "c": {
+                              "height": {
+                                "t": "int"
+                              },
+                              "id": {
+                                "t": "str"
+                              },
+                              "page_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "source": {
+                                "t": "str"
+                              },
+                              "telemetry": {
+                                "t": "str"
+                              },
+                              "thumbnail_height": {
+                                "t": "int"
+                              },
+                              "thumbnail_url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "thumbnail_width": {
+                                "t": "int"
+                              },
+                              "title": {
+                                "t": "str"
+                              },
+                              "url": {
+                                "t": "str",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "width": {
+                                "t": "int"
+                              }
+                            }
+                          }
+                        },
+                        "text": {
+                          "t": "str"
+                        },
+                        "thumbnail_url": {
+                          "t": "str"
+                        },
+                        "title": {
+                          "t": "str"
+                        },
+                        "type": {
+                          "t": "str"
+                        },
+                        "url": {
+                          "t": "str",
+                          "fmt": [
+                            "url"
+                          ]
+                        },
+                        "uuid": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "context": {
+                    "t": "null"
+                  },
+                  "cut_off": {
+                    "t": "bool"
+                  },
+                  "display_content": {
+                    "t": "null+object",
+                    "c": {
+                      "content": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "icon_url": {
+                              "t": "null"
+                            },
+                            "resource_type": {
+                              "t": "null"
+                            },
+                            "source": {
+                              "t": "null"
+                            },
+                            "subtitles": {
+                              "t": "list",
+                              "n": "1",
+                              "i": {
+                                "t": "str"
+                              }
+                            },
+                            "title": {
+                              "t": "str"
+                            },
+                            "url": {
+                              "t": "null"
+                            }
+                          }
+                        }
+                      },
+                      "is_trusted": {
+                        "t": "bool"
+                      },
+                      "json_block": {
+                        "t": "str"
+                      },
+                      "link": {
+                        "t": "object",
+                        "c": {
+                          "icon_url": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "resource_type": {
+                            "t": "null"
+                          },
+                          "source": {
+                            "t": "str"
+                          },
+                          "subtitles": {
+                            "t": "null"
+                          },
+                          "title": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          },
+                          "url": {
+                            "t": "str",
+                            "fmt": [
+                              "url"
+                            ]
+                          }
+                        }
+                      },
+                      "owned_by_account": {
+                        "t": "bool"
+                      },
+                      "published_action": {
+                        "t": "str"
+                      },
+                      "published_artifact_id": {
+                        "t": "str",
+                        "fmt": [
+                          "uuid"
+                        ]
+                      },
+                      "published_url": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "table": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "str"
+                          }
+                        }
+                      },
+                      "text": {
+                        "t": "str"
+                      },
+                      "title": {
+                        "t": "str"
+                      },
+                      "type": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "flags": {
+                    "t": "null"
+                  },
+                  "hidden": {
+                    "t": "bool"
+                  },
+                  "hidden_in_chat": {
+                    "t": "null"
+                  },
+                  "icon_name": {
+                    "t": "null+str"
+                  },
+                  "id": {
+                    "t": "str"
+                  },
+                  "input": {
+                    "t": "object",
+                    "c": {
+                      "action": {
+                        "t": "str"
+                      },
+                      "command": {
+                        "t": "str"
+                      },
+                      "content": {
+                        "t": "str"
+                      },
+                      "description": {
+                        "t": "str"
+                      },
+                      "favicon": {
+                        "t": "str"
+                      },
+                      "file_path": {
+                        "t": "str"
+                      },
+                      "file_text": {
+                        "t": "str"
+                      },
+                      "filepaths": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "str"
+                        }
+                      },
+                      "if_version": {
+                        "t": "str"
+                      },
+                      "keywords": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "str"
+                        }
+                      },
+                      "loading_messages": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "str"
+                        }
+                      },
+                      "max_results": {
+                        "t": "int"
+                      },
+                      "modules": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "str"
+                        }
+                      },
+                      "new_str": {
+                        "t": "str"
+                      },
+                      "old_str": {
+                        "t": "str"
+                      },
+                      "path": {
+                        "t": "str"
+                      },
+                      "platform": {
+                        "t": "str"
+                      },
+                      "products": {
+                        "t": "list+str",
+                        "n": "2-5",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "attributes": {
+                              "t": "list",
+                              "n": "6-20",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "label": {
+                                    "t": "str"
+                                  },
+                                  "value": {
+                                    "t": "str"
+                                  }
+                                }
+                              }
+                            },
+                            "blurb": {
+                              "t": "str"
+                            },
+                            "name": {
+                              "t": "str"
+                            },
+                            "price": {
+                              "t": "str"
+                            }
+                          }
+                        }
+                      },
+                      "query": {
+                        "t": "str"
+                      },
+                      "series": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "values": {
+                              "t": "list",
+                              "n": "2-5",
+                              "i": {
+                                "t": "int"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "steps": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "description": {
+                              "t": "str"
+                            },
+                            "title": {
+                              "t": "str"
+                            }
+                          }
+                        }
+                      },
+                      "style": {
+                        "t": "str"
+                      },
+                      "summary": {
+                        "t": "str"
+                      },
+                      "title": {
+                        "t": "str"
+                      },
+                      "url": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "uuids": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        }
+                      },
+                      "widget_code": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "integration_icon_url": {
+                    "t": "null+str",
+                    "fmt": [
+                      "url"
+                    ]
+                  },
+                  "integration_name": {
+                    "t": "null+str"
+                  },
+                  "is_error": {
+                    "t": "bool"
+                  },
+                  "is_mcp_app": {
+                    "t": "bool+null"
+                  },
+                  "mcp_server_url": {
+                    "t": "null+str",
+                    "fmt": [
+                      "url"
+                    ]
+                  },
+                  "message": {
+                    "t": "null+str"
+                  },
+                  "meta": {
+                    "t": "null+object",
+                    "c": {
+                      "io.modelcontextprotocol/serverInfo": {
+                        "t": "object",
+                        "c": {
+                          "name": {
+                            "t": "str"
+                          },
+                          "version": {
+                            "t": "str"
+                          }
+                        }
+                      },
+                      "output_format_category": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "name": {
+                    "t": "str"
+                  },
+                  "signature": {
+                    "t": "null"
+                  },
+                  "start_timestamp": {
+                    "t": "str",
+                    "fmt": [
+                      "iso-date"
+                    ]
+                  },
+                  "stop_timestamp": {
+                    "t": "str",
+                    "fmt": [
+                      "iso-date"
+                    ]
+                  },
+                  "structured_content": {
+                    "t": "null+object",
+                    "c": {
+                      "artifact_id": {
+                        "t": "str",
+                        "fmt": [
+                          "uuid"
+                        ]
+                      },
+                      "base_version": {
+                        "t": "str"
+                      },
+                      "display_path_segments": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "str"
+                        }
+                      },
+                      "documents": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "display_path_segments": {
+                              "t": "list",
+                              "n": "2-5",
+                              "i": {
+                                "t": "str"
+                              }
+                            },
+                            "memory_id": {
+                              "t": "str"
+                            },
+                            "memory_op_kind": {
+                              "t": "str"
+                            },
+                            "parsed": {
+                              "t": "object",
+                              "c": {
+                                "body": {
+                                  "t": "str"
+                                },
+                                "body_has_rewritten_wikilinks": {
+                                  "t": "bool"
+                                },
+                                "description": {
+                                  "t": "str"
+                                },
+                                "metadata": {
+                                  "t": "object",
+                                  "c": {}
+                                },
+                                "name": {
+                                  "t": "str"
+                                },
+                                "wikilink_refs": {
+                                  "t": "list",
+                                  "n": "0"
+                                },
+                                "wikilinks": {
+                                  "t": "list",
+                                  "n": "0"
+                                }
+                              }
+                            },
+                            "path": {
+                              "t": "str"
+                            },
+                            "path_segments": {
+                              "t": "list",
+                              "n": "2-5",
+                              "i": {
+                                "t": "str"
+                              }
+                            },
+                            "target": {
+                              "t": "object",
+                              "c": {
+                                "file_path": {
+                                  "t": "str"
+                                },
+                                "files_list": {
+                                  "t": "bool"
+                                }
+                              }
+                            },
+                            "updated_at": {
+                              "t": "str",
+                              "fmt": [
+                                "iso-date"
+                              ]
+                            },
+                            "version": {
+                              "t": "str"
+                            }
+                          }
+                        }
+                      },
+                      "forgiven": {
+                        "t": "bool"
+                      },
+                      "memory_id": {
+                        "t": "str"
+                      },
+                      "memory_op_kind": {
+                        "t": "str"
+                      },
+                      "opened": {
+                        "t": "bool"
+                      },
+                      "owned": {
+                        "t": "bool"
+                      },
+                      "parsed": {
+                        "t": "object",
+                        "c": {
+                          "body": {
+                            "t": "str"
+                          },
+                          "body_has_rewritten_wikilinks": {
+                            "t": "bool"
+                          },
+                          "description": {
+                            "t": "null+str"
+                          },
+                          "metadata": {
+                            "t": "object",
+                            "c": {}
+                          },
+                          "name": {
+                            "t": "null+str"
+                          },
+                          "wikilink_refs": {
+                            "t": "list",
+                            "n": "0"
+                          },
+                          "wikilinks": {
+                            "t": "list",
+                            "n": "0"
+                          }
+                        }
+                      },
+                      "path": {
+                        "t": "str"
+                      },
+                      "path_segments": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "str"
+                        }
+                      },
+                      "target": {
+                        "t": "object",
+                        "c": {
+                          "file_path": {
+                            "t": "str"
+                          },
+                          "files_list": {
+                            "t": "bool"
+                          }
+                        }
+                      },
+                      "title": {
+                        "t": "str"
+                      },
+                      "updated_at": {
+                        "t": "null+str",
+                        "fmt": [
+                          "iso-date"
+                        ]
+                      },
+                      "url": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "version": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "summaries": {
+                    "t": "list",
+                    "n": "6-20",
+                    "i": {
+                      "t": "object",
+                      "c": {
+                        "summary": {
+                          "t": "str"
+                        }
+                      }
+                    }
+                  },
+                  "text": {
+                    "t": "str",
+                    "fmt": [
+                      "url"
+                    ]
+                  },
+                  "thinking": {
+                    "t": "str"
+                  },
+                  "thinking_hidden": {
+                    "t": "bool"
+                  },
+                  "tool_identifier": {
+                    "t": "null"
+                  },
+                  "tool_origin": {
+                    "t": "str"
+                  },
+                  "tool_use_id": {
+                    "t": "str"
+                  },
+                  "truncated": {
+                    "t": "bool"
+                  },
+                  "type": {
+                    "t": "str"
+                  }
+                }
+              }
+            },
+            "created_at": {
+              "t": "str",
+              "fmt": [
+                "iso-date"
+              ]
+            },
+            "files": {
+              "t": "list",
+              "n": "1",
+              "i": {
+                "t": "object",
+                "c": {
+                  "created_at": {
+                    "t": "str",
+                    "fmt": [
+                      "iso-date"
+                    ]
+                  },
+                  "document_asset": {
+                    "t": "object",
+                    "c": {
+                      "file_variant": {
+                        "t": "str"
+                      },
+                      "page_count": {
+                        "t": "int"
+                      },
+                      "token_count": {
+                        "t": "int"
+                      },
+                      "url": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "file_kind": {
+                    "t": "str"
+                  },
+                  "file_name": {
+                    "t": "str"
+                  },
+                  "file_uuid": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  },
+                  "path": {
+                    "t": "str"
+                  },
+                  "preview_asset": {
+                    "t": "object",
+                    "c": {
+                      "file_variant": {
+                        "t": "str"
+                      },
+                      "image_height": {
+                        "t": "int"
+                      },
+                      "image_width": {
+                        "t": "int"
+                      },
+                      "primary_color": {
+                        "t": "str"
+                      },
+                      "url": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "preview_url": {
+                    "t": "str"
+                  },
+                  "size_bytes": {
+                    "t": "int"
+                  },
+                  "success": {
+                    "t": "bool"
+                  },
+                  "thumbnail_asset": {
+                    "t": "object",
+                    "c": {
+                      "file_variant": {
+                        "t": "str"
+                      },
+                      "image_height": {
+                        "t": "int"
+                      },
+                      "image_width": {
+                        "t": "int"
+                      },
+                      "primary_color": {
+                        "t": "str"
+                      },
+                      "url": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "thumbnail_url": {
+                    "t": "str"
+                  },
+                  "uuid": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  }
+                }
+              }
+            },
+            "index": {
+              "t": "int"
+            },
+            "input_mode": {
+              "t": "str"
+            },
+            "parent_message_uuid": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "sender": {
+              "t": "str"
+            },
+            "stop_reason": {
+              "t": "str"
+            },
+            "sync_sources": {
+              "t": "list",
+              "n": "0"
+            },
+            "text": {
+              "t": "str"
+            },
+            "truncated": {
+              "t": "bool"
+            },
+            "updated_at": {
+              "t": "str",
+              "fmt": [
+                "iso-date"
+              ]
+            },
+            "uuid": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            }
+          }
+        }
+      },
+      "created_at": {
+        "t": "str",
+        "fmt": [
+          "iso-date"
+        ]
+      },
+      "current_leaf_message_uuid": {
+        "t": "str",
+        "fmt": [
+          "uuid"
+        ]
+      },
+      "effective_thinking_mode": {
+        "t": "str"
+      },
+      "is_archived": {
+        "t": "bool"
+      },
+      "is_multiplayer": {
+        "t": "bool"
+      },
+      "is_starred": {
+        "t": "bool"
+      },
+      "is_temporary": {
+        "t": "bool"
+      },
+      "is_wiggle_enabled": {
+        "t": "bool"
+      },
+      "model": {
+        "t": "str"
+      },
+      "name": {
+        "t": "str"
+      },
+      "platform": {
+        "t": "str"
+      },
+      "settings": {
+        "t": "object",
+        "c": {
+          "chat_memory_mode": {
+            "t": "str"
+          },
+          "effort_level": {
+            "t": "str"
+          },
+          "enabled_artifacts_attachments": {
+            "t": "bool"
+          },
+          "enabled_monkeys_in_a_barrel": {
+            "t": "bool"
+          },
+          "enabled_saffron": {
+            "t": "bool"
+          },
+          "enabled_turmeric": {
+            "t": "bool"
+          },
+          "enabled_web_search": {
+            "t": "bool"
+          },
+          "preview_feature_uses_artifacts": {
+            "t": "bool"
+          },
+          "thinking_mode": {
+            "t": "str"
+          },
+          "tool_search_mode": {
+            "t": "str"
+          }
+        }
+      },
+      "summary": {
+        "t": "str"
+      },
+      "updated_at": {
+        "t": "str",
+        "fmt": [
+          "iso-date"
+        ]
+      },
+      "uuid": {
+        "t": "str",
+        "fmt": [
+          "uuid"
+        ]
+      },
+      "workspace_upgraded": {
+        "t": "bool"
+      }
+    }
+  }
+}

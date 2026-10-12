@@ -1,0 +1,788 @@
+{
+  "platform": "gemini",
+  "scope": "corpus",
+  "etalon": null,
+  "sources": 488,
+  "signature": "d7f0add3a548b3b5bf76a98e3b69f45f8bc08607181acadc38a84ef6562d448d",
+  "shape": {
+    "t": "object",
+    "c": {
+      "conversation_id": {
+        "t": "str"
+      },
+      "title": {
+        "t": "str"
+      },
+      "turns": {
+        "t": "list",
+        "n": "21-100",
+        "i": {
+          "t": "list",
+          "n": "6-20",
+          "i": {
+            "t": "list+null+str",
+            "n": "21-100",
+            "i": {
+              "t": "bool+int+list+null+str",
+              "n": "100+",
+              "i": {
+                "t": "bool+int+list+null+str",
+                "n": "21-100",
+                "i": {
+                  "t": "bool+int+list+null+object+str",
+                  "c": {
+                    "1011": {
+                      "t": "list",
+                      "n": "1",
+                      "i": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "list+str",
+                          "n": "2-5",
+                          "i": {
+                            "t": "list+str",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "1012": {
+                      "t": "list",
+                      "n": "6-20",
+                      "i": {
+                        "t": "list+null",
+                        "n": "2-5",
+                        "i": {
+                          "t": "list+null+str",
+                          "n": "2-5",
+                          "i": {
+                            "t": "int+list+str",
+                            "n": "2-5",
+                            "i": {
+                              "t": "list+str",
+                              "n": "2-5",
+                              "i": {
+                                "t": "int"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "1016": {
+                      "t": "list",
+                      "n": "2-5",
+                      "i": {
+                        "t": "bool+list",
+                        "n": "21-100",
+                        "i": {
+                          "t": "bool+int+list+null+str",
+                          "n": "2-5",
+                          "i": {
+                            "t": "bool+list+null+str",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "11": {
+                      "t": "list",
+                      "n": "2-5",
+                      "i": {
+                        "t": "list+str",
+                        "n": "2-5",
+                        "i": {
+                          "t": "int"
+                        }
+                      }
+                    },
+                    "29": {
+                      "t": "list",
+                      "n": "0"
+                    },
+                    "44": {
+                      "t": "list",
+                      "n": "2-5",
+                      "i": {
+                        "t": "int"
+                      }
+                    }
+                  },
+                  "n": "100+",
+                  "i": {
+                    "t": "bool+int+list+null+object+str",
+                    "c": {
+                      "13": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "int+list+null",
+                            "n": "21-100",
+                            "i": {
+                              "t": "list",
+                              "n": "6-20",
+                              "i": {
+                                "t": "int+list+null+str",
+                                "n": "2-5",
+                                "fmt": [
+                                  "email",
+                                  "url"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "19": {
+                        "t": "int"
+                      },
+                      "33": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "list+null",
+                          "n": "6-20",
+                          "i": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+null"
+                            }
+                          }
+                        }
+                      },
+                      "35": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "bool+list+null+object+str",
+                            "c": {
+                              "103": {
+                                "t": "list",
+                                "n": "2-5",
+                                "i": {
+                                  "t": "int+list+str",
+                                  "n": "21-100",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              },
+                              "104": {
+                                "t": "list",
+                                "n": "2-5",
+                                "i": {
+                                  "t": "int+list+null+str",
+                                  "n": "6-20",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            },
+                            "n": "6-20",
+                            "i": {
+                              "t": "list+null+str",
+                              "n": "2-5",
+                              "i": {
+                                "t": "int+object+str",
+                                "c": {},
+                                "fmt": [
+                                  "url",
+                                  "uuid"
+                                ]
+                              },
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "4": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "list+null",
+                            "n": "6-20",
+                            "i": {
+                              "t": "list+null+str",
+                              "n": "2-5",
+                              "i": {
+                                "t": "list+null+str",
+                                "n": "6-20",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "40": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "int+list+null+str",
+                            "n": "2-5",
+                            "i": {
+                              "t": "list+str",
+                              "n": "0"
+                            }
+                          }
+                        }
+                      },
+                      "44": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+list+str",
+                              "n": "2-5",
+                              "i": {
+                                "t": "list+null+str",
+                                "n": "6-20"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "45": {
+                        "t": "list",
+                        "n": "0"
+                      },
+                      "46": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+list+null",
+                              "n": "6-20",
+                              "i": {
+                                "t": "int+list+null+str",
+                                "n": "2-5",
+                                "fmt": [
+                                  "url",
+                                  "uuid"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "49": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "list",
+                            "n": "6-20",
+                            "i": {
+                              "t": "list+str",
+                              "n": "2-5",
+                              "i": {
+                                "t": "int+list+null+str",
+                                "n": "2-5"
+                              },
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "53": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "int"
+                        }
+                      },
+                      "57": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "bool+int+list+null+str",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "fmt": [
+                              "uuid"
+                            ]
+                          }
+                        }
+                      },
+                      "59": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "list",
+                          "n": "1",
+                          "i": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "list+null+str",
+                              "n": "6-20",
+                              "i": {
+                                "t": "int+list+null+str",
+                                "n": "2-5",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "7": {
+                        "t": "list",
+                        "n": "1",
+                        "i": {
+                          "t": "int"
+                        }
+                      },
+                      "73": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "int+null+str"
+                        }
+                      },
+                      "8": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "list+null",
+                          "n": "2-5",
+                          "i": {
+                            "t": "bool+list",
+                            "n": "6-20",
+                            "i": {
+                              "t": "bool+list+null",
+                              "n": "6-20",
+                              "i": {
+                                "t": "bool+int+list+null+str",
+                                "n": "21-100",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "81": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "int+list+str",
+                            "n": "6-20",
+                            "i": {
+                              "t": "int+list+null+str",
+                              "n": "21-100",
+                              "i": {
+                                "t": "float+int+list+null+object+str",
+                                "c": {},
+                                "n": "6-20",
+                                "fmt": [
+                                  "url"
+                                ]
+                              },
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "85": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "int+list",
+                            "n": "6-20",
+                            "i": {
+                              "t": "int+list+null+str",
+                              "n": "21-100",
+                              "i": {
+                                "t": "float+int+list+null+object+str",
+                                "c": {},
+                                "n": "6-20",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "87": {
+                        "t": "list",
+                        "n": "6-20",
+                        "i": {
+                          "t": "int+list+null",
+                          "n": "6-20",
+                          "i": {
+                            "t": "bool+int+list+null+str",
+                            "n": "6-20",
+                            "i": {
+                              "t": "int+list+null+str",
+                              "n": "6-20",
+                              "i": {
+                                "t": "int+list+str",
+                                "n": "2-5",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            },
+                            "fmt": [
+                              "url"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "n": "21-100",
+                    "i": {
+                      "t": "bool+int+list+null+object+str",
+                      "c": {
+                        "36": {
+                          "t": "list",
+                          "n": "1",
+                          "i": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "list+null+str",
+                              "n": "6-20",
+                              "i": {
+                                "t": "int+list+null+str",
+                                "n": "2-5",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "39": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "int+null+str"
+                          }
+                        },
+                        "54": {
+                          "t": "list",
+                          "n": "1",
+                          "i": {
+                            "t": "list",
+                            "n": "6-20",
+                            "i": {
+                              "t": "int+list+null",
+                              "n": "6-20",
+                              "i": {
+                                "t": "bool+int+list+null+str",
+                                "n": "6-20",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "58": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "int+list+null",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+list+null+str",
+                              "n": "2-5",
+                              "i": {
+                                "t": "list+null",
+                                "n": "2-5"
+                              }
+                            }
+                          }
+                        },
+                        "59": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+null+str"
+                            }
+                          }
+                        },
+                        "67": {
+                          "t": "list",
+                          "n": "1",
+                          "i": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "list",
+                              "n": "2-5",
+                              "i": {
+                                "t": "list+null",
+                                "n": "2-5"
+                              }
+                            }
+                          }
+                        },
+                        "69": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "int+list+null",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+list+null+str",
+                              "n": "2-5",
+                              "i": {
+                                "t": "list+str",
+                                "n": "2-5"
+                              }
+                            }
+                          }
+                        },
+                        "76": {
+                          "t": "list",
+                          "n": "6-20",
+                          "i": {
+                            "t": "list+null+str",
+                            "n": "6-20",
+                            "i": {
+                              "t": "int+list+null+str",
+                              "n": "2-5",
+                              "i": {
+                                "t": "int+list+null",
+                                "n": "6-20"
+                              },
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        },
+                        "80": {
+                          "t": "list",
+                          "n": "2-5",
+                          "i": {
+                            "t": "str"
+                          }
+                        }
+                      },
+                      "n": "6-20",
+                      "i": {
+                        "t": "bool+int+list+null+object+str",
+                        "c": {
+                          "102": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+list",
+                              "n": "1",
+                              "i": {
+                                "t": "list",
+                                "n": "6-20",
+                                "cut": true
+                              }
+                            }
+                          },
+                          "103": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+list+str",
+                              "n": "21-100",
+                              "i": {
+                                "t": "list",
+                                "n": "6-20",
+                                "cut": true
+                              },
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          },
+                          "104": {
+                            "t": "list",
+                            "n": "2-5",
+                            "i": {
+                              "t": "int+list+null+str",
+                              "n": "2-5",
+                              "i": {
+                                "t": "list",
+                                "n": "6-20",
+                                "cut": true
+                              },
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        },
+                        "n": "21-100",
+                        "i": {
+                          "t": "bool+float+int+list+null+object+str",
+                          "c": {
+                            "102": {
+                              "t": "list",
+                              "n": "2-5",
+                              "i": {
+                                "t": "int+list",
+                                "n": "1"
+                              }
+                            },
+                            "103": {
+                              "t": "list",
+                              "n": "2-5",
+                              "i": {
+                                "t": "int+list+str",
+                                "n": "21-100",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            },
+                            "104": {
+                              "t": "list",
+                              "n": "2-5",
+                              "i": {
+                                "t": "int+list+null+str",
+                                "n": "6-20",
+                                "fmt": [
+                                  "url"
+                                ]
+                              }
+                            }
+                          },
+                          "n": "21-100",
+                          "i": {
+                            "t": "bool+float+int+list+null+object+str",
+                            "c": {
+                              "1011": {
+                                "t": "list",
+                                "n": "1",
+                                "cut": true
+                              },
+                              "1012": {
+                                "t": "list",
+                                "n": "6-20",
+                                "cut": true
+                              },
+                              "1016": {
+                                "t": "list",
+                                "n": "2-5",
+                                "cut": true
+                              },
+                              "37": {
+                                "t": "list",
+                                "n": "1",
+                                "cut": true
+                              }
+                            },
+                            "n": "21-100",
+                            "i": {
+                              "t": "bool+float+int+list+null+object+str",
+                              "c": {},
+                              "n": "21-100",
+                              "fmt": [
+                                "iso-date",
+                                "url",
+                                "uuid"
+                              ]
+                            },
+                            "fmt": [
+                              "email",
+                              "url",
+                              "uuid"
+                            ]
+                          },
+                          "fmt": [
+                            "url",
+                            "uuid"
+                          ]
+                        },
+                        "fmt": [
+                          "url",
+                          "uuid"
+                        ]
+                      },
+                      "fmt": [
+                        "url"
+                      ]
+                    },
+                    "fmt": [
+                      "url"
+                    ]
+                  },
+                  "fmt": [
+                    "uuid"
+                  ]
+                },
+                "fmt": [
+                  "url"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

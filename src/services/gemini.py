@@ -593,6 +593,7 @@ class GeminiService(BaseService):
             "title": ref.title,
             "turns": turns,
         }
+        self.record_api_shape(payload)
         conv = self.parser.parse(
             "",
             conversation_id=ref.id,

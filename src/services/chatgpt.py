@@ -819,6 +819,7 @@ class ChatGPTService(BaseService):
             return super().export_conversation_with_html(ref)
         client = self._api_client()
         data = self._fetch_conversation_api(client, ref.id)
+        self.record_api_shape(data)
         conv = self.parser.parse(
             "", conversation_id=ref.id, extra={"api": data}
         )

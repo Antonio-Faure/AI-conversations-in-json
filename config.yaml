@@ -39,6 +39,11 @@ sidebar:
   stable_rounds: 4
 
 services:
+  # Monitoring de similarite de forme des payloads API (references versionnees
+  # dans tests/fixtures/api_shapes/, generees par scripts/api_bench.py) :
+  #   api_health: {enabled: true, threshold: 95, on_break: warn}
+  # `on_break: stop` arrete le service si un payload passe sous 80 % (BREAK).
+  # Bilan ecrit dans exports/<plateforme>/api_health.json en fin de run.
   chatgpt:
     enabled: true
     url: https://chatgpt.com/

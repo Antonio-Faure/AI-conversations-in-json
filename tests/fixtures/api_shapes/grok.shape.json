@@ -1,0 +1,2006 @@
+{
+  "platform": "grok",
+  "scope": "corpus",
+  "etalon": null,
+  "sources": 253,
+  "signature": "77f72bce256fc77bf1229cd99cbd1670ad8a9c44eedeefdf6e3fe542641d40fd",
+  "shape": {
+    "t": "object",
+    "c": {
+      "conversation": {
+        "t": "object",
+        "c": {
+          "conversationId": {
+            "t": "str",
+            "fmt": [
+              "uuid"
+            ]
+          },
+          "createTime": {
+            "t": "str",
+            "fmt": [
+              "iso-date"
+            ]
+          },
+          "kind": {
+            "t": "str"
+          },
+          "latestAssetMetadata": {
+            "t": "null"
+          },
+          "mediaTypes": {
+            "t": "list",
+            "n": "1",
+            "i": {
+              "t": "str"
+            }
+          },
+          "modifyTime": {
+            "t": "str",
+            "fmt": [
+              "iso-date"
+            ]
+          },
+          "starred": {
+            "t": "bool"
+          },
+          "systemPromptName": {
+            "t": "str"
+          },
+          "taskResult": {
+            "t": "null"
+          },
+          "temporary": {
+            "t": "bool"
+          },
+          "title": {
+            "t": "str"
+          },
+          "viewerIsOwner": {
+            "t": "bool"
+          },
+          "workspaces": {
+            "t": "list",
+            "n": "0"
+          }
+        }
+      },
+      "responses": {
+        "t": "list",
+        "n": "100+",
+        "i": {
+          "t": "object",
+          "c": {
+            "cardAttachmentsJson": {
+              "t": "list",
+              "n": "21-100",
+              "i": {
+                "t": "str",
+                "fmt": [
+                  "email"
+                ]
+              }
+            },
+            "citedCollectionSearchResults": {
+              "t": "list",
+              "n": "0"
+            },
+            "citedConnectorSearchResults": {
+              "t": "list",
+              "n": "0"
+            },
+            "citedRagResults": {
+              "t": "list",
+              "n": "0"
+            },
+            "citedWebSearchResults": {
+              "t": "list",
+              "n": "100+",
+              "i": {
+                "t": "object",
+                "c": {
+                  "preview": {
+                    "t": "str"
+                  },
+                  "title": {
+                    "t": "str"
+                  },
+                  "url": {
+                    "t": "str",
+                    "fmt": [
+                      "url"
+                    ]
+                  }
+                }
+              }
+            },
+            "citedXposts": {
+              "t": "list",
+              "n": "0"
+            },
+            "collectionSearchResults": {
+              "t": "list",
+              "n": "0"
+            },
+            "connectorSearchResults": {
+              "t": "list",
+              "n": "0"
+            },
+            "createTime": {
+              "t": "str",
+              "fmt": [
+                "iso-date"
+              ]
+            },
+            "fileAttachmentAssetMetadata": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "object",
+                "c": {
+                  "assetId": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  },
+                  "auxKeys": {
+                    "t": "object",
+                    "c": {
+                      "image_edit_is_root_user_uploaded": {
+                        "t": "str"
+                      },
+                      "original-image": {
+                        "t": "str"
+                      },
+                      "preview-image": {
+                        "t": "str"
+                      },
+                      "r_rated": {
+                        "t": "str"
+                      },
+                      "thumbhash": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "createTime": {
+                    "t": "str",
+                    "fmt": [
+                      "iso-date"
+                    ]
+                  },
+                  "currentConversationId": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  },
+                  "fileSource": {
+                    "t": "str"
+                  },
+                  "height": {
+                    "t": "int"
+                  },
+                  "inlineStatus": {
+                    "t": "str"
+                  },
+                  "isDeleted": {
+                    "t": "bool"
+                  },
+                  "isLatest": {
+                    "t": "bool"
+                  },
+                  "isModelGenerated": {
+                    "t": "bool"
+                  },
+                  "isRootAssetCreatedByModel": {
+                    "t": "bool"
+                  },
+                  "key": {
+                    "t": "str"
+                  },
+                  "lastUseTime": {
+                    "t": "str",
+                    "fmt": [
+                      "iso-date"
+                    ]
+                  },
+                  "mimeType": {
+                    "t": "str"
+                  },
+                  "name": {
+                    "t": "str"
+                  },
+                  "ownerUserId": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  },
+                  "previewImageKey": {
+                    "t": "str"
+                  },
+                  "rRated": {
+                    "t": "bool"
+                  },
+                  "responseId": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  },
+                  "rootAssetId": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  },
+                  "rootAssetSourceConversationId": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  },
+                  "sharedWithTeam": {
+                    "t": "bool"
+                  },
+                  "sharedWithUserIds": {
+                    "t": "list",
+                    "n": "0"
+                  },
+                  "sizeBytes": {
+                    "t": "int"
+                  },
+                  "sourceConversationId": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  },
+                  "summary": {
+                    "t": "str"
+                  },
+                  "thirdPartyFileId": {
+                    "t": "str"
+                  },
+                  "thumbhash": {
+                    "t": "str"
+                  },
+                  "updateTime": {
+                    "t": "str",
+                    "fmt": [
+                      "iso-date"
+                    ]
+                  },
+                  "width": {
+                    "t": "int"
+                  }
+                }
+              }
+            },
+            "fileAttachments": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "str",
+                "fmt": [
+                  "uuid"
+                ]
+              }
+            },
+            "fileAttachmentsMetadata": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "object",
+                "c": {
+                  "createTime": {
+                    "t": "str",
+                    "fmt": [
+                      "iso-date"
+                    ]
+                  },
+                  "fileMetadataId": {
+                    "t": "str",
+                    "fmt": [
+                      "uuid"
+                    ]
+                  },
+                  "fileMimeType": {
+                    "t": "str"
+                  },
+                  "fileName": {
+                    "t": "str"
+                  },
+                  "fileSource": {
+                    "t": "str"
+                  },
+                  "fileUri": {
+                    "t": "str"
+                  },
+                  "parsedFileUri": {
+                    "t": "str"
+                  },
+                  "thirdPartyFileId": {
+                    "t": "str"
+                  }
+                }
+              }
+            },
+            "fileIds": {
+              "t": "list",
+              "n": "0"
+            },
+            "fileUris": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "str",
+                "fmt": [
+                  "uuid"
+                ]
+              }
+            },
+            "generatedImageHeight": {
+              "t": "int"
+            },
+            "generatedImageUrls": {
+              "t": "list",
+              "n": "2-5",
+              "i": {
+                "t": "str"
+              }
+            },
+            "generatedImageWidth": {
+              "t": "int"
+            },
+            "imageAttachments": {
+              "t": "list",
+              "n": "0"
+            },
+            "imageEditUris": {
+              "t": "list",
+              "n": "0"
+            },
+            "inputChunks": {
+              "t": "list",
+              "n": "0"
+            },
+            "isControl": {
+              "t": "bool"
+            },
+            "manual": {
+              "t": "bool"
+            },
+            "mediaTypes": {
+              "t": "list",
+              "n": "1",
+              "i": {
+                "t": "str"
+              }
+            },
+            "message": {
+              "t": "str",
+              "fmt": [
+                "url"
+              ]
+            },
+            "metadata": {
+              "t": "object",
+              "c": {
+                "cited_web_results": {
+                  "t": "list",
+                  "n": "21-100",
+                  "i": {
+                    "t": "object",
+                    "c": {
+                      "1": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "14": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "15": {
+                        "t": "str"
+                      },
+                      "2": {
+                        "t": "str"
+                      },
+                      "3": {
+                        "t": "str"
+                      },
+                      "4": {
+                        "t": "str",
+                        "fmt": [
+                          "iso-date"
+                        ]
+                      },
+                      "6": {
+                        "t": "str"
+                      }
+                    }
+                  }
+                },
+                "deepsearchPreset": {
+                  "t": "str"
+                },
+                "deepsearch_headers": {
+                  "t": "list",
+                  "n": "6-20",
+                  "i": {
+                    "t": "object",
+                    "c": {
+                      "1": {
+                        "t": "str"
+                      },
+                      "2": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "1": {
+                              "t": "str"
+                            },
+                            "10": {
+                              "t": "list",
+                              "n": "21-100",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "1": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "uuid"
+                                    ]
+                                  },
+                                  "2": {
+                                    "t": "list",
+                                    "n": "6-20",
+                                    "i": {
+                                      "t": "object",
+                                      "c": {
+                                        "1": {
+                                          "t": "str",
+                                          "fmt": [
+                                            "email",
+                                            "url"
+                                          ]
+                                        },
+                                        "10": {
+                                          "t": "str"
+                                        },
+                                        "11": {
+                                          "t": "str"
+                                        },
+                                        "13": {
+                                          "t": "str",
+                                          "fmt": [
+                                            "url"
+                                          ]
+                                        },
+                                        "14": {
+                                          "t": "str",
+                                          "fmt": [
+                                            "url"
+                                          ]
+                                        },
+                                        "2": {
+                                          "t": "str"
+                                        },
+                                        "3": {
+                                          "t": "str"
+                                        },
+                                        "4": {
+                                          "t": "str",
+                                          "fmt": [
+                                            "iso-date"
+                                          ]
+                                        },
+                                        "6": {
+                                          "t": "str"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "3": {
+                                    "t": "list",
+                                    "n": "6-20",
+                                    "i": {
+                                      "t": "str"
+                                    }
+                                  },
+                                  "5": {
+                                    "t": "str"
+                                  },
+                                  "6": {
+                                    "t": "str"
+                                  }
+                                }
+                              }
+                            },
+                            "11": {
+                              "t": "str"
+                            },
+                            "4": {
+                              "t": "str"
+                            },
+                            "9": {
+                              "t": "list",
+                              "n": "6-20",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "1": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  },
+                                  "2": {
+                                    "t": "str"
+                                  },
+                                  "3": {
+                                    "t": "str"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "entities": {
+                  "t": "object",
+                  "c": {
+                    "1": {
+                      "t": "list",
+                      "n": "2-5",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "-1": {
+                            "t": "int"
+                          },
+                          "-2": {
+                            "t": "int"
+                          },
+                          "-3": {
+                            "t": "str"
+                          }
+                        }
+                      }
+                    },
+                    "2": {
+                      "t": "list",
+                      "n": "6-20",
+                      "i": {
+                        "t": "object",
+                        "c": {
+                          "1": {
+                            "t": "int"
+                          },
+                          "2": {
+                            "t": "int"
+                          },
+                          "3": {
+                            "t": "str"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "generated_image_height": {
+                  "t": "int"
+                },
+                "generated_image_width": {
+                  "t": "int"
+                },
+                "grok_mode": {
+                  "t": "int"
+                },
+                "is_quick_answer": {
+                  "t": "bool"
+                },
+                "is_think_harder": {
+                  "t": "bool"
+                },
+                "last_used_model": {
+                  "t": "str"
+                },
+                "llm_info": {
+                  "t": "object",
+                  "c": {
+                    "modelHash": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "media_post_ids": {
+                  "t": "list",
+                  "n": "100+",
+                  "i": {
+                    "t": "int"
+                  }
+                },
+                "mh_timestamp": {
+                  "t": "int"
+                },
+                "modelConfigOverride": {
+                  "t": "object",
+                  "c": {
+                    "modelMap": {
+                      "t": "object",
+                      "c": {}
+                    }
+                  }
+                },
+                "requestModelDetails": {
+                  "t": "object",
+                  "c": {
+                    "modelId": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "request_metadata": {
+                  "t": "object",
+                  "c": {
+                    "effort": {
+                      "t": "str"
+                    },
+                    "mode": {
+                      "t": "str"
+                    },
+                    "model": {
+                      "t": "str"
+                    },
+                    "source": {
+                      "t": "str"
+                    }
+                  }
+                },
+                "request_trace_id": {
+                  "t": "str",
+                  "fmt": [
+                    "hash"
+                  ]
+                },
+                "stream_errors": {
+                  "t": "list",
+                  "n": "1",
+                  "i": {
+                    "t": "object",
+                    "c": {
+                      "globalRateLimit": {
+                        "t": "object",
+                        "c": {}
+                      },
+                      "message": {
+                        "t": "str"
+                      },
+                      "modelNotAvailable": {
+                        "t": "object",
+                        "c": {}
+                      },
+                      "severity": {
+                        "t": "str"
+                      },
+                      "systemKillSwitch": {
+                        "t": "object",
+                        "c": {
+                          "featureName": {
+                            "t": "str"
+                          }
+                        }
+                      },
+                      "usageLimitReached": {
+                        "t": "object",
+                        "c": {}
+                      }
+                    }
+                  }
+                },
+                "summarized_trace": {
+                  "t": "str"
+                },
+                "ui_layout": {
+                  "t": "object",
+                  "c": {
+                    "1": {
+                      "t": "int"
+                    },
+                    "5": {
+                      "t": "list",
+                      "n": "2-5",
+                      "i": {
+                        "t": "str"
+                      }
+                    },
+                    "effort": {
+                      "t": "int+null+str"
+                    },
+                    "reasoningUiLayout": {
+                      "t": "str"
+                    },
+                    "reasoning_ui_layout": {
+                      "t": "str"
+                    },
+                    "rolloutIds": {
+                      "t": "list",
+                      "n": "2-5",
+                      "i": {
+                        "t": "str"
+                      }
+                    },
+                    "rollout_ids": {
+                      "t": "list",
+                      "n": "0"
+                    },
+                    "steerModelId": {
+                      "t": "str"
+                    },
+                    "steer_model_id": {
+                      "t": "null+str"
+                    },
+                    "willThinkLong": {
+                      "t": "bool"
+                    },
+                    "will_think_long": {
+                      "t": "bool"
+                    }
+                  }
+                },
+                "web_results": {
+                  "t": "list",
+                  "n": "21-100",
+                  "i": {
+                    "t": "object",
+                    "c": {
+                      "1": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "14": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "15": {
+                        "t": "str"
+                      },
+                      "2": {
+                        "t": "str"
+                      },
+                      "3": {
+                        "t": "str"
+                      },
+                      "4": {
+                        "t": "str",
+                        "fmt": [
+                          "iso-date"
+                        ]
+                      },
+                      "6": {
+                        "t": "str"
+                      }
+                    }
+                  }
+                },
+                "x_children": {
+                  "t": "list",
+                  "n": "6-20",
+                  "i": {
+                    "t": "int"
+                  }
+                },
+                "x_parent": {
+                  "t": "int"
+                }
+              }
+            },
+            "model": {
+              "t": "str"
+            },
+            "outputChunks": {
+              "t": "list",
+              "n": "0"
+            },
+            "parentResponseId": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "partial": {
+              "t": "bool"
+            },
+            "query": {
+              "t": "str",
+              "fmt": [
+                "url"
+              ]
+            },
+            "queryType": {
+              "t": "str"
+            },
+            "ragResults": {
+              "t": "list",
+              "n": "0"
+            },
+            "requestMetadata": {
+              "t": "object",
+              "c": {
+                "effort": {
+                  "t": "str"
+                },
+                "mode": {
+                  "t": "str"
+                },
+                "model": {
+                  "t": "str"
+                }
+              }
+            },
+            "responseId": {
+              "t": "str",
+              "fmt": [
+                "uuid"
+              ]
+            },
+            "searchProductResults": {
+              "t": "list",
+              "n": "0"
+            },
+            "sender": {
+              "t": "str"
+            },
+            "shared": {
+              "t": "bool"
+            },
+            "steps": {
+              "t": "list",
+              "n": "21-100",
+              "i": {
+                "t": "object",
+                "c": {
+                  "collectionSearchResults": {
+                    "t": "list",
+                    "n": "0"
+                  },
+                  "connectorSearchResults": {
+                    "t": "list",
+                    "n": "0"
+                  },
+                  "ragResults": {
+                    "t": "list",
+                    "n": "0"
+                  },
+                  "rolloutId": {
+                    "t": "str"
+                  },
+                  "tags": {
+                    "t": "list",
+                    "n": "2-5",
+                    "i": {
+                      "t": "str"
+                    }
+                  },
+                  "text": {
+                    "t": "list",
+                    "n": "2-5",
+                    "i": {
+                      "t": "str"
+                    }
+                  },
+                  "toolUsageCards": {
+                    "t": "list",
+                    "n": "1",
+                    "i": {
+                      "t": "object",
+                      "c": {
+                        "bash": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "command": {
+                                  "t": "str"
+                                },
+                                "description": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "browsePage": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "instructions": {
+                                  "t": "str"
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "browserTab": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "tabId": {
+                                  "t": "str"
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "chatroomSend": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "message": {
+                                  "t": "str"
+                                },
+                                "to": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "codeExecution": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "code": {
+                                  "t": "str"
+                                },
+                                "language": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "initTerminalSession": {
+                          "t": "object",
+                          "c": {}
+                        },
+                        "mcp": {
+                          "t": "object",
+                          "c": {
+                            "toolArgsJson": {
+                              "t": "str"
+                            },
+                            "toolName": {
+                              "t": "str"
+                            }
+                          }
+                        },
+                        "openPage": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "pattern": {
+                                  "t": "str"
+                                },
+                                "url": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "readFile": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "displayName": {
+                                  "t": "str"
+                                },
+                                "filePath": {
+                                  "t": "str"
+                                },
+                                "fileType": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "toolUsageCardId": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        },
+                        "viewImage": {
+                          "t": "object",
+                          "c": {}
+                        },
+                        "viewXVideo": {
+                          "t": "object",
+                          "c": {}
+                        },
+                        "webSearch": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "query": {
+                                  "t": "str",
+                                  "fmt": [
+                                    "url"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "writeFile": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "content": {
+                                  "t": "str"
+                                },
+                                "filePath": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "xSearch": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "query": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "xThreadFetch": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "postId": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "xUserSearch": {
+                          "t": "object",
+                          "c": {
+                            "args": {
+                              "t": "object",
+                              "c": {
+                                "query": {
+                                  "t": "str"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "toolUsageResults": {
+                    "t": "list",
+                    "n": "2-5",
+                    "i": {
+                      "t": "object",
+                      "c": {
+                        "codeExecutionResult": {
+                          "t": "object",
+                          "c": {
+                            "commandTimedOut": {
+                              "t": "bool"
+                            },
+                            "exitCode": {
+                              "t": "int"
+                            },
+                            "stderr": {
+                              "t": "str"
+                            },
+                            "stdout": {
+                              "t": "str"
+                            }
+                          }
+                        },
+                        "toolUsageCardId": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        },
+                        "webSearchResults": {
+                          "t": "object",
+                          "c": {
+                            "results": {
+                              "t": "list",
+                              "n": "6-20",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "preview": {
+                                    "t": "str"
+                                  },
+                                  "title": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  },
+                                  "url": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "email",
+                                      "url"
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "xSearchResults": {
+                          "t": "object",
+                          "c": {
+                            "results": {
+                              "t": "list",
+                              "n": "6-20",
+                              "i": {
+                                "t": "object",
+                                "c": {
+                                  "citationId": {
+                                    "t": "str"
+                                  },
+                                  "createTime": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "iso-date"
+                                    ]
+                                  },
+                                  "name": {
+                                    "t": "str"
+                                  },
+                                  "parent": {
+                                    "t": "null+object",
+                                    "c": {
+                                      "citationId": {
+                                        "t": "str"
+                                      },
+                                      "createTime": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "iso-date"
+                                        ]
+                                      },
+                                      "name": {
+                                        "t": "str"
+                                      },
+                                      "parent": {
+                                        "t": "null"
+                                      },
+                                      "parentPostId": {
+                                        "t": "str"
+                                      },
+                                      "postId": {
+                                        "t": "str"
+                                      },
+                                      "profileImageUrl": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "url"
+                                        ]
+                                      },
+                                      "publicMetrics": {
+                                        "t": "object",
+                                        "c": {
+                                          "likeCount": {
+                                            "t": "int"
+                                          },
+                                          "quoteCount": {
+                                            "t": "int"
+                                          },
+                                          "replyCount": {
+                                            "t": "int"
+                                          },
+                                          "retweetCount": {
+                                            "t": "int"
+                                          },
+                                          "viewCount": {
+                                            "t": "int"
+                                          }
+                                        }
+                                      },
+                                      "quote": {
+                                        "t": "null"
+                                      },
+                                      "quotePostId": {
+                                        "t": "str"
+                                      },
+                                      "text": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "url"
+                                        ]
+                                      },
+                                      "textMarkdown": {
+                                        "t": "str"
+                                      },
+                                      "username": {
+                                        "t": "str"
+                                      },
+                                      "verifiedType": {
+                                        "t": "str"
+                                      }
+                                    }
+                                  },
+                                  "parentPostId": {
+                                    "t": "str"
+                                  },
+                                  "postId": {
+                                    "t": "str"
+                                  },
+                                  "profileImageUrl": {
+                                    "t": "str",
+                                    "fmt": [
+                                      "url"
+                                    ]
+                                  },
+                                  "publicMetrics": {
+                                    "t": "object",
+                                    "c": {
+                                      "likeCount": {
+                                        "t": "int"
+                                      },
+                                      "quoteCount": {
+                                        "t": "int"
+                                      },
+                                      "replyCount": {
+                                        "t": "int"
+                                      },
+                                      "retweetCount": {
+                                        "t": "int"
+                                      },
+                                      "viewCount": {
+                                        "t": "int"
+                                      }
+                                    }
+                                  },
+                                  "quote": {
+                                    "t": "null+object",
+                                    "c": {
+                                      "citationId": {
+                                        "t": "str"
+                                      },
+                                      "createTime": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "iso-date"
+                                        ]
+                                      },
+                                      "name": {
+                                        "t": "str"
+                                      },
+                                      "parent": {
+                                        "t": "null"
+                                      },
+                                      "parentPostId": {
+                                        "t": "str"
+                                      },
+                                      "postId": {
+                                        "t": "str"
+                                      },
+                                      "profileImageUrl": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "url"
+                                        ]
+                                      },
+                                      "publicMetrics": {
+                                        "t": "object",
+                                        "c": {
+                                          "likeCount": {
+                                            "t": "int"
+                                          },
+                                          "quoteCount": {
+                                            "t": "int"
+                                          },
+                                          "replyCount": {
+                                            "t": "int"
+                                          },
+                                          "retweetCount": {
+                                            "t": "int"
+                                          },
+                                          "viewCount": {
+                                            "t": "int"
+                                          }
+                                        }
+                                      },
+                                      "quote": {
+                                        "t": "null"
+                                      },
+                                      "quotePostId": {
+                                        "t": "str"
+                                      },
+                                      "text": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "url"
+                                        ]
+                                      },
+                                      "textMarkdown": {
+                                        "t": "str"
+                                      },
+                                      "username": {
+                                        "t": "str"
+                                      },
+                                      "verifiedType": {
+                                        "t": "str"
+                                      }
+                                    }
+                                  },
+                                  "quotePostId": {
+                                    "t": "str"
+                                  },
+                                  "text": {
+                                    "t": "str"
+                                  },
+                                  "textMarkdown": {
+                                    "t": "str"
+                                  },
+                                  "username": {
+                                    "t": "str"
+                                  },
+                                  "verifiedType": {
+                                    "t": "str"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "webSearchResults": {
+                    "t": "list",
+                    "n": "21-100",
+                    "i": {
+                      "t": "object",
+                      "c": {
+                        "preview": {
+                          "t": "str"
+                        },
+                        "title": {
+                          "t": "str",
+                          "fmt": [
+                            "url"
+                          ]
+                        },
+                        "url": {
+                          "t": "str",
+                          "fmt": [
+                            "email",
+                            "url"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "xpostIds": {
+                    "t": "list",
+                    "n": "21-100",
+                    "i": {
+                      "t": "str"
+                    }
+                  },
+                  "xposts": {
+                    "t": "list",
+                    "n": "21-100",
+                    "i": {
+                      "t": "object",
+                      "c": {
+                        "citationId": {
+                          "t": "str"
+                        },
+                        "createTime": {
+                          "t": "str",
+                          "fmt": [
+                            "iso-date"
+                          ]
+                        },
+                        "name": {
+                          "t": "str"
+                        },
+                        "parent": {
+                          "t": "null+object",
+                          "c": {
+                            "citationId": {
+                              "t": "str"
+                            },
+                            "createTime": {
+                              "t": "str",
+                              "fmt": [
+                                "iso-date"
+                              ]
+                            },
+                            "name": {
+                              "t": "str"
+                            },
+                            "parent": {
+                              "t": "null"
+                            },
+                            "parentPostId": {
+                              "t": "str"
+                            },
+                            "postId": {
+                              "t": "str"
+                            },
+                            "profileImageUrl": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "publicMetrics": {
+                              "t": "object",
+                              "c": {
+                                "likeCount": {
+                                  "t": "int"
+                                },
+                                "quoteCount": {
+                                  "t": "int"
+                                },
+                                "replyCount": {
+                                  "t": "int"
+                                },
+                                "retweetCount": {
+                                  "t": "int"
+                                },
+                                "viewCount": {
+                                  "t": "int"
+                                }
+                              }
+                            },
+                            "quote": {
+                              "t": "null"
+                            },
+                            "quotePostId": {
+                              "t": "str"
+                            },
+                            "text": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "textMarkdown": {
+                              "t": "str"
+                            },
+                            "username": {
+                              "t": "str"
+                            },
+                            "verifiedType": {
+                              "t": "str"
+                            }
+                          }
+                        },
+                        "parentPostId": {
+                          "t": "str"
+                        },
+                        "postId": {
+                          "t": "str"
+                        },
+                        "profileImageUrl": {
+                          "t": "str",
+                          "fmt": [
+                            "url"
+                          ]
+                        },
+                        "publicMetrics": {
+                          "t": "object",
+                          "c": {
+                            "likeCount": {
+                              "t": "int"
+                            },
+                            "quoteCount": {
+                              "t": "int"
+                            },
+                            "replyCount": {
+                              "t": "int"
+                            },
+                            "retweetCount": {
+                              "t": "int"
+                            },
+                            "viewCount": {
+                              "t": "int"
+                            }
+                          }
+                        },
+                        "quote": {
+                          "t": "null+object",
+                          "c": {
+                            "citationId": {
+                              "t": "str"
+                            },
+                            "createTime": {
+                              "t": "str",
+                              "fmt": [
+                                "iso-date"
+                              ]
+                            },
+                            "name": {
+                              "t": "str"
+                            },
+                            "parent": {
+                              "t": "null"
+                            },
+                            "parentPostId": {
+                              "t": "str"
+                            },
+                            "postId": {
+                              "t": "str"
+                            },
+                            "profileImageUrl": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "publicMetrics": {
+                              "t": "object",
+                              "c": {
+                                "likeCount": {
+                                  "t": "int"
+                                },
+                                "quoteCount": {
+                                  "t": "int"
+                                },
+                                "replyCount": {
+                                  "t": "int"
+                                },
+                                "retweetCount": {
+                                  "t": "int"
+                                },
+                                "viewCount": {
+                                  "t": "int"
+                                }
+                              }
+                            },
+                            "quote": {
+                              "t": "null"
+                            },
+                            "quotePostId": {
+                              "t": "str"
+                            },
+                            "text": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            },
+                            "textMarkdown": {
+                              "t": "str"
+                            },
+                            "username": {
+                              "t": "str"
+                            },
+                            "verifiedType": {
+                              "t": "str"
+                            }
+                          }
+                        },
+                        "quotePostId": {
+                          "t": "str"
+                        },
+                        "text": {
+                          "t": "str"
+                        },
+                        "textMarkdown": {
+                          "t": "str"
+                        },
+                        "username": {
+                          "t": "str"
+                        },
+                        "verifiedType": {
+                          "t": "str"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "streamErrors": {
+              "t": "list",
+              "n": "1",
+              "i": {
+                "t": "object",
+                "c": {
+                  "globalRateLimit": {
+                    "t": "object",
+                    "c": {}
+                  },
+                  "message": {
+                    "t": "str"
+                  },
+                  "modelNotAvailable": {
+                    "t": "object",
+                    "c": {}
+                  },
+                  "severity": {
+                    "t": "str"
+                  },
+                  "systemKillSwitch": {
+                    "t": "object",
+                    "c": {
+                      "featureName": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "usageLimitReached": {
+                    "t": "object",
+                    "c": {
+                      "midTurn": {
+                        "t": "bool"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "thinkingEndTime": {
+              "t": "str",
+              "fmt": [
+                "iso-date"
+              ]
+            },
+            "thinkingStartTime": {
+              "t": "str",
+              "fmt": [
+                "iso-date"
+              ]
+            },
+            "toolResponses": {
+              "t": "list",
+              "n": "0"
+            },
+            "uiLayout": {
+              "t": "object",
+              "c": {
+                "effort": {
+                  "t": "str"
+                },
+                "reasoningUiLayout": {
+                  "t": "str"
+                },
+                "rolloutIds": {
+                  "t": "list",
+                  "n": "2-5",
+                  "i": {
+                    "t": "str"
+                  }
+                },
+                "steerModelId": {
+                  "t": "str"
+                },
+                "willThinkLong": {
+                  "t": "bool"
+                }
+              }
+            },
+            "webSearchResults": {
+              "t": "list",
+              "n": "100+",
+              "i": {
+                "t": "object",
+                "c": {
+                  "preview": {
+                    "t": "str"
+                  },
+                  "title": {
+                    "t": "str",
+                    "fmt": [
+                      "url"
+                    ]
+                  },
+                  "url": {
+                    "t": "str",
+                    "fmt": [
+                      "email",
+                      "url"
+                    ]
+                  }
+                }
+              }
+            },
+            "webpageUrls": {
+              "t": "list",
+              "n": "0"
+            },
+            "xpostIds": {
+              "t": "list",
+              "n": "100+",
+              "i": {
+                "t": "str"
+              }
+            },
+            "xposts": {
+              "t": "list",
+              "n": "21-100",
+              "i": {
+                "t": "object",
+                "c": {
+                  "citationId": {
+                    "t": "str"
+                  },
+                  "createTime": {
+                    "t": "str",
+                    "fmt": [
+                      "iso-date"
+                    ]
+                  },
+                  "name": {
+                    "t": "str"
+                  },
+                  "parent": {
+                    "t": "null+object",
+                    "c": {
+                      "citationId": {
+                        "t": "str"
+                      },
+                      "createTime": {
+                        "t": "str",
+                        "fmt": [
+                          "iso-date"
+                        ]
+                      },
+                      "name": {
+                        "t": "str"
+                      },
+                      "parent": {
+                        "t": "null"
+                      },
+                      "parentPostId": {
+                        "t": "str"
+                      },
+                      "postId": {
+                        "t": "str"
+                      },
+                      "profileImageUrl": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "publicMetrics": {
+                        "t": "object",
+                        "c": {
+                          "likeCount": {
+                            "t": "int"
+                          },
+                          "quoteCount": {
+                            "t": "int"
+                          },
+                          "replyCount": {
+                            "t": "int"
+                          },
+                          "retweetCount": {
+                            "t": "int"
+                          },
+                          "viewCount": {
+                            "t": "int"
+                          }
+                        }
+                      },
+                      "quote": {
+                        "t": "null"
+                      },
+                      "quotePostId": {
+                        "t": "str"
+                      },
+                      "text": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "textMarkdown": {
+                        "t": "str"
+                      },
+                      "username": {
+                        "t": "str"
+                      },
+                      "verifiedType": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "parentPostId": {
+                    "t": "str"
+                  },
+                  "postId": {
+                    "t": "str"
+                  },
+                  "profileImageUrl": {
+                    "t": "str",
+                    "fmt": [
+                      "url"
+                    ]
+                  },
+                  "publicMetrics": {
+                    "t": "object",
+                    "c": {
+                      "likeCount": {
+                        "t": "int"
+                      },
+                      "quoteCount": {
+                        "t": "int"
+                      },
+                      "replyCount": {
+                        "t": "int"
+                      },
+                      "retweetCount": {
+                        "t": "int"
+                      },
+                      "viewCount": {
+                        "t": "int"
+                      }
+                    }
+                  },
+                  "quote": {
+                    "t": "null+object",
+                    "c": {
+                      "citationId": {
+                        "t": "str"
+                      },
+                      "createTime": {
+                        "t": "str",
+                        "fmt": [
+                          "iso-date"
+                        ]
+                      },
+                      "name": {
+                        "t": "str"
+                      },
+                      "parent": {
+                        "t": "null"
+                      },
+                      "parentPostId": {
+                        "t": "str"
+                      },
+                      "postId": {
+                        "t": "str"
+                      },
+                      "profileImageUrl": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "publicMetrics": {
+                        "t": "object",
+                        "c": {
+                          "likeCount": {
+                            "t": "int"
+                          },
+                          "quoteCount": {
+                            "t": "int"
+                          },
+                          "replyCount": {
+                            "t": "int"
+                          },
+                          "retweetCount": {
+                            "t": "int"
+                          },
+                          "viewCount": {
+                            "t": "int"
+                          }
+                        }
+                      },
+                      "quote": {
+                        "t": "null"
+                      },
+                      "quotePostId": {
+                        "t": "str"
+                      },
+                      "text": {
+                        "t": "str",
+                        "fmt": [
+                          "url"
+                        ]
+                      },
+                      "textMarkdown": {
+                        "t": "str"
+                      },
+                      "username": {
+                        "t": "str"
+                      },
+                      "verifiedType": {
+                        "t": "str"
+                      }
+                    }
+                  },
+                  "quotePostId": {
+                    "t": "str"
+                  },
+                  "text": {
+                    "t": "str"
+                  },
+                  "textMarkdown": {
+                    "t": "str"
+                  },
+                  "username": {
+                    "t": "str"
+                  },
+                  "verifiedType": {
+                    "t": "str"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -577,6 +577,7 @@ class ClaudeService(BaseService):
             return super().export_conversation_with_html(ref)
         client = self._api_client()
         data = self._fetch_conversation_api(client, ref.id)
+        self.record_api_shape(data)
         if not data.get("chat_messages"):
             raise EmptyConversationError(
                 f"claude: conversation sans message chargeable ({ref.id})"

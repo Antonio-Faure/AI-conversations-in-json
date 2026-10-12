@@ -609,6 +609,7 @@ class MistralService(BaseService):
             return super().export_conversation_with_html(ref)
         client = self._api_client()
         data = self._fetch_conversation_api(client, ref.id)
+        self.record_api_shape(data)
         if not (data.get("messages") or {}).get("items"):
             raise EmptyConversationError(
                 f"mistral: conversation sans message ({ref.id})"

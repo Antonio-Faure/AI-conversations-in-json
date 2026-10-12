@@ -150,6 +150,7 @@ class GrokService(BaseService):
             extra={"conversation": meta, "responses": responses},
         )
         self._raw_payload = {"conversation": meta, "responses": responses}
+        self.record_api_shape(self._raw_payload)
         return conv, None
 
     def take_raw_payload(self) -> Optional[Dict[str, Any]]:

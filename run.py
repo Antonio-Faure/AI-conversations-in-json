@@ -166,6 +166,12 @@ def _print_summary(summary, config: dict) -> None:
             f"patch={len(result.patched):<4} inchanges={len(result.unchanged):<4} "
             f"ignorees={len(result.skipped):<4} [{state}]"
         )
+        if result.api_health:
+            health = result.api_health
+            print(
+                f"{'':<12} api_health: {health['mean_score']}% "
+                f"n={health['n']} drift={health['drifts']}"
+            )
     print(f"Sortie: {Path(config['output_dir'])}")
 
 
