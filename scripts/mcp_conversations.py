@@ -896,7 +896,7 @@ def build_server(tools: ConversationTools):
     @server.tool(description=SEARCH_DESCRIPTION)
     def search(
         query: str,
-        k: int = 10,
+        k: int = 5,
         platforms: Optional[List[str]] = None,
         alpha: float = 0.6,
         date_from: Optional[str] = None,
