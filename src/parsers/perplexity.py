@@ -121,8 +121,77 @@ def _api_workflow_items(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
     return items
 
 
+#: segments markdown diffuses (`ask_text_0_markdown`, `ask_text_1_markdown`, ...)
+_API_ASK_TEXT_SEGMENT_RE = re.compile(r"^ask_text_(\d+)_markdown$")
+
+
+def _api_markdown_block_text(markdown: Dict[str, Any]) -> str:
+    """Texte d'un `markdown_block` : `answer`, sinon `chunks` rejoues.
+
+    `chunks` sont les deltas de streaming qui composent `answer` ; ils servent
+    de repli quand le texte final n'a pas ete fige (`answer` vide).
+    """
+    answer = str(markdown.get("answer") or "")
+    if answer.strip():
+        return answer
+    chunks = markdown.get("chunks") or []
+    return "".join(str(chunk) for chunk in chunks).strip()
+
+
+def _api_markdown_answer(entry: Dict[str, Any]) -> str:
+    """Reponse des blocs `markdown_block` (reponse diffusee en flux).
+
+    Les conversations recentes n'exposent plus la reponse dans un item
+    `WORKFLOW_ITEM_TEXT` : elle est decoupee en blocs `markdown_block` — un
+    bloc final `ask_text` (texte complet) precede de segments
+    `ask_text_N_markdown` (morceaux diffuses). On prend le bloc final quand il
+    porte du texte ; sinon on concatene les segments dans l'ordre
+    (`chunk_starting_offset`, puis numero du segment) ; sinon on rejoue les
+    `chunks` du bloc final.
+    """
+    final: Optional[Dict[str, Any]] = None
+    segments: List[tuple] = []
+    for block in entry.get("blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        markdown = block.get("markdown_block")
+        if not isinstance(markdown, dict):
+            continue
+        usage = str(block.get("intended_usage") or "")
+        match = _API_ASK_TEXT_SEGMENT_RE.match(usage)
+        if match:
+            segments.append((int(match.group(1)), markdown))
+        elif usage == "ask_text":
+            final = markdown
+    if final is not None:
+        text = _api_markdown_block_text(final)
+        if text:
+            return text
+    ordered: List[tuple] = []
+    for suffix, markdown in segments:
+        text = _api_markdown_block_text(markdown)
+        if not text:
+            continue
+        offset = markdown.get("chunk_starting_offset")
+        try:
+            offset = int(offset)
+        except (TypeError, ValueError):
+            offset = 0
+        ordered.append((offset, suffix, text))
+    ordered.sort(key=lambda item: (item[0], item[1]))
+    return "\n".join(item[2] for item in ordered)
+
+
 def _api_answer(entry: Dict[str, Any]) -> str:
-    """Texte de la reponse assistant (`WORKFLOW_ITEM_TEXT` variant `answer`)."""
+    """Texte de la reponse assistant.
+
+    Deux formes selon le mode de generation :
+      - items `WORKFLOW_ITEM_TEXT` variant `answer` du `workflow_block` ;
+      - blocs `markdown_block` (`ask_text` final + segments
+        `ask_text_N_markdown`) : les conversations recentes n'exposent plus la
+        reponse dans le workflow, d'ou la perte des reponses si on ne lit que
+        la premiere forme.
+    """
     parts: List[str] = []
     for item in _api_workflow_items(entry):
         if item.get("type") != "WORKFLOW_ITEM_TEXT":
@@ -133,7 +202,9 @@ def _api_answer(entry: Dict[str, Any]) -> str:
         text = str(text_payload.get("text") or "").strip()
         if text:
             parts.append(text)
-    return "\n\n".join(parts)
+    if parts:
+        return "\n\n".join(parts)
+    return _api_markdown_answer(entry)
 
 
 def _api_turn_results(entry: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -280,6 +351,60 @@ def _api_asset_images(entry: Dict[str, Any]) -> List[str]:
         if markdown not in images:
             images.append(markdown)
     return images
+
+
+def _api_media_markdown(entry: Dict[str, Any]) -> List[str]:
+    """Images et videos des blocs de medias d'une entree, en markdown.
+
+    `media_block` / `inline_entity_block.media_block` / `image_mode_block` /
+    `video_mode_block` portent les medias affiches dans la reponse. Pour une
+    image, le champ `image` est l'URL du media (a telecharger) et `url` la page
+    source : rendu en `![nom](image)`. Pour une video, `url` est la page de
+    lecture et `image` une simple vignette (YouTube) : rendu en lien
+    `[nom](url)`, a ne pas telecharger comme une image. Deduplication par URL,
+    ordre du payload.
+    """
+    images: List[str] = []
+    videos: List[str] = []
+    seen: set = set()
+    for block in entry.get("blocks") or []:
+        if not isinstance(block, dict):
+            continue
+        items: List[Dict[str, Any]] = []
+        for key in ("media_block", "image_mode_block", "video_mode_block"):
+            value = block.get(key)
+            if not isinstance(value, dict):
+                continue
+            for item in (value.get("media_items") or []) + (
+                value.get("generated_media_items") or []
+            ):
+                if isinstance(item, dict):
+                    items.append(item)
+        inline = block.get("inline_entity_block")
+        if isinstance(inline, dict):
+            media = inline.get("media_block")
+            if isinstance(media, dict):
+                for item in media.get("media_items") or []:
+                    if isinstance(item, dict):
+                        items.append(item)
+        for item in items:
+            name = str(item.get("name") or item.get("caption") or "").strip()
+            if str(item.get("medium") or "image") == "video":
+                url = str(item.get("url") or "").strip()
+                if not url.startswith(("http://", "https://")) or url in seen:
+                    continue
+                seen.add(url)
+                videos.append(f"[{name or url}]({url})")
+                continue
+            url = str(
+                item.get("image") or item.get("original_image_url")
+                or item.get("thumbnail") or ""
+            ).strip()
+            if not url.startswith(("http://", "https://")) or url in seen:
+                continue
+            seen.add(url)
+            images.append(f"![{name or 'image'}]({url})")
+    return images + videos
 
 
 class PerplexityParser(BaseParser):
@@ -501,13 +626,16 @@ class PerplexityParser(BaseParser):
         """Construit la conversation depuis le JSON de `/rest/thread/<id>`.
 
         ``data`` : ``{entries[], thread_metadata{}}``. Chaque entree est un tour
-        (``query_str`` = message utilisateur, reponse dans les items
-        ``WORKFLOW_ITEM_TEXT`` variant ``answer``), dans l'ordre chronologique
-        (`from_first=true`). Les pieces jointes (`is_attachment`) sont rendues en
-        markdown dans le message utilisateur, les sources web dans
-        ``Message.sources``, les etapes de workflow dans ``reasoning`` et les
-        fichiers generes dans ``artifacts``. Le LaTeX brut de l'API
-        (``\\(...\\)``/``\\[...\\]``) est normalise en ``$``/``$$``.
+        (``query_str`` = message utilisateur), dans l'ordre chronologique
+        (`from_first=true`). La reponse assistant vient des items
+        ``WORKFLOW_ITEM_TEXT`` variant ``answer`` du ``workflow_block`` ou, sur
+        les conversations recentes, des blocs ``markdown_block`` (bloc final
+        ``ask_text`` + segments ``ask_text_N_markdown``). Les pieces jointes
+        (`is_attachment`) sont rendues en markdown dans le message utilisateur,
+        les images/videos des blocs de medias sont ajoutees a la reponse, les
+        sources web dans ``Message.sources``, les etapes de workflow dans
+        ``reasoning`` et les fichiers generes dans ``artifacts``. Le LaTeX brut
+        de l'API (``\\(...\\)``/``\\[...\\]``) est normalise en ``$``/``$$``.
 
         Un tour sans reponse textuelle mais avec du raisonnement (etape de
         workflow) garde un message assistant vide : ne pas fusionner les deux
@@ -557,6 +685,9 @@ class PerplexityParser(BaseParser):
 
             answer = _normalize_api_math(_api_answer(entry))
             images = _api_asset_images(entry)
+            for markdown in _api_media_markdown(entry):
+                if markdown not in images:
+                    images.append(markdown)
             if images:
                 block = "\n\n".join(images)
                 answer = f"{answer}\n\n{block}".strip() if answer else block
