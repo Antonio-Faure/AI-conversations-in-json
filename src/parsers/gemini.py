@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import copy
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from bs4 import BeautifulSoup, NavigableString
 
@@ -109,6 +109,424 @@ _UI_TEXT_SELECTORS = (
     "[class*='screen-reader']",
     "[aria-hidden='true']",
 )
+
+# -- mapping API (payload brut `hNvQHb` de batchexecute) ----------------------
+#
+# Le payload de conversation est un tableau de tours :
+#   tour = [ [conv_id, r_<user>], [conv_id, r_<suite>, rc_<reponse>],
+#            <contenu utilisateur>, <contenu assistant>, [epoch, nanos] ]
+# - contenu utilisateur : parts `[texte, .., [groupes de pieces jointes]]`
+# - contenu assistant : candidats `[rc_id, [texte markdown], .., champs]` ;
+#   le texte porte des annotations (`?code_reference`, `[cite: N]`,
+#   `[file-tag: ..]`, URL d'image generee) qu'on normalise vers le markdown du
+#   schema, et les champs structures (dicts protobuf : `44` citations, `59`
+#   fichiers generes) portent les sources et les liens de telechargement. Les
+#   positions des champs varient selon la requete : on parcourt la structure au
+#   lieu de lire des index fixes.
+
+#: annotation de fence du payload : ```python?code_reference&code_event_index=1
+API_FENCE_RE = re.compile(r"(?m)^```([^\n`?]*)\?[^\n`]*$")
+#: bloc de code complet (info + corps) pour normaliser les lignes vides finales
+API_FENCE_BLOCK_RE = re.compile(r"(?ms)^```([^\n`]*)\n(.*?)^```[ \t]*$")
+#: marqueur de citation `[cite: N]` (la source est dans le champ `44`)
+API_CITE_RE = re.compile(r"\[cite:\s*\d+\]")
+#: marqueur de fichier genere `[file-tag: <id>]` (le lien est dans le champ `59`)
+API_FILE_TAG_RE = re.compile(r"\[file-tag:\s*[^\]]+\]")
+#: URL interne d'une image generee (remplacee par le markdown de l'image reelle)
+API_GENERATED_IMAGE_RE = re.compile(
+    r"https?://googleusercontent\.com/image_generation_content/\S+"
+)
+#: puce markdown du payload (`* item`) -> convention du rendu DOM (`- item`)
+API_BULLET_RE = re.compile(r"(?m)^(\s*)[*+] ")
+#: nom d'outil API -> libelle du schema (memes libelles que le parseur DOM)
+API_TOOL_IMAGE_MARKERS = ("image", "imagen", "banana")
+API_TOOL_LABELS = {
+    "google": "Recherche web",
+    "data_analysis_tool": "Exécution de code",
+    "image_generation_tool": "Génération d'images",
+    "canvas_tool": "Canvas",
+    "video_tool": "Analyse vidéo",
+}
+
+
+def _api_parts(content: Any) -> List[list]:
+    """Parts d'un message utilisateur (le champ ``turn[2]``).
+
+    Gemini envoie soit une part unique ``[texte, ..]``, soit une liste de
+    parts ; on normalise vers une liste de parts.
+    """
+    if not isinstance(content, list) or not content:
+        return []
+    first = content[0]
+    if isinstance(first, str):
+        return [content]
+    if isinstance(first, list):
+        if first and isinstance(first[0], list):
+            return [part for part in first if isinstance(part, list)]
+        return [first]
+    return []
+
+
+def _api_part_text(part: Any) -> str:
+    """Texte d'une part utilisateur (premier element)."""
+    return part[0] if isinstance(part, list) and isinstance(part[0], str) else ""
+
+
+def _api_walk(node: Any):
+    """Parcourt recursivement listes et dictionnaires d'une structure API."""
+    if isinstance(node, list):
+        yield node
+        for item in node:
+            yield from _api_walk(item)
+    elif isinstance(node, dict):
+        yield node
+        for item in node.values():
+            yield from _api_walk(item)
+
+
+def _api_values(node: Any) -> List[Any]:
+    """Valeurs d'un noeud (elements d'une liste, valeurs d'un dictionnaire)."""
+    if isinstance(node, list):
+        return list(node)
+    if isinstance(node, dict):
+        return list(node.values())
+    return []
+
+
+def _api_find_attachments(node: Any) -> List[list]:
+    """Noeuds pieces jointes ``[null, <type>, <nom>, ..]`` d'une structure."""
+    found: List[list] = []
+    if isinstance(node, list):
+        if (
+            len(node) >= 4
+            and node[0] is None
+            and isinstance(node[1], int)
+            and isinstance(node[2], str)
+            and node[2]
+        ):
+            found.append(node)
+            return found
+        for item in node:
+            found.extend(_api_find_attachments(item))
+    elif isinstance(node, dict):
+        for item in node.values():
+            found.extend(_api_find_attachments(item))
+    return found
+
+
+def _api_attachment_name(node: list) -> str:
+    return str(node[2]) if len(node) > 2 and isinstance(node[2], str) else ""
+
+
+def _api_attachment_mime(node: list) -> str:
+    for value in node[3:]:
+        if isinstance(value, str) and "/" in value and len(value) < 64:
+            return value
+    return ""
+
+
+def _api_attachment_urls(node: list) -> List[str]:
+    """URLs annexes d'une piece jointe (vignette, telechargement, envoi)."""
+    urls = node[7] if len(node) > 7 and isinstance(node[7], list) else []
+    return [url for url in urls if isinstance(url, str) and url.startswith("http")]
+
+
+def _api_download_url(node: list) -> str:
+    """URL de telechargement direct d'une piece jointe (sinon chaine vide)."""
+    for url in _api_attachment_urls(node):
+        if "contribution.usercontent.google.com/download" in url:
+            return url
+    return ""
+
+
+def _api_attachment_markdown(node: list) -> str:
+    """Piece jointe -> markdown : image ``![nom](url)`` ou lien de fichier.
+
+    Les images pointent l'URL ``lh3.googleusercontent.com/gg/..`` (telechargee
+    par la session) ; les fichiers non-image pointent l'URL de telechargement
+    ``contribution.usercontent.google.com/download`` (nom + extension connus,
+    telecharges dans ``files/``). Les medias (audio/video) portent en plus une
+    vignette ``gg`` : on la rend comme l'apercu image du DOM.
+    """
+    name = _api_attachment_name(node)
+    mime = _api_attachment_mime(node)
+    if mime.startswith("image/"):
+        url = node[3] if len(node) > 3 and isinstance(node[3], str) else ""
+        if url.startswith("http"):
+            alt = name or "image"
+            return f"![{alt}]({url})"
+        return ""
+    blocks: List[str] = []
+    thumb = next(
+        (url for url in _api_attachment_urls(node) if "googleusercontent.com/gg/" in url),
+        "",
+    )
+    if thumb and name:
+        blocks.append(f"![{name}]({thumb})")
+    download = _api_download_url(node)
+    if name and download:
+        blocks.append(f"[{name}]({download})")
+    if blocks:
+        return "\n\n".join(blocks)
+    return name
+
+
+def _api_message_attachments(part: list) -> List[list]:
+    """Pieces jointes reellement attachees au message (``part[4][0][3]``).
+
+    Le champ ``part[4][0][4]`` liste tous les fichiers de l'espace de travail
+    (rappeles a chaque tour) : on ne garde que ``[3]``, l'attachement du tour.
+    """
+    groups = part[4] if len(part) > 4 and isinstance(part[4], list) else []
+    found: List[list] = []
+    for group in groups:
+        if not isinstance(group, list) or len(group) < 4:
+            continue
+        used = group[3]
+        if isinstance(used, list):
+            for item in used:
+                found.extend(_api_find_attachments(item))
+    return found
+
+
+def _api_candidate(turn: list) -> Optional[list]:
+    """Premier candidat de reponse d'un tour (``turn[3][0][0]``)."""
+    if not isinstance(turn, list) or len(turn) < 4:
+        return None
+    candidates = turn[3][0] if isinstance(turn[3], list) else None
+    if isinstance(candidates, list) and candidates and isinstance(candidates[0], list):
+        return candidates[0]
+    return None
+
+
+def _api_assistant_text(turn: list) -> str:
+    """Texte markdown brut de la reponse (candidat -> liste de morceaux)."""
+    candidate = _api_candidate(turn)
+    chunks = (
+        candidate[1]
+        if candidate is not None and len(candidate) > 1 and isinstance(candidate[1], list)
+        else []
+    )
+    return "\n".join(chunk for chunk in chunks if isinstance(chunk, str))
+
+
+def _api_candidate_fields(candidate: Optional[list]) -> Dict[str, Any]:
+    """Champs structures d'un candidat (dicts protobuf du champ 12).
+
+    Les champs (citations `44`, fichiers `59`, blocs de code `39`...) vivent
+    dans des dictionnaires imbriques ; on fusionne ceux du candidat (la premiere
+    valeur rencontree gagne). La position du dict n'est pas fiable (elle varie
+    selon la taille de page demandee) : on parcourt tout le candidat.
+    """
+    if candidate is None:
+        return {}
+    fields: Dict[str, Any] = {}
+    for node in _api_walk(candidate):
+        if isinstance(node, dict):
+            for key, value in node.items():
+                fields.setdefault(key, value)
+    return fields
+
+
+def _api_source_label(node: list) -> str:
+    """Piece jointe citee -> libelle de source, format DOM ``JSON: donnees.json``."""
+    name = _api_attachment_name(node)
+    if not name:
+        return ""
+    if "." in name:
+        return f"{name.rsplit('.', 1)[1].upper()}: {name}"
+    mime = _api_attachment_mime(node)
+    return f"{mime.split('/')[-1].upper()}: {name}" if mime else name
+
+
+def _api_citations(candidate: Optional[list]) -> Dict[str, str]:
+    """Marqueurs ``[cite: N]`` -> libelle de source (champ ``44``)."""
+    fields = _api_candidate_fields(candidate)
+    out: Dict[str, str] = {}
+    for entry in fields.get("44") or []:
+        marker: Optional[str] = None
+        nodes: List[list] = []
+        for node in _api_walk(entry):
+            for item in _api_values(node):
+                if marker is None and isinstance(item, str) and item.startswith("[cite:"):
+                    marker = item
+            nodes.extend(_api_find_attachments(node))
+        if not marker or not nodes:
+            continue
+        label = _api_source_label(nodes[0])
+        if label:
+            out[marker] = label
+    return out
+
+
+def _api_file_tags(candidate: Optional[list]) -> Dict[str, str]:
+    """Marqueurs ``[file-tag: ..]`` -> lien markdown du fichier (champ ``59``)."""
+    fields = _api_candidate_fields(candidate)
+    out: Dict[str, str] = {}
+    for entry in fields.get("59") or []:
+        marker: Optional[str] = None
+        nodes: List[list] = []
+        for node in _api_walk(entry):
+            for item in _api_values(node):
+                if marker is None and isinstance(item, str) and item.startswith("[file-tag:"):
+                    marker = item
+            nodes.extend(_api_find_attachments(node))
+        if not marker or not nodes:
+            continue
+        markdown = _api_attachment_markdown(nodes[0])
+        if markdown:
+            out[marker] = markdown
+    return out
+
+
+def _api_generated_images(candidate: Optional[list]) -> Dict[str, str]:
+    """URL interne d'image generee -> markdown de l'image reelle.
+
+    Le texte de la reponse contient une URL ``image_generation_content`` (non
+    telechargeable) ; le champ structure associe porte le nom du fichier et
+    l'URL ``lh3.googleusercontent.com/gg/..`` de l'image (telechargeable). Le
+    noeud le plus proche qui porte les deux (URL + piece jointe) gagne.
+    """
+    if candidate is None:
+        return {}
+    best: Dict[str, Tuple[int, str]] = {}
+    for node in _api_walk(candidate):
+        urls = [
+            item
+            for sub in _api_walk(node)
+            for item in _api_values(sub)
+            if isinstance(item, str) and "image_generation_content" in item
+        ]
+        if not urls:
+            continue
+        attachments = _api_find_attachments(node)
+        if not attachments:
+            continue
+        markdown = _api_attachment_markdown(attachments[0])
+        if not markdown:
+            continue
+        size = sum(1 for _ in _api_walk(node))
+        for url in urls:
+            previous = best.get(url)
+            if previous is None or size < previous[0]:
+                best[url] = (size, markdown)
+    return {url: markdown for url, (_size, markdown) in best.items()}
+
+
+def _api_tools(turn: list, user_video: bool = False) -> List[str]:
+    """Outils/etapes d'un tour, mappes vers les libelles du parseur DOM.
+
+    L'API nomme les outils par identifiant (`data_analysis_tool`, `google`..) et
+    porte un libelle localise ; on retablit les libelles francais stables du
+    DOM (« Exécution de code », « Génération d'images », ..).
+    """
+    if not isinstance(turn, list) or len(turn) < 5:
+        return []
+    tools: List[str] = []
+    for field in (4, 5):
+        entries = turn[3][field] if len(turn[3]) > field else None
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if not isinstance(entry, list) or len(entry) < 2:
+                continue
+            inner = entry[1]
+            if not isinstance(inner, list) or not inner:
+                continue
+            name = inner[0] if isinstance(inner[0], str) else ""
+            label = ""
+            if len(inner) > 1 and isinstance(inner[1], list):
+                parts = [p for p in inner[1] if isinstance(p, str)]
+                label = " ".join(parts)
+            mapped = API_TOOL_LABELS.get(name)
+            if name == "data_analysis_tool" and any(
+                marker in label.lower() for marker in API_TOOL_IMAGE_MARKERS
+            ):
+                mapped = "Génération d'images"
+            mapped = mapped or name
+            if mapped and mapped not in tools:
+                tools.append(mapped)
+    if user_video and "Analyse vidéo" not in tools:
+        # marqueur DOM `.luminous-video-duration-pill` : une video jointe au tour
+        tools.append("Analyse vidéo")
+    return tools
+
+
+def _api_model(turn: list) -> Optional[str]:
+    """Identifiant du modele de la reponse (dernier champ du tour)."""
+    if not isinstance(turn, list) or len(turn) < 4 or not isinstance(turn[3], list):
+        return None
+    for value in reversed(turn[3]):
+        if isinstance(value, str) and value.startswith("gemini-"):
+            return value
+    return None
+
+
+def _api_timestamp(turn: list) -> Optional[str]:
+    """Horodatage du tour (``[epoch, nanos]``) en ISO Z."""
+    if not isinstance(turn, list) or len(turn) < 5:
+        return None
+    stamp = turn[4]
+    if not isinstance(stamp, list) or not stamp or not isinstance(stamp[0], (int, float)):
+        return None
+    seconds = float(stamp[0])
+    nanos = float(stamp[1]) if len(stamp) > 1 and isinstance(stamp[1], (int, float)) else 0.0
+    return normalize_timestamp(seconds + nanos / 1e9)
+
+
+def _api_trim_fences(text: str) -> str:
+    """Retire les lignes vides finales des blocs ``` (comme le rendu DOM).
+
+    Le payload termine le corps d'un bloc par une ligne vide
+    (``print(x)\\n\\n``` ``) : le rendu DOM, lui, n'a pas de ligne vide avant la
+    cloture. On aligne pour que ``code_blocks`` soit identique.
+    """
+    def repl(match: "re.Match[str]") -> str:
+        info, body = match.group(1), match.group(2)
+        if not body.strip():
+            return match.group(0)
+        return f"```{info}\n{body.rstrip()}\n```"
+
+    return API_FENCE_BLOCK_RE.sub(repl, text)
+
+
+def _api_tidy_blank_lines(text: str) -> str:
+    """Compacte les lignes vides hors blocs de code (convention du DOM)."""
+    out: List[str] = []
+    in_fence = False
+    for line in text.split("\n"):
+        if line.startswith("```"):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if not in_fence and not line.strip() and out and not out[-1].strip():
+            continue
+        out.append(line)
+    return "\n".join(out)
+
+
+def _api_normalize_text(
+    text: str,
+    *,
+    citations: Dict[str, str],
+    file_tags: Dict[str, str],
+    generated_images: Dict[str, str],
+) -> str:
+    """Markdown du payload -> markdown du schema (annotations retirees)."""
+    for marker, markdown in file_tags.items():
+        if marker in text:
+            text = text.replace(marker, markdown)
+    for url, markdown in generated_images.items():
+        if url in text:
+            text = text.replace(url, markdown)
+    text = API_GENERATED_IMAGE_RE.sub("", text)
+    text = API_FILE_TAG_RE.sub("", text)
+    text = API_CITE_RE.sub("", text)
+    text = API_FENCE_RE.sub(lambda m: f"```{m.group(1)}", text)
+    text = _api_trim_fences(text)
+    text = API_BULLET_RE.sub(lambda m: f"{m.group(1)}- ", text)
+    text = _api_tidy_blank_lines(text)
+    return text.strip()
 
 
 def _turn_user_key(turn_soup: BeautifulSoup) -> str:
@@ -252,6 +670,12 @@ class GeminiParser(BaseParser):
         extra: Optional[Dict[str, Any]] = None,
     ) -> Conversation:
         extra = extra or {}
+        if extra.get("api"):
+            # chemin API (payload batchexecute `hNvQHb`) : le service passe le
+            # payload JSON brut dans `extra["api"]`, le HTML est ignore.
+            return self.parse_api(
+                extra["api"], conversation_id=conversation_id, extra=extra
+            )
         soup = self.make_soup(html)
 
         # Chaque `.conversation-container` = un tour (requete + reponse). On
@@ -363,6 +787,145 @@ class GeminiParser(BaseParser):
             model=model or None,
         )
         self.log_parse(conv, model=model, title=title)
+        return self.check(conv)
+
+    def parse_api(
+        self,
+        payload: Dict[str, Any],
+        *,
+        conversation_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Conversation:
+        """Construit la conversation depuis le payload brut de l'API Gemini.
+
+        ``payload`` = ``{"conversation_id", "title", "turns": [tour, ..]}`` ou
+        chaque tour vient de la reponse ``hNvQHb`` de ``batchexecute`` (pages
+        fusionnees dans l'ordre du fil). Le texte des reponses est normalise
+        vers le markdown du schema : annotations de fence (``?code_reference``),
+        marqueurs ``[cite: N]`` (-> ``sources``), ``[file-tag: ..]`` (-> lien du
+        fichier genere), URL d'image generee (-> image markdown), puces ``*``
+        alignees sur le rendu DOM (``-``). Les pieces jointes du tour
+        utilisateur sont ajoutees en markdown (images telechargeables, fichiers
+        via l'URL de telechargement authentifiee).
+        """
+        extra = extra or {}
+        turns = payload.get("turns") if isinstance(payload, dict) else None
+        if not isinstance(turns, list) or not turns:
+            raise ParseError("gemini api: aucune donnee de conversation")
+
+        messages: List[Any] = []
+        models: List[str] = []
+        for turn in turns:
+            if not isinstance(turn, list):
+                continue
+            candidate = _api_candidate(turn)
+            citations = _api_citations(candidate)
+            file_tags = _api_file_tags(candidate)
+            generated = _api_generated_images(candidate)
+
+            parts = _api_parts(turn[2] if len(turn) > 2 else None)
+            text = "\n\n".join(
+                chunk for chunk in (_api_part_text(part) for part in parts) if chunk
+            )
+            text = _api_normalize_text(
+                text, citations={}, file_tags={}, generated_images={}
+            )
+            attachments: List[str] = []
+            video_attached = False
+            for part in parts:
+                for node in _api_message_attachments(part):
+                    markdown = _api_attachment_markdown(node)
+                    if markdown and markdown not in attachments:
+                        attachments.append(markdown)
+                    if _api_attachment_mime(node).startswith("video/"):
+                        video_attached = True
+            if attachments:
+                block = "\n\n".join(attachments)
+                if block not in text:
+                    text = f"{text}\n\n{block}".strip() if text else block
+            timestamp = _api_timestamp(turn)
+            user_id = ""
+            if len(turn) > 0 and isinstance(turn[0], list) and len(turn[0]) > 1:
+                user_id = str(turn[0][1] or "")
+            if text or attachments:
+                messages.append(
+                    self.msg("user", text, timestamp, None, message_id=user_id)
+                )
+
+            assistant_raw = _api_assistant_text(turn)
+            assistant = _api_normalize_text(
+                assistant_raw,
+                citations=citations,
+                file_tags=file_tags,
+                generated_images=generated,
+            )
+            tools = _api_tools(turn, user_video=video_attached)
+            artifacts: List[str] = []
+            if re.search(r"```xml[^\n]*\n[^`]*<svg", assistant):
+                # artefact canvas/SVG : le DOM le signale par `svg-code-block`
+                artifacts.append("SVG")
+                if "Canvas" not in tools:
+                    tools.append("Canvas")
+            sources = [
+                label for marker, label in citations.items() if marker in assistant_raw
+            ]
+            model = _api_model(turn)
+            if model:
+                models.append(model)
+            metadata: Dict[str, Any] = {"tokens": None}
+            # l'id de la reponse est porte par le candidat (`rc_..`), avec repli
+            # sur le champ 3 de la structure assistant (positions variables)
+            assistant_id = ""
+            if candidate is not None and isinstance(candidate[0], str):
+                assistant_id = candidate[0]
+            elif len(turn) > 3 and isinstance(turn[3], list) and len(turn[3]) > 3:
+                assistant_id = str(turn[3][3] or "")
+            message = self.msg(
+                "assistant",
+                assistant,
+                timestamp,
+                metadata,
+                message_id=assistant_id,
+                model=model,
+            )
+            if tools:
+                message.tools = tools
+            if artifacts:
+                message.artifacts = artifacts
+            if sources:
+                message.sources = sources
+            # une reponse vide (rendu en echec, image pure...) est conservee
+            # pour ne pas fusionner deux requetes utilisateur consecutives
+            # (meme convention que le parseur DOM).
+            if assistant or tools or artifacts or sources or (
+                messages and messages[-1].role == "user"
+            ):
+                messages.append(message)
+
+        if not messages:
+            raise ParseError("gemini api: aucun message extrait")
+
+        title = payload.get("title") or extra.get("title_hint")
+        title = clean_ui_title(title) or clean_ui_title(extra.get("title_hint"))
+        if title:
+            title = re.sub(r"\s+[—-]\s*Gemini\s*$", "", title)
+
+        conv_id = (
+            conversation_id
+            or (payload.get("conversation_id") if isinstance(payload, dict) else None)
+            or extra.get("conversation_id")
+        )
+        if not conv_id:
+            conv_id = "unknown"
+
+        conv = Conversation(
+            platform=self.service_name,
+            conversation_id=str(conv_id),
+            title=title or "Gemini conversation",
+            messages=messages,
+            model=self.majority(models),
+        )
+        self.log_parse(conv, model=conv.model, title=title)
         return self.check(conv)
 
     CONTENT_OF_USER = (
