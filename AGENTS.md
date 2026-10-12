@@ -52,6 +52,9 @@ plus un RAG et une page web de recherche. Le détail complet est dans
 .venv/bin/python scripts/rag_search.py "requête" -k 10
 .venv/bin/python scripts/serve_web.py            # http://127.0.0.1:8765
 
+# Serveur MCP stdio (recherche depuis un agent ; stdout = JSON-RPC, logs stderr)
+.venv/bin/python scripts/mcp_conversations.py [-c config.yaml]
+
 # Utilitaires
 .venv/bin/python scripts/backfill_urls.py        # champ url manquant
 .venv/bin/python scripts/download_images.py      # images locales (best effort)
@@ -100,6 +103,10 @@ indisponibles).
   doivent pas accéder à `session.page`.
 - **RAG** : `src/rag/` (BGE-M3 + SQLite/sqlite-vec), page web `web/`, serveur
   `scripts/serve_web.py`.
+- **Serveur MCP** : `scripts/mcp_conversations.py` (SDK `mcp` v2, transport
+  stdio ; outils `search`, `grep`, `get_conversation`, `get_message`,
+  `list_conversations`, `stats`), enregistré sous `mcp.servers.aicv` dans la
+  config globale opencode ; skill `.opencode/skills/conversations-search/`.
 
 ## Invariants à ne pas casser
 

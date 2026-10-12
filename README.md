@@ -350,6 +350,33 @@ Indexation **un vecteur par message** et recherche par **similarité cosinus**.
 Chaque résultat affiche `cos=<similarité> [<platform>/<role>] <timestamp> conv=<id>`
 puis un extrait du message.
 
+## Serveur MCP (recherche depuis un agent)
+
+`scripts/mcp_conversations.py` expose le RAG et les exports en **serveur MCP
+stdio** (SDK officiel `mcp` v2), enregistré dans la config globale opencode sous
+`mcp.servers.aicv` : les agents cherchent dans l'archive avec des outils natifs.
+
+| Outil | Rôle |
+| --- | --- |
+| `search` | recherche hybride (embeddings + mots-clés), groupée par conversation |
+| `grep` | chaîne exacte ou regex dans les exports JSON (sans modèle) |
+| `get_conversation` / `get_message` | JSON standardisé complet / message précis |
+| `list_conversations` | inventaire `conversation_list.json` |
+| `stats` | compteurs par plateforme + fraîcheur de l'index |
+
+```bash
+# lancer le serveur à la main (stdio : stdout = JSON-RPC, logs sur stderr)
+.venv/bin/python scripts/mcp_conversations.py
+.venv/bin/python scripts/mcp_conversations.py -c /autre/chemin/config.yaml
+
+# enregistrer dans opencode (config globale)
+opencode mcp add aicv --global -- .venv/bin/python scripts/mcp_conversations.py
+```
+
+Le modèle d'embeddings n'est chargé qu'au premier `search` ; `stats()` indique la
+date d'indexation (`rag_index.py` après un re-parse). La skill
+`.opencode/skills/conversations-search/` documente l'usage côté agent.
+
 ## Page web de recherche
 
 Interface locale (dark theme, responsive, Crimson Pro + DM Sans) pour explorer
@@ -426,6 +453,7 @@ valeurs omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │   ├── capture_cookies.py     # capture les cookies (navigateur visible)
 │   ├── rag_index.py           # indexe les messages (BGE-M3 -> sqlite-vec)
 │   ├── rag_search.py          # recherche cosinus dans le RAG
+│   ├── mcp_conversations.py   # serveur MCP stdio (search/grep/get/list/stats)
 │   ├── reparse_exports.py     # régénère les JSON depuis les artefacts bruts (sans re-crawl)
 │   ├── backfill_urls.py       # ajoute le champ url (JSON + inventaire)
 │   ├── serve_web.py           # serveur local + API + ouverture navigateur

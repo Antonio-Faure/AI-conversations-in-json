@@ -9,3 +9,6 @@ pytest>=8.0
 torch>=2.2
 sentence-transformers>=3.0
 sqlite-vec>=0.1.6
+
+# Serveur MCP stdio (scripts/mcp_conversations.py, SDK officiel v2)
+mcp>=2.0
