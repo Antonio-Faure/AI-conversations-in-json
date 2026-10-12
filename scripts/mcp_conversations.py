@@ -331,7 +331,7 @@ class ConversationTools:
     def search(
         self,
         query: str,
-        k: int = 10,
+        k: int = 5,
         platforms: Optional[List[str]] = None,
         alpha: float = 0.6,
         date_from: Optional[str] = None,
@@ -623,7 +623,7 @@ class ConversationTools:
     # -- outil : get_conversation ----------------------------------------------------
 
     def get_conversation(
-        self, platform: str, conversation_id: str, max_messages: int = 0
+        self, platform: str, conversation_id: str, max_messages: int = 40
     ) -> Dict[str, Any]:
         """JSON standardise d'une conversation ; max_messages > 0 = N premiers."""
         platform = self._check_platform(platform)
@@ -837,7 +837,7 @@ GREP_DESCRIPTION = (
 GET_CONVERSATION_DESCRIPTION = (
     "Renvoie le JSON standardise d'une conversation archivee (messages, "
     "metadonnees). conversation_id accepte un id complet ou un prefixe non "
-    "ambigu. max_messages=0 (defaut) = tout ; max_messages=N = les N premiers "
+    "ambigu. max_messages=40 par defaut (0 = tout) ; max_messages=N = les N premiers "
     "messages, avec total_messages et truncated."
 )
 
@@ -919,13 +919,13 @@ def build_server(tools: ConversationTools):
         pattern: str,
         platform: Optional[str] = None,
         regex: bool = False,
-        limit: int = 50,
+        limit: int = 20,
     ) -> str:
         return call(tools.grep, pattern=pattern, platform=platform, regex=regex, limit=limit)
 
     @server.tool(description=GET_CONVERSATION_DESCRIPTION)
     def get_conversation(
-        platform: str, conversation_id: str, max_messages: int = 0
+        platform: str, conversation_id: str, max_messages: int = 40
     ) -> str:
         return call(
             tools.get_conversation,
