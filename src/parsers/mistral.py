@@ -1,6 +1,16 @@
-"""Parser DOM Mistral (chat.mistral.ai).
+"""Parser Mistral (chat.mistral.ai) : DOM et API tRPC.
 
-Structure observee (2026) :
+Chemin **API** (`message.all,chat.byId,canva.all`) : le service passe le
+payload tRPC brut dans ``extra["api"]`` (voir :meth:`parse_api`). Les messages
+forment un graphe de versions (`parentId`/`parentVersion`, `version`,
+`nextVersion`) : on reconstruit la **chaine active** en remontant les liens de
+parente, les branches (editions/regenerations) allant dans ``variants``. Le
+texte markdown vient des ``contentChunks`` (les chunks ``text`` de contexte
+``reasoning`` alimentent ``reasoning``), les pieces jointes de ``files``, les
+canvas de ``canva.all`` et le modele de ``chat.modelConfig`` (nom affiche
+resolu par ``model_display_map``, fourni par le service via ``settings.get``).
+
+Structure DOM observee (2026) :
   - tour de message : <div data-message-author-role="user|assistant"
                            data-message-id="..." data-message-version="0">
   - user      : <div class="select-text"><span class="whitespace-pre-wrap">...</span></div>
@@ -68,6 +78,11 @@ _FRENCH_MONTHS = {
     "decembre": 12, "décembre": 12,
 }
 
+#: delimiteurs LaTeX bruts de l'API -> convention `$`/`$$` des parseurs
+#: (le modele ecrit parfois `\(...\)`/`\[...\]`, le DOM les rend en KaTeX)
+API_DISPLAY_MATH_RE = re.compile(r"\\\[(.+?)\\\]", re.DOTALL)
+API_INLINE_MATH_RE = re.compile(r"\\\((.+?)\\\)", re.DOTALL)
+
 #: outils Mistral (nom du tool_call) -> libelle standardise
 _TOOL_LABELS = {
     "web_search": "Recherche web",
@@ -96,6 +111,16 @@ _TOOL_PREFIXES = (
     ("google_calendar", "Google Agenda"),
     ("library", "Bibliothèque"),
 )
+
+
+def _api_normalize_math(text: str) -> str:
+    """`\\(...\\)` / `\\[...\\]` -> `$...$` / `$$...$$` (convention du depot)."""
+    if not text:
+        return text
+    text = API_DISPLAY_MATH_RE.sub(lambda m: f"$${m.group(1).strip()}$$", text)
+    return API_INLINE_MATH_RE.sub(lambda m: f"${m.group(1).strip()}$", text)
+
+
 #: etapes visibles en repli (HTML sans payload RSC)
 _DOM_TOOL_MARKERS = (
     (re.compile(r"recherch[ée] sur le web", re.I), "Recherche web"),
@@ -192,6 +217,12 @@ class MistralParser(BaseParser):
         extra: Optional[Dict[str, Any]] = None,
     ) -> Conversation:
         extra = extra or {}
+        if extra.get("api"):
+            # chemin API tRPC : le service passe le payload JSON brut dans
+            # `extra["api"]` (messages + chat + canvas + map des modeles)
+            return self.parse_api(
+                extra["api"], conversation_id=conversation_id, extra=extra
+            )
         soup = self.make_soup(html)
         payload = self._rsc_payload(html)
         message_data = self._message_index(payload)
@@ -296,6 +327,339 @@ class MistralParser(BaseParser):
                 )
             if len(built) >= 2:
                 message.variants = built
+
+    # -- mapping API (`message.all,chat.byId,canva.all`) ------------------------
+
+    def parse_api(
+        self,
+        data: Dict[str, Any],
+        *,
+        conversation_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Conversation:
+        """Construit la conversation depuis le payload tRPC de l'API.
+
+        ``data`` regroupe les trois reponses du batch
+        ``message.all,chat.byId,canva.all`` : ``{"messages": {"items": [...]},
+        "chat": {...}, "canvases": {"items": [...]}, "model_display_map":
+        {alias: nom}}``. ``messages.items`` contient **toutes les versions**
+        (editions utilisateur, regenerations) ; la chaine active est
+        reconstituee par les liens ``parentId``/``parentVersion``, les branches
+        partant dans ``Message.variants``. Le texte vient des ``contentChunks``
+        (hors chunks de raisonnement), les pieces jointes de ``files``, les
+        canvas de ``canva.all`` et les sources des ``contentChunks`` web.
+        """
+        extra = extra or {}
+        items = self._api_items(data.get("messages"))
+        if not items:
+            raise ParseError("mistral api: aucune donnee de conversation")
+        chat = data.get("chat") if isinstance(data.get("chat"), dict) else {}
+        canvases = self._api_items(data.get("canvases"))
+        display_map = data.get("model_display_map") or extra.get("model_display_map") or {}
+
+        messages: List[Any] = []
+        for raw in self._api_active_chain(items):
+            message = self._api_build_message(raw, items, canvases)
+            if message is not None:
+                messages.append(message)
+        if not messages:
+            raise ParseError("mistral api: aucun message exploitable")
+
+        conv_id = conversation_id or chat.get("id") or extra.get("conversation_id")
+        if not conv_id:
+            raise ParseError("mistral api: conversation_id manquant")
+        title = (
+            str(chat.get("userTitle") or chat.get("generatedTitle") or chat.get("title") or "")
+            or extra.get("title_hint")
+            or "Mistral conversation"
+        )
+        model = self._api_model(chat, display_map)
+        conv = Conversation(
+            platform=self.service_name,
+            conversation_id=str(conv_id),
+            title=title,
+            messages=messages,
+            model=model,
+        )
+        self.log_parse(conv, title=title, model=model)
+        return self.check(conv)
+
+    @staticmethod
+    def _api_items(container: Any) -> List[Dict[str, Any]]:
+        """Liste d'items d'une reponse paginee (`{"items": [...]}`)."""
+        if isinstance(container, dict):
+            container = container.get("items")
+        return [item for item in container or [] if isinstance(item, dict)]
+
+    @staticmethod
+    def _api_version(raw: Dict[str, Any], key: str = "version") -> int:
+        try:
+            return int(raw.get(key) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    @classmethod
+    def _api_active_chain(cls, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Chaine active des messages, du plus ancien au plus recent.
+
+        Le dernier message (``createdAt`` maximal) est la tete ; on remonte les
+        liens ``parentId``/``parentVersion`` jusqu'au premier tour. Les
+        versions non actives (branches d'edition/regeneration) ne sont donc pas
+        dans la chaine.
+        """
+        by_key: Dict[Any, Dict[str, Any]] = {}
+        for raw in items:
+            key = (str(raw.get("id") or ""), cls._api_version(raw))
+            by_key.setdefault(key, raw)
+        head = max(items, key=lambda raw: str(raw.get("createdAt") or ""))
+        chain: List[Dict[str, Any]] = []
+        seen: set = set()
+        current: Optional[Dict[str, Any]] = head
+        while current is not None:
+            key = (str(current.get("id") or ""), cls._api_version(current))
+            if key in seen:
+                break
+            seen.add(key)
+            chain.append(current)
+            parent_id = str(current.get("parentId") or "")
+            if not parent_id:
+                break
+            parent_version = cls._api_version(current, "parentVersion")
+            current = by_key.get((parent_id, parent_version)) or by_key.get(
+                (parent_id, 0)
+            )
+        chain.reverse()
+        return chain
+
+    def _api_build_message(
+        self,
+        raw: Dict[str, Any],
+        items: List[Dict[str, Any]],
+        canvases: List[Dict[str, Any]],
+    ) -> Optional[Any]:
+        """Message standardise d'un tour API (None si vide, comme le DOM)."""
+        role = str(raw.get("role") or "").lower()
+        if role not in ("user", "assistant", "system", "tool"):
+            role = "assistant"
+        text = self._api_text(raw, canvases)
+        reasoning = self._api_reasoning(raw) if role == "assistant" else ""
+        artifacts = self._api_artifacts(raw, canvases) if role == "assistant" else []
+        if not text and not reasoning and not artifacts:
+            return None
+        model = str(raw.get("model") or "").strip() or None
+        message = self.msg(
+            role,
+            text,
+            raw.get("createdAt"),
+            {"tokens": None} if role == "assistant" else {},
+            message_id=str(raw.get("id") or ""),
+            model=model,
+        )
+        if reasoning:
+            message.reasoning = reasoning
+        if artifacts:
+            message.artifacts = artifacts
+        if role == "assistant":
+            # le parser DOM lit ces memes cles du payload RSC : on reutilise
+            tools = self._tools_of(raw, None)
+            if tools:
+                message.tools = tools
+            sources = self._sources_of(raw, None)
+            if sources:
+                message.sources = sources
+        variants = self._api_variants(raw, items, canvases, role)
+        if variants:
+            message.variants = variants
+        return message
+
+    @classmethod
+    def _api_text(cls, raw: Dict[str, Any], canvases: List[Dict[str, Any]]) -> str:
+        """Texte markdown d'un tour API (chunks answer + pieces jointes)."""
+        role = str(raw.get("role") or "").lower()
+        if role == "user":
+            # pas de contentChunks utilisateur : le texte est dans `content`
+            text = str(raw.get("content") or "").strip()
+        else:
+            parts: List[str] = []
+            for chunk in raw.get("contentChunks") or []:
+                if not isinstance(chunk, dict):
+                    continue
+                ctype = chunk.get("type")
+                if ctype == "text":
+                    if (chunk.get("_context") or {}).get("type") == "reasoning":
+                        continue
+                    value = str(chunk.get("text") or "").strip()
+                    if value:
+                        parts.append(value)
+                elif ctype == "file_reference":
+                    url = str(chunk.get("fileUrl") or "").strip()
+                    if url:
+                        alt = cls._md_escape_label(str(chunk.get("fileAlt") or ""))
+                        parts.append(f"[{alt or url}]({url})")
+                elif ctype == "image_url":
+                    url = str(chunk.get("imageUrl") or "").strip()
+                    if url:
+                        parts.append(f"![image]({url})")
+                elif ctype == "custom_element":
+                    # titre d'un element riche (tableau) : le DOM l'affiche
+                    # au-dessus du tableau (`data-rich-table-title`)
+                    element = chunk.get("element") or {}
+                    if element.get("type") == "table-metadata":
+                        title = str(
+                            (element.get("attributes") or {}).get("title") or ""
+                        ).strip()
+                        if title:
+                            parts.append(title)
+            text = "\n\n".join(parts).strip()
+            if not text:
+                # repli DOM : un tour reduit a un canvas affiche son contenu
+                for chunk in raw.get("contentChunks") or []:
+                    if isinstance(chunk, dict) and chunk.get("type") == "canva":
+                        canva = cls._api_canva(chunk, canvases)
+                        if canva is not None:
+                            text = str(canva.get("content") or "").strip()
+                            break
+            if not text:
+                # payload sans chunks (archives) : le `content` agrege fait foi
+                text = str(raw.get("content") or "").strip()
+        files = raw.get("files") if isinstance(raw.get("files"), list) else None
+        attachments = cls._attachments_markdown(None, files) if files else ""
+        if attachments:
+            text = f"{text}\n\n{attachments}".strip() if text else attachments
+        return _api_normalize_math(text)
+
+    @classmethod
+    def _api_reasoning(cls, raw: Dict[str, Any]) -> str:
+        """Raisonnement d'un tour API : chunks `text` de contexte `reasoning`."""
+        parts: List[str] = []
+        for chunk in raw.get("contentChunks") or []:
+            if not isinstance(chunk, dict) or chunk.get("type") != "text":
+                continue
+            if (chunk.get("_context") or {}).get("type") != "reasoning":
+                continue
+            value = str(chunk.get("text") or "").strip()
+            if value:
+                parts.append(value)
+        return _api_normalize_math("\n\n".join(parts))
+
+    @classmethod
+    def _api_canva(
+        cls, chunk: Dict[str, Any], canvases: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """Canvas reference par un chunk (`id` + `version`) dans `canva.all`."""
+        canva_id = str(chunk.get("id") or "")
+        canva_version = cls._api_version(chunk)
+        for canva in canvases:
+            if (
+                str(canva.get("id") or "") == canva_id
+                and cls._api_version(canva) == canva_version
+            ):
+                return canva
+        return None
+
+    @classmethod
+    def _api_artifacts(
+        cls, raw: Dict[str, Any], canvases: List[Dict[str, Any]]
+    ) -> List[str]:
+        """Canvas d'un tour assistant, sous la forme ``titre (type)`` (dedup)."""
+        artifacts: List[str] = []
+        for chunk in raw.get("contentChunks") or []:
+            if not isinstance(chunk, dict) or chunk.get("type") != "canva":
+                continue
+            canva = cls._api_canva(chunk, canvases)
+            if canva is None:
+                continue
+            title = str(canva.get("title") or "").strip()
+            media_type = str(canva.get("type") or "").strip()
+            if title and media_type:
+                label = f"{title} ({media_type})"
+            else:
+                label = title or media_type
+            if label and label not in artifacts:
+                artifacts.append(label)
+        return artifacts
+
+    @classmethod
+    def _api_variants(
+        cls,
+        raw: Dict[str, Any],
+        items: List[Dict[str, Any]],
+        canvases: List[Dict[str, Any]],
+        role: str,
+    ) -> List[Variant]:
+        """Versions alternatives d'un tour actif (editions, regenerations).
+
+        Edition utilisateur : plusieurs messages de meme ``id`` (versions
+        chainees par ``prevVersion``/``nextVersion``). Regeneration : plusieurs
+        reponses assistant partageant ``parentId``/``parentVersion``. L'ordre
+        des variantes suit le numero de version (1re = la plus ancienne).
+        """
+        siblings: List[Dict[str, Any]] = []
+        kind = ""
+        if role == "user":
+            siblings = [
+                other
+                for other in items
+                if str(other.get("id") or "") == str(raw.get("id") or "")
+            ]
+            kind = "edit"
+        elif role == "assistant":
+            parent_id = str(raw.get("parentId") or "")
+            parent_version = cls._api_version(raw, "parentVersion")
+            siblings = [
+                other
+                for other in items
+                if str(other.get("role") or "") == "assistant"
+                and str(other.get("parentId") or "") == parent_id
+                and cls._api_version(other, "parentVersion") == parent_version
+            ]
+            kind = "regeneration"
+        if len(siblings) < 2:
+            return []
+        siblings.sort(key=lambda other: cls._api_version(other))
+        active = next(
+            (
+                index
+                for index, other in enumerate(siblings)
+                if str(other.get("id") or "") == str(raw.get("id") or "")
+                and cls._api_version(other) == cls._api_version(raw)
+            ),
+            0,
+        )
+        built: List[Variant] = []
+        for index, version_raw in enumerate(siblings):
+            built.append(
+                Variant(
+                    kind=kind,
+                    texte=cls._api_text(version_raw, canvases),
+                    timestamp=version_raw.get("createdAt"),
+                    message_id=str(raw.get("id") or ""),
+                    active=index == active,
+                )
+            )
+        return built if len(built) >= 2 else []
+
+    @staticmethod
+    def _api_model(
+        chat: Dict[str, Any], display_map: Dict[str, str]
+    ) -> Optional[str]:
+        """Modele de la conversation (nom affiche, repli alias puis defaut).
+
+        ``chat.modelConfig.model_alias`` porte le modele choisi ; le nom
+        affiche vient de ``settings.get`` (``vibeWorkModelConfigs``). Les
+        conversations legacy (/chat) n'ont pas de ``modelConfig`` : on retombe
+        sur le premier modele configure, comme le DOM.
+        """
+        config = chat.get("modelConfig")
+        alias = ""
+        if isinstance(config, dict):
+            alias = str(config.get("model_alias") or "").strip()
+        if alias:
+            return display_map.get(alias, alias)
+        for display in display_map.values():
+            if display:
+                return display
+        return None
 
     # -- payload RSC (horodatages, modele, sources, outils) --------------------
 
