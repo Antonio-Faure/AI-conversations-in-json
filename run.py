@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Point d'entree CLI : export des conversations IA en JSON + HTML.
+"""Point d'entree CLI : export des conversations IA en JSON standardise.
 
-ChatGPT et Claude. Sortie : exports/<platform>/<nom>.{json,html} plus
-exports/<platform>/conversation_list.json (inventaire).
+ChatGPT, Claude, Gemini, Perplexity, Grok et Mistral. Sortie :
+exports/<platform>/<nom>.json (+ artefact brut : HTML pour les plateformes DOM,
+raw/<nom>.json pour les plateformes API) plus exports/<platform>/conversation_list.json
+(inventaire).
 
 Modes:
     --monthly (ou --full) : liste TOUTES les conversations et les scrape toutes
@@ -39,7 +41,7 @@ log = logging.getLogger("aicv")
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run.py",
-        description="Export des conversations IA (ChatGPT, Claude, Gemini, Perplexity) en JSON standardise + HTML.",
+        description="Export des conversations IA (ChatGPT, Claude, Gemini, Perplexity, Grok, Mistral) en JSON standardise + artefact brut (HTML ou payload API).",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     mode = parser.add_mutually_exclusive_group()

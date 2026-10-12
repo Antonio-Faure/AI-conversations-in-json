@@ -49,6 +49,10 @@ class ConversationUnavailableError(EmptyConversationError):
     """Conversation inaccessible (supprimee/privee) : ne plus la retenter."""
 
 
+class RateLimitedError(RuntimeError):
+    """Limite de debit persistante : arreter le service proprement (reprise plus tard)."""
+
+
 #: textes des dialogs de rate limite (ChatGPT "Too many requests", etc.)
 RATE_LIMIT_MARKERS = ("too many requests", "trop de requ", "temporairement limit")
 RATE_LIMIT_DISMISS_SELECTORS = (
@@ -413,10 +417,11 @@ class BaseService(ABC):
     def take_raw_payload(self) -> Optional[Any]:
         """Payload API brut du dernier export (None pour les services DOM).
 
-        Les services API (ChatGPT en mode API, Grok) le memorisent pendant
-        `export_conversation_with_html` ; l'orchestrateur l'archive alors dans
-        `exports/<platform>/raw/<slug>.json`, l'equivalent du HTML brut. La
-        methode consomme le payload : un export ulterieur ne le reecrit pas.
+        Les services API (ChatGPT, Claude, Gemini, Grok, Mistral, Perplexity)
+        le memorisent pendant `export_conversation_with_html` ; l'orchestrateur
+        l'archive alors dans `exports/<platform>/raw/<slug>.json`, l'equivalent
+        du HTML brut. La methode consomme le payload : un export ulterieur ne
+        le reecrit pas.
         """
         return None
 

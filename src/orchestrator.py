@@ -45,6 +45,7 @@ from .services.base import (
     ConversationUnavailableError,
     EmptyConversationError,
     NoopSession,
+    RateLimitedError,
     ServiceNotLoggedIn,
 )
 from .utils.file_utils import (
@@ -317,6 +318,11 @@ class Orchestrator:
                 result.skipped_reason = str(exc)
                 self._close(session)
                 return None
+            except RateLimitedError as exc:
+                log.warning(str(exc))
+                result.skipped_reason = str(exc)
+                self._close(session)
+                return None
             except BlockedError as exc:
                 if engine == "auto" and attempt_engine != "botasaurus":
                     log_fields(
@@ -415,6 +421,15 @@ class Orchestrator:
                 extra={"conversation_id": ref.id, "error": str(exc)},
             )
             result.failed.append(ref.id)
+            return "stop"
+        except RateLimitedError as exc:
+            log_fields(
+                log, logging.WARNING,
+                f"{service.name}: limite de debit (service arrete, reprise ulterieure)",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            result.skipped.append(ref.id)
+            result.skipped_reason = str(exc)
             return "stop"
         except (ParseError, SchemaError) as exc:
             log_fields(

@@ -297,11 +297,12 @@ class TestChatGPTParser:
         # le raisonnement reste extrait (comportement existant)
         assert "Searched files and read the requested file" in conv.messages[0].reasoning
 
-    def test_etalon_tools_etapes(self, fixture_html):
-        """Etalon gele : 3 messages portent des etapes d'outil."""
+    def test_etalon_tools_etapes(self, fixture_json):
+        """Etalon gele (payload API) : 3 messages portent des etapes d'outil."""
         conv = ChatGPTParser().parse(
-            fixture_html("etalons/chatgpt/chatgpt.html"),
+            "",
             conversation_id="f0000000-0000-4000-8000-f2f43feb599e",
+            extra={"api": fixture_json("etalons/chatgpt/chatgpt.raw.json")},
         )
         with_tools = [m for m in conv.messages if m.tools]
         assert len(with_tools) == 3
@@ -981,11 +982,12 @@ class TestClaudeParser:
         assert "Scores" not in assistant.texte  # carte hors texte
         assert "Voici le fichier" in assistant.texte
 
-    def test_etalon_reasoning_et_artifacts(self, fixture_html):
-        """Etalon gele : 1 message avec reasoning, 3 cartes artefact."""
+    def test_etalon_reasoning_et_artifacts(self, fixture_json):
+        """Etalon gele (payload API) : 1 message avec reasoning, 3 cartes artefact."""
         conv = ClaudeParser().parse(
-            fixture_html("etalons/claude/claude.html"),
+            "",
             conversation_id="f0000000-0000-4000-8000-12a21176e31e",
+            extra={"api": fixture_json("etalons/claude/claude.raw.json")},
         )
         reasoning = [m for m in conv.messages if m.reasoning]
         assert len(reasoning) == 1
@@ -996,44 +998,44 @@ class TestClaudeParser:
         flat = [entry for m in with_artifacts for entry in m.artifacts]
         assert flat == ["Scores (csv)", "Bonjour (txt)", "Artefact test (html)"]
 
-    def test_etalon_horodatage_et_outils(self, fixture_html):
-        """Etalon gele : horodatage de la derniere reponse + cartes d'outils."""
+    def test_etalon_horodatage_et_outils(self, fixture_json):
+        """Etalon gele (payload API) : horodatage des tours + cartes d'outils."""
         conv = ClaudeParser().parse(
-            fixture_html("etalons/claude/claude.html"),
+            "",
             conversation_id="f0000000-0000-4000-8000-12a21176e31e",
+            extra={"api": fixture_json("etalons/claude/claude.raw.json")},
         )
-        # une seule <time> dans le transcript : rattachee a la bonne reponse
-        stamped = [m for m in conv.messages if m.timestamp]
-        assert len(stamped) == 1
-        assert stamped[0].role == "assistant"
-        assert stamped[0].timestamp == "2026-09-24T09:37:00Z"
-        assert conv.started_at == "2026-09-24T09:37:00Z"
+        # l'API horodate chaque tour (le DOM n'exposait qu'une seule <time>)
+        assert all(m.timestamp for m in conv.messages)
+        assert conv.messages[-1].timestamp == "2026-09-24T09:37:00Z"
+        assert conv.started_at == "2026-09-24T08:58:21Z"
         assert conv.last_message_at == "2026-09-24T09:37:00Z"
         labels = [tool for m in conv.messages for tool in m.tools]
-        assert "A exécuté une commande, fichiers partagés" in labels
-        assert "Checking available tools for generating the requested image." in labels
-        assert any("Artefact simple" in label for label in labels)
+        assert "Exécution de code" in labels
+        assert "Fichiers présentés" in labels
+        assert any("Artefact" in label for label in labels)
 
-    def test_etalon_supp_horodatage_et_memoire(self, fixture_html):
-        """Etalon supplementaire : horodatage + carte 'Memoire rappelee'."""
+    def test_etalon_supp_horodatage_et_memoire(self, fixture_json):
+        """Etalon supplementaire (payload API) : horodatage + memoire lue."""
         conv = ClaudeParser().parse(
-            fixture_html("etalons/claude/claude-supp.html"),
+            "",
             conversation_id="f0000000-0000-4000-8000-34fb92a90b44",
+            extra={"api": fixture_json("etalons/claude/claude-supp.raw.json")},
         )
         assert conv.messages[0].tools == []
         assert conv.messages[1].timestamp == "2026-09-25T16:03:45Z"
-        assert conv.messages[1].tools == ["Mémoire rappelée"]
+        assert "Mémoire lue" in conv.messages[1].tools
 
-    def test_etalon_supp_reasoning_integral(self, fixture_html):
-        """Etalon supp (HTML gelee, panneau deplie) : raisonnement integral.
+    def test_etalon_supp_reasoning_integral(self, fixture_json):
+        """Etalon supp (payload API) : raisonnement integral (blocs thinking).
 
-        Le libelle replie fait ~55 caracteres ; une fois le panneau deploye par
-        le service, le texte complet (~840 caracteres) est dans le DOM et doit
-        etre extrait, pas le resume.
+        Le DOM replie ne montrait qu'un libelle (~55 caracteres) ; le payload
+        API porte le texte complet (~1000 caracteres) qui doit etre extrait.
         """
         conv = ClaudeParser().parse(
-            fixture_html("etalons/claude/claude-supp.html"),
+            "",
             conversation_id="f0000000-0000-4000-8000-34fb92a90b44",
+            extra={"api": fixture_json("etalons/claude/claude-supp.raw.json")},
         )
         reasoning = conv.messages[1].reasoning
         assert "Designing a vivid SVG scene of a fox in snow." in reasoning

@@ -1,0 +1,4057 @@
+{
+  "conversation": {
+    "conversationId": "f0000000-0000-4000-8000-f001d3860781",
+    "title": "Affiche uniquement une citation",
+    "starred": false,
+    "createTime": "2026-09-25T16:02:36.865Z",
+    "modifyTime": "2026-09-25T16:52:02.862Z",
+    "systemPromptName": "",
+    "temporary": false,
+    "mediaTypes": [],
+    "workspaces": [],
+    "taskResult": null,
+    "latestAssetMetadata": null,
+    "viewerIsOwner": true,
+    "kind": "CONVERSATION_KIND_UNSPECIFIED"
+  },
+  "responses": [
+    {
+      "responseId": "f0000000-0000-4000-8000-16038ff05f1f",
+      "message": "Affiche uniquement une citation : « Ceci est un test ». Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:02:41.456Z",
+      "parentResponseId": "f0000000-0000-4000-8000-f7e8a2efba37",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-83fd41fbfaa8",
+      "message": "« Ceci est un test »",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:02:41.468Z",
+      "parentResponseId": "f0000000-0000-4000-8000-16038ff05f1f",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Affichant la citation demandée"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:02:36.948Z",
+      "thinkingEndTime": "2026-09-25T16:02:41.456Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-90af94f2e3d3",
+      "message": "Affiche uniquement un séparateur horizontal entre les mots « Haut » et « Bas ». Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:02:56.422Z",
+      "parentResponseId": "f0000000-0000-4000-8000-83fd41fbfaa8",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-7314ec9aeefd",
+      "message": "Haut\n---\nBas",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:02:56.434Z",
+      "parentResponseId": "f0000000-0000-4000-8000-90af94f2e3d3",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Displaying the horizontal separator"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:02:52.498Z",
+      "thinkingEndTime": "2026-09-25T16:02:56.422Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-9fbaabd770f7",
+      "message": "Affiche uniquement la phrase : Le mot `code` est en ligne. Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:03:11.221Z",
+      "parentResponseId": "f0000000-0000-4000-8000-7314ec9aeefd",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-559235df6c4a",
+      "message": "Le mot `code` est en ligne.",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:03:11.235Z",
+      "parentResponseId": "f0000000-0000-4000-8000-9fbaabd770f7",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Displaying the requested phrase"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:03:07.148Z",
+      "thinkingEndTime": "2026-09-25T16:03:11.221Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-be7a0f1544cc",
+      "message": "Affiche uniquement un tableau Markdown de 2 colonnes (Nom, Âge) et 2 lignes de données fictives. Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:03:26.954Z",
+      "parentResponseId": "f0000000-0000-4000-8000-559235df6c4a",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-b5e45deb1b3d",
+      "message": "| Nom | Âge |\n|-----|-----|\n| Alice | 28 |\n| Bob | 34 |",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:03:26.966Z",
+      "parentResponseId": "f0000000-0000-4000-8000-be7a0f1544cc",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Générant le tableau Markdown demandé"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:03:22.613Z",
+      "thinkingEndTime": "2026-09-25T16:03:26.954Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-8a2bc4642b96",
+      "message": "Affiche uniquement une image Markdown cliquable (lien vers https://example.com) avec alt « clic ». Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:03:47.266Z",
+      "parentResponseId": "f0000000-0000-4000-8000-b5e45deb1b3d",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-32310e9c1c01",
+      "message": "[![clic](https://example.com)](https://example.com)",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:03:47.279Z",
+      "parentResponseId": "f0000000-0000-4000-8000-8a2bc4642b96",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Generating the clickable Markdown image"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Generating the clickable Markdown image"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:03:38.580Z",
+      "thinkingEndTime": "2026-09-25T16:03:47.266Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-11bcad958ca1",
+      "message": "Affiche uniquement un système de 2 équations linéaires simples. Puis une phrase. Maximum 4 lignes.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:04:05.901Z",
+      "parentResponseId": "f0000000-0000-4000-8000-32310e9c1c01",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-7fda2b5510b9",
+      "message": "\\[\n\\begin{cases}\nx + y = 5 \\\\\n2x - y = 1\n\\end{cases}\n\\]\nCeci est un système linéaire simple.",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:04:05.913Z",
+      "parentResponseId": "f0000000-0000-4000-8000-11bcad958ca1",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Affichage du système d'équations"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Affichage du système d'équations"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:04:00.138Z",
+      "thinkingEndTime": "2026-09-25T16:04:05.901Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-2cc343268367",
+      "message": "Voici un JSON invalide : {\"a\":1,}. Dis uniquement s’il est valide ou non et l’erreur en 1 phrase max.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:04:23.638Z",
+      "parentResponseId": "f0000000-0000-4000-8000-7fda2b5510b9",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-322dd9519c20",
+      "message": "Non, il est invalide à cause de la virgule finale.",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:04:23.681Z",
+      "parentResponseId": "f0000000-0000-4000-8000-2cc343268367",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Vérifiant la syntaxe du JSON fourni"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:04:18.696Z",
+      "thinkingEndTime": "2026-09-25T16:04:23.638Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-ed7cc7031a8d",
+      "message": "Décris cette image en maximum 15 mots. Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:04:49.219Z",
+      "parentResponseId": "f0000000-0000-4000-8000-322dd9519c20",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [
+        "f0000000-0000-4000-8000-1d217dcb54cd"
+      ],
+      "cardAttachmentsJson": [],
+      "fileUris": [
+        "f0000000-0000-4000-8000-1d217dcb54cd"
+      ],
+      "fileAttachmentsMetadata": [
+        {
+          "fileMetadataId": "f0000000-0000-4000-8000-1d217dcb54cd",
+          "fileMimeType": "image/png",
+          "fileName": "image.png",
+          "fileUri": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-1d217dcb54cd/content",
+          "parsedFileUri": "",
+          "createTime": "2026-09-25T16:04:31.923Z",
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE"
+        }
+      ],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [
+        {
+          "assetId": "f0000000-0000-4000-8000-1d217dcb54cd",
+          "mimeType": "image/png",
+          "name": "image.png",
+          "sizeBytes": 9339,
+          "createTime": "2026-09-25T16:04:31.923Z",
+          "lastUseTime": "2026-09-25T16:04:31.923Z",
+          "summary": "",
+          "previewImageKey": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-1d217dcb54cd/preview-image",
+          "key": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-1d217dcb54cd/content",
+          "auxKeys": {
+            "image_edit_is_root_user_uploaded": "true",
+            "preview-image": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-1d217dcb54cd/preview-image",
+            "r_rated": "false",
+            "thumbhash": "4OcNNYiEgGB4eHdXd3d4d4A4iI+p"
+          },
+          "isDeleted": false,
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE",
+          "rootAssetId": "f0000000-0000-4000-8000-1d217dcb54cd",
+          "sourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "isModelGenerated": false,
+          "updateTime": "2026-09-25T16:04:31.923Z",
+          "isLatest": true,
+          "inlineStatus": "DEFAULT_ARTIFACT_INLINE_STATUS",
+          "isRootAssetCreatedByModel": false,
+          "rootAssetSourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "sharedWithTeam": false,
+          "sharedWithUserIds": [],
+          "thumbhash": "4OcNNYiEgGB4eHdXd3d4d4A4iI+p",
+          "ownerUserId": "f0000000-0000-4000-8000-21c8b10400e8"
+        }
+      ],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-e9d3153259f7",
+      "message": "Mire TV circulaire à barres colorées verticales avec bande arc-en-ciel.",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:04:49.245Z",
+      "parentResponseId": "f0000000-0000-4000-8000-ed7cc7031a8d",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Analyzing the circular color bar test pattern"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Décrivant la mire de couleurs circulaire"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:04:40.074Z",
+      "thinkingEndTime": "2026-09-25T16:04:49.219Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-1692aed080ff",
+      "message": "Extrais uniquement la date de ce fichier TXT. Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:05:06.157Z",
+      "parentResponseId": "f0000000-0000-4000-8000-e9d3153259f7",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [
+        "f0000000-0000-4000-8000-6570ed0e3b89"
+      ],
+      "cardAttachmentsJson": [],
+      "fileUris": [
+        "f0000000-0000-4000-8000-6570ed0e3b89"
+      ],
+      "fileAttachmentsMetadata": [
+        {
+          "fileMetadataId": "f0000000-0000-4000-8000-6570ed0e3b89",
+          "fileMimeType": "text/plain",
+          "fileName": "notes.txt",
+          "fileUri": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-6570ed0e3b89/content",
+          "parsedFileUri": "",
+          "createTime": "2026-09-25T16:04:57.450Z",
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE"
+        }
+      ],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [
+        {
+          "assetId": "f0000000-0000-4000-8000-6570ed0e3b89",
+          "mimeType": "text/plain",
+          "name": "notes.txt",
+          "sizeBytes": 108,
+          "createTime": "2026-09-25T16:04:57.450Z",
+          "lastUseTime": "2026-09-25T16:04:57.450Z",
+          "summary": "",
+          "previewImageKey": "",
+          "key": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-6570ed0e3b89/content",
+          "auxKeys": {
+            "image_edit_is_root_user_uploaded": "true"
+          },
+          "isDeleted": false,
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE",
+          "rootAssetId": "f0000000-0000-4000-8000-6570ed0e3b89",
+          "sourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "isModelGenerated": false,
+          "updateTime": "2026-09-25T16:04:57.450Z",
+          "isLatest": true,
+          "inlineStatus": "DEFAULT_ARTIFACT_INLINE_STATUS",
+          "isRootAssetCreatedByModel": false,
+          "rootAssetSourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "sharedWithTeam": false,
+          "sharedWithUserIds": [],
+          "ownerUserId": "f0000000-0000-4000-8000-21c8b10400e8"
+        }
+      ],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-3214e581f261",
+      "message": "",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:05:06.185Z",
+      "parentResponseId": "f0000000-0000-4000-8000-1692aed080ff",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "stream_errors": [
+          {
+            "globalRateLimit": {},
+            "message": "Service temporarily unavailable. Please try again later.",
+            "severity": "STREAM_ERROR_SEVERITY_NORMAL"
+          }
+        ]
+      },
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [
+        {
+          "message": "Service temporarily unavailable. Please try again later.",
+          "globalRateLimit": {},
+          "severity": "STREAM_ERROR_SEVERITY_NORMAL"
+        }
+      ],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-478f8e4b00be",
+      "message": "Texte long :Section A début : Pomme... (répéter 20 fois « Ligne de remplissage. »)Section milieu : Poire... (répéter 20 fois « Ligne de remplissage. »)Section fin : BananeExtrais uniquement les 3 fruits dans l’ordre. Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:19:35.929Z",
+      "parentResponseId": "f0000000-0000-4000-8000-3214e581f261",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-2bee2ba5aa79",
+      "message": "Pomme\nPoire\nBanane",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:19:35.941Z",
+      "parentResponseId": "f0000000-0000-4000-8000-478f8e4b00be",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Extracting the three fruits in order"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:19:32.267Z",
+      "thinkingEndTime": "2026-09-25T16:19:35.929Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-7dd30ecdec91",
+      "message": "Si tu peux analyser cet audio, extrais la tâche en 5 mots max. Sinon réponds uniquement « Audio non supporté ».",
+      "sender": "human",
+      "createTime": "2026-09-25T16:23:12.450Z",
+      "parentResponseId": "f0000000-0000-4000-8000-2bee2ba5aa79",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [
+        "f0000000-0000-4000-8000-c8b79dbdea43"
+      ],
+      "cardAttachmentsJson": [],
+      "fileUris": [
+        "f0000000-0000-4000-8000-c8b79dbdea43"
+      ],
+      "fileAttachmentsMetadata": [
+        {
+          "fileMetadataId": "f0000000-0000-4000-8000-c8b79dbdea43",
+          "fileMimeType": "audio/mpeg",
+          "fileName": "audio.mp3",
+          "fileUri": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-c8b79dbdea43/content",
+          "parsedFileUri": "",
+          "createTime": "2026-09-25T16:23:03.271Z",
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE"
+        }
+      ],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [
+        {
+          "assetId": "f0000000-0000-4000-8000-c8b79dbdea43",
+          "mimeType": "audio/mpeg",
+          "name": "audio.mp3",
+          "sizeBytes": 16526,
+          "createTime": "2026-09-25T16:23:03.271Z",
+          "lastUseTime": "2026-09-25T16:23:03.271Z",
+          "summary": "",
+          "previewImageKey": "",
+          "key": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-c8b79dbdea43/content",
+          "auxKeys": {
+            "image_edit_is_root_user_uploaded": "true"
+          },
+          "isDeleted": false,
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE",
+          "rootAssetId": "f0000000-0000-4000-8000-c8b79dbdea43",
+          "sourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "isModelGenerated": false,
+          "updateTime": "2026-09-25T16:23:03.271Z",
+          "isLatest": true,
+          "inlineStatus": "DEFAULT_ARTIFACT_INLINE_STATUS",
+          "isRootAssetCreatedByModel": false,
+          "rootAssetSourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "sharedWithTeam": false,
+          "sharedWithUserIds": [],
+          "ownerUserId": "f0000000-0000-4000-8000-21c8b10400e8"
+        }
+      ],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-079bf86ccf34",
+      "message": "",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:23:12.477Z",
+      "parentResponseId": "f0000000-0000-4000-8000-7dd30ecdec91",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "stream_errors": [
+          {
+            "globalRateLimit": {},
+            "message": "Service temporarily unavailable. Please try again later.",
+            "severity": "STREAM_ERROR_SEVERITY_NORMAL"
+          }
+        ]
+      },
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [
+        {
+          "message": "Service temporarily unavailable. Please try again later.",
+          "globalRateLimit": {},
+          "severity": "STREAM_ERROR_SEVERITY_NORMAL"
+        }
+      ],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-6385ef3ef1c4",
+      "message": "Si tu peux analyser cette vidéo, dis la couleur dominante en 3 mots max. Sinon réponds uniquement « Vidéo non supportée ».",
+      "sender": "human",
+      "createTime": "2026-09-25T16:37:55.830Z",
+      "parentResponseId": "f0000000-0000-4000-8000-079bf86ccf34",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [
+        "f0000000-0000-4000-8000-63b44a25073a"
+      ],
+      "cardAttachmentsJson": [],
+      "fileUris": [
+        "f0000000-0000-4000-8000-63b44a25073a"
+      ],
+      "fileAttachmentsMetadata": [
+        {
+          "fileMetadataId": "f0000000-0000-4000-8000-63b44a25073a",
+          "fileMimeType": "video/mp4",
+          "fileName": "video.mp4",
+          "fileUri": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-63b44a25073a/content",
+          "parsedFileUri": "",
+          "createTime": "2026-09-25T16:37:34.988Z",
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE"
+        }
+      ],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [
+        {
+          "assetId": "f0000000-0000-4000-8000-63b44a25073a",
+          "mimeType": "video/mp4",
+          "name": "video.mp4",
+          "sizeBytes": 30367,
+          "createTime": "2026-09-25T16:37:34.988Z",
+          "lastUseTime": "2026-09-25T16:37:34.988Z",
+          "summary": "",
+          "previewImageKey": "",
+          "key": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-63b44a25073a/content",
+          "auxKeys": {
+            "image_edit_is_root_user_uploaded": "true",
+            "r_rated": "false"
+          },
+          "isDeleted": false,
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE",
+          "currentConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "rootAssetId": "f0000000-0000-4000-8000-63b44a25073a",
+          "sourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "isModelGenerated": false,
+          "updateTime": "2026-09-25T16:37:34.988Z",
+          "isLatest": true,
+          "inlineStatus": "DEFAULT_ARTIFACT_INLINE_STATUS",
+          "isRootAssetCreatedByModel": false,
+          "rootAssetSourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "sharedWithTeam": false,
+          "sharedWithUserIds": [],
+          "ownerUserId": "f0000000-0000-4000-8000-21c8b10400e8"
+        }
+      ],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-37a740645142",
+      "message": "Aucune couleur dominante",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:37:55.855Z",
+      "parentResponseId": "f0000000-0000-4000-8000-6385ef3ef1c4",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Analyzing the video frames"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Determining the dominant color"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:37:44.276Z",
+      "thinkingEndTime": "2026-09-25T16:37:55.830Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-13a189a3e144",
+      "message": "Exécute un script Python qui crée un fichier output.csv contenant « a,b\\n1,2 ». Fournis le fichier. Réponds en maximum 2 phrases.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:38:20.195Z",
+      "parentResponseId": "f0000000-0000-4000-8000-37a740645142",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-64656d1d4503",
+      "message": "Le fichier output.csv a été créé avec le contenu demandé.  \n<grok:render card_id=\"N1mWo\" card_type=\"rendered_file_card\" type=\"render_file\"><argument name=\"file_path\">/home/workdir/artifacts/output.csv</argument></grok:render>",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:38:20.208Z",
+      "parentResponseId": "f0000000-0000-4000-8000-13a189a3e144",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [
+        "{\"id\":\"N1mWo\",\"type\":\"render_file\",\"cardType\":\"rendered_file_card\",\"file_name\":\"output.csv\",\"content_type\":\"text\",\"mime_type\":\"text/csv\",\"file_size\":8,\"url\":\"users/f0000000-0000-4000-8000-21c8b10400e8/generated/f0000000-0000-4000-8000-2e773896dfbc/output.csv\",\"thumbnail_url\":\"https://grok.com/file-icons/tables_light.png\",\"thumbnail_dark_url\":\"https://grok.com/file-icons/tables_dark.png\"}"
+      ],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "<xai:tool_usage_card>\n  <xai:tool_usage_card_id>f0000000-0000-4000-8000-5a1e43717721</xai:tool_usage_card_id>\n  <xai:tool_name>Bash</xai:tool_name>\n  <xai:tool_args><![CDATA[{\"args\":{\"command\":\"echo -e \\\"a,b\\\\n1,2\\\" > /home/workdir/artifacts/output.csv && cat /home/workdir/artifacts/output.csv\",\"timeout\":null,\"description\":\"Create output.csv with specified content\"}}]]></xai:tool_args>\n</xai:tool_usage_card>"
+          ],
+          "tags": [
+            "tool_usage_card"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": [
+            {
+              "toolUsageCardId": "f0000000-0000-4000-8000-5a1e43717721",
+              "bash": {
+                "args": {
+                  "command": "echo -e \"a,b\\n1,2\" > /home/workdir/artifacts/output.csv && cat /home/workdir/artifacts/output.csv",
+                  "description": "Create output.csv with specified content"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "text": [
+            "<xai:tool_usage_card>\n  <xai:tool_usage_card_id>f0000000-0000-4000-8000-75d1e4c1b48d</xai:tool_usage_card_id>\n  <xai:tool_name>InitTerminalSession</xai:tool_name>\n  <xai:tool_args><![CDATA[{\"preview_url\":null}]]></xai:tool_args>\n</xai:tool_usage_card>"
+          ],
+          "tags": [
+            "tool_usage_card"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": [
+            {
+              "toolUsageCardId": "f0000000-0000-4000-8000-75d1e4c1b48d",
+              "initTerminalSession": {}
+            }
+          ]
+        },
+        {
+          "text": [
+            ""
+          ],
+          "tags": [
+            "raw_function_result"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Création du fichier output.csv"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Fournissant le fichier output.csv"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:38:08.488Z",
+      "thinkingEndTime": "2026-09-25T16:38:20.195Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-a006899614ce",
+      "message": "Liste uniquement les skills réellement disponibles (docx, pdf, pptx, xlsx, ffmpeg, etc.). Maximum 5 puces. Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:38:35.052Z",
+      "parentResponseId": "f0000000-0000-4000-8000-64656d1d4503",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-29a4dbd96888",
+      "message": "- docx\n- pdf\n- pptx\n- xlsx\n- ffmpeg",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:38:35.063Z",
+      "parentResponseId": "f0000000-0000-4000-8000-a006899614ce",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Listing the available skills"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:38:31.232Z",
+      "thinkingEndTime": "2026-09-25T16:38:35.052Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-2e6e0049533d",
+      "message": "Quels connecteurs sont actuellement disponibles ? Réponds en maximum 3 puces ou « Aucun ».",
+      "sender": "human",
+      "createTime": "2026-09-25T16:42:14.612Z",
+      "parentResponseId": "f0000000-0000-4000-8000-29a4dbd96888",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-f8a5f284118a",
+      "message": "- Voice\n- Automations",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:42:14.630Z",
+      "parentResponseId": "f0000000-0000-4000-8000-2e6e0049533d",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "<xai:tool_usage_card>\n  <xai:tool_usage_card_id>f0000000-0000-4000-8000-2620e942d7a6</xai:tool_usage_card_id>\n  <xai:tool_name>Mcp</xai:tool_name>\n  <xai:tool_args><![CDATA[{\"tool_name\":\"list_available_connectors\",\"tool_args_json\":\"{}\",\"connector_id\":null,\"connector_name\":null,\"connector_catalog_id\":null,\"connector_icon_url\":null,\"read_only_hint\":null,\"destructive_hint\":null,\"idempotent_hint\":null,\"open_world_hint\":null,\"meta\":null,\"tool_result_json\":null}]]></xai:tool_args>\n</xai:tool_usage_card>"
+          ],
+          "tags": [
+            "tool_usage_card"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": [
+            {
+              "toolUsageCardId": "f0000000-0000-4000-8000-2620e942d7a6",
+              "mcp": {
+                "toolName": "list_available_connectors",
+                "toolArgsJson": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "text": [
+            ""
+          ],
+          "tags": [
+            "raw_function_result"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Identifiant les connecteurs disponibles"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Listant les connecteurs disponibles"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:42:06.932Z",
+      "thinkingEndTime": "2026-09-25T16:42:14.612Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-345fc9a5bcb9",
+      "message": "Quel est mon fruit préféré fictif ? Réponds en 5 mots max.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:42:30.401Z",
+      "parentResponseId": "f0000000-0000-4000-8000-f8a5f284118a",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-90b2e3ce7f2c",
+      "message": "Je ne le connais pas.",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:42:30.413Z",
+      "parentResponseId": "f0000000-0000-4000-8000-345fc9a5bcb9",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Vérifiant les préférences fictives"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:42:25.898Z",
+      "thinkingEndTime": "2026-09-25T16:42:30.401Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-219f38fdc2e2",
+      "message": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:42:46.207Z",
+      "parentResponseId": "f0000000-0000-4000-8000-90b2e3ce7f2c",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-ae63a645ca3f",
+      "message": "- Élément 1\n  - Sous-élément A\n  - Sous-élément B\n- Élément 2\n  - Sous-élément C\n  - Sous-élément D",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:42:46.220Z",
+      "parentResponseId": "f0000000-0000-4000-8000-219f38fdc2e2",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Generating the requested nested list"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:42:42.163Z",
+      "thinkingEndTime": "2026-09-25T16:42:46.207Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-9f448442daab",
+      "message": "Écris la formule inline E=mc^2 en LaTeX dans une phrase d'une ligne.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:46:21.249Z",
+      "parentResponseId": "f0000000-0000-4000-8000-ae63a645ca3f",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-40ea163230ed",
+      "message": "La formule célèbre est $E=mc^2$.",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:46:21.262Z",
+      "parentResponseId": "f0000000-0000-4000-8000-9f448442daab",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Writing the LaTeX formula in a sentence"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:46:16.549Z",
+      "thinkingEndTime": "2026-09-25T16:46:21.249Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-28367be08f6d",
+      "message": "Lis le fichier donnees.json joint et donne uniquement la valeur de la clé « etalon ».",
+      "sender": "human",
+      "createTime": "2026-09-25T16:46:47.545Z",
+      "parentResponseId": "f0000000-0000-4000-8000-40ea163230ed",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [
+        "f0000000-0000-4000-8000-6fc40c1ed661"
+      ],
+      "cardAttachmentsJson": [],
+      "fileUris": [
+        "f0000000-0000-4000-8000-6fc40c1ed661"
+      ],
+      "fileAttachmentsMetadata": [
+        {
+          "fileMetadataId": "f0000000-0000-4000-8000-6fc40c1ed661",
+          "fileMimeType": "application/json",
+          "fileName": "donnees.json",
+          "fileUri": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-6fc40c1ed661/content",
+          "parsedFileUri": "",
+          "createTime": "2026-09-25T16:46:29.643Z",
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE"
+        }
+      ],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [
+        {
+          "assetId": "f0000000-0000-4000-8000-6fc40c1ed661",
+          "mimeType": "application/json",
+          "name": "donnees.json",
+          "sizeBytes": 60,
+          "createTime": "2026-09-25T16:46:29.643Z",
+          "lastUseTime": "2026-09-25T16:46:29.643Z",
+          "summary": "",
+          "previewImageKey": "",
+          "key": "users/f0000000-0000-4000-8000-21c8b10400e8/f0000000-0000-4000-8000-6fc40c1ed661/content",
+          "auxKeys": {
+            "image_edit_is_root_user_uploaded": "true"
+          },
+          "isDeleted": false,
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE",
+          "currentConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "rootAssetId": "f0000000-0000-4000-8000-6fc40c1ed661",
+          "sourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "isModelGenerated": false,
+          "updateTime": "2026-09-25T16:46:29.643Z",
+          "isLatest": true,
+          "inlineStatus": "DEFAULT_ARTIFACT_INLINE_STATUS",
+          "isRootAssetCreatedByModel": false,
+          "rootAssetSourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "sharedWithTeam": false,
+          "sharedWithUserIds": [],
+          "ownerUserId": "f0000000-0000-4000-8000-21c8b10400e8"
+        }
+      ],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-e80dcbbb561d",
+      "message": "true",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:46:47.571Z",
+      "parentResponseId": "f0000000-0000-4000-8000-28367be08f6d",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "<xai:tool_usage_card>\n  <xai:tool_usage_card_id>f0000000-0000-4000-8000-ecd9e186618f</xai:tool_usage_card_id>\n  <xai:tool_name>ReadFile</xai:tool_name>\n  <xai:tool_args><![CDATA[{\"args\":{\"file_path\":\"/home/workdir/attachments/donnees.json\",\"offset\":null,\"limit\":null,\"file_type\":1,\"display_name\":null}}]]></xai:tool_args>\n</xai:tool_usage_card>"
+          ],
+          "tags": [
+            "tool_usage_card"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": [
+            {
+              "toolUsageCardId": "f0000000-0000-4000-8000-ecd9e186618f",
+              "readFile": {
+                "args": {
+                  "filePath": "/home/workdir/attachments/donnees.json",
+                  "fileType": "FILE_TYPE_FILE"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "text": [
+            "<xai:tool_usage_card>\n  <xai:tool_usage_card_id>f0000000-0000-4000-8000-a5e716b2a066</xai:tool_usage_card_id>\n  <xai:tool_name>InitTerminalSession</xai:tool_name>\n  <xai:tool_args><![CDATA[{\"preview_url\":null}]]></xai:tool_args>\n</xai:tool_usage_card>"
+          ],
+          "tags": [
+            "tool_usage_card"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": [
+            {
+              "toolUsageCardId": "f0000000-0000-4000-8000-a5e716b2a066",
+              "initTerminalSession": {}
+            }
+          ]
+        },
+        {
+          "text": [
+            ""
+          ],
+          "tags": [
+            "raw_function_result"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Extraction de la valeur de la clé etalon"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:46:38.511Z",
+      "thinkingEndTime": "2026-09-25T16:46:47.545Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-f25c88019da4",
+      "message": "Génère une image d'un renard roux dans une forêt enneigée. Aucun texte.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:47:14.595Z",
+      "parentResponseId": "f0000000-0000-4000-8000-e80dcbbb561d",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-5468766fb73c",
+      "message": "<grok:render card_id=\"jbQ6i\" card_type=\"generated_image_card\" type=\"render_generated_image\"></grok:render>",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:47:14.610Z",
+      "parentResponseId": "f0000000-0000-4000-8000-f25c88019da4",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [
+        "f0000000-0000-4000-8000-5002b8e3e9e3"
+      ],
+      "cardAttachmentsJson": [
+        "{\"id\":\"jbQ6i\",\"type\":\"render_generated_image\",\"cardType\":\"generated_image_card\",\"prompt\":\"A red fox standing in a snowy forest, realistic detailed fur, soft snow covering the ground and trees, winter atmosphere, natural lighting, no text, no words, no letters\",\"image_chunk\":{\"imageUuid\":\"f0000000-0000-4000-8000-5002b8e3e9e3\",\"imageUrl\":\"users/f0000000-0000-4000-8000-21c8b10400e8/generated/f0000000-0000-4000-8000-5002b8e3e9e3/image.jpg\",\"seq\":1,\"progress\":100,\"moderated\":false,\"mediaId\":\"f0000000-0000-4000-8000-5002b8e3e9e3\",\"imageTitle\":\"Generated Image\",\"imageIndex\":0,\"imageModel\":\"imagine_x_1\",\"rRated\":false,\"resolution\":{\"height\":1176,\"width\":784},\"isRootUserUploaded\":false,\"isRootCelebrity\":false,\"imageReferences\":[],\"mimeType\":\"image/jpeg\"}}"
+      ],
+      "fileUris": [
+        "f0000000-0000-4000-8000-5002b8e3e9e3"
+      ],
+      "fileAttachmentsMetadata": [
+        {
+          "fileMetadataId": "f0000000-0000-4000-8000-5002b8e3e9e3",
+          "fileMimeType": "image/jpeg",
+          "fileName": "image.jpg",
+          "fileUri": "users/f0000000-0000-4000-8000-21c8b10400e8/generated/f0000000-0000-4000-8000-5002b8e3e9e3/image.jpg",
+          "parsedFileUri": "",
+          "createTime": "2026-09-25T16:47:14.327Z",
+          "fileSource": "SELF_UPLOAD_FILE_SOURCE"
+        }
+      ],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Generating an image of a red fox in a snowy forest"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:46:58.372Z",
+      "thinkingEndTime": "2026-09-25T16:47:14.595Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [
+        {
+          "assetId": "f0000000-0000-4000-8000-5002b8e3e9e3",
+          "mimeType": "image/jpeg",
+          "name": "image.jpg",
+          "sizeBytes": 278903,
+          "createTime": "2026-09-25T16:47:14.327Z",
+          "lastUseTime": "2026-09-25T16:47:14.327Z",
+          "summary": "",
+          "previewImageKey": "",
+          "key": "users/f0000000-0000-4000-8000-21c8b10400e8/generated/f0000000-0000-4000-8000-5002b8e3e9e3/image.jpg",
+          "auxKeys": {
+            "original-image": "users/f0000000-0000-4000-8000-21c8b10400e8/generated/f0000000-0000-4000-8000-5002b8e3e9e3/original_image.jpg",
+            "thumbhash": "5vcJBQAmaJB0qYdoh5hmhh1RoAFV"
+          },
+          "isDeleted": false,
+          "fileSource": "IMAGINE_GENERATED_FILE_SOURCE",
+          "currentConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "sourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "isModelGenerated": true,
+          "updateTime": "2026-09-25T16:47:14.327Z",
+          "isLatest": true,
+          "inlineStatus": "DEFAULT_ARTIFACT_INLINE_STATUS",
+          "isRootAssetCreatedByModel": true,
+          "rootAssetSourceConversationId": "f0000000-0000-4000-8000-f001d3860781",
+          "sharedWithTeam": false,
+          "sharedWithUserIds": [],
+          "width": 784,
+          "height": 1176,
+          "rRated": false,
+          "thumbhash": "5vcJBQAmaJB0qYdoh5hmhh1RoAFV",
+          "ownerUserId": "f0000000-0000-4000-8000-21c8b10400e8"
+        }
+      ],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-7efe0e2d78c4",
+      "message": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:47:46.512Z",
+      "parentResponseId": "f0000000-0000-4000-8000-5468766fb73c",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-6030f1986ac6",
+      "message": "<grok:render card_id=\"i4HTQ\" card_type=\"rendered_file_card\" type=\"render_file\"><argument name=\"file_path\">/home/workdir/artifacts/canvas.html</argument></grok:render>",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:47:46.524Z",
+      "parentResponseId": "f0000000-0000-4000-8000-7efe0e2d78c4",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [
+        "{\"id\":\"i4HTQ\",\"type\":\"render_file\",\"cardType\":\"rendered_file_card\",\"file_name\":\"canvas.html\",\"content_type\":\"other\",\"mime_type\":\"application/octet-stream\",\"file_size\":334,\"url\":\"users/f0000000-0000-4000-8000-21c8b10400e8/generated/f0000000-0000-4000-8000-582a2225d9b6/canvas.html\",\"thumbnail_url\":\"https://grok.com/file-icons/unknown_light.png\",\"thumbnail_dark_url\":\"https://grok.com/file-icons/unknown_dark.png\"}"
+      ],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Creating the canvas artifact"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "<xai:tool_usage_card>\n  <xai:tool_usage_card_id>f0000000-0000-4000-8000-dbaf17273465</xai:tool_usage_card_id>\n  <xai:tool_name>WriteFile</xai:tool_name>\n  <xai:tool_args><![CDATA[{\"args\":{\"file_path\":\"/home/workdir/artifacts/canvas.html\",\"content\":\"<!DOCTYPE html>\\n<html>\\n<head>\\n<title>Artefact</title>\\n<style>\\nbody { font-family: Arial, sans-serif; padding: 20px; }\\nh1 { color: #333; }\\nul { list-style-type: disc; }\\n</style>\\n</head>\\n<body>\\n<h1>Titre de l'artefact</h1>\\n<ul>\\n<li>Premier élément</li>\\n<li>Deuxième élément</li>\\n<li>Troisième élément</li>\\n</ul>\\n</body>\\n</html>\\n\"}}]]></xai:tool_args>\n</xai:tool_usage_card>"
+          ],
+          "tags": [
+            "tool_usage_card"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": [
+            {
+              "toolUsageCardId": "f0000000-0000-4000-8000-dbaf17273465",
+              "writeFile": {
+                "args": {
+                  "filePath": "/home/workdir/artifacts/canvas.html",
+                  "content": "<!DOCTYPE html>\n<html>\n<head>\n<title>Artefact</title>\n<style>\nbody { font-family: Arial, sans-serif; padding: 20px; }\nh1 { color: #333; }\nul { list-style-type: disc; }\n</style>\n</head>\n<body>\n<h1>Titre de l'artefact</h1>\n<ul>\n<li>Premier élément</li>\n<li>Deuxième élément</li>\n<li>Troisième élément</li>\n</ul>\n</body>\n</html>\n"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "text": [
+            "<xai:tool_usage_card>\n  <xai:tool_usage_card_id>f0000000-0000-4000-8000-b12c35e794b3</xai:tool_usage_card_id>\n  <xai:tool_name>InitTerminalSession</xai:tool_name>\n  <xai:tool_args><![CDATA[{\"preview_url\":null}]]></xai:tool_args>\n</xai:tool_usage_card>"
+          ],
+          "tags": [
+            "tool_usage_card"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": [
+            {
+              "toolUsageCardId": "f0000000-0000-4000-8000-b12c35e794b3",
+              "initTerminalSession": {}
+            }
+          ]
+        },
+        {
+          "text": [
+            ""
+          ],
+          "tags": [
+            "raw_function_result"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Rendering the canvas artifact"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:47:26.996Z",
+      "thinkingEndTime": "2026-09-25T16:47:46.512Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-63fd8f69fca3",
+      "message": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+      "sender": "human",
+      "createTime": "2026-09-25T16:48:01.581Z",
+      "parentResponseId": "f0000000-0000-4000-8000-6030f1986ac6",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-4882aa88aea7",
+      "message": "🍎🍌🍇\nمرحبا\n你好",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:48:01.593Z",
+      "parentResponseId": "f0000000-0000-4000-8000-63fd8f69fca3",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Generating the requested emoji and text lines"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:47:57.813Z",
+      "thinkingEndTime": "2026-09-25T16:48:01.581Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-c364a9b32717",
+      "message": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+      "sender": "human",
+      "createTime": "2026-09-25T16:51:40.210Z",
+      "parentResponseId": "f0000000-0000-4000-8000-4882aa88aea7",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-9ff6ce1776fd",
+      "message": "**Raisonnement étape par étape :**\n\n1. La distance parcourue est de 120 km.  \n2. Le temps mis est de 1 h 30, soit 1,5 heure (ou 3/2 heures).  \n3. La vitesse moyenne se calcule par la formule :  \n   \\[\n   v = \\frac{d}{t}\n   \\]  \n4. On remplace :  \n   \\[\n   v = \\frac{120}{1{,}5} = 80\n   \\]  \n\n**Réponse :** 80 km/h.",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:51:40.222Z",
+      "parentResponseId": "f0000000-0000-4000-8000-c364a9b32717",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Calculant la vitesse moyenne du train"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:51:34.397Z",
+      "thinkingEndTime": "2026-09-25T16:51:37.280Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-08a85bff7c9a",
+      "message": "Exécute réellement ce Python et donne uniquement la sortie : print(sum([4, 5, 6]))",
+      "sender": "human",
+      "createTime": "2026-09-25T16:52:02.850Z",
+      "parentResponseId": "f0000000-0000-4000-8000-9ff6ce1776fd",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-b6d94666a62b",
+      "message": "15",
+      "sender": "assistant",
+      "createTime": "2026-09-25T16:52:02.862Z",
+      "parentResponseId": "f0000000-0000-4000-8000-08a85bff7c9a",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "<xai:tool_usage_card>\n  <xai:tool_usage_card_id>f0000000-0000-4000-8000-1f66553a80a1</xai:tool_usage_card_id>\n  <xai:tool_name>Bash</xai:tool_name>\n  <xai:tool_args><![CDATA[{\"args\":{\"command\":\"python3 -c \\\"print(sum([4, 5, 6]))\\\"\",\"timeout\":null,\"description\":\"Execute Python sum print\"}}]]></xai:tool_args>\n</xai:tool_usage_card>"
+          ],
+          "tags": [
+            "tool_usage_card"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": [
+            {
+              "toolUsageCardId": "f0000000-0000-4000-8000-1f66553a80a1",
+              "bash": {
+                "args": {
+                  "command": "python3 -c \"print(sum([4, 5, 6]))\"",
+                  "description": "Execute Python sum print"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "text": [
+            "<xai:tool_usage_card>\n  <xai:tool_usage_card_id>f0000000-0000-4000-8000-90674f9b0653</xai:tool_usage_card_id>\n  <xai:tool_name>InitTerminalSession</xai:tool_name>\n  <xai:tool_args><![CDATA[{\"preview_url\":null}]]></xai:tool_args>\n</xai:tool_usage_card>"
+          ],
+          "tags": [
+            "tool_usage_card"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": [
+            {
+              "toolUsageCardId": "f0000000-0000-4000-8000-90674f9b0653",
+              "initTerminalSession": {}
+            }
+          ]
+        },
+        {
+          "text": [
+            ""
+          ],
+          "tags": [
+            "raw_function_result"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Calculant la somme des éléments"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-25T16:51:53.284Z",
+      "thinkingEndTime": "2026-09-25T16:52:02.850Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    }
+  ]
+}

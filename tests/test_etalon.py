@@ -87,6 +87,31 @@ def test_detecte_refus_et_unicode():
     assert "emoji_unicode" in caps
 
 
+def test_detecte_pieces_jointes_locales():
+    """Pieces jointes localisees (`files/<hash>.<ext>`) : le nom d'origine
+    peut avoir disparu du texte avec l'URL distante."""
+    payload = {
+        "messages": [
+            {
+                "role": "user",
+                "texte": (
+                    "[Download the CSV file](files/7755a770f3e1f3397799.csv)\n"
+                    "[notes](files/47a997cc2bde5e5cc3cb.md)\n"
+                    "[doc](files/bdb9b910aea91b499fba.pdf)\n"
+                    "[data](files/b34ab5e8ca723cc8611f.json)\n"
+                    "[audio](files/556652507a9b5db19609.mp3)\n"
+                    "[image](files/a3c9acd98ec9cc919559.webp)"
+                ),
+            }
+        ]
+    }
+    caps = detect_capabilities(payload)
+    assert {
+        "upload_csv", "upload_text", "upload_pdf", "upload_json",
+        "audio", "upload_image",
+    } <= caps
+
+
 def test_queue_coverage_par_similarite():
     queue = [
         "Affiche la phrase avec print('Hello') en code en ligne : Pour afficher un message",

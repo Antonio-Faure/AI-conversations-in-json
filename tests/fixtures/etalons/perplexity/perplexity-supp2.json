@@ -4,31 +4,32 @@
   "title": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
   "url": "https://www.perplexity.ai/search/f0000000-0000-4000-8000-a3aebf3bff64",
   "model": "turbo",
-  "started_at": "2026-09-26T23:39:00Z",
-  "last_message_at": "2026-09-26T23:39:00Z",
+  "started_at": "2026-09-26T21:39:00Z",
+  "last_message_at": "2026-09-26T21:39:01Z",
   "exported_at": "2026-09-27T22:04:56Z",
   "messages": [
     {
       "conversation_id": "f0000000-0000-4000-8000-a3aebf3bff64",
-      "message_id": "",
+      "message_id": "f0000000-0000-4000-8000-aa2d841fe9e6",
       "role": "user",
       "platform": "perplexity",
-      "model": null,
-      "timestamp": "2026-09-26T23:39:00Z",
+      "model": "turbo",
+      "timestamp": "2026-09-26T21:39:01Z",
       "texte": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-a3aebf3bff64",
-      "message_id": "",
+      "message_id": "f0000000-0000-4000-8000-aa2d841fe9e6",
       "role": "assistant",
       "platform": "perplexity",
-      "model": null,
-      "timestamp": null,
+      "model": "turbo",
+      "timestamp": "2026-09-26T21:39:01Z",
       "texte": "---",
       "code_blocks": [],
       "reasoning": "",
@@ -36,7 +37,8 @@
       "sources": [],
       "tools": [
         "Recherche"
-      ]
+      ],
+      "variants": []
     }
   ]
 }

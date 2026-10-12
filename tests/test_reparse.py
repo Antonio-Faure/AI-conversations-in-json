@@ -89,6 +89,68 @@ def test_reparse_api_grok_depuis_le_payload():
     assert conv.url == "https://grok.com/chat/g1"
 
 
+def test_reparse_api_claude_depuis_le_payload():
+    payload = json.loads(
+        (FIXTURES / "claude_api_conversation.json").read_text(encoding="utf-8")
+    )
+    conv_id = payload["uuid"]
+    old = {
+        "conversation_id": conv_id,
+        "url": "https://claude.ai/chat/" + conv_id,
+    }
+    conv = reparse._reparse_api("claude", old, payload)
+    assert conv.conversation_id == conv_id
+    assert len(conv.messages) == 50
+    assert [m.role for m in conv.messages] == ["user", "assistant"] * 25
+    assert conv.url == old["url"]
+
+
+def test_reparse_api_mistral_depuis_le_payload():
+    payload = json.loads(
+        (FIXTURES / "mistral_api_conversation.json").read_text(encoding="utf-8")
+    )
+    conv_id = (payload.get("chat") or {}).get("id")
+    conv = reparse._reparse_api("mistral", {"conversation_id": conv_id}, payload)
+    assert conv.conversation_id == conv_id
+    assert len(conv.messages) == 26
+    assert [m.role for m in conv.messages][:2] == ["user", "assistant"]
+    assert conv.url == "https://chat.mistral.ai/work/" + conv_id
+
+
+def test_reparse_api_perplexity_depuis_le_payload():
+    payload = json.loads(
+        (FIXTURES / "perplexity_api_thread.json").read_text(encoding="utf-8")
+    )
+    conv_id = "f0000000-0000-4000-8000-7d3b48b1fa63"
+    old = {
+        "conversation_id": conv_id,
+        "url": "https://www.perplexity.ai/search/" + conv_id,
+    }
+    conv = reparse._reparse_api("perplexity", old, payload)
+    assert conv.conversation_id == conv_id
+    assert len(conv.messages) == 14
+    assert [m.role for m in conv.messages] == ["user", "assistant"] * 7
+    assert conv.url == old["url"]
+
+
+def test_reparse_api_gemini_depuis_le_payload():
+    payload = json.loads(
+        (FIXTURES / "gemini_api_conversation.json").read_text(encoding="utf-8")
+    )
+    conv_id = payload["conversation_id"]
+    old = {
+        "conversation_id": conv_id,
+        "title": payload["title"],
+        "url": "https://gemini.google.com/app/" + conv_id,
+    }
+    conv = reparse._reparse_api("gemini", old, payload)
+    assert conv.conversation_id == conv_id
+    assert conv.title == payload["title"]
+    assert len(conv.messages) == 60
+    assert [m.role for m in conv.messages][:2] == ["user", "assistant"]
+    assert conv.url == old["url"]
+
+
 def test_main_ignore_une_conversation_sans_artefact(tmp_path, monkeypatch, capsys):
     """Sans HTML ni payload brut : nettoyage direct, aucun plantage."""
     json_path = _write_export(
@@ -139,3 +201,32 @@ def test_main_remappe_depuis_le_payload_brut(tmp_path, monkeypatch, capsys):
     assert data["url"] == "https://chatgpt.com/c/" + payload["conversation_id"]
     out = capsys.readouterr().out
     assert "1 remappes" in out
+
+
+def test_main_payload_api_prime_sur_un_html_residuel(tmp_path, monkeypatch, capsys):
+    """Migration JSON-only : un .html d'un ancien scrape DOM ne doit pas gagner."""
+    payload = json.loads(
+        (FIXTURES / "mistral_api_conversation.json").read_text(encoding="utf-8")
+    )
+    conv_id = (payload.get("chat") or {}).get("id")
+    json_path = _write_export(
+        tmp_path, "mistral", "etalon",
+        {
+            "conversation_id": conv_id,
+            "platform": "mistral",
+            "title": "Etalon",
+            "url": "https://chat.mistral.ai/work/" + conv_id,
+            "messages": [],
+        },
+        raw=payload,
+    )
+    # HTML residuel invalide : s'il gagnait, le re-parse echouerait
+    json_path.with_suffix(".html").write_text("<html>obsolète</html>", encoding="utf-8")
+    _write_list(tmp_path / "mistral", [
+        {"conversation_id": conv_id, "title": "Etalon", "file": "etalon"},
+    ])
+    assert _run_main(monkeypatch, tmp_path) == 0
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    assert len(data["messages"]) == 26
+    out = capsys.readouterr().out
+    assert "1 remappes" in out and "0 echecs" in out

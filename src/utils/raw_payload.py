@@ -1,8 +1,9 @@
 """Payload API brut : `exports/<platform>/raw/<slug>.json`.
 
-Les plateformes scrapees par API (ChatGPT en mode API, Grok) ne produisent
-plus de HTML : le payload de l'API est conserve tel quel, comme l'est le HTML
-brut des plateformes DOM, pour permettre un re-mapping sans re-telechargement.
+Les plateformes scrapees par API (ChatGPT, Claude, Gemini, Grok, Mistral,
+Perplexity) ne produisent plus de HTML : le payload de l'API est conserve tel
+quel, comme l'est le HTML brut des plateformes DOM, pour permettre un
+re-mapping sans re-telechargement.
 """
 
 from __future__ import annotations

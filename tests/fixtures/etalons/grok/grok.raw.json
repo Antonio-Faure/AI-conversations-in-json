@@ -1,0 +1,573 @@
+{
+  "conversation": {
+    "conversationId": "f0000000-0000-4000-8000-54304fc377d5",
+    "title": "Affiche uniquement un titre niveau 1 « Test Titre »",
+    "starred": false,
+    "createTime": "2026-09-24T17:50:33.368Z",
+    "modifyTime": "2026-09-24T17:54:21.301Z",
+    "systemPromptName": "",
+    "temporary": false,
+    "mediaTypes": [],
+    "workspaces": [],
+    "taskResult": null,
+    "latestAssetMetadata": null,
+    "viewerIsOwner": true,
+    "kind": "CONVERSATION_KIND_UNSPECIFIED"
+  },
+  "responses": [
+    {
+      "responseId": "f0000000-0000-4000-8000-d0955660ed84",
+      "message": "Affiche uniquement un titre niveau 1 « Test Titre » et un sous-titre niveau 2 « Sous-titre ». Aucune autre phrase.",
+      "sender": "human",
+      "createTime": "2026-09-24T17:50:37.384Z",
+      "parentResponseId": "f0000000-0000-4000-8000-025d11b51c57",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-ab58bf33083a",
+      "message": "# Test Titre\n## Sous-titre",
+      "sender": "assistant",
+      "createTime": "2026-09-24T17:50:37.397Z",
+      "parentResponseId": "f0000000-0000-4000-8000-d0955660ed84",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Affichant le titre et le sous-titre"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-24T17:50:33.443Z",
+      "thinkingEndTime": "2026-09-24T17:50:37.384Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-05ce7fc48998",
+      "message": "Affiche uniquement : gras *italique* ~~barré~~. Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-24T17:50:52.273Z",
+      "parentResponseId": "f0000000-0000-4000-8000-ab58bf33083a",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-200f1623d3aa",
+      "message": "**gras** *italique* ~~barré~~",
+      "sender": "assistant",
+      "createTime": "2026-09-24T17:50:52.444Z",
+      "parentResponseId": "f0000000-0000-4000-8000-05ce7fc48998",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Affichant le texte formaté"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Affichant le texte formaté"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-24T17:50:47.030Z",
+      "thinkingEndTime": "2026-09-24T17:50:52.273Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-6ea950ac7b08",
+      "message": "Affiche uniquement une liste numérotée de 3 éléments : un, deux, trois. Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-24T17:51:05.869Z",
+      "parentResponseId": "f0000000-0000-4000-8000-200f1623d3aa",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-cce739b52d8c",
+      "message": "1. un\n2. deux\n3. trois",
+      "sender": "assistant",
+      "createTime": "2026-09-24T17:51:05.880Z",
+      "parentResponseId": "f0000000-0000-4000-8000-6ea950ac7b08",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [
+        {
+          "text": [
+            "Thinking about your request"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        },
+        {
+          "text": [
+            "Generating the requested numbered list"
+          ],
+          "tags": [
+            "header"
+          ],
+          "webSearchResults": [],
+          "xpostIds": [],
+          "xposts": [],
+          "toolUsageResults": [],
+          "ragResults": [],
+          "connectorSearchResults": [],
+          "collectionSearchResults": [],
+          "toolUsageCards": []
+        }
+      ],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "ui_layout": {
+          "effort": null,
+          "reasoning_ui_layout": "UNIFIED",
+          "rollout_ids": [],
+          "steer_model_id": null,
+          "will_think_long": false
+        }
+      },
+      "uiLayout": {
+        "reasoningUiLayout": "UNIFIED",
+        "willThinkLong": false,
+        "rolloutIds": []
+      },
+      "thinkingStartTime": "2026-09-24T17:51:03.043Z",
+      "thinkingEndTime": "2026-09-24T17:51:05.869Z",
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-fe271b4f6192",
+      "message": "Affiche uniquement une checklist de 2 items : [ ] à faire et [x] fait. Rien d’autre.",
+      "sender": "human",
+      "createTime": "2026-09-24T17:54:21.287Z",
+      "parentResponseId": "f0000000-0000-4000-8000-cce739b52d8c",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {},
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "",
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    },
+    {
+      "responseId": "f0000000-0000-4000-8000-6b42e613080e",
+      "message": "",
+      "sender": "assistant",
+      "createTime": "2026-09-24T17:54:21.301Z",
+      "parentResponseId": "f0000000-0000-4000-8000-fe271b4f6192",
+      "manual": false,
+      "partial": false,
+      "shared": false,
+      "query": "",
+      "queryType": "",
+      "webSearchResults": [],
+      "xpostIds": [],
+      "xposts": [],
+      "generatedImageUrls": [],
+      "imageAttachments": [],
+      "fileAttachments": [],
+      "cardAttachmentsJson": [],
+      "fileUris": [],
+      "fileAttachmentsMetadata": [],
+      "isControl": false,
+      "steps": [],
+      "imageEditUris": [],
+      "mediaTypes": [],
+      "webpageUrls": [],
+      "metadata": {
+        "request_metadata": {
+          "effort": "auto",
+          "model": "fast",
+          "source": "Web"
+        },
+        "stream_errors": [
+          {
+            "globalRateLimit": {},
+            "message": "Service temporarily unavailable. Please try again later.",
+            "severity": "STREAM_ERROR_SEVERITY_NORMAL"
+          }
+        ]
+      },
+      "citedWebSearchResults": [],
+      "toolResponses": [],
+      "model": "grok-3",
+      "requestMetadata": {
+        "model": "fast",
+        "effort": "AUTO"
+      },
+      "ragResults": [],
+      "citedRagResults": [],
+      "searchProductResults": [],
+      "connectorSearchResults": [],
+      "collectionSearchResults": [],
+      "streamErrors": [
+        {
+          "message": "Service temporarily unavailable. Please try again later.",
+          "globalRateLimit": {},
+          "severity": "STREAM_ERROR_SEVERITY_NORMAL"
+        }
+      ],
+      "citedXposts": [],
+      "citedConnectorSearchResults": [],
+      "citedCollectionSearchResults": [],
+      "inputChunks": [],
+      "outputChunks": [],
+      "fileAttachmentAssetMetadata": [],
+      "fileIds": []
+    }
+  ]
+}

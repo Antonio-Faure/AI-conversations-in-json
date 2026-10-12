@@ -479,6 +479,43 @@ def test_parse_api_ordre_par_parente():
     assert [m.message_id for m in conv.messages] == ["u1", "a1"]
 
 
+def test_parse_api_branche_abandonnee_ignoree():
+    """Une regeneration vide plus recente (parent disparu) ne masque pas la reponse."""
+    payload = {
+        "chat": {"id": "c1", "generatedTitle": "json.dump("},
+        "messages": {
+            "items": [
+                {  # branche abandonnee : plus recente, vide, parent absent
+                    "id": "orpheline",
+                    "role": "assistant",
+                    "content": "",
+                    "createdAt": "2026-01-01T00:02:00Z",
+                    "parentId": "disparu",
+                    "parentVersion": 0,
+                },
+                {
+                    "id": "a1",
+                    "role": "assistant",
+                    "content": "explication",
+                    "createdAt": "2026-01-01T00:00:01Z",
+                    "parentId": "u1",
+                    "parentVersion": 0,
+                },
+                {
+                    "id": "u1",
+                    "role": "user",
+                    "content": "json.dump(",
+                    "createdAt": "2026-01-01T00:00:00Z",
+                    "parentId": None,
+                },
+            ]
+        },
+    }
+    conv = MistralParser().parse("", extra={"api": payload})
+    assert [m.role for m in conv.messages] == ["user", "assistant"]
+    assert [m.message_id for m in conv.messages] == ["u1", "a1"]
+
+
 # -- service -----------------------------------------------------------------
 
 

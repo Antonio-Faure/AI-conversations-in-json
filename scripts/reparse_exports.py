@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Regenere les exports a partir des artefacts bruts (sans re-crawler).
 
-- plateformes DOM (chatgpt, claude, gemini, mistral, perplexity) : re-parse le
-  `.html` voisin avec le parser courant (correctifs LaTeX/code/nettoyage),
-  puis fusionne les metadonnees absentes du HTML (timestamps/modele) depuis
-  l'ancien JSON (par message_id, sinon par index) ;
-- plateformes API (ChatGPT en mode API, Grok) : re-mappe depuis le payload brut
-  `raw/<stem>.json` (`exports/<platform>/raw/`) ; une conversation sans HTML ni
-  payload est nettoyee directement (normalisation, balises xAI) ;
+- plateformes API (ChatGPT, Claude, Gemini, Grok, Mistral, Perplexity) :
+  re-mappe depuis le payload brut `raw/<stem>.json`
+  (`exports/<platform>/raw/`) ; le payload prime sur un `.html` residuel d'un
+  ancien scrape DOM (migration JSON-only) ;
+- repli DOM (`services.<bot>.api: false` pour chatgpt/claude/mistral/perplexity,
+  `dom: true` pour perplexity, defaut pour gemini sans `api: true`) : re-parse
+  le `.html` voisin et fusionne les metadonnees absentes depuis l'ancien JSON
+  (par message_id, sinon par index) ;
+- une conversation sans artefact brut (HTML ou payload) est nettoyee
+  directement (normalisation, balises xAI) ;
 - toutes : normalisation de l'alternance user/assistant ;
 - met a jour conversation_list.json (message_count, has_code, last_message_at).
 
@@ -53,8 +56,10 @@ def _url_for(
     return normalize_conversation_url(conversation_url(platform, conversation_id))
 
 DOM_PLATFORMS = ("chatgpt", "claude", "gemini", "mistral", "perplexity")
-#: plateformes sans HTML : payload brut dans raw/<stem>.json
-API_PLATFORMS = ("chatgpt", "grok")
+#: plateformes API : payload brut dans raw/<stem>.json (prime sur un HTML
+#: residuel pour les plateformes migrees : chatgpt, claude, gemini, grok,
+#: mistral, perplexity)
+API_PLATFORMS = ("chatgpt", "claude", "gemini", "grok", "mistral", "perplexity")
 
 
 def _resolve(value) -> Path:
@@ -103,26 +108,29 @@ def _reparse(platform: str, old: Dict[str, Any], html_path: Path) -> Conversatio
 def _reparse_api(platform: str, old: Dict[str, Any], raw: Any) -> Conversation:
     """Re-mappe une conversation depuis le payload API brut (`raw/<stem>.json`).
 
-    ChatGPT : payload de `backend-api/conversations` (extra `api`) ; Grok :
-    `{conversation, responses}` (les deux reponses REST de l'API).
+    ChatGPT (`backend-api/conversations`), Claude (`chat_conversations/<id>`),
+    Mistral (batch tRPC `message.all,chat.byId,canva.all`) et Perplexity
+    (`/rest/thread/<id>`) passent le payload dans l'extra `api` ; Gemini
+    (RPC `batchexecute hNvQHb`) y ajoute `title_hint` (le payload ne porte pas
+    toujours de titre) ; Grok recoit `{conversation, responses}` (les deux
+    reponses REST de l'API).
     """
     parser = PARSER_CLASSES[platform]()
     payload = raw if isinstance(raw, dict) else {}
-    if platform == "chatgpt":
-        conv = parser.parse(
-            "",
-            conversation_id=str(old.get("conversation_id") or ""),
-            extra={"api": payload},
-        )
-    else:  # grok
-        conv = parser.parse(
-            "",
-            conversation_id=str(old.get("conversation_id") or ""),
-            extra={
-                "conversation": payload.get("conversation") or {},
-                "responses": payload.get("responses") or [],
-            },
-        )
+    if platform == "grok":
+        extra: Dict[str, Any] = {
+            "conversation": payload.get("conversation") or {},
+            "responses": payload.get("responses") or [],
+        }
+    elif platform == "gemini":
+        extra = {"api": payload, "title_hint": old.get("title")}
+    else:  # chatgpt, claude, mistral, perplexity : payload dans extra["api"]
+        extra = {"api": payload}
+    conv = parser.parse(
+        "",
+        conversation_id=str(old.get("conversation_id") or ""),
+        extra=extra,
+    )
     conv = _merge_old_metadata(conv, old)
     if not conv.url:
         conv.url = old.get("url") or _url_for(platform, conv.conversation_id)
@@ -196,12 +204,14 @@ def main() -> int:
             html_path = json_path.with_suffix(".html")
             raw = load_raw_payload(exports, platform, json_path.stem)
             try:
-                if platform in DOM_PLATFORMS and html_path.exists():
-                    conv = _reparse(platform, old_meta, html_path)
-                    totals["reparsed"] += 1
-                elif platform in API_PLATFORMS and raw is not None:
+                # API d'abord : pour les plateformes migrees, un .html residuel
+                # (ancien scrape DOM) ne doit pas gagner sur le payload brut
+                if platform in API_PLATFORMS and raw is not None:
                     conv = _reparse_api(platform, old_meta, raw)
                     totals["remapped"] += 1
+                elif platform in DOM_PLATFORMS and html_path.exists():
+                    conv = _reparse(platform, old_meta, html_path)
+                    totals["reparsed"] += 1
                 else:
                     # pas d'artefact brut (conversation migree, export ancien) :
                     # nettoyage direct du JSON, sans planter

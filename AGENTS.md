@@ -74,7 +74,10 @@ indisponibles).
 - **Services** (navigation + découverte) : `src/services/<bot>.py`, façades
   communes `scrape_conversation` / `parse_page` / `capture_message_screenshots`
   dans `src/services/base.py`. Grok est **API + cookies** (`uses_browser=False`) ;
-  ChatGPT a un mode API opt-in (`services.chatgpt.api: true`). Les services API
+  ChatGPT, Claude, Mistral et Perplexity sont en **mode API par défaut**
+  (désactivable par `services.<bot>.api: false` → repli DOM ; pour Perplexity,
+  `services.perplexity.dom: true`) ; Gemini est en mode API **opt-in**
+  (`services.gemini.api: true`, actif dans `config.yaml`). Les services API
   renvoient `(conv, None)` et exposent `take_raw_payload()`.
 - **Parseurs** (DOM → `Conversation`, testables sans navigateur) :
   `src/parsers/<bot>.py`, helpers dans `src/parsers/base.py`.
@@ -100,17 +103,20 @@ indisponibles).
   `[nom](files/<hash>.<ext>)`, fichier téléchargé dans `exports/<platform>/files/`,
   servi par la même route `/media/<platform>/<fichier>`.
 - **URL** de conversation toujours renseignée (`Conversation.url`).
-- **Artefact brut** : HTML (`<stem>.html`) pour les plateformes DOM. Pour les
-  plateformes API (chatgpt en mode API, grok), le payload brut
+- **Artefact brut** : HTML (`<stem>.html`) pour les plateformes DOM (repli
+  `api: false`). Pour les plateformes API (chatgpt, claude, gemini, grok,
+  mistral, perplexity), le payload brut
   `exports/<platform>/raw/<slug>.json` remplace le HTML (re-mapping sans
-  re-téléchargement) ; un `.html` résiduel est supprimé au prochain scrape.
+  re-téléchargement) ; un `.html` résiduel est supprimé au prochain scrape et
+  `reparse_exports.py` donne la priorité au payload brut.
 - Ajouter une capacité de parseur = fichier `<bot>.py` + tests, **sans** toucher
   `base.py`/`schema.py`/serveur sans raison.
 
 ## Tests
 
 - `pytest` (config `pytest.ini`, `pythonpath = .`). Fixtures HTML dans
-  `tests/fixtures/` (fixture `fixture_html` dans `tests/conftest.py`).
+  `tests/fixtures/` (fixture `fixture_html` dans `tests/conftest.py`) ; payloads
+  API (`*_api_*.json`) pour tester les mappers JSON hors navigateur.
 - Tester les parseurs **sans navigateur** (HTML en dur) ; l'orchestrateur avec
   des services/sessions factices (`tests/test_orchestrator.py`) ; le CLI sans
   Chromium (`tests/test_cli.py`).
@@ -183,8 +189,10 @@ indisponibles).
 - Envoi (une seule fois) : sous-agent browser-use par bot, puis on gèle le
   HTML/JSON de la conversation obtenue.
 - **Fixtures gelées** : `.venv/bin/python scripts/freeze_etalon.py [--clean]`
-  copie HTML+JSON dans `tests/fixtures/etalons/`; `tests/test_etalon_fixtures.py`
-  reparse hors navigateur et compare (détecte une régression de parseur).
+  copie l'artefact brut (payload `raw/` pour les plateformes API, HTML pour les
+  DOM) + JSON dans `tests/fixtures/etalons/` ; `tests/test_etalon_fixtures.py`
+  reparse hors navigateur (payload API via `extra={"api": …}`) et compare
+  (détecte une régression de parseur).
 
 ## Pièges connus
 
@@ -193,6 +201,18 @@ indisponibles).
 - Cloudflare : Claude/Perplexity/Mistral forcent `engine: botasaurus` ; login et
   export doivent utiliser **le même moteur** (cookies liés à l'UA).
 - Perplexity gratuit rate-limite → espacer (`--daily`), pas de scraping massif.
+- Perplexity : lecture par API REST (`GET /rest/thread/<id>`, pagination par
+  curseur) + GraphQL (`POST /rest/perplexity_ask/graphql`, découverte
+  `LibraryRecentThreadsPaginationQuery`) ; les cookies sont mintés une fois via
+  le navigateur (`profiles/perplexity`, botasaurus) puis tout passe en HTTP
+  pur. Payload brut dans `exports/perplexity/raw/` ; repli DOM opt-in
+  (`services.perplexity.dom: true`).
+- Gemini : lecture par RPC `batchexecute`
+  (`/_/BardChatUi/data/batchexecute` : `MaZiqc` liste, `hNvQHb` fil) avec les
+  cookies du profil et les jetons tournants de la page (`SNlM0e`, `F.sid`,
+  `bl`) ; 429 et erreur applicative `BardErrorInfo` 1096 gérées par backoff.
+  Mode API **opt-in** (`services.gemini.api: true`), payload brut dans
+  `exports/gemini/raw/`.
 - **Fils « collés en bas »** (Perplexity, parfois Claude/ChatGPT) : un `scrollTop`
   programmatique est annulé. Utiliser `session.scroll_wheel` (molette réelle CDP)
   pour remonter le conteneur, pas `scrollTop`.
@@ -209,14 +229,23 @@ indisponibles).
 - Une **fusion JSON partielle** (scrape tronqué) ne remplace pas l'archive :
   statut `kept` (préfixe/suffixe) → ne pas dégrader un export complet.
 - Mistral : application unique `/work` (l'ancien `/chat` a fusionné dedans) ;
-  les URLs `/chat/<id>` sont réécrites en `/work/<id>`. Timestamps non exposés
-  (`null`).
+  les URLs `/chat/<id>` sont réécrites en `/work/<id>`. Lecture par API tRPC
+  (`/api/trpc/…` : `chat.last`, `message.all,chat.byId,canva.all`) avec
+  `cookies/mistral.json` (à rafraîchir via `run.py --login mistral` quand la
+  session expire) ; `services.mistral.api: false` force le DOM. Timestamps non
+  exposés (`null`).
+- Claude : lecture par API REST
+  (`/api/organizations/<org>/chat_conversations_v2` puis
+  `/api/organizations/<org>/chat_conversations/<id>?tree=True`) avec les cookies
+  du profil (`cookies/claude.json` sinon mint via navigateur, UA lié au profil) ;
+  `services.claude.api: false` force le DOM. Payload brut dans
+  `exports/claude/raw/`.
 - Grok : pas de navigateur → pas de screenshots, pas de HTML ; payload brut dans
   `exports/grok/raw/`. Les pièces jointes sont téléchargées via un `fetch`
   authentifié par cookies.
-- ChatGPT en mode API (`services.chatgpt.api: true`) : pas de HTML ni de
-  screenshots, payload brut dans `exports/chatgpt/raw/` ; `--variants` exige le
-  mode DOM.
+- ChatGPT, Claude, Mistral, Perplexity et Gemini (opt-in) en mode API : pas de
+  HTML ni de screenshots, payload brut dans `exports/<bot>/raw/` ;
+  `--variants` exige le mode DOM pour ChatGPT.
 - Après un `reparse_exports.py` ou un `download_images.py`, relancer
   `rag_index.py --force` (cache par empreinte de message).
 

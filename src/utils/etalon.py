@@ -108,6 +108,16 @@ _FILE_PATTERNS = (
     (r"video[^ \n]*\.(?:mp4|mov|webm)", "video"),
     (r"image[^ \n]*\.(?:png|jpe?g|webp|gif)", "upload_image"),
     (r"\]\(images/", "upload_image"),
+    # pieces jointes localisees (`[nom](files/<hash>.<ext>)`) : l'URL distante
+    # portait souvent le nom du fichier ; une fois remplacee par le chemin
+    # local, seul le suffixe distingue encore le type de piece jointe
+    (r"\]\(files/[^)\s]*\.pdf\)", "upload_pdf"),
+    (r"\]\(files/[^)\s]*\.csv\)", "upload_csv"),
+    (r"\]\(files/[^)\s]*\.json\)", "upload_json"),
+    (r"\]\(files/[^)\s]*\.(?:txt|md)\)", "upload_text"),
+    (r"\]\(files/[^)\s]*\.(?:mp3|wav|m4a|ogg)\)", "audio"),
+    (r"\]\(files/[^)\s]*\.(?:mp4|mov|webm)\)", "video"),
+    (r"\]\(files/[^)\s]*\.(?:png|jpe?g|webp|gif|svg)\)", "upload_image"),
 )
 
 #: capacites verifiables automatiquement depuis un export (JSON + HTML optionnel)

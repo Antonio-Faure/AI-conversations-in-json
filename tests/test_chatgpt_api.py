@@ -180,6 +180,49 @@ def test_parse_api_sources():
     ]
 
 
+def test_parse_api_image_group_reference():
+    """Les carrousels d'images web (`image_group`) sont remappes dans le texte."""
+    marker = '\ue200image_group\ue202{"layout":"carousel"}'
+    payload = {
+        "conversation_id": "c1",
+        "messages": [
+            {
+                "id": "u1",
+                "author": {"role": "user"},
+                "content": {"content_type": "text", "parts": ["montre des images"]},
+            },
+            {
+                "id": "a1",
+                "author": {"role": "assistant"},
+                "recipient": "all",
+                "metadata": {
+                    "model_slug": "gpt-5-6",
+                    "content_references": [
+                        {
+                            "type": "image_group",
+                            "matched_text": marker,
+                            "alt": (
+                                "![Image](https://images.openai.com/a)  "
+                                "![Image](https://images.openai.com/b)"
+                            ),
+                        }
+                    ],
+                },
+                "content": {
+                    "content_type": "text",
+                    "parts": [f"Voici :\n\n{marker}\n\nfin"],
+                },
+            },
+        ],
+    }
+    conv = ChatGPTParser().parse("", extra={"api": payload})
+    texte = conv.messages[1].texte
+    assert marker not in texte
+    assert texte.count("![") == 2
+    assert "https://images.openai.com/a" in texte
+    assert texte.endswith("fin")
+
+
 def test_parse_api_raisonnement_thoughts():
     """Un `thoughts` porteur de texte alimente `reasoning`, son resume `tools`."""
     payload = {

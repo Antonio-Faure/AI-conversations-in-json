@@ -4,8 +4,9 @@
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
 
 Export automatisé des conversations IA dans un **format JSON standardisé** +
-l'**artefact brut** de chaque conversation (HTML de la page pour les
-plateformes DOM, payload API brut pour ChatGPT en mode API et Grok).
+l'**artefact brut** de chaque conversation (payload API brut pour les
+plateformes API — ChatGPT, Claude, Gemini, Grok, Mistral, Perplexity — HTML de
+la page pour le repli DOM).
 Plateformes actives : **ChatGPT**, **Claude**, **Gemini**, **Perplexity**,
 **Grok** (xAI) et **Mistral**.
 
@@ -32,10 +33,11 @@ run.py (CLI)
               1. ouvre la home -> sidebar -> liste des conversations
               2. sélectionne les cibles selon le mode (daily / monthly)
               3. pour chacune : navigation + scroll -> HTML complet (DOM) ou
-                 appels API -> payload brut (ChatGPT API, Grok)
+                 appels API -> payload brut (ChatGPT, Claude, Gemini, Grok,
+                 Mistral, Perplexity)
               4. parsing -> Conversation standardisée (+ code_blocks)
               5. écriture atomique de <nom>.json et de l'artefact brut
-                 (.html pour le DOM, raw/<nom>.json pour l'API)
+                 (raw/<nom>.json pour l'API, .html pour le DOM)
               6. mise à jour de conversation_list.json
 ```
 
@@ -79,7 +81,14 @@ Pour Grok et Mistral (pas de profil scraper dédié), la commande **capture les
 cookies** : elle ouvre un navigateur visible, détecte la connexion
 automatiquement (cookie de session) et écrit `cookies/<service>.json`.
 Grok utilise Firefox natif (Chromium est bloqué par Cloudflare), Mistral le
-moteur botasaurus. Vérification : `scripts/check_cookies.py`.
+moteur botasaurus. Vérification : `scripts/check_cookies.py`. En mode API,
+Mistral lit `cookies/mistral.json` directement : relancer
+`run.py --login mistral` quand la session expire (les lectures HTTP n'ouvrent
+pas de navigateur). Perplexity réutilise les cookies du profil
+(`profiles/perplexity`, mintés au début de chaque run) : relancer
+`run.py --login perplexity` si la session expire. Gemini en mode API lit aussi
+les cookies du profil (`profiles/gemini`) et les jetons de la page :
+`run.py --login gemini` en cas de session expirée.
 
 Important : le login utilise **le même moteur que l'export** du service
 (Botasaurus pour Claude et Perplexity). Les cookies anti-bot comme
@@ -167,8 +176,12 @@ ou en `monthly`.
   `code_blocks` en est la vue structurée `{language, code}`.
 - timestamps ISO-8601 UTC (`...Z`) ou `null` quand la plateforme ne les expose pas.
 - Le fichier `.html` contient le DOM complet de la page de conversation
-  (plateformes DOM). ChatGPT en mode API et Grok n'écrivent plus de HTML : le
-  payload brut `raw/<nom>.json` le remplace comme artefact de re-mapping.
+  (repli DOM). Les plateformes API (ChatGPT, Claude, Gemini, Grok, Mistral,
+  Perplexity) n'écrivent plus de HTML : le payload brut `raw/<nom>.json` le
+  remplace comme artefact de re-mapping (JSON-only). Le mode API est le défaut
+  (`services.<bot>.api: true`) ; `api: false` force le repli DOM, qui réécrit
+  le HTML (`services.perplexity.dom: true` pour Perplexity ; Gemini est
+  opt-in : `services.gemini.api: true`, actif dans `config.yaml`).
 - `variants` (optionnel, capture avec `--variants`) : versions alternatives du
   message — éditions d'un message utilisateur (`kind: "edit"`) ou réponses
   régénérées (`kind: "regeneration"`) — dans l'ordre de l'interface ; `texte`
@@ -288,9 +301,9 @@ Correctifs appliqués aux parseurs et à la régénération :
   pour Mistral → distingue `/chat` de `/work`). Backfill sur l'existant :
   `.venv/bin/python scripts/backfill_urls.py`.
 
-Régénération **sans re-crawler** depuis les artefacts bruts sauvegardés : HTML
-des plateformes DOM, payload API brut (`exports/<platform>/raw/`) pour ChatGPT
-en mode API et Grok.
+Régénération **sans re-crawler** depuis les artefacts bruts sauvegardés :
+payload API brut (`exports/<platform>/raw/`) pour ChatGPT, Claude, Gemini,
+Grok, Mistral et Perplexity, HTML du repli DOM.
 
 ```bash
 .venv/bin/python scripts/reparse_exports.py                 # toutes plateformes
@@ -298,10 +311,11 @@ en mode API et Grok.
 ```
 
 Les métadonnées absentes de l'artefact (timestamps/modele) sont fusionnées
-depuis l'ancien JSON (`.json.bak` conservé). Une conversation sans HTML ni
-payload (export ancien, plateforme migrée) est nettoyée directement. Re-lancer
-ensuite `scripts/rag_index.py --force` (les vecteurs inchangés sont repris du
-cache).
+depuis l'ancien JSON (`.json.bak` conservé). Pour les plateformes migrées en
+API, le payload brut prime sur un `.html` résiduel (migration JSON-only). Une
+conversation sans HTML ni payload (export ancien, plateforme migrée) est
+nettoyée directement. Re-lancer ensuite `scripts/rag_index.py --force` (les
+vecteurs inchangés sont repris du cache).
 
 ## RAG (recherche sémantique des messages)
 
@@ -394,10 +408,12 @@ Tout est dans [`config.yaml`](config.yaml) : chemins **relatifs à la racine du
 dépôt** (ou absolus), services (les 6 `enabled: true`), headless, timeouts,
 scroll, `parallel`, `cookies_dir`, `rag_db`/`rag_model`. Claude,
 Perplexity et Mistral forcent `engine: botasaurus` (Cloudflare bloque
-Playwright) ; Grok utilise l'API HTTP + cookies (aucun navigateur) ; ChatGPT
-peut basculer en lectures API pures (`services.chatgpt.api: true` : payload
-brut archivé au lieu du HTML). Les valeurs omises reprennent `DEFAULT_CONFIG`
-(`src/orchestrator.py`).
+Playwright) ; Grok utilise l'API HTTP + cookies (aucun navigateur) ; ChatGPT,
+Claude, Mistral et Perplexity lisent par défaut via l'API
+(`services.<bot>.api: true` : payload brut archivé au lieu du HTML) et gardent
+le DOM en repli (`api: false`, ou `services.perplexity.dom: true`). Gemini est
+en API **opt-in** (`services.gemini.api: true`, actif dans `config.yaml`). Les
+valeurs omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 
 ## Architecture
 
@@ -426,10 +442,16 @@ brut archivé au lieu du HTML). Les valeurs omises reprennent `DEFAULT_CONFIG`
 │   ├── services/              # chatgpt, claude, gemini, perplexity, grok, mistral
 │   │   ├── base.py            # BaseService : découverte + scrape + parse
 │   │   ├── grok.py            # API REST + cookies (uses_browser=False)
-│   │   └── mistral.py         # botasaurus + cookies ; modes /chat + /work
+│   │   ├── claude.py          # API REST + cookies ; repli DOM (api: false)
+│   │   ├── mistral.py         # API tRPC + cookies ; repli DOM ; /chat + /work
+│   │   ├── perplexity.py      # API REST/GraphQL + cookies ; repli DOM (dom: true)
+│   │   └── gemini.py          # API batchexecute (opt-in) ; DOM par défaut
 │   ├── parsers/               # parsing DOM (BeautifulSoup, testable sans navigateur)
 │   │   ├── base.py            # BaseParser : parse(), parse_links(), text_of()
-│   │   ├── mistral.py         # data-message-author-role + parties answer/reasoning
+│   │   ├── claude.py          # DOM + arbre API (variantes natives)
+│   │   ├── mistral.py         # DOM + payload tRPC (variantes, canvas)
+│   │   ├── perplexity.py      # DOM + payload /rest/thread (sources, étapes)
+│   │   ├── gemini.py          # DOM + payload batchexecute (sources, fichiers)
 │   │   └── grok.py            # construit depuis les données de l'API
 │   ├── rag/                   # RAG messages : BGE-M3 + SQLite/sqlite-vec
 │   │   ├── embeddings.py      #   Embedder BGE-M3 (lazy, normalisé)
@@ -451,8 +473,9 @@ brut archivé au lieu du HTML). Les valeurs omises reprennent `DEFAULT_CONFIG`
 
 ## Tests
 
-Les parsers sont testés **sans navigateur** sur des fixtures HTML ; l'orchestrateur
-avec des services et sessions factices ; le CLI sans lancer Chromium.
+Les parsers sont testés **sans navigateur** sur des fixtures HTML (DOM) et des
+payloads API (`tests/fixtures/*_api_*.json`) ; l'orchestrateur avec des services
+et sessions factices ; le CLI sans lancer Chromium.
 
 ```bash
 .venv/bin/python -m pytest
@@ -469,6 +492,8 @@ avec des services et sessions factices ; le CLI sans lancer Chromium.
 | Export vide | vérifier `profiles/<platform>/` et lancer `--headful --verbose` |
 | Perplexity : conversations vides en rafale | rate-limit du forfait gratuit → espacer les runs (`--daily`) |
 | Grok / Mistral : `cookies absents` | lancer `run.py --login grok` (ou `mistral`) puis `scripts/check_cookies.py` |
+| Claude/Mistral/Perplexity/Gemini API : `non authentifie` (401/403) | cookies du profil expirés → `run.py --login <service>` |
+| Claude : `organisation introuvable` | session invalide → `run.py --login claude` |
 
 ## Limites connues
 
@@ -477,13 +502,30 @@ avec des services et sessions factices ; le CLI sans lancer Chromium.
 - Grok : Cloudflare bloque le Chromium automatisé → scraping via l'**API REST +
   cookies** (`uses_browser=False`) ; aucun HTML n'est généré, le payload brut
   de l'API est conservé dans `exports/grok/raw/`. Modèle : `grok-3`.
+- Claude : lecture par l'**API REST** (`/api/organizations/<org>/chat_conversations*`,
+  cookies du profil) ; aucun HTML ni screenshot, payload brut dans
+  `exports/claude/raw/`. `services.claude.api: false` force le DOM.
 - Mistral : application unique `/work` (l'ancien `/chat` a fusionné dedans) ;
-  les URLs `/chat/<id>` sont réécrites en `/work/<id>`. Timestamps non exposés
-  (`null`). Cookies dans `profiles/mistral` (profil persistant) et
-  `cookies/mistral.json`.
-- Perplexity : le forfait **gratuit** rate-limite la lecture en rafale
-  (redirection vers l'accueil → conversations vides). `--daily` les reprend
-  progressivement ; le modèle vient de l'API de découverte (`displayModel.modelID`).
+  les URLs `/chat/<id>` sont réécrites en `/work/<id>`. Lecture par l'**API
+  tRPC** (`/api/trpc/…`, cookies `cookies/mistral.json` — à rafraîchir via
+  `run.py --login mistral` quand la session expire) ; payload brut dans
+  `exports/mistral/raw/`, `services.mistral.api: false` force le DOM.
+  Timestamps non exposés (`null`).
+- Perplexity : lecture par l'**API REST** (`GET /rest/thread/<id>`, pagination
+  par curseur) + GraphQL (`POST /rest/perplexity_ask/graphql` pour la
+  découverte) ; les cookies sont mintés une fois via le navigateur
+  (`profiles/perplexity`, botasaurus) puis tout passe en HTTP pur. Payload brut
+  dans `exports/perplexity/raw/`, repli DOM via `services.perplexity.dom: true`.
+  Le forfait **gratuit** rate-limite la lecture en rafale (redirection vers
+  l'accueil → conversations vides). `--daily` les reprend progressivement ; le
+  modèle vient de l'API de découverte (`displayModel.modelID`).
+- Gemini : lecture par RPC `batchexecute` (`MaZiqc` liste, `hNvQHb` fil) avec
+  les cookies du profil et les jetons tournants de la page ; mode API
+  **opt-in** (`services.gemini.api: true`), payload brut dans
+  `exports/gemini/raw/`, sans HTML ni screenshots. Les 429 et l'erreur
+  applicative `BardErrorInfo` 1096 sont absorbés par backoff (pacing 3 s) ; en
+  cas de limite persistante le service s'arrête proprement et `--daily` reprend
+  les conversations sans `raw/`.
 - Le nom de fichier vient du titre (slugifié) : une collision de titres est
   désambiguïsée par un suffixe d'id. Un changement de titre conserve le fichier
   existant (le nom est mémorisé dans `conversation_list.json`).

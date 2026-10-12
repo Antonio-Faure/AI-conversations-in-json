@@ -6,7 +6,7 @@
   "model": "grok-3",
   "started_at": "2026-09-25T16:02:36Z",
   "last_message_at": "2026-09-25T16:52:02Z",
-  "exported_at": "2026-09-28T07:30:34Z",
+  "exported_at": "2026-10-11T16:45:15Z",
   "messages": [
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -20,7 +20,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -34,7 +35,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -48,7 +50,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -62,7 +65,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -76,7 +80,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -90,7 +95,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -104,7 +110,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -118,7 +125,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -132,7 +140,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -146,7 +155,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -160,7 +170,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -174,7 +185,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -188,7 +200,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -202,7 +215,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -216,7 +230,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -230,7 +245,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -244,7 +260,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -258,7 +275,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -272,7 +290,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -286,7 +305,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -300,7 +320,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -314,7 +335,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -328,7 +350,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -342,7 +365,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -356,7 +380,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -375,7 +400,8 @@
       "tools": [
         "Exécution de commandes",
         "Initialisation du terminal"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -389,7 +415,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -403,7 +430,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -417,7 +445,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -433,7 +462,8 @@
       "sources": [],
       "tools": [
         "Connecteurs MCP"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -447,7 +477,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -461,7 +492,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -475,7 +507,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -489,7 +522,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -503,7 +537,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -517,7 +552,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -531,7 +567,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -548,7 +585,8 @@
       "tools": [
         "Lecture de fichier",
         "Initialisation du terminal"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -562,7 +600,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -578,7 +617,8 @@
       "sources": [],
       "tools": [
         "Génération d'image"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -592,7 +632,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -611,7 +652,8 @@
       "tools": [
         "Écriture de fichier",
         "Initialisation du terminal"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -625,7 +667,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -639,7 +682,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -653,7 +697,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -667,7 +712,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -681,7 +727,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-f001d3860781",
@@ -698,7 +745,8 @@
       "tools": [
         "Exécution de commandes",
         "Initialisation du terminal"
-      ]
+      ],
+      "variants": []
     }
   ]
 }

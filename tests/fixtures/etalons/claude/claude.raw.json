@@ -1,0 +1,1615 @@
+{
+  "uuid": "f0000000-0000-4000-8000-12a21176e31e",
+  "name": "Formatting text with different styles",
+  "summary": "**Conversation Overview**\n\nThis conversation was a systematic and exhaustive test of Claude's formatting, rendering, and capability boundaries across a wide range of scenarios. The person issued a rapid series of precise, minimal prompts — almost always with an explicit instruction to include \"nothing else\" beyond the requested output — covering Markdown formatting (bold, italic, strikethrough, numbered lists, checklists, blockquotes, horizontal rules, nested lists, inline code, images), LaTeX (inline equations, matrix rendering), multilingual and emoji output, SQL query generation, code blocks with syntax labeling, step-by-step reasoning, and file generation via code execution.\n\nClaude demonstrated consistent compliance with the \"nothing extra\" constraint throughout, producing clean, minimal outputs. For file generation tasks (CSV and plain text), Claude used a bash execution tool to create files and presented them for download. For image generation, Claude produced an SVG illustration of a fox in a snowy forest using a visualization widget. For the canvas/artifact request, Claude generated and rendered an HTML file with a title and bullet list. Claude also confirmed having access to Gmail, Google Calendar, and Google Drive integrations in the session. One response — to a prompt about audio content in a video — correctly acknowledged that audio/video analysis was not possible. Responses to prompts referencing unshared files (PDF, table data, JSON) were handled with appropriate clarifications or best-effort responses based on available context.\n\nThe person demonstrated a pattern of terse, structured, single-purpose prompts focused on boundary-testing and output verification rather than open-ended collaboration, with no corrections or preference adjustments communicated during the session.\n\n**Tool Knowledge**\n\nClaude confirmed active access to Gmail, Google Calendar, and Google Drive connectors within this conversation. File creation via bash tool followed the pattern of writing to `/mnt/user-data/outputs/` and then presenting the file path using a `present_files` call — this two-step sequence (write then present) reliably produced downloadable files. The SVG visualization approach via the `mcp__visualize__show_widget` tool successfully rendered inline illustrated content when image generation was requested. The HTML artifact workflow used `create_file` followed by an `Artifact` tool call referencing the saved file path, which produced a rendered canvas preview.",
+  "model": "claude-sonnet-5",
+  "created_at": "2026-09-24T08:58:21.695071Z",
+  "updated_at": "2026-09-24T09:37:00.093737Z",
+  "settings": {
+    "enabled_web_search": true,
+    "enabled_monkeys_in_a_barrel": true,
+    "enabled_saffron": true,
+    "tool_search_mode": "auto",
+    "thinking_mode": "auto",
+    "effort_level": "medium",
+    "chat_memory_mode": "enabled",
+    "preview_feature_uses_artifacts": true,
+    "enabled_artifacts_attachments": true,
+    "enabled_turmeric": true
+  },
+  "is_starred": false,
+  "is_archived": false,
+  "is_temporary": false,
+  "workspace_upgraded": false,
+  "is_multiplayer": false,
+  "platform": "CLAUDE_AI",
+  "is_wiggle_enabled": true,
+  "effective_thinking_mode": "auto",
+  "current_leaf_message_uuid": "f0000000-0000-4000-8000-f170d61e4cb1",
+  "chat_messages": [
+    {
+      "uuid": "f0000000-0000-4000-8000-765c6426edfd",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T08:58:22.301575Z",
+          "stop_timestamp": "2026-09-24T08:58:22.301575Z",
+          "type": "text",
+          "text": "Écris le mot \"test\" trois fois : une fois en gras, une fois en italique, une fois barré. Une ligne par mot, rien d'autre.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 0,
+      "created_at": "2026-09-24T08:58:22.302387Z",
+      "updated_at": "2026-09-24T08:58:22.302387Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-05b5b210d675"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-93be2b941a1d",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T08:58:22.296066Z",
+          "stop_timestamp": "2026-09-24T08:58:22.819738Z",
+          "type": "text",
+          "text": "**test**\n*test*\n~~test~~",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 1,
+      "created_at": "2026-09-24T08:58:22.835027Z",
+      "updated_at": "2026-09-24T08:58:22.835027Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-765c6426edfd"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-fca04b364060",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T08:59:46.673132Z",
+          "stop_timestamp": "2026-09-24T08:59:46.673132Z",
+          "type": "text",
+          "text": "Fais une liste numérotée de 3 étapes fictives pour \"ouvrir une boîte\". Aucun texte avant ou après.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 2,
+      "created_at": "2026-09-24T08:59:46.673297Z",
+      "updated_at": "2026-09-24T08:59:46.673297Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-93be2b941a1d"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-98f22ec7580d",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T08:59:46.667288Z",
+          "stop_timestamp": "2026-09-24T08:59:47.290774Z",
+          "type": "text",
+          "text": "1. Attraper la boîte\n2. Ouvrir le couvercle\n3. Regarder à l'intérieur",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 3,
+      "created_at": "2026-09-24T08:59:47.310726Z",
+      "updated_at": "2026-09-24T08:59:47.310726Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-fca04b364060"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-5fa116b65fc1",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:01:11.916966Z",
+          "stop_timestamp": "2026-09-24T09:01:11.916966Z",
+          "type": "text",
+          "text": "Fais une checklist de 3 tâches fictives, la 2e cochée comme faite. Rien d'autre.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 4,
+      "created_at": "2026-09-24T09:01:11.917126Z",
+      "updated_at": "2026-09-24T09:01:11.917126Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-98f22ec7580d"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-75c541681685",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:01:11.908001Z",
+          "stop_timestamp": "2026-09-24T09:01:12.486188Z",
+          "type": "text",
+          "text": "- [ ] Tâche 1\n- [x] Tâche 2\n- [ ] Tâche 3",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 5,
+      "created_at": "2026-09-24T09:01:12.503846Z",
+      "updated_at": "2026-09-24T09:01:12.503846Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-5fa116b65fc1"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-9773704b6307",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:02:39.813120Z",
+          "stop_timestamp": "2026-09-24T09:02:39.813120Z",
+          "type": "text",
+          "text": "Affiche la phrase fictive \"Ceci est une citation de test.\" en citation Markdown (>). Rien d'autre.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 6,
+      "created_at": "2026-09-24T09:02:39.813362Z",
+      "updated_at": "2026-09-24T09:02:39.813362Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-75c541681685"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-78d08d37d387",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:02:39.807341Z",
+          "stop_timestamp": "2026-09-24T09:02:40.312234Z",
+          "type": "text",
+          "text": "> Ceci est une citation de test.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 7,
+      "created_at": "2026-09-24T09:02:40.327067Z",
+      "updated_at": "2026-09-24T09:02:40.327067Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-9773704b6307"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-6e22db25604e",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:04:06.993417Z",
+          "stop_timestamp": "2026-09-24T09:04:06.993417Z",
+          "type": "text",
+          "text": "Affiche le mot \"Haut\", puis un séparateur horizontal, puis le mot \"Bas\". Rien d'autre.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 8,
+      "created_at": "2026-09-24T09:04:06.993595Z",
+      "updated_at": "2026-09-24T09:04:06.993595Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-78d08d37d387"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-dafbcec1d7dd",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:04:06.988675Z",
+          "stop_timestamp": "2026-09-24T09:04:07.491131Z",
+          "type": "text",
+          "text": "Haut\n\n---\n\nBas",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 9,
+      "created_at": "2026-09-24T09:04:07.510102Z",
+      "updated_at": "2026-09-24T09:04:07.510102Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-6e22db25604e"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-9471bf7559e0",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:05:34.784300Z",
+          "stop_timestamp": "2026-09-24T09:05:34.784300Z",
+          "type": "text",
+          "text": "Écris la variable `total` en code en ligne dans une phrase courte. Une phrase maximum.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 10,
+      "created_at": "2026-09-24T09:05:34.784459Z",
+      "updated_at": "2026-09-24T09:05:34.784459Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-dafbcec1d7dd"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-dc8204a51b89",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:05:34.780077Z",
+          "stop_timestamp": "2026-09-24T09:05:35.309085Z",
+          "type": "text",
+          "text": "La variable `total` stocke le résultat du calcul.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 11,
+      "created_at": "2026-09-24T09:05:35.322613Z",
+      "updated_at": "2026-09-24T09:05:35.322613Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-9471bf7559e0"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-d423a943ab68",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:07:05.797916Z",
+          "stop_timestamp": "2026-09-24T09:07:05.797916Z",
+          "type": "text",
+          "text": "Écris l'équation E=mc² en LaTeX inline dans une phrase d'une ligne.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 12,
+      "created_at": "2026-09-24T09:07:05.798102Z",
+      "updated_at": "2026-09-24T09:07:05.798102Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-dc8204a51b89"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-21ca75d716f8",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:07:05.791840Z",
+          "stop_timestamp": "2026-09-24T09:07:06.338361Z",
+          "type": "text",
+          "text": "L'équation $E=mc^2$ relie l'énergie et la masse.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 13,
+      "created_at": "2026-09-24T09:07:06.352481Z",
+      "updated_at": "2026-09-24T09:07:06.352481Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-d423a943ab68"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-dfaa0645745d",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:08:43.798797Z",
+          "stop_timestamp": "2026-09-24T09:08:43.798797Z",
+          "type": "text",
+          "text": "Affiche en LaTeX une matrice 2x2 avec 1,2,3,4. Une seule formule, rien d'autre.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 14,
+      "created_at": "2026-09-24T09:08:43.799020Z",
+      "updated_at": "2026-09-24T09:08:43.799020Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-21ca75d716f8"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-1726b68cf49b",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:08:43.953945Z",
+          "stop_timestamp": "2026-09-24T09:08:44.460298Z",
+          "type": "text",
+          "text": "$$\\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}$$",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 15,
+      "created_at": "2026-09-24T09:08:44.473279Z",
+      "updated_at": "2026-09-24T09:08:44.473279Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-dfaa0645745d"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-b00abce44ea1",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:10:25.306049Z",
+          "stop_timestamp": "2026-09-24T09:10:25.306049Z",
+          "type": "text",
+          "text": "Donne une requête SQL de moins de 10 lignes qui sélectionne les clients d'une table \"clients\" nés après 2000. Une phrase d'explication maximum.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 16,
+      "created_at": "2026-09-24T09:10:25.306624Z",
+      "updated_at": "2026-09-24T09:10:25.306624Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-1726b68cf49b"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-9658a7e7f52d",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:10:25.553837Z",
+          "stop_timestamp": "2026-09-24T09:10:26.162285Z",
+          "type": "text",
+          "text": "```sql\nSELECT *\nFROM clients\nWHERE YEAR(date_naissance) > 2000;\n```\n\nCette requête sélectionne tous les clients nés après l'année 2000.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 17,
+      "created_at": "2026-09-24T09:10:26.177457Z",
+      "updated_at": "2026-09-24T09:10:26.177457Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-b00abce44ea1"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-f29bcd834129",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:11:51.410505Z",
+          "stop_timestamp": "2026-09-24T09:11:51.410505Z",
+          "type": "text",
+          "text": "Montre à quoi ressemble le code source Markdown (non rendu) d'un titre et d'une liste à puces, dans un bloc de code étiqueté markdown. Une phrase d'explication maximum.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 18,
+      "created_at": "2026-09-24T09:11:51.410718Z",
+      "updated_at": "2026-09-24T09:11:51.410718Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-9658a7e7f52d"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-b49d7671f9fd",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:11:51.405466Z",
+          "stop_timestamp": "2026-09-24T09:11:52.210934Z",
+          "type": "text",
+          "text": "```markdown\n# Titre\n\n- Élément 1\n- Élément 2\n- Élément 3\n```\n\nVoici le code source Markdown brut, non rendu, d'un titre et d'une liste à puces.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 19,
+      "created_at": "2026-09-24T09:11:52.229680Z",
+      "updated_at": "2026-09-24T09:11:52.229680Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-f29bcd834129"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-b1602f6ef7dc",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:13:35.540421Z",
+          "stop_timestamp": "2026-09-24T09:13:35.540421Z",
+          "type": "text",
+          "text": "Quel texte exact vois-tu sur cette image ? Réponds uniquement par le texte lu.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 20,
+      "created_at": "2026-09-24T09:13:35.540572Z",
+      "updated_at": "2026-09-24T09:13:35.540572Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [
+        {
+          "success": true,
+          "file_kind": "image",
+          "file_uuid": "f0000000-0000-4000-8000-f9b068d04079",
+          "file_name": "image.png",
+          "created_at": "2026-09-24T09:13:19.108292Z",
+          "size_bytes": 9339,
+          "thumbnail_url": "/api/f0000000-0000-4000-8000-88b4cc6c9cf9/files/f0000000-0000-4000-8000-f9b068d04079/thumbnail",
+          "preview_url": "/api/f0000000-0000-4000-8000-88b4cc6c9cf9/files/f0000000-0000-4000-8000-f9b068d04079/preview",
+          "thumbnail_asset": {
+            "url": "/api/f0000000-0000-4000-8000-88b4cc6c9cf9/files/f0000000-0000-4000-8000-f9b068d04079/thumbnail",
+            "file_variant": "thumbnail",
+            "primary_color": "000000",
+            "image_width": 400,
+            "image_height": 267
+          },
+          "preview_asset": {
+            "url": "/api/f0000000-0000-4000-8000-88b4cc6c9cf9/files/f0000000-0000-4000-8000-f9b068d04079/preview",
+            "file_variant": "preview",
+            "primary_color": "000000",
+            "image_width": 480,
+            "image_height": 320
+          },
+          "uuid": "f0000000-0000-4000-8000-f9b068d04079"
+        }
+      ],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-b49d7671f9fd"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-b72dac7642a2",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:13:35.527285Z",
+          "stop_timestamp": "2026-09-24T09:13:36.009529Z",
+          "type": "text",
+          "text": "\"0\"",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 21,
+      "created_at": "2026-09-24T09:13:36.027792Z",
+      "updated_at": "2026-09-24T09:13:36.027792Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-b1602f6ef7dc"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-2e5b0502c55d",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:15:21.830244Z",
+          "stop_timestamp": "2026-09-24T09:15:21.830244Z",
+          "type": "text",
+          "text": "Liste uniquement les noms de personnes présents dans ce PDF.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 22,
+      "created_at": "2026-09-24T09:15:21.830383Z",
+      "updated_at": "2026-09-24T09:15:21.830383Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [
+        {
+          "success": true,
+          "file_kind": "document",
+          "file_uuid": "f0000000-0000-4000-8000-d48fdfd067fb",
+          "file_name": "document.pdf",
+          "created_at": "2026-09-24T09:15:05.194317Z",
+          "size_bytes": 711,
+          "thumbnail_asset": {
+            "url": "/api/f0000000-0000-4000-8000-88b4cc6c9cf9/files/f0000000-0000-4000-8000-d48fdfd067fb/thumbnail",
+            "file_variant": "thumbnail",
+            "primary_color": "ffffff",
+            "image_width": 283,
+            "image_height": 400
+          },
+          "document_asset": {
+            "url": "/api/f0000000-0000-4000-8000-88b4cc6c9cf9/files/f0000000-0000-4000-8000-d48fdfd067fb/document_pdf",
+            "file_variant": "original",
+            "page_count": 1,
+            "token_count": 1570
+          },
+          "uuid": "f0000000-0000-4000-8000-d48fdfd067fb"
+        }
+      ],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-b72dac7642a2"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-4e675e36b0a9",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:15:21.818664Z",
+          "stop_timestamp": "2026-09-24T09:15:22.285419Z",
+          "type": "text",
+          "text": "Aucun nom de personne n'est présent dans ce document.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 23,
+      "created_at": "2026-09-24T09:15:22.300309Z",
+      "updated_at": "2026-09-24T09:15:22.300309Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-2e5b0502c55d"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-c03de482cd0f",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:17:05.172063Z",
+          "stop_timestamp": "2026-09-24T09:17:05.172063Z",
+          "type": "text",
+          "text": "Trouve la ligne où le total ne correspond pas à la somme des deux colonnes précédentes. Réponds par le numéro de ligne.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 24,
+      "created_at": "2026-09-24T09:17:05.172256Z",
+      "updated_at": "2026-09-24T09:17:05.172256Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-4e675e36b0a9"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-05ee683340bd",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:17:05.981252Z",
+          "stop_timestamp": "2026-09-24T09:17:06.478835Z",
+          "type": "text",
+          "text": "Aucun tableau ou fichier n'a été fourni dans ce message — peux-tu partager les données à vérifier ?",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 25,
+      "created_at": "2026-09-24T09:17:06.491671Z",
+      "updated_at": "2026-09-24T09:17:06.491671Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-c03de482cd0f"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-ff5aa81547bc",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:18:57.949429Z",
+          "stop_timestamp": "2026-09-24T09:18:57.949429Z",
+          "type": "text",
+          "text": "Transforme ce fichier JSON en tableau Markdown, rien d'autre.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 26,
+      "created_at": "2026-09-24T09:18:57.949567Z",
+      "updated_at": "2026-09-24T09:18:57.949567Z",
+      "truncated": false,
+      "attachments": [
+        {
+          "id": "f0000000-0000-4000-8000-01efe66588ec",
+          "file_name": "donnees.json",
+          "file_size": 60,
+          "file_type": "application/json",
+          "extracted_content": "{\n  \"etalon\": true,\n  \"valeurs\": [\n    1,\n    2,\n    3\n  ]\n}",
+          "created_at": "2026-09-24T09:18:57.917386Z"
+        }
+      ],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-05ee683340bd"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-eb0aabfc2e04",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:18:57.823926Z",
+          "stop_timestamp": "2026-09-24T09:18:58.425320Z",
+          "type": "text",
+          "text": "| Clé | Valeur |\n|---|---|\n| etalon | true |\n| valeurs | 1, 2, 3 |",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 27,
+      "created_at": "2026-09-24T09:18:58.440639Z",
+      "updated_at": "2026-09-24T09:18:58.440639Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-ff5aa81547bc"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-748172ac363e",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:20:32.941326Z",
+          "stop_timestamp": "2026-09-24T09:20:32.941326Z",
+          "type": "text",
+          "text": "Y a-t-il de la musique dans cette vidéo ? Réponds par oui ou non.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 28,
+      "created_at": "2026-09-24T09:20:32.941511Z",
+      "updated_at": "2026-09-24T09:20:32.941511Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [
+        {
+          "success": true,
+          "path": "/mnt/user-data/uploads/video.mp4",
+          "file_kind": "blob",
+          "file_uuid": "f0000000-0000-4000-8000-406a3fb4f2d0",
+          "file_name": "video.mp4",
+          "created_at": "2026-09-24T09:20:17.235312Z",
+          "size_bytes": 30367,
+          "uuid": "f0000000-0000-4000-8000-406a3fb4f2d0"
+        }
+      ],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-eb0aabfc2e04"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-c3562a75463b",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:20:33.180956Z",
+          "stop_timestamp": "2026-09-24T09:20:33.706026Z",
+          "type": "text",
+          "text": "Je ne peux pas analyser le contenu audio/vidéo de ce fichier pour répondre par oui ou non.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 29,
+      "created_at": "2026-09-24T09:20:33.720840Z",
+      "updated_at": "2026-09-24T09:20:33.720840Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-748172ac363e"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-ea1eceb46ff7",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:22:27.809846Z",
+          "stop_timestamp": "2026-09-24T09:22:27.809846Z",
+          "type": "text",
+          "text": "Exécute du code pour générer un fichier CSV de 3 lignes (nom,score) avec des données fictives, et donne-moi le fichier.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 30,
+      "created_at": "2026-09-24T09:22:27.810062Z",
+      "updated_at": "2026-09-24T09:22:27.810062Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-c3562a75463b"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-4391ec1a78a8",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:22:28.226422Z",
+          "stop_timestamp": "2026-09-24T09:22:29.212105Z",
+          "type": "tool_use",
+          "id": "toolu_01FmwTidc9wh38Qi7GUxbd5H",
+          "name": "bash_tool",
+          "input": {
+            "command": "mkdir -p /mnt/user-data/outputs && cat > /mnt/user-data/outputs/scores.csv << 'EOF'\nnom,score\nAlice,85\nBob,92\nChloé,78\nEOF\ncat /mnt/user-data/outputs/scores.csv",
+            "description": "Génération d'un fichier CSV fictif de 3 lignes"
+          },
+          "message": "Génération d'un fichier CSV fictif de 3 lignes",
+          "integration_name": "File Creation",
+          "icon_name": "commandLinePrompt",
+          "display_content": {
+            "type": "json_block",
+            "json_block": "{\"language\": \"bash\", \"code\": \"mkdir -p /mnt/user-data/outputs && cat > /mnt/user-data/outputs/scores.csv << 'EOF'\\nnom,score\\nAlice,85\\nBob,92\\nChlo\\u00e9,78\\nEOF\\ncat /mnt/user-data/outputs/scores.csv\"}"
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:22:30.333871Z",
+          "stop_timestamp": "2026-09-24T09:22:30.333905Z",
+          "type": "tool_result",
+          "tool_use_id": "toolu_01FmwTidc9wh38Qi7GUxbd5H",
+          "name": "bash_tool",
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"returncode\":0,\"stdout\":\"nom,score\\nAlice,85\\nBob,92\\nChloé,78\\n\",\"stderr\":\"\"}"
+            }
+          ],
+          "is_error": false,
+          "meta": {
+            "output_format_category": "none"
+          },
+          "integration_name": "File Creation",
+          "icon_name": "commandLinePrompt",
+          "display_content": {
+            "type": "json_block",
+            "json_block": "{\"returncode\":0,\"stdout\":\"nom,score\\nAlice,85\\nBob,92\\nChloé,78\\n\",\"stderr\":\"\"}"
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:22:30.806525Z",
+          "stop_timestamp": "2026-09-24T09:22:31.103011Z",
+          "type": "tool_use",
+          "id": "toolu_015d9uzMBn8zk3QgJT3ai5V8",
+          "name": "present_files",
+          "input": {
+            "filepaths": [
+              "/mnt/user-data/outputs/scores.csv"
+            ]
+          },
+          "message": "Presenting file(s)...",
+          "integration_name": "File Creation",
+          "icon_name": "file",
+          "display_content": {
+            "type": "table",
+            "table": [
+              [
+                "filepaths",
+                "['/mnt/user-data/outputs/scores.csv']"
+              ]
+            ]
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:22:31.151223Z",
+          "stop_timestamp": "2026-09-24T09:22:31.151260Z",
+          "type": "tool_result",
+          "tool_use_id": "toolu_015d9uzMBn8zk3QgJT3ai5V8",
+          "name": "present_files",
+          "content": [
+            {
+              "type": "local_resource",
+              "file_path": "/mnt/user-data/outputs/scores.csv",
+              "name": "scores",
+              "mime_type": "text/csv",
+              "artifact_publishable": false
+            },
+            {
+              "type": "text",
+              "text": "The file cards appear at the end of your reply if it ends with text, otherwise under this step; say they are below only if you finish the reply with text."
+            }
+          ],
+          "is_error": false,
+          "meta": {
+            "output_format_category": "other"
+          },
+          "message": "Presented file",
+          "integration_name": "File Creation",
+          "icon_name": "file",
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:22:31.670520Z",
+          "stop_timestamp": "2026-09-24T09:22:31.741288Z",
+          "type": "text",
+          "text": "Voici le fichier ci-dessous.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 31,
+      "created_at": "2026-09-24T09:22:31.756096Z",
+      "updated_at": "2026-09-24T09:22:31.756096Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-ea1eceb46ff7"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-390e610c3b53",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:23:43.306965Z",
+          "stop_timestamp": "2026-09-24T09:23:43.306965Z",
+          "type": "text",
+          "text": "Exécute du code pour créer un fichier texte contenant \"Bonjour depuis le code\" et donne-moi le fichier.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 32,
+      "created_at": "2026-09-24T09:23:43.307124Z",
+      "updated_at": "2026-09-24T09:23:43.307124Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-4391ec1a78a8"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-34bed945a1b0",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:23:43.302292Z",
+          "stop_timestamp": "2026-09-24T09:23:44.279966Z",
+          "type": "tool_use",
+          "id": "toolu_01LyCuFgxCEZiRvzxAUKzvv8",
+          "name": "bash_tool",
+          "input": {
+            "command": "mkdir -p /mnt/user-data/outputs && echo \"Bonjour depuis le code\" > /mnt/user-data/outputs/bonjour.txt\ncat /mnt/user-data/outputs/bonjour.txt",
+            "description": "Création d'un fichier texte avec le message demandé"
+          },
+          "message": "Création d'un fichier texte avec le message demandé",
+          "integration_name": "File Creation",
+          "icon_name": "commandLinePrompt",
+          "display_content": {
+            "type": "json_block",
+            "json_block": "{\"language\": \"bash\", \"code\": \"mkdir -p /mnt/user-data/outputs && echo \\\"Bonjour depuis le code\\\" > /mnt/user-data/outputs/bonjour.txt\\ncat /mnt/user-data/outputs/bonjour.txt\"}"
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:23:44.479271Z",
+          "stop_timestamp": "2026-09-24T09:23:44.479305Z",
+          "type": "tool_result",
+          "tool_use_id": "toolu_01LyCuFgxCEZiRvzxAUKzvv8",
+          "name": "bash_tool",
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"returncode\":0,\"stdout\":\"Bonjour depuis le code\\n\",\"stderr\":\"\"}"
+            }
+          ],
+          "is_error": false,
+          "meta": {
+            "output_format_category": "none"
+          },
+          "integration_name": "File Creation",
+          "icon_name": "commandLinePrompt",
+          "display_content": {
+            "type": "json_block",
+            "json_block": "{\"returncode\":0,\"stdout\":\"Bonjour depuis le code\\n\",\"stderr\":\"\"}"
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:23:52.621011Z",
+          "stop_timestamp": "2026-09-24T09:23:52.930072Z",
+          "type": "tool_use",
+          "id": "toolu_0126QLHFwTkJ9jeLcSx7vtNa",
+          "name": "present_files",
+          "input": {
+            "filepaths": [
+              "/mnt/user-data/outputs/bonjour.txt"
+            ]
+          },
+          "message": "Presenting file(s)...",
+          "integration_name": "File Creation",
+          "icon_name": "file",
+          "display_content": {
+            "type": "table",
+            "table": [
+              [
+                "filepaths",
+                "['/mnt/user-data/outputs/bonjour.txt']"
+              ]
+            ]
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:23:52.953619Z",
+          "stop_timestamp": "2026-09-24T09:23:52.953645Z",
+          "type": "tool_result",
+          "tool_use_id": "toolu_0126QLHFwTkJ9jeLcSx7vtNa",
+          "name": "present_files",
+          "content": [
+            {
+              "type": "local_resource",
+              "file_path": "/mnt/user-data/outputs/bonjour.txt",
+              "name": "bonjour",
+              "mime_type": "text/plain",
+              "artifact_publishable": false
+            },
+            {
+              "type": "text",
+              "text": "The file cards appear at the end of your reply if it ends with text, otherwise under this step; say they are below only if you finish the reply with text."
+            }
+          ],
+          "is_error": false,
+          "meta": {
+            "output_format_category": "other"
+          },
+          "message": "Presented file",
+          "integration_name": "File Creation",
+          "icon_name": "file",
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:23:53.615154Z",
+          "stop_timestamp": "2026-09-24T09:23:53.682581Z",
+          "type": "text",
+          "text": "Voici le fichier ci-dessous.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 33,
+      "created_at": "2026-09-24T09:23:53.701800Z",
+      "updated_at": "2026-09-24T09:23:53.701800Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-390e610c3b53"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-4b57fed58b8f",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:25:22.097099Z",
+          "stop_timestamp": "2026-09-24T09:25:22.097099Z",
+          "type": "text",
+          "text": "As-tu accès en ce moment à un connecteur externe (email, agenda, Drive) dans cette conversation ? Réponds en une phrase.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 34,
+      "created_at": "2026-09-24T09:25:22.097281Z",
+      "updated_at": "2026-09-24T09:25:22.097281Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-34bed945a1b0"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-99ce85e8e6e0",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:25:22.092037Z",
+          "stop_timestamp": "2026-09-24T09:25:22.679723Z",
+          "type": "text",
+          "text": "Oui, j'ai accès à Gmail, Google Calendar et Google Drive dans cette conversation.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 35,
+      "created_at": "2026-09-24T09:25:22.693226Z",
+      "updated_at": "2026-09-24T09:25:22.693226Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-4b57fed58b8f"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-37c07b84d657",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:26:59.830786Z",
+          "stop_timestamp": "2026-09-24T09:26:59.830786Z",
+          "type": "text",
+          "text": "Explique ce qu'est la photosynthèse en moins de 20 mots.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 36,
+      "created_at": "2026-09-24T09:26:59.831008Z",
+      "updated_at": "2026-09-24T09:26:59.831008Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-99ce85e8e6e0"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-1a3c63e25608",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:27:00.524448Z",
+          "stop_timestamp": "2026-09-24T09:27:00.899071Z",
+          "type": "text",
+          "text": "La photosynthèse permet aux plantes de transformer lumière, eau et CO2 en énergie et oxygène.",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 37,
+      "created_at": "2026-09-24T09:27:00.917833Z",
+      "updated_at": "2026-09-24T09:27:00.917833Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-37c07b84d657"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-1dca71e4f233",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:28:37.964307Z",
+          "stop_timestamp": "2026-09-24T09:28:37.964307Z",
+          "type": "text",
+          "text": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 38,
+      "created_at": "2026-09-24T09:28:37.964507Z",
+      "updated_at": "2026-09-24T09:28:37.964507Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-1a3c63e25608"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-d51c9fecf16a",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:28:37.958507Z",
+          "stop_timestamp": "2026-09-24T09:28:38.650272Z",
+          "type": "text",
+          "text": "- Élément 1\n  - Sous-élément 1.1\n  - Sous-élément 1.2\n- Élément 2\n  - Sous-élément 2.1\n  - Sous-élément 2.2",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 39,
+      "created_at": "2026-09-24T09:28:38.673891Z",
+      "updated_at": "2026-09-24T09:28:38.673891Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-1dca71e4f233"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-31df73dd1ded",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:30:16.187284Z",
+          "stop_timestamp": "2026-09-24T09:30:16.187284Z",
+          "type": "text",
+          "text": "Affiche uniquement une image Markdown pointant vers https://placehold.co/120x60 avec le texte alternatif « test ».",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 40,
+      "created_at": "2026-09-24T09:30:16.187447Z",
+      "updated_at": "2026-09-24T09:30:16.187447Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-d51c9fecf16a"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-f380303f5708",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:30:16.179072Z",
+          "stop_timestamp": "2026-09-24T09:30:16.683033Z",
+          "type": "text",
+          "text": "![test](https://placehold.co/120x60)",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 41,
+      "created_at": "2026-09-24T09:30:16.701279Z",
+      "updated_at": "2026-09-24T09:30:16.701279Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-31df73dd1ded"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-8f2c380b6826",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:31:59.428593Z",
+          "stop_timestamp": "2026-09-24T09:31:59.428593Z",
+          "type": "text",
+          "text": "Génère une image d'un renard roux dans une forêt enneigée. Aucun texte.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 42,
+      "created_at": "2026-09-24T09:31:59.428782Z",
+      "updated_at": "2026-09-24T09:31:59.428782Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-f380303f5708"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-9ec1f5b3cc01",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:31:59.424422Z",
+          "stop_timestamp": "2026-09-24T09:32:02.492833Z",
+          "type": "thinking",
+          "thinking": "",
+          "summaries": [
+            {
+              "summary": "Checking available tools for generating the requested image."
+            }
+          ],
+          "cut_off": false,
+          "truncated": true,
+          "hidden": false,
+          "thinking_hidden": true
+        },
+        {
+          "start_timestamp": "2026-09-24T09:32:02.492927Z",
+          "stop_timestamp": "2026-09-24T09:32:02.719512Z",
+          "type": "tool_use",
+          "id": "toolu_017hgagEiT9NXrbtnJmBuerK",
+          "name": "visualize:read_me",
+          "input": {
+            "modules": [
+              "art"
+            ]
+          },
+          "message": "Read me",
+          "integration_name": "visualize",
+          "is_mcp_app": false,
+          "mcp_server_url": "https://sandbox.claudemcpcontent.com/imagine_mcp",
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:32:03.243904Z",
+          "stop_timestamp": "2026-09-24T09:32:03.244044Z",
+          "type": "tool_result",
+          "tool_use_id": "toolu_017hgagEiT9NXrbtnJmBuerK",
+          "name": "visualize:read_me",
+          "content": [
+            {
+              "type": "text",
+              "text": "# Imagine — Visual Creation Suite\n\n## Modules\nCall read_me again with the modules parameter to load detailed guidance:\n- `diagram` — SVG flowcharts, structural diagrams, illustrative diagrams\n- `mockup` — UI mockups, forms, cards, dashboards\n- `interactive` — interactive explainers with controls\n- `chart` — charts, data analysis, geographic maps (Chart.js, D3 choropleth)\n- `art` — illustration and generative art\nPick the closest fit. The module includes all relevant design guidance.\n\n**Complexity budget — hard limits:**\n- Box subtitles: ≤5 words. Detail goes in click-through (`sendPrompt`) or the prose below — not the box.\n- Colors: ≤2 ramps per diagram. If colors encode meaning (states, tiers), add a 1-line legend. Otherwise use one neutral ramp.\n- Horizontal tier: ≤4 boxes at full width (~140px each). 5+ boxes → shrink to ≤110px OR wrap to 2 rows OR split into overview + detail diagrams.\n\nIf you catch yourself writing \"click to learn more\" in prose, the diagram itself must ACTUALLY be sparse. Don't promise brevity then front-load everything.\n\n**Accessibility:** For HTML widgets, begin with a visually-hidden `<h2 class=\"sr-only\">` containing a one-sentence summary of the visualization for screen-reader users. (SVG widgets use `role=\"img\"` with `<title>` and `<desc>` instead — see SVG setup.)\n\nYou create rich visual content — SVG diagrams/illustrations and HTML interactive widgets — that renders inline in conversation. The best output feels like a natural extension of the chat.\n\n## Core Design System\n\nThese rules apply to ALL use cases.\n\n### Philosophy\n- **Seamless**: Users shouldn't notice where claude.ai ends and your widget begins.\n- **Flat**: No gradients, mesh backgrounds, noise textures, or decorative effects. Clean flat surfaces.\n- **Compact**: Show the essential inline. Explain the rest in text.\n- **Text goes in your response, visuals go in the tool** — All explanatory text, descriptions, introductions, and summaries must be written as normal response text OUTSIDE the tool call. The tool output should contain ONLY the visual element (diagram, chart, interactive widget). Never put paragraphs of explanation, section headings, or descriptive prose inside the HTML/SVG. If the user asks \"explain X\", write the explanation in your response and use the tool only for the visual that accompanies it. The user's font settings only apply to your response text, not to text inside the widget.\n\n### Streaming\nOutput streams token-by-token. Structure code so useful content appears early.\n- **HTML**: `<style>` (short) → content HTML → `<script>` last.\n- **SVG**: `<defs>` (markers) → visual elements immediately.\n- Prefer inline `style=\"...\"` over `<style>` blocks — inputs/controls must look correct mid-stream.\n- Keep `<style>` under ~15 lines. Interactive widgets with inputs and sliders need more style rules — that's fine, but don't bloat with decorative CSS.\n- Gradients, shadows, and blur flash during streaming DOM diffs. Use solid flat fills instead.\n\n### Rules\n- No `<!-- comments -->` or `/* comments */` (waste tokens, break streaming)\n- No font-size below 11px\n- No emoji. Icons = Tabler **outline** webfont (5800+, already loaded): `<i class=\"ti ti-home\"></i>`. Outline only — never use `-filled` suffixes (`ti-heart-filled` etc. are not loaded and will render blank). Inherits color + font-size from parent. Decorative icons get `aria-hidden=\"true\"`; icon-only buttons get `aria-label`. Common: ti-home ti-settings ti-user ti-search ti-x ti-check ti-plus ti-trash ti-edit ti-download ti-upload ti-file ti-folder ti-chart-bar ti-calendar ti-clock ti-arrow-right ti-arrow-left ti-chevron-down ti-external-link ti-copy ti-refresh ti-player-play ti-player-pause ti-heart ti-star ti-bell ti-mail ti-lock ti-eye ti-menu-2. Don't hand-draw icon SVG paths.\n- No gradients, drop shadows, blur, glow, or neon effects\n- No dark/colored backgrounds on outer containers (transparent only — host provides the bg)\n- **Typography**: The default font is Anthropic Sans. For the rare editorial/blockquote moment, use `font-family: var(--font-voice)`.\n- **Headings**: h1 = 22px, h2 = 18px, h3 = 16px — all `font-weight: 500`. Heading color is pre-set to `var(--text-primary)` — don't override it. Body text = 16px, weight 400, `line-height: 1.7`. **Two weights only: 400 regular, 500 bold.** Never use 600 or 700 — they look heavy against the host UI.\n- **Sentence case** always. Never Title Case, never ALL CAPS. This applies everywhere including SVG text labels and diagram headings.\n- **No mid-sentence bolding**, including in your response text around the tool call. Entity names, class names, function names go in `code style` not **bold**. Bold is for headings and labels only.\n- The widget container is `display: block; width: 100%`. Your HTML fills it naturally — no wrapper div needed. Just start with your content directly. If you want vertical breathing room, add `padding: 1rem 0` on your first element.\n- Never use `position: fixed` — the iframe viewport sizes itself to your in-flow content height, so fixed-positioned elements (modals, overlays, tooltips) collapse it to `min-height: 100px`. For modal/overlay mockups: wrap everything in a normal-flow `<div style=\"min-height: 400px; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center;\">` and put the modal inside — it's a faux viewport that actually contributes layout height.\n- **Fullscreen / expand buttons**: there is no fullscreen. Never call any element's `requestFullscreen()`, never call `document.exitFullscreen()`, and never key state on `document.fullscreenElement` (the API is dead inside the widget iframe and `fullscreenElement` stays null forever, so a label or branch keyed on it is permanently stuck), never call display-mode host APIs, and never fake fullscreen by restyling your container to viewport size — all of these produce dead or broken controls on at least one platform. If the user asks for a fullscreen or expand button, implement an expanded-layout toggle instead: a synchronous CSS class flip on in-flow content with explicit px sizes (taller chart, roomier controls), updating the button label in the same handler — no async, no awaits, symmetric enter/exit. Mutate the existing elements' classes and text; never rebuild the control's DOM with innerHTML (replacement silently drops event listeners and leaves a dead button). The host resizes to fit your content automatically.\n- No DOCTYPE, `<html>`, `<head>`, or `<body>` — just content fragments.\n- When placing text on a colored background (badges, pills, cards, tags), use the darkest shade from that same color family for the text — never plain black or generic gray.\n- **Corners**: use `border-radius: var(--radius)` for controls, `12px` for cards. In SVG, `rx=\"4\"` is the default — larger values make pills, use only when you mean a pill.\n- **No rounded corners on single-sided borders** — if using `border-left` or `border-top` accents, set `border-radius: 0`. Rounded corners only work with full borders on all sides.\n- **No titles or prose inside the tool output** — see Philosophy above.\n- **Icon sizing**: Tabler `<i class=\"ti …\">` sizes with `font-size` — 16–20px inline, 24px max decorative. For one-off inline SVG icons, set `width`/`height` explicitly (same limits).\n- No tabs, carousels, or `display: none` sections during streaming — hidden content streams invisibly. Show all content stacked vertically. (Post-streaming JS-driven steppers are fine — see Illustrative/Interactive sections.)\n- No nested scrolling — auto-fit height.\n- **Validate input in interactive widgets.** Any widget that collects user input before acting on it (quiz answers, text boxes, form fields) must check that input in its submit handler: if a required field is empty or invalid, show a clear inline error next to the control (13px `color: var(--text-danger)` text, e.g. \"Enter an answer first\") and stop — do not advance to the next step, reveal the answer, or otherwise proceed until the input is valid. Clear the error as soon as the user edits the field.\n- Scripts execute after streaming — load libraries via `<script src=\"https://cdnjs.cloudflare.com/ajax/libs/...\">` (UMD globals), then use the global in a plain `<script>` that follows. The library `<script src>` tag must come BEFORE any inline script that uses its global — never call a library from code that appears above its `<script src>` tag.\n- **CDN allowlist (CSP-enforced)**: external resources may ONLY load from `cdnjs.cloudflare.com`, `esm.sh`, `cdn.jsdelivr.net`, `unpkg.com`, `fonts.googleapis.com`, `fonts.gstatic.com`. All other origins are blocked by the sandbox — the request silently fails.\n\n### CSS Variables\n**Surfaces**: `--surface-2` (white), `--surface-1` (card), `--surface-0` (page bg); role tints `--bg-{accent,danger,success,warning}`\n**Text**: `--text-primary` (black), `--text-secondary` (muted), `--text-muted` (hints); role `--text-{accent,danger,success,warning}`\n**Borders**: `--border` (default hairline), `--border-strong` (hover), `--border-stronger`; role `--border-{accent,danger,success,warning}`\n**Typography**: `--font-sans`, `--font-voice` (serif), `--font-mono`\n**Layout**: `--radius` (8px), `--pad-{sm,md,lg,xl}`, `--gap-{xs,sm,md,lg,xl}`; for larger corners use literal `12px`/`16px`\nAll auto-adapt to light/dark mode. For custom colors in HTML, use CSS variables.\n\n**Dark mode is mandatory** — every color must work in both modes:\n- In SVG: use the pre-built color classes (`c-blue`, `c-teal`, `c-amber`, etc.) for colored nodes — they handle light/dark mode automatically. Never write `<style>` blocks for colors.\n- In SVG: every `<text>` element needs a class (`t`, `ts`, `th`) — never omit fill or use `fill=\"inherit\"`. Inside a `c-{color}` parent, text classes auto-adjust to the ramp.\n- In HTML: always use CSS variables (--text-primary, --text-secondary) for text. Never hardcode colors like color: #333 — invisible in dark mode.\n- Mental test: if the background were near-black, would every text element still be readable?\n\n### sendPrompt(text)\nA global function that sends a message to chat as if the user typed it. Use it when the user's next step benefits from Claude thinking. Handle filtering, sorting, toggling, and calculations in JS instead.\n\n### Links\n`<a href=\"https://...\">` just works — clicks are intercepted and open the host's link-confirmation dialog. Or call `openLink(url)` directly.\n\n## When nothing fits\nPick the closest use case below and adapt. When nothing fits cleanly:\n- Default to editorial layout if the content is explanatory\n- Default to card layout if the content is a bounded object\n- All core design system rules still apply\n- Use `sendPrompt()` for any action that benefits from Claude thinking\n\n\n## SVG setup\n\n**ViewBox safety checklist** — before finalizing any SVG, verify:\n1. Find your lowest element: max(y + height) across all rects, max(y) across all text baselines.\n2. Set viewBox height = that value + 40px buffer.\n3. Find your rightmost element: max(x + width) across all rects. All content must stay within x=0 to x=680.\n4. For text with text-anchor=\"end\", the text extends LEFT from x. If x=118 and text is 200px wide, it starts at x=-82 — outside the viewBox. Increase x or use text-anchor=\"start\".\n5. Never use negative x or y coordinates. The viewBox starts at 0,0.\n6. **No unintentional overlaps.** For every pair of elements that aren't meant to layer (label-on-label, label-on-arrow, box-on-box, callout-on-shape), check their bounding boxes do not intersect. The only allowed overlaps are deliberate: a label centered inside its own box, an arrowhead touching the box it points to, a highlight rect behind the thing it highlights. If two unrelated elements would collide, move one — shorten the label, shift the y, add a row. A diagram with crossed labels reads as broken regardless of how good the content is.\n7. Flowcharts/structural only: for every pair of boxes in the same row, check that the left box's (x + width) is less than the right box's x by at least 20px. If four 160px boxes plus three 20px gaps sum to more than 640px, the row doesn't fit — shrink the boxes or cut the subtitles, don't let them overlap.\n\n**SVG setup**: `<svg width=\"100%\" viewBox=\"0 0 680 H\" role=\"img\"><title>…</title><desc>…</desc>…` — 680px wide, flexible height. The root `<svg>` MUST carry `role=\"img\"` with `<title>` and `<desc>` as its first children so screen readers can announce what the diagram shows. Set H to fit content tightly — the last element's bottom edge + 40px padding. Don't leave excess empty space below the content. Safe area: x=40 to x=640, y=40 to y=(H-40). Background transparent. **Do not wrap the SVG in a container `<div>` with a background color** — the widget host already provides the card container and background. Output the raw `<svg>` element directly.\n\n**The 680 in viewBox is load-bearing — do not change it.** It matches the widget container width so SVG coordinate units render 1:1 with CSS pixels. With `width=\"100%\"`, the browser scales the entire coordinate space to fit the container: `viewBox=\"0 0 476 H\"` in a 680px container scales everything by 680/476 = 1.43×, so your `class=\"th\"` 14px text renders at ~20px. The font calibration table below and all \"text fits in box\" math assume 1:1. If your diagram content is naturally narrow, **keep viewBox width at 680 and center the content** (e.g. content spans x=240..440) — do not shrink the viewBox to hug the content. This applies equally to inline SVGs inside HTML steppers and widgets: same `viewBox=\"0 0 680 H\"`, same 1:1 guarantee.\n\n**viewBox height:** After layout, find max_y (bottom-most point of any shape, including text baselines + 4px descent). Set viewBox height = max_y + 20. Don't guess.\n\n**text-anchor='end' at x<60 is risky** — the longest label will extend left past x=0. Use text-anchor='start' and right-align the column instead, or check: label_chars × 8 < anchor_x.\n\n**One SVG per tool call** — each call must contain exactly one <svg> element. Never leave an abandoned or partial SVG in the output. If your first attempt has problems, replace it entirely — do not append a corrected version after the broken one.\n\n**Style rules for all diagrams**:\n- Every `<text>` element must carry one of the pre-built classes (`t`, `ts`, `th`). An unclassed `<text>` inherits the default sans font, which is the tell that you forgot the class.\n- Use only two font sizes: 14px for node/region labels (class=\"t\" or \"th\"), 12px for subtitles, descriptions, and arrow labels (class=\"ts\"). No other sizes.\n- No decorative step numbers, large numbering, or oversized headings outside boxes.\n- No icons or illustrations inside boxes — text only. (Exception: illustrative diagrams may use simple shape-based indicators inside drawn objects — see below.)\n- Sentence case on all labels.\n\n**Font size calibration for diagram text labels** - Here's csv table to give you better sense of the Anthropic Sans font rendering width:\n```csv\ntext, chars length, font-weight, font-size, rendered width\nAuthentication Service, chars: 22, font-weight: 500, font-size: 14px, width: 167px\nBackground Job Processor, chars: 24, font-weight: 500, font-size: 14px, width: 201px\nDetects and validates incoming tokens, chars: 37, font-weight: 400, font-size: 14px, width: 279px\nforwards request to, chars: 19, font-weight: 400, font-size: 12px, width: 123px\nデータベースサーバー接続, chars: 12, font-weight: 400, font-size: 14px, width: 181px\n```\n\nBefore placing text in a box, check: does (text width + 2×padding) fit the container?\n\n**SVG `<text>` never auto-wraps.** Every line break needs an explicit `<tspan x=\"...\" dy=\"1.2em\">`. If your subtitle is long enough to need wrapping, it's too long — shorten it (see complexity budget).\n\n**Example check**: You want to put \"Glucose (C₆H₁₂O₆)\" in a rounded rect. The text is 20 characters at 14px ≈ 180px wide. Add 2×24px padding = 228px minimum box width. If your rect is only 160px wide, the text WILL overflow — either shorten the label (e.g. just \"Glucose\") or widen the box. Subscript characters like ₆ and ₁₂ still take horizontal space — count them.\n\n**Pre-built classes** (already loaded in SVG widget):\n- `class=\"t\"` = sans 14px primary, `class=\"ts\"` = sans 12px secondary, `class=\"th\"` = sans 14px medium (500)\n- `class=\"box\"` = neutral rect (`--surface-1` fill, `--border-strong` stroke)\n- `class=\"node\"` = clickable group with hover effect (cursor pointer, slight dim on hover)\n- `class=\"arr\"` = arrow line (1.5px, open chevron head)\n- `class=\"leader\"` = dashed leader line (tertiary stroke, 0.5px, dashed)\n- `class=\"c-{ramp}\"` = colored node (c-blue, c-teal, c-amber, c-green, c-red, c-purple, c-coral, c-pink, c-gray). Apply to `<g>` or shape element (rect/circle/ellipse), NOT to paths. Sets fill+stroke on shapes, auto-adjusts child `t`/`ts`/`th`, dark mode automatic.\n\n**c-{ramp} nesting:** These classes use direct-child selectors (`>`). Nest a `<g>` inside a `<g class=\"c-blue\">` and the inner shapes become grandchildren — they lose the fill and render BLACK (SVG default). Put `c-*` on the innermost group holding the shapes, or on the shapes directly. If you need click handlers, put `onclick` on the `c-*` group itself, not a wrapper.\n\n- Short aliases: `var(--p)`, `var(--s)`, `var(--t)`, `var(--bg2)`, `var(--b)`\n- Arrow marker: always include this `<defs>` at the start of every SVG:\n  `<defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"8\" refY=\"5\" markerWidth=\"6\" markerHeight=\"6\" orient=\"auto-start-reverse\"><path d=\"M2 1L8 5L2 9\" fill=\"none\" stroke=\"context-stroke\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></marker></defs>`\n  Then use `marker-end=\"url(#arrow)\"` on lines. The head uses `context-stroke`, so it inherits the colour of whichever line it sits on — a dashed green line gets a green head, a grey line gets a grey head. Never a colour mismatch. Do not add filters or extra markers to `<defs>`. `<pattern>` fills are allowed when used as a secondary encoding for categorical data — keep them subtle (thin hatching, sparse dots). Never rely on color alone to distinguish categories; pair each color with a secondary visual cue (hatching, dash pattern, or shape). Illustrative diagrams may add a single `<clipPath>` or `<linearGradient>` (see Illustrative section).\n\n**Minimize standalone labels.** Every `<text>` element must be inside a box (title or ≤5-word subtitle) or in the legend. Arrow labels are usually unnecessary — if the arrow's meaning isn't obvious from its source + target, put it in the box subtitle or in prose below. Labels floating in space collide with things and are ambiguous.\n\n**Stroke width:** Use 0.5px strokes for diagram borders and edges — not 1px or 2px. Thin strokes feel more refined.\n\n**Connector paths need `fill=\"none\"`.** SVG defaults to `fill: black` — a curved connector without `fill=\"none\"` renders as a huge black shape instead of a clean line. Every `<path>` or `<polyline>` used as a connector/arrow MUST have `fill=\"none\"`. Only set fill on shapes meant to be filled (rects, circles, polygons).\n\n**Rect rounding:** `rx=\"4\"` for subtle corners. `rx=\"8\"` max for emphasized rounding. `rx` ≥ half the height = pill shape — deliberate only.\n\n**Schematic containers use dashed rects with a label.** Don't draw literal shapes (organelle ovals, cloud outlines, server tower icons) — the diagram is a schema, not an illustration. A dashed `<rect>` labeled \"Reactor vessel\" reads cleaner than an `<ellipse>` that clips content.\n\n**Lines stop at component edges.** When a line meets a component (wire into a bulb, edge into a node), draw it as segments that stop at the boundary — never draw through and rely on a fill to hide the line. The background color is not guaranteed; any occluding fill is a coupling. Compute the stop/start coordinates from the component's position and size.\n\n**Physical-color scenes (sky, water, grass, skin, materials):** Use ALL hardcoded hex — never mix with `c-*` theme classes. The scene should not invert in dark mode. If you need a dark variant, key it on the app theme: `[data-mode=\"dark\"] .scene` for the normal case, plus `@media (prefers-color-scheme: dark) { :root:not([data-mode]) .scene }` as the OS fallback for when no app theme was provided (the widget root carries `data-mode`; a bare media query alone would follow the OS even when the claude.ai setting disagrees) — this is the one place dark variants for hardcoded colors are allowed. Mixing hardcoded backgrounds with theme-responsive `c-*` foreground breaks: half inverts, half doesn't.\n\n**No rotated text**. `<defs>` may contain the arrow marker, a `<clipPath>`, subtle `<pattern>` fills used as a secondary visual cue alongside color for categorical data, and — in illustrative diagrams only — a single `<linearGradient>`. Nothing else: no filters, no extra markers.\n\n\n## Art and illustration\n*\"Draw me a sunset\" / \"Create a geometric pattern\"*\n\nUse SVG. Same technical rules (viewBox, safe area) but the aesthetic is different:\n- Fill the canvas — art should feel rich, not sparse\n- Bold colors: mix `--text-*` categories for variety (info blue, success green, warning amber)\n- Art is the one place custom `<style>` color blocks are fine — freestyle colors, `[data-mode=\"dark\"]` selectors (plus the `:root:not([data-mode])` media-query fallback) for dark mode variants if you want them\n- Layer overlapping opaque shapes for depth\n- Organic forms with `<path>` curves, `<ellipse>`, `<circle>`\n- Texture via repetition (parallel lines, dots, hatching) not raster effects\n- Geometric patterns with `<g transform=\"rotate()\">` for radial symmetry\n\n\nDo not overthink. Try to keep thinking below 500 tokens. If the visual is complex and requires more reasoning effort, consider creating an artifact instead."
+            }
+          ],
+          "is_error": false,
+          "meta": {
+            "io.modelcontextprotocol/serverInfo": {
+              "name": "visualize",
+              "version": "1.0.0"
+            }
+          },
+          "integration_name": "visualize",
+          "mcp_server_url": "https://sandbox.claudemcpcontent.com/imagine_mcp",
+          "display_content": {
+            "type": "text",
+            "text": "# Imagine — Visual Creation Suite\n\n## Modules\nCall read_me again with the modules parameter to load detailed guidance:\n- `diagram` — SVG flowcharts, structural diagrams, illustrative diagrams\n- `mockup` — UI mockups, forms, cards, dashboards\n- `interactive` — interactive explainers with controls\n- `chart` — charts, data analysis, geographic maps (Chart.js, D3 choropleth)\n- `art` — illustration and generative art\nPick the closest fit. The module includes all relevant design guidance.\n\n**Complexity budget — hard limits:**\n- Box subtitles: ≤5 words. Detail goes in click-through (`sendPrompt`) or the prose below — not the box.\n- Colors: ≤2 ramps per diagram. If colors encode meaning (states, tiers), add a 1-line legend. Otherwise use one neutral ramp.\n- Horizontal tier: ≤4 boxes at full width (~140px each). 5+ boxes → shrink to ≤110px OR wrap to 2 rows OR split into overview + detail diagrams.\n\nIf you catch yourself writing \"click to learn more\" in prose, the diagram itself must ACTUALLY be sparse. Don't promise brevity then front-load everything.\n\n**Accessibility:** For HTML widgets, begin with a visually-hidden `<h2 class=\"sr-only\">` containing a one-sentence summary of the visualization for screen-reader users. (SVG widgets use `role=\"img\"` with `<title>` and `<desc>` instead — see SVG setup.)\n\nYou create rich visual content — SVG diagrams/illustrations and HTML interactive widgets — that renders inline in conversation. The best output feels like a natural extension of the chat.\n\n## Core Design System\n\nThese rules apply to ALL use cases.\n\n### Philosophy\n- **Seamless**: Users shouldn't notice where claude.ai ends and your widget begins.\n- **Flat**: No gradients, mesh backgrounds, noise textures, or decorative effects. Clean flat surfaces.\n- **Compact**: Show the essential inline. Explain the rest in text.\n- **Text goes in your response, visuals go in the tool** — All explanatory text, descriptions, introductions, and summaries must be written as normal response text OUTSIDE the tool call. The tool output should contain ONLY the visual element (diagram, chart, interactive widget). Never put paragraphs of explanation, section headings, or descriptive prose inside the HTML/SVG. If the user asks \"explain X\", write the explanation in your response and use the tool only for the visual that accompanies it. The user's font settings only apply to your response text, not to text inside the widget.\n\n### Streaming\nOutput streams token-by-token. Structure code so useful content appears early.\n- **HTML**: `<style>` (short) → content HTML → `<script>` last.\n- **SVG**: `<defs>` (markers) → visual elements immediately.\n- Prefer inline `style=\"...\"` over `<style>` blocks — inputs/controls must look correct mid-stream.\n- Keep `<style>` under ~15 lines. Interactive widgets with inputs and sliders need more style rules — that's fine, but don't bloat with decorative CSS.\n- Gradients, shadows, and blur flash during streaming DOM diffs. Use solid flat fills instead.\n\n### Rules\n- No `<!-- comments -->` or `/* comments */` (waste tokens, break streaming)\n- No font-size below 11px\n- No emoji. Icons = Tabler **outline** webfont (5800+, already loaded): `<i class=\"ti ti-home\"></i>`. Outline only — never use `-filled` suffixes (`ti-heart-filled` etc. are not loaded and will render blank). Inherits color + font-size from parent. Decorative icons get `aria-hidden=\"true\"`; icon-only buttons get `aria-label`. Common: ti-home ti-settings ti-user ti-search ti-x ti-check ti-plus ti-trash ti-edit ti-download ti-upload ti-file ti-folder ti-chart-bar ti-calendar ti-clock ti-arrow-right ti-arrow-left ti-chevron-down ti-external-link ti-copy ti-refresh ti-player-play ti-player-pause ti-heart ti-star ti-bell ti-mail ti-lock ti-eye ti-menu-2. Don't hand-draw icon SVG paths.\n- No gradients, drop shadows, blur, glow, or neon effects\n- No dark/colored backgrounds on outer containers (transparent only — host provides the bg)\n- **Typography**: The default font is Anthropic Sans. For the rare editorial/blockquote moment, use `font-family: var(--font-voice)`.\n- **Headings**: h1 = 22px, h2 = 18px, h3 = 16px — all `font-weight: 500`. Heading color is pre-set to `var(--text-primary)` — don't override it. Body text = 16px, weight 400, `line-height: 1.7`. **Two weights only: 400 regular, 500 bold.** Never use 600 or 700 — they look heavy against the host UI.\n- **Sentence case** always. Never Title Case, never ALL CAPS. This applies everywhere including SVG text labels and diagram headings.\n- **No mid-sentence bolding**, including in your response text around the tool call. Entity names, class names, function names go in `code style` not **bold**. Bold is for headings and labels only.\n- The widget container is `display: block; width: 100%`. Your HTML fills it naturally — no wrapper div needed. Just start with your content directly. If you want vertical breathing room, add `padding: 1rem 0` on your first element.\n- Never use `position: fixed` — the iframe viewport sizes itself to your in-flow content height, so fixed-positioned elements (modals, overlays, tooltips) collapse it to `min-height: 100px`. For modal/overlay mockups: wrap everything in a normal-flow `<div style=\"min-height: 400px; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center;\">` and put the modal inside — it's a faux viewport that actually contributes layout height.\n- **Fullscreen / expand buttons**: there is no fullscreen. Never call any element's `requestFullscreen()`, never call `document.exitFullscreen()`, and never key state on `document.fullscreenElement` (the API is dead inside the widget iframe and `fullscreenElement` stays null forever, so a label or branch keyed on it is permanently stuck), never call display-mode host APIs, and never fake fullscreen by restyling your container to viewport size — all of these produce dead or broken controls on at least one platform. If the user asks for a fullscreen or expand button, implement an expanded-layout toggle instead: a synchronous CSS class flip on in-flow content with explicit px sizes (taller chart, roomier controls), updating the button label in the same handler — no async, no awaits, symmetric enter/exit. Mutate the existing elements' classes and text; never rebuild the control's DOM with innerHTML (replacement silently drops event listeners and leaves a dead button). The host resizes to fit your content automatically.\n- No DOCTYPE, `<html>`, `<head>`, or `<body>` — just content fragments.\n- When placing text on a colored background (badges, pills, cards, tags), use the darkest shade from that same color family for the text — never plain black or generic gray.\n- **Corners**: use `border-radius: var(--radius)` for controls, `12px` for cards. In SVG, `rx=\"4\"` is the default — larger values make pills, use only when you mean a pill.\n- **No rounded corners on single-sided borders** — if using `border-left` or `border-top` accents, set `border-radius: 0`. Rounded corners only work with full borders on all sides.\n- **No titles or prose inside the tool output** — see Philosophy above.\n- **Icon sizing**: Tabler `<i class=\"ti …\">` sizes with `font-size` — 16–20px inline, 24px max decorative. For one-off inline SVG icons, set `width`/`height` explicitly (same limits).\n- No tabs, carousels, or `display: none` sections during streaming — hidden content streams invisibly. Show all content stacked vertically. (Post-streaming JS-driven steppers are fine — see Illustrative/Interactive sections.)\n- No nested scrolling — auto-fit height.\n- **Validate input in interactive widgets.** Any widget that collects user input before acting on it (quiz answers, text boxes, form fields) must check that input in its submit handler: if a required field is empty or invalid, show a clear inline error next to the control (13px `color: var(--text-danger)` text, e.g. \"Enter an answer first\") and stop — do not advance to the next step, reveal the answer, or otherwise proceed until the input is valid. Clear the error as soon as the user edits the field.\n- Scripts execute after streaming — load libraries via `<script src=\"https://cdnjs.cloudflare.com/ajax/libs/...\">` (UMD globals), then use the global in a plain `<script>` that follows. The library `<script src>` tag must come BEFORE any inline script that uses its global — never call a library from code that appears above its `<script src>` tag.\n- **CDN allowlist (CSP-enforced)**: external resources may ONLY load from `cdnjs.cloudflare.com`, `esm.sh`, `cdn.jsdelivr.net`, `unpkg.com`, `fonts.googleapis.com`, `fonts.gstatic.com`. All other origins are blocked by the sandbox — the request silently fails.\n\n### CSS Variables\n**Surfaces**: `--surface-2` (white), `--surface-1` (card), `--surface-0` (page bg); role tints `--bg-{accent,danger,success,warning}`\n**Text**: `--text-primary` (black), `--text-secondary` (muted), `--text-muted` (hints); role `--text-{accent,danger,success,warning}`\n**Borders**: `--border` (default hairline), `--border-strong` (hover), `--border-stronger`; role `--border-{accent,danger,success,warning}`\n**Typography**: `--font-sans`, `--font-voice` (serif), `--font-mono`\n**Layout**: `--radius` (8px), `--pad-{sm,md,lg,xl}`, `--gap-{xs,sm,md,lg,xl}`; for larger corners use literal `12px`/`16px`\nAll auto-adapt to light/dark mode. For custom colors in HTML, use CSS variables.\n\n**Dark mode is mandatory** — every color must work in both modes:\n- In SVG: use the pre-built color classes (`c-blue`, `c-teal`, `c-amber`, etc.) for colored nodes — they handle light/dark mode automatically. Never write `<style>` blocks for colors.\n- In SVG: every `<text>` element needs a class (`t`, `ts`, `th`) — never omit fill or use `fill=\"inherit\"`. Inside a `c-{color}` parent, text classes auto-adjust to the ramp.\n- In HTML: always use CSS variables (--text-primary, --text-secondary) for text. Never hardcode colors like color: #333 — invisible in dark mode.\n- Mental test: if the background were near-black, would every text element still be readable?\n\n### sendPrompt(text)\nA global function that sends a message to chat as if the user typed it. Use it when the user's next step benefits from Claude thinking. Handle filtering, sorting, toggling, and calculations in JS instead.\n\n### Links\n`<a href=\"https://...\">` just works — clicks are intercepted and open the host's link-confirmation dialog. Or call `openLink(url)` directly.\n\n## When nothing fits\nPick the closest use case below and adapt. When nothing fits cleanly:\n- Default to editorial layout if the content is explanatory\n- Default to card layout if the content is a bounded object\n- All core design system rules still apply\n- Use `sendPrompt()` for any action that benefits from Claude thinking\n\n\n## SVG setup\n\n**ViewBox safety checklist** — before finalizing any SVG, verify:\n1. Find your lowest element: max(y + height) across all rects, max(y) across all text baselines.\n2. Set viewBox height = that value + 40px buffer.\n3. Find your rightmost element: max(x + width) across all rects. All content must stay within x=0 to x=680.\n4. For text with text-anchor=\"end\", the text extends LEFT from x. If x=118 and text is 200px wide, it starts at x=-82 — outside the viewBox. Increase x or use text-anchor=\"start\".\n5. Never use negative x or y coordinates. The viewBox starts at 0,0.\n6. **No unintentional overlaps.** For every pair of elements that aren't meant to layer (label-on-label, label-on-arrow, box-on-box, callout-on-shape), check their bounding boxes do not intersect. The only allowed overlaps are deliberate: a label centered inside its own box, an arrowhead touching the box it points to, a highlight rect behind the thing it highlights. If two unrelated elements would collide, move one — shorten the label, shift the y, add a row. A diagram with crossed labels reads as broken regardless of how good the content is.\n7. Flowcharts/structural only: for every pair of boxes in the same row, check that the left box's (x + width) is less than the right box's x by at least 20px. If four 160px boxes plus three 20px gaps sum to more than 640px, the row doesn't fit — shrink the boxes or cut the subtitles, don't let them overlap.\n\n**SVG setup**: `<svg width=\"100%\" viewBox=\"0 0 680 H\" role=\"img\"><title>…</title><desc>…</desc>…` — 680px wide, flexible height. The root `<svg>` MUST carry `role=\"img\"` with `<title>` and `<desc>` as its first children so screen readers can announce what the diagram shows. Set H to fit content tightly — the last element's bottom edge + 40px padding. Don't leave excess empty space below the content. Safe area: x=40 to x=640, y=40 to y=(H-40). Background transparent. **Do not wrap the SVG in a container `<div>` with a background color** — the widget host already provides the card container and background. Output the raw `<svg>` element directly.\n\n**The 680 in viewBox is load-bearing — do not change it.** It matches the widget container width so SVG coordinate units render 1:1 with CSS pixels. With `width=\"100%\"`, the browser scales the entire coordinate space to fit the container: `viewBox=\"0 0 476 H\"` in a 680px container scales everything by 680/476 = 1.43×, so your `class=\"th\"` 14px text renders at ~20px. The font calibration table below and all \"text fits in box\" math assume 1:1. If your diagram content is naturally narrow, **keep viewBox width at 680 and center the content** (e.g. content spans x=240..440) — do not shrink the viewBox to hug the content. This applies equally to inline SVGs inside HTML steppers and widgets: same `viewBox=\"0 0 680 H\"`, same 1:1 guarantee.\n\n**viewBox height:** After layout, find max_y (bottom-most point of any shape, including text baselines + 4px descent). Set viewBox height = max_y + 20. Don't guess.\n\n**text-anchor='end' at x<60 is risky** — the longest label will extend left past x=0. Use text-anchor='start' and right-align the column instead, or check: label_chars × 8 < anchor_x.\n\n**One SVG per tool call** — each call must contain exactly one <svg> element. Never leave an abandoned or partial SVG in the output. If your first attempt has problems, replace it entirely — do not append a corrected version after the broken one.\n\n**Style rules for all diagrams**:\n- Every `<text>` element must carry one of the pre-built classes (`t`, `ts`, `th`). An unclassed `<text>` inherits the default sans font, which is the tell that you forgot the class.\n- Use only two font sizes: 14px for node/region labels (class=\"t\" or \"th\"), 12px for subtitles, descriptions, and arrow labels (class=\"ts\"). No other sizes.\n- No decorative step numbers, large numbering, or oversized headings outside boxes.\n- No icons or illustrations inside boxes — text only. (Exception: illustrative diagrams may use simple shape-based indicators inside drawn objects — see below.)\n- Sentence case on all labels.\n\n**Font size calibration for diagram text labels** - Here's csv table to give you better sense of the Anthropic Sans font rendering width:\n```csv\ntext, chars length, font-weight, font-size, rendered width\nAuthentication Service, chars: 22, font-weight: 500, font-size: 14px, width: 167px\nBackground Job Processor, chars: 24, font-weight: 500, font-size: 14px, width: 201px\nDetects and validates incoming tokens, chars: 37, font-weight: 400, font-size: 14px, width: 279px\nforwards request to, chars: 19, font-weight: 400, font-size: 12px, width: 123px\nデータベースサーバー接続, chars: 12, font-weight: 400, font-size: 14px, width: 181px\n```\n\nBefore placing text in a box, check: does (text width + 2×padding) fit the container?\n\n**SVG `<text>` never auto-wraps.** Every line break needs an explicit `<tspan x=\"...\" dy=\"1.2em\">`. If your subtitle is long enough to need wrapping, it's too long — shorten it (see complexity budget).\n\n**Example check**: You want to put \"Glucose (C₆H₁₂O₆)\" in a rounded rect. The text is 20 characters at 14px ≈ 180px wide. Add 2×24px padding = 228px minimum box width. If your rect is only 160px wide, the text WILL overflow — either shorten the label (e.g. just \"Glucose\") or widen the box. Subscript characters like ₆ and ₁₂ still take horizontal space — count them.\n\n**Pre-built classes** (already loaded in SVG widget):\n- `class=\"t\"` = sans 14px primary, `class=\"ts\"` = sans 12px secondary, `class=\"th\"` = sans 14px medium (500)\n- `class=\"box\"` = neutral rect (`--surface-1` fill, `--border-strong` stroke)\n- `class=\"node\"` = clickable group with hover effect (cursor pointer, slight dim on hover)\n- `class=\"arr\"` = arrow line (1.5px, open chevron head)\n- `class=\"leader\"` = dashed leader line (tertiary stroke, 0.5px, dashed)\n- `class=\"c-{ramp}\"` = colored node (c-blue, c-teal, c-amber, c-green, c-red, c-purple, c-coral, c-pink, c-gray). Apply to `<g>` or shape element (rect/circle/ellipse), NOT to paths. Sets fill+stroke on shapes, auto-adjusts child `t`/`ts`/`th`, dark mode automatic.\n\n**c-{ramp} nesting:** These classes use direct-child selectors (`>`). Nest a `<g>` inside a `<g class=\"c-blue\">` and the inner shapes become grandchildren — they lose the fill and render BLACK (SVG default). Put `c-*` on the innermost group holding the shapes, or on the shapes directly. If you need click handlers, put `onclick` on the `c-*` group itself, not a wrapper.\n\n- Short aliases: `var(--p)`, `var(--s)`, `var(--t)`, `var(--bg2)`, `var(--b)`\n- Arrow marker: always include this `<defs>` at the start of every SVG:\n  `<defs><marker id=\"arrow\" viewBox=\"0 0 10 10\" refX=\"8\" refY=\"5\" markerWidth=\"6\" markerHeight=\"6\" orient=\"auto-start-reverse\"><path d=\"M2 1L8 5L2 9\" fill=\"none\" stroke=\"context-stroke\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></marker></defs>`\n  Then use `marker-end=\"url(#arrow)\"` on lines. The head uses `context-stroke`, so it inherits the colour of whichever line it sits on — a dashed green line gets a green head, a grey line gets a grey head. Never a colour mismatch. Do not add filters or extra markers to `<defs>`. `<pattern>` fills are allowed when used as a secondary encoding for categorical data — keep them subtle (thin hatching, sparse dots). Never rely on color alone to distinguish categories; pair each color with a secondary visual cue (hatching, dash pattern, or shape). Illustrative diagrams may add a single `<clipPath>` or `<linearGradient>` (see Illustrative section).\n\n**Minimize standalone labels.** Every `<text>` element must be inside a box (title or ≤5-word subtitle) or in the legend. Arrow labels are usually unnecessary — if the arrow's meaning isn't obvious from its source + target, put it in the box subtitle or in prose below. Labels floating in space collide with things and are ambiguous.\n\n**Stroke width:** Use 0.5px strokes for diagram borders and edges — not 1px or 2px. Thin strokes feel more refined.\n\n**Connector paths need `fill=\"none\"`.** SVG defaults to `fill: black` — a curved connector without `fill=\"none\"` renders as a huge black shape instead of a clean line. Every `<path>` or `<polyline>` used as a connector/arrow MUST have `fill=\"none\"`. Only set fill on shapes meant to be filled (rects, circles, polygons).\n\n**Rect rounding:** `rx=\"4\"` for subtle corners. `rx=\"8\"` max for emphasized rounding. `rx` ≥ half the height = pill shape — deliberate only.\n\n**Schematic containers use dashed rects with a label.** Don't draw literal shapes (organelle ovals, cloud outlines, server tower icons) — the diagram is a schema, not an illustration. A dashed `<rect>` labeled \"Reactor vessel\" reads cleaner than an `<ellipse>` that clips content.\n\n**Lines stop at component edges.** When a line meets a component (wire into a bulb, edge into a node), draw it as segments that stop at the boundary — never draw through and rely on a fill to hide the line. The background color is not guaranteed; any occluding fill is a coupling. Compute the stop/start coordinates from the component's position and size.\n\n**Physical-color scenes (sky, water, grass, skin, materials):** Use ALL hardcoded hex — never mix with `c-*` theme classes. The scene should not invert in dark mode. If you need a dark variant, key it on the app theme: `[data-mode=\"dark\"] .scene` for the normal case, plus `@media (prefers-color-scheme: dark) { :root:not([data-mode]) .scene }` as the OS fallback for when no app theme was provided (the widget root carries `data-mode`; a bare media query alone would follow the OS even when the claude.ai setting disagrees) — this is the one place dark variants for hardcoded colors are allowed. Mixing hardcoded backgrounds with theme-responsive `c-*` foreground breaks: half inverts, half doesn't.\n\n**No rotated text**. `<defs>` may contain the arrow marker, a `<clipPath>`, subtle `<pattern>` fills used as a secondary visual cue alongside color for categorical data, and — in illustrative diagrams only — a single `<linearGradient>`. Nothing else: no filters, no extra markers.\n\n\n## Art and illustration\n*\"Draw me a sunset\" / \"Create a geometric pattern\"*\n\nUse SVG. Same technical rules (viewBox, safe area) but the aesthetic is different:\n- Fill the canvas — art should feel rich, not sparse\n- Bold colors: mix `--text-*` categories for variety (info blue, success green, warning amber)\n- Art is the one place custom `<style>` color blocks are fine — freestyle colors, `[data-mode=\"dark\"]` selectors (plus the `:root:not([data-mode])` media-query fallback) for dark mode variants if you want them\n- Layer overlapping opaque shapes for depth\n- Organic forms with `<path>` curves, `<ellipse>`, `<circle>`\n- Texture via repetition (parallel lines, dots, hatching) not raster effects\n- Geometric patterns with `<g transform=\"rotate()\">` for radial symmetry\n\n\nDo not overthink. Try to keep thinking below 500 tokens. If the visual is complex and requires more reasoning effort, consider creating an artifact instead."
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:32:04.319072Z",
+          "stop_timestamp": "2026-09-24T09:32:21.106691Z",
+          "type": "tool_use",
+          "id": "toolu_01TVDNyEim6Yn5kyTfy61Uh6",
+          "name": "visualize:show_widget",
+          "input": {
+            "loading_messages": [
+              "Peinture de la forêt enneigée",
+              "Ajout du renard roux"
+            ],
+            "title": "renard_foret_neige",
+            "widget_code": "<svg width=\"100%\" viewBox=\"0 0 680 480\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\"><title>Renard roux dans une forêt enneigée</title><desc>Illustration d'un renard roux assis dans une forêt de sapins enneigée, sous un ciel bleu pâle avec de la neige qui tombe.</desc>\n<defs>\n<linearGradient id=\"sky\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n<stop offset=\"0%\" stop-color=\"#bcd9ec\"/>\n<stop offset=\"100%\" stop-color=\"#e8f2f8\"/>\n</linearGradient>\n</defs>\n<rect x=\"0\" y=\"0\" width=\"680\" height=\"480\" fill=\"url(#sky)\"/>\n<rect x=\"0\" y=\"340\" width=\"680\" height=\"140\" fill=\"#f2f7fb\"/>\n\n<!-- distant trees -->\n<g fill=\"#a9c6d6\">\n<polygon points=\"80,340 40,410 120,410\"/>\n<polygon points=\"150,330 100,410 200,410\"/>\n<polygon points=\"540,335 490,410 590,410\"/>\n<polygon points=\"610,340 570,410 650,410\"/>\n</g>\n\n<!-- main pine trees -->\n<g fill=\"#3f6b52\">\n<polygon points=\"120,150 60,300 180,300\"/>\n<polygon points=\"120,190 75,310 165,310\"/>\n<polygon points=\"120,225 90,320 150,320\"/>\n<rect x=\"112\" y=\"300\" width=\"16\" height=\"30\" fill=\"#5a4632\"/>\n</g>\n<g fill=\"#345a44\">\n<polygon points=\"560,120 480,330 640,330\"/>\n<polygon points=\"560,175 505,335 615,335\"/>\n<polygon points=\"560,225 520,340 600,340\"/>\n<rect x=\"548\" y=\"330\" width=\"24\" height=\"35\" fill=\"#4a3a28\"/>\n</g>\n<g fill=\"#3f6b52\">\n<polygon points=\"450,190 410,320 490,320\"/>\n<polygon points=\"450,225 425,325 475,325\"/>\n<rect x=\"443\" y=\"320\" width=\"14\" height=\"25\" fill=\"#5a4632\"/>\n</g>\n\n<!-- snow on trees -->\n<g fill=\"#f7fbfd\" opacity=\"0.85\">\n<polygon points=\"120,150 105,190 135,190\"/>\n<polygon points=\"120,190 100,220 140,220\"/>\n<polygon points=\"560,120 540,165 580,165\"/>\n<polygon points=\"560,175 530,215 590,215\"/>\n<polygon points=\"450,190 432,220 468,220\"/>\n</g>\n\n<!-- ground snow mounds -->\n<ellipse cx=\"130\" cy=\"345\" rx=\"120\" ry=\"18\" fill=\"#ffffff\"/>\n<ellipse cx=\"560\" cy=\"350\" rx=\"140\" ry=\"20\" fill=\"#ffffff\"/>\n<ellipse cx=\"340\" cy=\"400\" rx=\"260\" ry=\"40\" fill=\"#ffffff\"/>\n\n<!-- fox body -->\n<g>\n<ellipse cx=\"340\" cy=\"360\" rx=\"70\" ry=\"50\" fill=\"#d9692f\"/>\n<path d=\"M285 340 Q260 420 330 400 Q345 395 340 370 Z\" fill=\"#d9692f\"/>\n<ellipse cx=\"330\" cy=\"405\" rx=\"20\" ry=\"10\" fill=\"#f7ece0\"/>\n<!-- tail -->\n<path d=\"M400 380 Q460 370 455 320 Q450 290 410 300 Q440 330 400 340 Q420 360 400 380 Z\" fill=\"#d9692f\"/>\n<ellipse cx=\"425\" cy=\"305\" rx=\"18\" ry=\"14\" fill=\"#f7ece0\"/>\n<!-- head -->\n<circle cx=\"345\" cy=\"300\" r=\"42\" fill=\"#d9692f\"/>\n<polygon points=\"315,265 305,230 335,260\" fill=\"#d9692f\"/>\n<polygon points=\"317,258 313,238 328,256\" fill=\"#3a2a20\"/>\n<polygon points=\"375,265 388,228 358,260\" fill=\"#d9692f\"/>\n<polygon points=\"373,258 380,238 365,256\" fill=\"#3a2a20\"/>\n<!-- face -->\n<path d=\"M330 305 Q345 330 365 305 Q360 320 345 322 Q330 320 330 305 Z\" fill=\"#f7ece0\"/>\n<circle cx=\"326\" cy=\"292\" r=\"4\" fill=\"#2b2019\"/>\n<circle cx=\"368\" cy=\"292\" r=\"4\" fill=\"#2b2019\"/>\n<ellipse cx=\"350\" cy=\"315\" rx=\"6\" ry=\"4\" fill=\"#2b2019\"/>\n</g>\n\n<!-- snowfall -->\n<g fill=\"#ffffff\">\n<circle cx=\"90\" cy=\"80\" r=\"3\"/>\n<circle cx=\"180\" cy=\"60\" r=\"2.5\"/>\n<circle cx=\"260\" cy=\"120\" r=\"3\"/>\n<circle cx=\"330\" cy=\"70\" r=\"2\"/>\n<circle cx=\"410\" cy=\"100\" r=\"3\"/>\n<circle cx=\"500\" cy=\"60\" r=\"2.5\"/>\n<circle cx=\"580\" cy=\"90\" r=\"3\"/>\n<circle cx=\"620\" cy=\"150\" r=\"2\"/>\n<circle cx=\"50\" cy=\"180\" r=\"2.5\"/>\n<circle cx=\"150\" cy=\"200\" r=\"2\"/>\n<circle cx=\"240\" cy=\"180\" r=\"2.5\"/>\n<circle cx=\"380\" cy=\"200\" r=\"2\"/>\n<circle cx=\"470\" cy=\"180\" r=\"2.5\"/>\n<circle cx=\"560\" cy=\"210\" r=\"2\"/>\n</g>\n</svg>"
+          },
+          "message": "Show widget",
+          "integration_name": "visualize",
+          "is_mcp_app": true,
+          "mcp_server_url": "https://sandbox.claudemcpcontent.com/imagine_mcp",
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:32:21.293529Z",
+          "stop_timestamp": "2026-09-24T09:32:21.293553Z",
+          "type": "tool_result",
+          "tool_use_id": "toolu_01TVDNyEim6Yn5kyTfy61Uh6",
+          "name": "visualize:show_widget",
+          "content": [
+            {
+              "type": "text",
+              "text": "Content rendered and shown to the user. Please do not duplicate the shown content in text because it's already visually represented."
+            },
+            {
+              "type": "text",
+              "text": "[This tool call rendered an interactive widget in the chat. The user can already see the result — do not repeat it in text or with another visualization tool.]"
+            }
+          ],
+          "is_error": false,
+          "meta": {
+            "io.modelcontextprotocol/serverInfo": {
+              "name": "visualize",
+              "version": "1.0.0"
+            }
+          },
+          "integration_name": "visualize",
+          "mcp_server_url": "https://sandbox.claudemcpcontent.com/imagine_mcp",
+          "display_content": {
+            "type": "text",
+            "text": "Content rendered and shown to the user. Please do not duplicate the shown content in text because it's already visually represented."
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:32:21.693829Z",
+          "stop_timestamp": "2026-09-24T09:32:21.827279Z",
+          "type": "text",
+          "text": "(illustration ci-dessus)",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 43,
+      "created_at": "2026-09-24T09:32:21.913391Z",
+      "updated_at": "2026-09-24T09:32:21.913391Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-8f2c380b6826"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-4f7e489c5f3e",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:33:36.601364Z",
+          "stop_timestamp": "2026-09-24T09:33:36.601364Z",
+          "type": "text",
+          "text": "Crée un artefact (canvas) contenant un titre et une liste à puces, et montre le rendu. Rien d'autre.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 44,
+      "created_at": "2026-09-24T09:33:36.601525Z",
+      "updated_at": "2026-09-24T09:33:36.601525Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-9ec1f5b3cc01"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-8697cb45c30c",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:33:37.714189Z",
+          "stop_timestamp": "2026-09-24T09:33:41.673784Z",
+          "type": "tool_use",
+          "id": "toolu_01KfKEFZdEvNCLJzQGeMJEnU",
+          "name": "create_file",
+          "input": {
+            "path": "/mnt/user-data/outputs/artefact.html",
+            "file_text": "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n<title>Artefact test</title>\n<style>\n  :root {\n    --bg: #ffffff;\n    --text: #1a1a1a;\n    box-sizing: border-box;\n    padding-top: env(safe-area-inset-top, 0px);\n    padding-bottom: env(safe-area-inset-bottom, 0px);\n  }\n  @media (prefers-color-scheme: dark) {\n    :root:not([data-theme=\"light\"]) {\n      --bg: #1a1a1a;\n      --text: #f0f0f0;\n    }\n  }\n  :root[data-theme=\"dark\"] {\n    --bg: #1a1a1a;\n    --text: #f0f0f0;\n  }\n  html { scroll-padding-top: env(safe-area-inset-top, 0px); }\n  body {\n    background: var(--bg);\n    color: var(--text);\n    font-family: system-ui, sans-serif;\n    max-width: 100%;\n    margin: 0;\n    padding: 2rem 1.5rem;\n  }\n  h1 { font-size: 1.5rem; }\n  ul { line-height: 1.7; }\n</style>\n</head>\n<body>\n<h1>Titre de test</h1>\n<ul>\n  <li>Élément 1</li>\n  <li>Élément 2</li>\n  <li>Élément 3</li>\n</ul>\n</body>\n</html>\n",
+            "description": "Artefact simple avec titre et liste à puces"
+          },
+          "message": "Artefact simple avec titre et liste à puces",
+          "integration_name": "File Creation",
+          "icon_name": "file",
+          "display_content": {
+            "type": "json_block",
+            "json_block": "{\"language\": \"html\", \"code\": \"<!DOCTYPE html>\\n<html lang=\\\"fr\\\">\\n<head>\\n<meta charset=\\\"UTF-8\\\">\\n<meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1, viewport-fit=cover\\\">\\n<title>Artefact test</title>\\n<style>\\n  :root {\\n    --bg: #ffffff;\\n    --text: #1a1a1a;\\n    box-sizing: border-box;\\n    padding-top: env(safe-area-inset-top, 0px);\\n    padding-bottom: env(safe-area-inset-bottom, 0px);\\n  }\\n  @media (prefers-color-scheme: dark) {\\n    :root:not([data-theme=\\\"light\\\"]) {\\n      --bg: #1a1a1a;\\n      --text: #f0f0f0;\\n    }\\n  }\\n  :root[data-theme=\\\"dark\\\"] {\\n    --bg: #1a1a1a;\\n    --text: #f0f0f0;\\n  }\\n  html { scroll-padding-top: env(safe-area-inset-top, 0px); }\\n  body {\\n    background: var(--bg);\\n    color: var(--text);\\n    font-family: system-ui, sans-serif;\\n    max-width: 100%;\\n    margin: 0;\\n    padding: 2rem 1.5rem;\\n  }\\n  h1 { font-size: 1.5rem; }\\n  ul { line-height: 1.7; }\\n</style>\\n</head>\\n<body>\\n<h1>Titre de test</h1>\\n<ul>\\n  <li>\\u00c9l\\u00e9ment 1</li>\\n  <li>\\u00c9l\\u00e9ment 2</li>\\n  <li>\\u00c9l\\u00e9ment 3</li>\\n</ul>\\n</body>\\n</html>\\n\", \"filename\": \"/mnt/user-data/outputs/artefact.html\"}"
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:33:42.718586Z",
+          "stop_timestamp": "2026-09-24T09:33:42.718621Z",
+          "type": "tool_result",
+          "tool_use_id": "toolu_01KfKEFZdEvNCLJzQGeMJEnU",
+          "name": "create_file",
+          "content": [
+            {
+              "type": "text",
+              "text": "File created successfully: /mnt/user-data/outputs/artefact.html"
+            }
+          ],
+          "is_error": false,
+          "meta": {
+            "output_format_category": "html"
+          },
+          "integration_name": "File Creation",
+          "icon_name": "file",
+          "display_content": {
+            "type": "text",
+            "text": "File created successfully: /mnt/user-data/outputs/artefact.html"
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:33:43.799003Z",
+          "stop_timestamp": "2026-09-24T09:33:43.799874Z",
+          "type": "tool_use",
+          "id": "toolu_01TsWQym6wxVepmCHn6nbJrh",
+          "name": "Artifact",
+          "input": {
+            "title": "Artefact test",
+            "favicon": "📝",
+            "file_path": "/mnt/user-data/outputs/artefact.html"
+          },
+          "message": "Artifact",
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:33:45.017945Z",
+          "stop_timestamp": "2026-09-24T09:33:45.017978Z",
+          "type": "tool_result",
+          "tool_use_id": "toolu_01TsWQym6wxVepmCHn6nbJrh",
+          "name": "Artifact",
+          "content": [
+            {
+              "type": "text",
+              "text": "Published /mnt/user-data/outputs/artefact.html at https://claude.ai/artifact/Gbpwqq5v72ebCAtKeYsqTz"
+            }
+          ],
+          "is_error": false,
+          "structured_content": {
+            "url": "https://claude.ai/artifact/Gbpwqq5v72ebCAtKeYsqTz",
+            "path": "/mnt/user-data/outputs/artefact.html",
+            "title": "Artefact test",
+            "artifact_id": "f0000000-0000-4000-8000-54c08bae66e6"
+          },
+          "message": "Published artifact",
+          "display_content": {
+            "type": "file",
+            "published_url": "https://claude.ai/code/artifact/f0000000-0000-4000-8000-54c08bae66e6",
+            "published_artifact_id": "f0000000-0000-4000-8000-54c08bae66e6",
+            "published_action": "published",
+            "title": "Artefact test",
+            "owned_by_account": true
+          },
+          "tool_origin": "first_party"
+        },
+        {
+          "start_timestamp": "2026-09-24T09:33:45.426947Z",
+          "stop_timestamp": "2026-09-24T09:33:45.572774Z",
+          "type": "text",
+          "text": "(artefact ci-dessus)",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 45,
+      "created_at": "2026-09-24T09:33:45.590490Z",
+      "updated_at": "2026-09-24T09:33:45.590490Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-4f7e489c5f3e"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-9a88cda92ec8",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:35:19.952187Z",
+          "stop_timestamp": "2026-09-24T09:35:19.952187Z",
+          "type": "text",
+          "text": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 46,
+      "created_at": "2026-09-24T09:35:19.952379Z",
+      "updated_at": "2026-09-24T09:35:19.952379Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-8697cb45c30c"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-0c5385e037ad",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:35:19.943764Z",
+          "stop_timestamp": "2026-09-24T09:35:20.607275Z",
+          "type": "text",
+          "text": "🎉🚀🌟\nمرحبا بك في هذا الاختبار\n你好,这是一个测试",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 47,
+      "created_at": "2026-09-24T09:35:20.625635Z",
+      "updated_at": "2026-09-24T09:35:20.625635Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-9a88cda92ec8"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-9da4d1605e74",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:36:59.047436Z",
+          "stop_timestamp": "2026-09-24T09:36:59.047436Z",
+          "type": "text",
+          "text": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
+          "citations": []
+        }
+      ],
+      "sender": "human",
+      "index": 48,
+      "created_at": "2026-09-24T09:36:59.047640Z",
+      "updated_at": "2026-09-24T09:36:59.047640Z",
+      "truncated": false,
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-0c5385e037ad"
+    },
+    {
+      "uuid": "f0000000-0000-4000-8000-f170d61e4cb1",
+      "text": "",
+      "content": [
+        {
+          "start_timestamp": "2026-09-24T09:36:59.298379Z",
+          "stop_timestamp": "2026-09-24T09:37:00.072372Z",
+          "type": "text",
+          "text": "Vitesse moyenne = distance ÷ temps.\n\n1. Distance = 120 km\n2. Temps = 1 h 30 = 1,5 h\n3. Vitesse = 120 ÷ 1,5 = 80\n\n**Réponse : 80 km/h**",
+          "citations": []
+        }
+      ],
+      "sender": "assistant",
+      "index": 49,
+      "created_at": "2026-09-24T09:37:00.093737Z",
+      "updated_at": "2026-09-24T09:37:00.093737Z",
+      "truncated": false,
+      "stop_reason": "end_turn",
+      "attachments": [],
+      "files": [],
+      "sync_sources": [],
+      "parent_message_uuid": "f0000000-0000-4000-8000-9da4d1605e74"
+    }
+  ]
+}

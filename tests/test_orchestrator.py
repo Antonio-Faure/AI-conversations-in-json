@@ -25,6 +25,7 @@ from src.services.base import (
     BlockedError,
     ConversationUnavailableError,
     EmptyConversationError,
+    RateLimitedError,
     ServiceNotLoggedIn,
 )
 
@@ -210,6 +211,24 @@ class UnavailableConversationService(FakeService):
 
     def export_conversation_with_html(self, ref):
         raise ConversationUnavailableError(f"{self.name}: conversation inaccessible")
+
+
+class RateLimitedService(FakeService):
+    """Limite de debit persistante : le service s'arrete proprement (pas d'echec)."""
+
+    name = "ratelimit"
+
+    def export_conversation_with_html(self, ref):
+        raise RateLimitedError(f"{self.name}: limite de debit persistante")
+
+
+class RateLimitedDiscovery(FakeService):
+    """Limite de debit des la decouverte : service saute proprement."""
+
+    name = "ratelimitdisc"
+
+    def list_conversations(self, limit=None):
+        raise RateLimitedError(f"{self.name}: limite de debit persistante")
 
 
 class ManyConversations(FakeService):
@@ -503,6 +522,24 @@ class TestRunPipeline:
         assert result.skipped_reason
         assert "session expiree" in result.skipped_reason
         assert summary.has_failures
+
+    def test_rate_limit_arrete_le_service_proprement(self, workdir):
+        """Limite de debit : service arrete (skip), pas de conversation en echec."""
+        orch, _ = make_orchestrator(workdir, {"ratelimit": RateLimitedService})
+        summary = orch.run(mode="monthly")
+        result = summary.services["ratelimit"]
+        assert result.skipped_reason
+        assert "limite de debit" in result.skipped_reason
+        assert result.failed == []
+        assert result.skipped  # conversation interrompue, reprise au prochain run
+
+    def test_rate_limit_en_decouverte_skip_service(self, workdir):
+        orch, _ = make_orchestrator(workdir, {"ratelimitdisc": RateLimitedDiscovery})
+        summary = orch.run(mode="monthly")
+        result = summary.services["ratelimitdisc"]
+        assert result.skipped_reason
+        assert "limite de debit" in result.skipped_reason
+        assert result.failed == []
 
     def test_cookies_absents_skip_service(self, workdir):
         """Un CookieAuthError ne doit pas tuer le run : service saute, autres OK."""

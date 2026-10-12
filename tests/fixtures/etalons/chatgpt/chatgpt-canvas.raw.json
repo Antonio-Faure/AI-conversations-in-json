@@ -1,0 +1,2231 @@
+{
+  "title": "Liste dessin et écrit",
+  "create_time": 1779209172.134841,
+  "update_time": 1779219159.105229,
+  "moderation_results": [],
+  "plugin_ids": null,
+  "conversation_id": "f0000000-0000-4000-8000-b8095fda9f73",
+  "conversation_template_id": null,
+  "gizmo_id": null,
+  "gizmo_type": null,
+  "is_archived": false,
+  "is_starred": null,
+  "safe_urls": [
+    "https://images.openai.com/static-rsc-4/P9jDhhY6PyH3qcTg7E90SJTVF9xc3SWAo8ba7wkAj22HstHmTLNUgK6Pcz2H6NwlYBMtN5v7zCzW2SmbNLTQUHOnWjQwF0HBl7r071Hb-9CmTQWYLkrHKXwy0mz76u8fLgSlJVbQAaiUs1aspMWpz61DHNMUm-YKf1Yd-w_sr8vdJIHLCQN9I8kLgRiaCAqZ?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/7yB1aQfsPR3AEC5A2U28SltHHStvu66llCG06H5tgi6P7VEZ23Mnqm_e17cRCtkARWfQn8Rh2NlUeB9usPCgCqPPzKgHRemK0NuIsa4TMFl1umKkSULUGDn6bvcO9ekJu6YLCmKkTrbf_gujPiz-FQltY6YXQLrelDqh-Mu7RDNf0P0NOadmKngT9xwPQ9_P?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/AdmgYLGe0TCW3TbtnKSQ9CTp4SOg6tzZhQJQN8DHggwHTp93ZLAbWW4V86A3L2oeVM-xbTUD9j0zrNtr6Ehyg50uGpVKMJic2R_A69-iUxqvyBH5zLByAZ16p1YAlbWg8i9t8pyIjPiPTx3Now3xpDDbSW-Ba_S39wH0FtUlBEoq8u9lBECIA7MD83inuvKo?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/jv1JMQX0IUUW-bEWAPrOmRENOafoUJaQGwaPdrIq42JOU3BG5kWhKPWU_erPaoN6u--U600f7ivb52oU4NWGT4eJUcbnfVm_u9OZR1v2Y-iijtZsx6u4eDD-Tx188-uZYqBi0_3ZmWMWMYyhgQ2BfPQB0-m7wmNy9MtIdDcLUYYzTl2ZKQz41UH3190TgntW?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/8Ce1fMe0k77psm-m2WggqSJJy3pFBj_MmQ7y6RLGBQOX6XR9wWdBiVQnPz1wVIyCFXQxjGBOx_ILKYvUqq2rjLnLzPWmyYowqvUe6g_ShgvBnSlHa6lwetgRXZ7m9uVWm6SWYiQixwp7bOyaoACrBRTmlx2K49b4UEGjqf7om5UB5zzkpH-fFN3QYdKare8H?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/wjz-kdyA4kEYTlAJHi0u2_E18Rg_cpT57AJZBHJplH4A2em4YPRwelOBc70oCMlLGXIVko1HYQp4yQ95NP7fk5_BjhMbNdLuJDewdLsqtgheOklICTyDCCwCRT1CYUD1GXGpmTu0uj1b_FFhQddyTv4QlfEFeKkXtYLoPZLalaisvbjPpHqXd0msth7IJOn4?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/nWKjqjfE3DsBbZ8z9_4ihjx1DQfjYCH9Y_2W965MNgkY5wmjyBxtkV_kZl2H1g6hbT0iVqKRZJuZTQ6jGsH8ryFl-ehqiq4vajx68ti4XhywkTTYxlIQh-x-Wsn9nNLrSE2wHHibY-rJt98WxHuAvl6nBudSA83TSgMGnAd-qqxUmNZOXzmK-ntur60jZCCJ?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/Ayp-glB0gHFti9rYOzcuQooIcjfd0CkFXO4XJ20wUOl9PuvN3nh4gxkoZ77YPf16V5BsBSLGSdhHeRuDzxn1WXSQmJQvs_815VM2-FkGHXU37v5agTQtPi91YF1gMhQCBiAvHKz6g9V2QXfFkS7j7j8zidFbXPToKZTtHoAvPxxiwMhSEzqzBNJd-XSMNZ80?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/KnR4R222oXTWN4O3puGwkg3gJfzP4oD_h88MgpgxBMsHyB4GEZQJZvqmu7l1E86XaGvQ3GuzgYwAUK6cyST4ShPS78UH7CWPivHSx0c5T-igL1wz1lxgfC5SMX3TvS-uOrcNqtHQqxGeKLBVi_N_bTGdPutFDTsLYDpD47fteujTok6iC9K1N4UBYCFsdB-T?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/qvtLWc1gR97EdJvm7jjLdk9P15CpJt6ZpUEqGPyGG9_4JHaDaOx2YDLYiL4Av_UICfsmTPFQ-zo27xYMN20mkYkkgEDFjq0debddhbQAeNhNK760I4qiwrWM0zxb87FoL_HbuW9YOvwriq20aCp102jwgoq1-Lng5uwsDFwR4JG0ZMwXA2XGjVY4FxqIr3Cy?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/Tli8-YnEwrC9h9S6CAQmmk7l9daltj7V28EIAq2RpQP7qkZXs6DVI6h_V4lV75kajyRj34o2W0231cMzdaezkm5DZxbw8iHZ7ZE1caM7ZrCwLsF6FN9EW1CwcEhqkLqHKrzF9khcAJrmYY5R7JDeUitI41BPZR6aF6oO8_PVkrp31WHv2bfBnYsv5oOyLrso?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/G6czKUOtcK5Uo14wc_w7x30y-pwzgQ1HeIf3ykq6zxdzCursnpBOZli19NJaQc8_uOZTgdsvGuxTHpH_l-BbSP14ph2KZsdTMmpsvQhFrRpIQOBZ7i9-H4sDW67DJlsLLb_B3R8IdmCswVsEoD_kiHDGhNENj4DTFtV0P2__uUecx0-1NDGGhYC5g1gk_o73?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/b5PCqhkmEjGLtqI2utJvuACopMrEF4Eh5e1WcKMhm45sbv0U92Ra6VZ4QK7DClKDRqkHWM03ePSaFv4sAFwNgO_Rmv7n_Rgnbr5Se2ycK11yRAAMT3iVJBS1R-1D-TF2NDJdjfMoXreV-g-QBl-sTgOKdzoe8BQNJH6NdmNi_gGvesjidO3MU9rJFI7iqBP5?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/LonJvAPSXvWp0SMC5PV0eWKiWaCVlwLlPcd2JxzWSNHSFQP9p8wZtazqenRSYyi4JVbsOwWwpkNrS0zN0SOnUPcSWbSxnCdEiFszDumF5GlcCCUOdQ-MnlQZwz-t5ukZ-FS9l4Hb2OAzKOuTlIr15Vjct3_gZIW0oRLlpixrw5zH-M3IF7JHBikOAyoOp2Hg?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/TD1fJZwstlPZXkRV8A07No55Os9zpKUjoa7MylOeI0YA8WZvVE14fp1_MWKmGxibQ_yFukrU2FHOH7ULkf78uawOOCH-crSFxP-3nIR5GQUQg8sMwkD31b8w3kzOaAiOSFKlwSJuyvtGogTMqf9NjRGA1xwjPk58_-xPtZD1rabIOaT-4WLsJ3xqvQAPajsQ?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/k3Q60boEJCz4HTlvFbhTDcq3eSu7zyttUx7B77hbK3cBcL9hThPYsrtEVMnbZ9MvivZP8Qy2lckFgdIKH9OSfi9UED4QyCceaIrTCPGNZpFCStROS2rRNkH5W9N2iLRAZriOuAdlL8Tt11z4zT2sUYM_J1s3TyOu41f4l826JJ33rdhJeQq1KnaDzIDNbC9S?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/K64lDuVlpsiCVxYaO0ujtF2THS4Yf60l4xPiL45Wf4LjvGP23WUDgbEbQjc6YG3HwL9apchnLS_fDPwjCa7DcJOiTf9zsJdYmZj309fIh-ErKCbHwb7GUSoaXT-hRg4fG5CJWTCDhV-Io1I9XqEOIgbwRx7nPRVT3giq2gMVEJYrk4PSPoAspegKYIVrEDf5?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/IElG2r408AxHoEn7hi2w1nfJ4nWeNEX_kv8vXPOD4NWlc4pF9RXQyuCMhBFRimiJBJRbEK821DTo-S2RgxoD_icF7FfgUf_6AIkieIiFm0jf8WaRQHfIMB37Nw1JX7T7d109hgIupg_-1XXu72glomYVIL9Y9e7YNVb263djWTIZ8xwqjorlDjaKtYx0yaK8?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/68FwGEOBi_LTZ09V-2BMNetGlPtYiL4jP2hcLnYrVZ21eu9P9KInJMJJaakPQvKhoADAy9kvJMz349kDSUJ5pjuY8B4xS4OAT44ELnbsFru3z2FD2OZ_VKjMlrVmgqRFx-E_wOvj_LN25A_g3cQDr3CoMt12rPjOlDFuLoedGazd-_710uQXtU2oxGnv5CFx?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/OtGRybBPAsR2HXLOS4fVswANFSOfF0c-vTcDjLIMG-EWeI0Glh5vGGPLSTKDSXCm37N-2BToEPKwI0wXjaqfUYlbknZyCEG5XAaHJlwRQTs_ODVxtkRb6Suka1CpST-H6akE57YrTT0UMQb3X_qix1PotY8VyZ7frlJXOO-pIcWIsSwJHPZJqWZGBwIiriv0?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/xAqJ_4ng1zBQrDkIPGc5w9mahanMhuS78PfE2PDK15pqdv8etdoRDXWfT6wX-F587WUONcxlqJYtmHGElPOpUtDubLfnka7CXqqyANhagC4qB-kDofnpySnLADoso_sUIvSO7vSGroJtS1IS4l8mXqx8ANXiZyzqIRrPg2JD8pWWqFDzLynUrTm3ES18Rw8X?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/pKxLxPhDdgruYeDgz41exB0hI1wftpMI0zyO1QmvJXPTCIPl4rPYaK0r6_yC2vMwrC638PHX8wZn9MIdCccv3Qy5epVVOdjSA0-TGnOR89aUZ7wO_a2w18_5Z9kU10nPWa2fDXVXThpWaIsVoBzCjpnBNNE7ev0K6GwSfmI5Bz3BK72y-jdNBTTY8RYEpo4I?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/pgdJefjYEEin6CcTDYBVS6i9Ua-6WXrk8tu9-v_GzM5qX8XHfQQgjbwhuoXphgxDci4P317TFS0f9qKbW4npuBHb31S-Xxh3Rh4jQ8V-9F0OiBosSOeKDAMe2iEDMxmeUE14UGltkes40ATf7y2byr8JHkZveyXWiQBYhi8hhACTPGjdrTTEFM_ifgFMkeyW?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/LCXazL4McEwqq1uNDCchmgrx1DeinsROhuVeTfmgKYkFVephHpNS-DFmiYO6JJPSCvG6cwn7lnp5hsE6K9Sjy__4Rew3E5a5OiBGiFTPkjFZNwCweghxo2UKu0zpv3q7LA_zVZ4WMBHNCaJciSWMQg9TRqt7PXMRaxnYynygG6HpLNglVzvFZlaxUENjduzT?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/umBMPdHNyTEMnrmE2LOlAWTVysKLujdu6e2aRvgTCu3GL6nP8d3Zv-Tsdl-jHF1AvQhahOfR9yuAw29UQqfs1voUq2URpKlEA9_r3d6l6hdA_QOv6vwpakXaN6KE_bd0gHc0YeGI4S5qzJzx9OPEwtDdGxEaNi0X3LzGRwKjtL4DDnKMEw-YgMAoB-BruyfR?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/X5m2zk6ltKakGTLNs3oDKclRP1tYFXNSK7QxRIAtAVMBIEc6fOXqOnT36CkfEWa_fgfNLFTEEMUdPF1g-j5DwkywF0cyvoiAa8CCnz1BGNndrBde6ZtJ400-CRsuOmgMZQfdNpb-ocTQnDLjrQybx_XSKAPLJifDXgvIAViaftEcFS5Ac0pHRv5vrIxNP85c?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/qHDTxVTnE1G6AWvaWt7raaCyu8sbU3Az6Ohol2usGowdneD9HbDeTWoz90goghxTujSVcJS-oC8OsfDy6_vAgj4rODKblP-kH70mdyn-wZdZUFxTXIVy_O7xnxGxbeMd0jaKwiPkUteZ8Uj7P8d7f0P-lf7MWcMam_OLQJNwaUMFLsrPSipmBjkubtyRPjFp?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/4x9AsFGXktHjDAuHa0_GZmaGHkpqcNyVRD0sgFkMyRswBOMMD5FUAYzg9v-NEJW_YltfKnNNUjMYGNv7I4oQ9DLkKrbzoDAxk1LcjvtZXznash43AqSzHhUet3yfa_MeWA9IWxaVhR_7XOLYc27SNNGjh_9wt59GkpPyIMYyHEjtIIr_V0nQtYlkzHvobA8y?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/fOErUXQRFLrrul3AS9tjWGHjrrTXhJSlHYTJZn5Cj9Iv01lvOQjT2PQl_5cTV0763D8gWm_xBfabXRTf-OsH_sEFgjSdraMLAVe2fP8tL6OEBGOdv7WGTl0QnJMlT5iAqXOHAageaP-oGHpYdE6d9HLLm-koLhhrV_f-bmuLtpQbMYxf7NrW16IUgvzsziea?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/KA7L8XTtBBfu3tETVuxHYr2IiNxSmi_7a6VYMz4i8JPmtqk1KQrz5uiLKQ5_StMyNzvPoH3NwVVZPlmzDXDfJNXof0DhiVoDmgE2r9dL-2BjV3UfASafz1ZfEbk9-Caqd4bUfSWPMLa7yRTYnkKQe1thg1bfTcF70fpgeIdNKPe53nPXUG9PYiIAwwuhX1sF?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/jcn2GE_dWKZcfWQ3kom85pFNC3DnM5dwdNJnjwrbiXU6PpyKhLp8txgUVu5qDidb7FML5HybVXBh_bgwE7q26aZW5CpvN1flKET5BPd2tmeJnneQjrZtyc_Zany5fiCjFokfEDjBSZdxxGrXkJEffHIAROaFzIFtdujMBSAE4ew2luJUFVTh6qdjVFPK69NU?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/bZEsfqevpZBE1hk_DKjNRyrlmyxGWP2KyGk9AI1uzwZA-Nwzv2Sb4_ab-AYKSxj3JQYpVVlbFx9gqbHiBVioNWq_ydMDY1D5qHOu9vQMFdK2VI01HGXRzWqKM1tmqjmNOrcLwvbc-CDsyfqYPfaiETa5PxPNhH0IWAB2PD0L9oioLFNHRKts74zX1KHCaavC?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/rJJirtuDf4tN3VFa6ONC3vP-I7A7G0Fvo09IBROuUZys_I7KzkrSSMMcAqWL1dGcAkSrScznCHlruffxUsJnhGxvUAUPw5TsOtVxEPO9arPbnhtBTt8EGH8LIpPJBUJLIgvnPshGLHt7ss2LHApQCC_-sJY76XVfHiqDn2_z_9aDsVZcEe63wVEVgKR8wV8k?purpose=fullsize",
+    "https://images.openai.com/static-rsc-4/EF1uukGcS1Pp6BIcT5DULKuWvvkSe-k69fPfVTE4mhui_dr0fltoXoyk_0a2vwCmFZiVCNEtAAvU9q854BqBVMGipbTkXqGcjEjgQjOLHkbby2lmoE_8q4qMRNngia-UbRNO9mX-OT-4jEFcHhxRv9UQF0pQTdDHLOtVlBIlQeS7H4zdpo8Y7SUAbvHbYs_N?purpose=fullsize"
+  ],
+  "blocked_urls": [],
+  "default_model_slug": "auto",
+  "atlas_mode_enabled": null,
+  "conversation_origin": null,
+  "is_read_only": null,
+  "voice": null,
+  "async_status": null,
+  "disabled_tool_ids": [],
+  "is_temporary_chat": false,
+  "is_do_not_remember": false,
+  "memory_scope": "global_enabled",
+  "context_scopes": [],
+  "sugar_item_id": null,
+  "sugar_item_visible": false,
+  "pinned_time": null,
+  "is_study_mode": false,
+  "owner": null,
+  "sectioned_conversation": null,
+  "messages": [
+    {
+      "id": "f0000000-0000-4000-8000-757c65fec1c5",
+      "author": {
+        "role": "system",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": null,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          ""
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 0.0,
+      "metadata": {
+        "is_visually_hidden_from_conversation": true,
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-ad7d01e2615d",
+      "author": {
+        "role": "system",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": null,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          ""
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 0.0,
+      "metadata": {
+        "rebase_developer_message": true,
+        "is_visually_hidden_from_conversation": true,
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-2091b72260a6",
+      "author": {
+        "role": "system",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209171.836178,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          ""
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 0.0,
+      "metadata": {
+        "request_id": "f0000000-0000-4000-8000-fff783acffb4",
+        "message_source": null,
+        "turn_exchange_id": "f0000000-0000-4000-8000-5bfd9f770072",
+        "is_visually_hidden_from_conversation": true,
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-2300aa2f031a",
+      "author": {
+        "role": "user",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209173.112,
+      "update_time": 1779209196.536791,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Fais moi une liste de tous ce que je peux dessiner et écrire sur mon support"
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "attachments": [
+          {
+            "id": "file_00000000a4dc720aac507d03ec08cc57",
+            "size": 7817,
+            "name": "Grand oral - Astérosismologie.md",
+            "mime_type": "text/markdown",
+            "source": "library",
+            "library_file_id": "libfile_54104021b1ac8191a69841f62b068c62",
+            "is_big_paste": false
+          }
+        ],
+        "selected_github_repos": [],
+        "serialization_metadata": {
+          "custom_symbol_offsets": []
+        },
+        "request_id": "f0000000-0000-4000-8000-fff783acffb4",
+        "message_source": null,
+        "turn_exchange_id": "f0000000-0000-4000-8000-5bfd9f770072",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-4522a7c1162b",
+      "author": {
+        "role": "tool",
+        "name": "file_search",
+        "metadata": {}
+      },
+      "create_time": 1779209171.955423,
+      "update_time": null,
+      "content": {
+        "content_type": "tether_browsing_display",
+        "result": "",
+        "summary": "",
+        "assets": null,
+        "tether_id": null
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 0.0,
+      "metadata": {
+        "command": "spinner",
+        "status": "running",
+        "request_id": "f0000000-0000-4000-8000-fff783acffb4",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-5bfd9f770072",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "parent_id": "f0000000-0000-4000-8000-5a2116b41ea9",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-0be5862c9c83",
+      "author": {
+        "role": "tool",
+        "name": "file_search",
+        "metadata": {}
+      },
+      "create_time": 1779209172.0273101,
+      "update_time": null,
+      "content": {
+        "content_type": "tether_quote",
+        "url": "file_00000000a4dc720aac507d03ec08cc57",
+        "domain": "Grand oral - Astérosismologie.md",
+        "text": "fileciteturn0file0\n\n*Astérosismologie : comment l'étude des phénomènes ondulatoires permet-elle de sonder les dynamiques au cœur des étoiles ?*\n\n### Amorce\n\nQuand on regarde une étoile dans le ciel, elle paraît parfaitement calme et immobile. Pourtant, en réalité, les étoiles vibrent en permanence. Ces vibrations provoquent de minuscules variations de lumière que l’on peut mesurer depuis l’espace. En étudiant ces oscillations, les astrophysiciens peuvent littéralement “écouter” les étoiles et découvrir ce qui se passe profondément dans leur cœur : c’est le principe de l’astérosismologie.\n\n### Plan \n\nJe vous propose de parcourir mon oral en plusieurs parties, premièrement le principe, définition et histoire de l'astérosismologie puis acquisition et traitement des données astérosismologiques. Finalement, ce qu'il est possible de déduire grâce à cette science et un exemple précis.\n\n### Principe et définition \n\nLes étoiles sont de grandes boules de gaz très chaud, appelées **plasmas**, où se produisent des réactions de fusion nucléaire. Elles ne sont pas immobiles : elles **vibrent** très légèrement, comme une corde d'une guitare.\n\nL’astérosismologie consiste à étudier ces **oscillations globales** pour comprendre l’intérieur des étoiles. Ces vibrations existent à des **fréquences bien précises**, appelées **modes de vibration** ou simplement **modes**. Elles dépendent de la structure interne de l’étoile.\n\nOn distingue surtout deux grands types de modes :\n- **Les modes p** : ce sont des oscillations liées à la **pression** du gaz.  Elles se propagent surtout dans les couches externes de l’étoile, c'est-à-dire la zone de convection. Ce sont des ondes acoustiques, ainsi nous pouvons rapprocher ce phénomène d'un son qui pourrait être produit par une enceinte.\n- **Les modes g** : ce sont des oscillations liées à la **gravité**. Elles sont surtout sensibles dans les régions profondes, donc au cœur de l’étoile dans la zone radiative, c'est-à-dire l'endroit où la fusion se passe. Si nous devions donner une image, cela ressemblerait à des courants océanique comme le Gulf Stream dans le sens où de l'eau ou le plasma bouge en fonction de différentes caractéristiques comme la température ou la densité par rapport au milieu.\n\n(Ici : présenter un schéma d'une étoile avec les différentes zones les très légères déformations et les principes des modes p et g simplifiés avec les exemples : son et océan)\n\nCes oscillations globales ont un impact sur la lumière émise que nous pouvons capter en quelque sortes elles impriment leurs marques sur la lumière émise.\n\nL’idée essentielle est donc la suivante : **en observant la lumière des étoiles où est imprimée leurs vibrations, on peut déduire ce qui se passe à l’intérieur** et leurs caractéristiques précises.\n\n![[Structure d'une étoile.jpg]]\n### Histoire\n\nL’astérosismologie est une science récente, mais elle s’appuie sur une science analogue plus ancienne : l’**héliosismologie**, qui étudie les vibrations du Soleil. Pendant longtemps, on n’avait pas les moyens techniques pour mesurer ces faibles variations avec assez de précision.\n\n(Exemple CoRoT : Pour une autre étoile de type Delta Scuti, HD50844, plus de 1000 fréquences de modes d'oscillation ont été mesurées tandis qu'à partir de la Terre seulement 27 fréquences avaient été détectées.)\n\nLe développement réel de l’astérosismologie a commencé avec les télescopes spatiaux, notamment **CoRoT** (2006) et **Kepler** (2009), au début des années 2000 et surtout dans les années 2010. Ces missions ont permis de mesurer des variations de luminosité extrêmement faibles pendant de longues durées, ce qui était impossible à faire depuis le sol avec la même précision notamment à cause de l'atmosphère et de l'impossibilité de prendre des observations en continu.\n\n### Acquisition des données\n\nLes télescopes comme **CoRoT** et **Kepler** observent une étoile pendant très longtemps et enregistrent sa luminosité de façon très régulière. Cela permet de repérer de petites variations dans le temps, causées par les vibrations de l’étoile ce qui est fondamental pour cette science.\n\nL’intérêt de ces télescopes est double :\n\n- ils sont placés dans l’espace, donc ils ne subissent pas les perturbations de l’atmosphère ;\n- ils peuvent observer une étoile pendant des semaines, des mois, voire des années.\n\nPar exemple :\n\n- **CoRoT** observait avec une cadence (fréquence d'échantillonnage) rapide (1 seconde à 15 minutes) et sur des durées assez longues (20 à 120 jours);\n- **Kepler** a permis un suivi encore plus précis et plus long (toutes les 30 minutes pendant plus de 3 ans), ce qui a été décisif pour l’étude des oscillations stellaires.\n\nCes observations produisent une **courbe de lumière**, c’est-à-dire un graphique qui montre comment la luminosité de l’étoile varie au cours du temps.\n\n### Traitement des données\n\nLe signal lumineux enregistré est souvent complexe : il mélange plusieurs vibrations en même temps. Pour l’analyser, on utilise la **transformée de Fourier**.\n\nCet outil mathématique permet de décomposer un signal compliqué en une somme de signaux plus simples, en particulier des **ondes sinusoïdales**. Chaque fréquence obtenue correspond à un mode de vibration de l’étoile.\n\n(Ici : il faut montrer un exemple basique avec un signal plus complexe et deux signaux plus basiques et la formule avec une rapide explication des paramètres et du vocabulaire)\n\nAutrement dit :\n\n- le signal observé dans le temps est complexe ;\n- la transformée de Fourier permet de faire apparaître les fréquences cachées ;\n- ces fréquences révèlent les modes de vibration.\n\nEn astérosismologie, les **faibles fréquences** sont souvent associées aux modes g, tandis que les fréquences plus élevées sont plutôt associées aux modes p.\n\n### Ce qu’il est possible de déduire\n\nÀ partir des modes de vibration, on peut obtenir beaucoup d’informations sur l’étoile :\n\n- sa **masse** ;\n- son **rayon** ;\n- sa **densité interne** ;\n- son **âge** ;\n- parfois sa **rotation** ;\n- et même la structure de son **cœur**.\n\nPour déduire cela, on compare les modes de vibrations obtenus avec des simulations de logiciel comme MESA (Modules for Experiments in Stellar Astrophysics) qui permet de simuler une étoile à partir de les paramètres physiques et un autre logiciel comme GYRE qui permet de déduire de cette simulation les modes que l'on observerait si la simulation était réelle.\n\nC’est ce qui rend l’astérosismologie très puissante : on n’observe pas seulement la lumière de l’étoile mais on en déduit son organisation interne qui autrement ne serait pas accessible.\n\nEn pratique, les vibrations ne sont pas les mêmes selon que l’étoile est jeune, vieille, massive ou peu massive. Une étoile en fin de vie n’aura pas les mêmes modes qu’une étoile plus stable. Les fréquences observées servent donc de “signature” de l’état interne de l’étoile.\n\n### Exemple précis\n\nKepler a observé le système solaire 16 Cygni, un système à étoile triple dans la constellation du Cygne. Et grâce à l'astérosismologie, on sait que 16 Cygni A fait 1,22 fois le rayon du Soleil et la masse de 1,07 Soleil.\n\n### Conclusion\n\nL’astérosismologie est donc une méthode d’étude indirecte mais très efficace. Elle repose sur l’analyse des phénomènes ondulatoires pour comprendre les étoiles de la surface jusqu'à leur cœur.\n\nAinsi, grâce aux télescopes, au traitement des données par transformée de Fourier et à la comparaison avec des simulations, on peut déduire des informations essentielles sur les étoiles.",
+        "title": "Grand oral - Astérosismologie.md",
+        "tether_id": null
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "command": "context_stuff",
+        "is_visually_hidden_from_conversation": false,
+        "retrieval_turn_number": 0,
+        "retrieval_file_index": 0,
+        "request_id": "f0000000-0000-4000-8000-fff783acffb4",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-5bfd9f770072",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "parent_id": "f0000000-0000-4000-8000-4522a7c1162b",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-4712637af796",
+      "author": {
+        "role": "tool",
+        "name": "file_search",
+        "metadata": {}
+      },
+      "create_time": 1779209172.037661,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "All the files uploaded by the user have been fully loaded. Searching won't provide additional information."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "is_visually_hidden_from_conversation": false,
+        "request_id": "f0000000-0000-4000-8000-fff783acffb4",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-5bfd9f770072",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "parent_id": "f0000000-0000-4000-8000-0be5862c9c83",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-d3bbd45dd46c",
+      "author": {
+        "role": "system",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209172.055947,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          ""
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 0.0,
+      "metadata": {
+        "request_id": "f0000000-0000-4000-8000-fff783acffb4",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-5bfd9f770072",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "parent_id": "f0000000-0000-4000-8000-4712637af796",
+        "is_visually_hidden_from_conversation": true,
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-d4d423f4df84",
+      "author": {
+        "role": "assistant",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209172.051519,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Voici une liste claire de tout ce que tu peux **dessiner**, **écrire** et **afficher** sur ton support pour ton Grand Oral sur l’astérosismologie. L’objectif est d’avoir un support **visuel, simple, scientifique et utile à l’oral**, sans surcharge.\n\n# 1. Schéma principal d’une étoile (très recommandé)\n\nimage_group{\"layout\":\"carousel\",\"aspect_ratio\":\"1:1\",\"query\":[\"schéma structure interne étoile simple zone radiative zone convective\",\"diagramme étoile modes p et g simplifié\",\"coupe étoile pédagogique astrophysique\",\"schéma oscillations étoile astérosismologie\"],\"num_per_query\":1}\n\n## À dessiner\n- Une étoile en coupe\n- Les différentes couches :\n  - cœur\n  - zone radiative\n  - zone convective\n  - surface/photosphère\n\n## À ajouter dessus\n- Flèches des **modes p**\n  - plutôt vers l’extérieur\n  - oscillations “acoustiques”\n- Flèches des **modes g**\n  - plutôt profondes\n  - liées à la gravité\n\n## À écrire à côté\n- « Modes p = pression »\n- « Modes g = gravité »\n- « Les oscillations modifient la luminosité »\n\n---\n\n# 2. Comparaison simple “son / océan”\n\n## Tu peux dessiner :\n### Pour les modes p\n- une enceinte\n- ou une onde sonore\n\n### Pour les modes g\n- des courants océaniques\n- ou une vague profonde\n\n## Petit texte\n- « Mode p : comparable à une onde sonore »\n- « Mode g : mouvements internes liés à la densité »\n\n---\n\n# 3. Courbe de lumière\n\nimage_group{\"layout\":\"carousel\",\"aspect_ratio\":\"16:9\",\"query\":[\"courbe de lumière étoile simple\",\"light curve star oscillation simple graph\",\"graph luminosité étoile variation temps\",\"courbe luminosité astérosismologie\"],\"num_per_query\":1}\n\n## À dessiner\n- Axe horizontal : temps\n- Axe vertical : luminosité\n- Une courbe ondulée légère\n\n## À écrire\n- « Variation de luminosité »\n- « Les oscillations sont détectées par les télescopes »\n\n---\n\n# 4. Transformée de Fourier (très important)\n\nimage_group{\"layout\":\"carousel\",\"aspect_ratio\":\"16:9\",\"query\":[\"transformée de fourier signal simple pédagogique\",\"fourier transform simple sinus decomposition\",\"spectre fréquence signal exemple simple\",\"analyse fréquentielle oscillation\"],\"num_per_query\":1}\n\n## Tu peux montrer :\n### À gauche\n- un signal complexe\n\n### Puis une flèche\n→ « Transformée de Fourier »\n\n### À droite\n- plusieurs pics de fréquence\n- ou plusieurs sinusoïdes simples\n\n## Tu peux écrire la formule\ngenui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"F(\\\\omega)=\\\\int_{-\\\\infty}^{+\\\\infty} f(t)e^{-i\\\\omega t}\\\\,dt\"}}\n\n## Et expliquer rapidement\n- \\(f(t)\\) : signal observé\n- \\(F(\\omega)\\) : fréquences obtenues\n- permet de “décomposer” le signal\n\n---\n\n# 5. Schéma “observation depuis l’espace”\n\nimage_group{\"layout\":\"carousel\",\"aspect_ratio\":\"16:9\",\"query\":[\"télescope spatial kepler illustration\",\"satellite corot dessin\",\"kepler observant étoile schéma\",\"télescope spatial astérosismologie\"],\"num_per_query\":1}\n\n## À dessiner\n- une étoile\n- un satellite (Kepler ou CoRoT)\n- des flèches de lumière\n\n## À écrire\n- « Observation continue »\n- « Pas de perturbation atmosphérique »\n\n---\n\n# 6. Frise chronologique rapide\n\n## Tu peux écrire :\n- Héliosismologie\n- 2006 → CoRoT\n- 2009 → Kepler\n- Développement majeur de l’astérosismologie\n\nTu peux faire une ligne simple avec des dates.\n\n---\n\n# 7. Exemple final : 16 Cygni\n\nimage_group{\"layout\":\"carousel\",\"aspect_ratio\":\"16:9\",\"query\":[\"16 cygni artist impression\",\"système stellaire 16 cygni\",\"constellation cygne étoile 16 cygni\",\"illustration étoile type solaire\"],\"num_per_query\":1}\n\n## À écrire\n- « 16 Cygni A »\n- Rayon ≈ 1,22 Soleil\n- Masse ≈ 1,07 Soleil\n\n## Tu peux ajouter\n- « Déduit grâce aux oscillations stellaires »\n\n---\n\n# 8. Les mots-clés importants à afficher\n\nTu peux les écrire dans un coin du support :\n\n- Astérosismologie\n- Oscillations stellaires\n- Modes p\n- Modes g\n- Luminosité\n- Transformée de Fourier\n- Fréquence\n- Télescope spatial\n- Kepler\n- CoRoT\n\n---\n\n# 9. Ce qu’il vaut mieux éviter\n\n❌ Trop de texte  \n❌ Des paragraphes entiers  \n❌ Trop de calculs  \n❌ Des schémas compliqués  \n❌ Des couleurs partout\n\nTon support doit :\n- guider ton oral,\n- aider le jury à visualiser,\n- mais ne pas remplacer ce que tu dis.\n\n---\n\n# 10. Structure idéale de ton support (simple)\n\n## Partie gauche\n- étoile en coupe\n- modes p / g\n\n## Milieu\n- courbe de lumière\n- Fourier\n\n## Partie droite\n- satellite\n- frise historique\n- exemple 16 Cygni\n\n---\n\nSi tu veux, je peux aussi :\n- te faire un **plan exact de la feuille A3**\n- te créer un **support visuel complet prêt à recopier**\n- te faire une **version très esthétique**\n- ou une **version ultra simple spéciale Grand Oral 10 min**."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 1.0,
+      "metadata": {
+        "finish_details": {
+          "type": "stop",
+          "stop_tokens": [
+            200002
+          ]
+        },
+        "is_complete": true,
+        "citations": [],
+        "content_references": [
+          {
+            "matched_text": "image_group{\"layout\":\"carousel\",\"aspect_ratio\":\"1:1\",\"query\":[\"schéma structure interne étoile simple zone radiative zone convective\",\"diagramme étoile modes p et g simplifié\",\"coupe étoile pédagogique astrophysique\",\"schéma oscillations étoile astérosismologie\"],\"num_per_query\":1}",
+            "prefix": null,
+            "start_idx": 304,
+            "end_idx": 589,
+            "safe_urls": [
+              "https://images.openai.com/static-rsc-4/Ayp-glB0gHFti9rYOzcuQooIcjfd0CkFXO4XJ20wUOl9PuvN3nh4gxkoZ77YPf16V5BsBSLGSdhHeRuDzxn1WXSQmJQvs_815VM2-FkGHXU37v5agTQtPi91YF1gMhQCBiAvHKz6g9V2QXfFkS7j7j8zidFbXPToKZTtHoAvPxxiwMhSEzqzBNJd-XSMNZ80?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/G6czKUOtcK5Uo14wc_w7x30y-pwzgQ1HeIf3ykq6zxdzCursnpBOZli19NJaQc8_uOZTgdsvGuxTHpH_l-BbSP14ph2KZsdTMmpsvQhFrRpIQOBZ7i9-H4sDW67DJlsLLb_B3R8IdmCswVsEoD_kiHDGhNENj4DTFtV0P2__uUecx0-1NDGGhYC5g1gk_o73?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/b5PCqhkmEjGLtqI2utJvuACopMrEF4Eh5e1WcKMhm45sbv0U92Ra6VZ4QK7DClKDRqkHWM03ePSaFv4sAFwNgO_Rmv7n_Rgnbr5Se2ycK11yRAAMT3iVJBS1R-1D-TF2NDJdjfMoXreV-g-QBl-sTgOKdzoe8BQNJH6NdmNi_gGvesjidO3MU9rJFI7iqBP5?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/jcn2GE_dWKZcfWQ3kom85pFNC3DnM5dwdNJnjwrbiXU6PpyKhLp8txgUVu5qDidb7FML5HybVXBh_bgwE7q26aZW5CpvN1flKET5BPd2tmeJnneQjrZtyc_Zany5fiCjFokfEDjBSZdxxGrXkJEffHIAROaFzIFtdujMBSAE4ew2luJUFVTh6qdjVFPK69NU?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/jv1JMQX0IUUW-bEWAPrOmRENOafoUJaQGwaPdrIq42JOU3BG5kWhKPWU_erPaoN6u--U600f7ivb52oU4NWGT4eJUcbnfVm_u9OZR1v2Y-iijtZsx6u4eDD-Tx188-uZYqBi0_3ZmWMWMYyhgQ2BfPQB0-m7wmNy9MtIdDcLUYYzTl2ZKQz41UH3190TgntW?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/pKxLxPhDdgruYeDgz41exB0hI1wftpMI0zyO1QmvJXPTCIPl4rPYaK0r6_yC2vMwrC638PHX8wZn9MIdCccv3Qy5epVVOdjSA0-TGnOR89aUZ7wO_a2w18_5Z9kU10nPWa2fDXVXThpWaIsVoBzCjpnBNNE7ev0K6GwSfmI5Bz3BK72y-jdNBTTY8RYEpo4I?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/rJJirtuDf4tN3VFa6ONC3vP-I7A7G0Fvo09IBROuUZys_I7KzkrSSMMcAqWL1dGcAkSrScznCHlruffxUsJnhGxvUAUPw5TsOtVxEPO9arPbnhtBTt8EGH8LIpPJBUJLIgvnPshGLHt7ss2LHApQCC_-sJY76XVfHiqDn2_z_9aDsVZcEe63wVEVgKR8wV8k?purpose=fullsize"
+            ],
+            "refs": [],
+            "alt": "![Image](https://images.openai.com/static-rsc-4/jv1JMQX0IUUW-bEWAPrOmRENOafoUJaQGwaPdrIq42JOU3BG5kWhKPWU_erPaoN6u--U600f7ivb52oU4NWGT4eJUcbnfVm_u9OZR1v2Y-iijtZsx6u4eDD-Tx188-uZYqBi0_3ZmWMWMYyhgQ2BfPQB0-m7wmNy9MtIdDcLUYYzTl2ZKQz41UH3190TgntW?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/rJJirtuDf4tN3VFa6ONC3vP-I7A7G0Fvo09IBROuUZys_I7KzkrSSMMcAqWL1dGcAkSrScznCHlruffxUsJnhGxvUAUPw5TsOtVxEPO9arPbnhtBTt8EGH8LIpPJBUJLIgvnPshGLHt7ss2LHApQCC_-sJY76XVfHiqDn2_z_9aDsVZcEe63wVEVgKR8wV8k?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/G6czKUOtcK5Uo14wc_w7x30y-pwzgQ1HeIf3ykq6zxdzCursnpBOZli19NJaQc8_uOZTgdsvGuxTHpH_l-BbSP14ph2KZsdTMmpsvQhFrRpIQOBZ7i9-H4sDW67DJlsLLb_B3R8IdmCswVsEoD_kiHDGhNENj4DTFtV0P2__uUecx0-1NDGGhYC5g1gk_o73?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/jcn2GE_dWKZcfWQ3kom85pFNC3DnM5dwdNJnjwrbiXU6PpyKhLp8txgUVu5qDidb7FML5HybVXBh_bgwE7q26aZW5CpvN1flKET5BPd2tmeJnneQjrZtyc_Zany5fiCjFokfEDjBSZdxxGrXkJEffHIAROaFzIFtdujMBSAE4ew2luJUFVTh6qdjVFPK69NU?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/b5PCqhkmEjGLtqI2utJvuACopMrEF4Eh5e1WcKMhm45sbv0U92Ra6VZ4QK7DClKDRqkHWM03ePSaFv4sAFwNgO_Rmv7n_Rgnbr5Se2ycK11yRAAMT3iVJBS1R-1D-TF2NDJdjfMoXreV-g-QBl-sTgOKdzoe8BQNJH6NdmNi_gGvesjidO3MU9rJFI7iqBP5?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/pKxLxPhDdgruYeDgz41exB0hI1wftpMI0zyO1QmvJXPTCIPl4rPYaK0r6_yC2vMwrC638PHX8wZn9MIdCccv3Qy5epVVOdjSA0-TGnOR89aUZ7wO_a2w18_5Z9kU10nPWa2fDXVXThpWaIsVoBzCjpnBNNE7ev0K6GwSfmI5Bz3BK72y-jdNBTTY8RYEpo4I?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/Ayp-glB0gHFti9rYOzcuQooIcjfd0CkFXO4XJ20wUOl9PuvN3nh4gxkoZ77YPf16V5BsBSLGSdhHeRuDzxn1WXSQmJQvs_815VM2-FkGHXU37v5agTQtPi91YF1gMhQCBiAvHKz6g9V2QXfFkS7j7j8zidFbXPToKZTtHoAvPxxiwMhSEzqzBNJd-XSMNZ80?purpose=fullsize)",
+            "prompt_text": null,
+            "type": "image_group",
+            "images": [
+              {
+                "image_result": {
+                  "url": "https://physiquereussite.fr/la-physique-des-etoiles-1/schema-etoile/?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/jv1JMQX0IUUW-bEWAPrOmRENOafoUJaQGwaPdrIq42JOU3BG5kWhKPWU_erPaoN6u--U600f7ivb52oU4NWGT4eJUcbnfVm_u9OZR1v2Y-iijtZsx6u4eDD-Tx188-uZYqBi0_3ZmWMWMYyhgQ2BfPQB0-m7wmNy9MtIdDcLUYYzTl2ZKQz41UH3190TgntW?purpose=fullsize",
+                  "content_size": {
+                    "width": 1024,
+                    "height": 898
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/oLmpiR7mH6081ZahktFEM-m6_adyWI_025_bfUCtDqT8h0iCwGhTkz0Cq6RQYTgC3TAeq56QaRu3O7U7qaErpnE5EPP5QSc1POeWeETZiP0A73QNqxXHx7CfgtmZv8HD3ekYCFb5EnFvuFxBOftGEZe_KQOLjb4emy6SwPjdEmQ?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1024,
+                    "height": 898
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.4873046875,
+                    "center_y_percent": 0.13028953229398663
+                  },
+                  "title": "Schema Etoile | Physique & Réussite",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://physiquereussite.fr/wp-content/uploads/2016/04/Schema-Etoile-1024x898.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "schéma structure interne étoile simple zone radiative zone convective",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.annabac.com/revision-bac/l-origine-de-l-energie-solaire-0?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/rJJirtuDf4tN3VFa6ONC3vP-I7A7G0Fvo09IBROuUZys_I7KzkrSSMMcAqWL1dGcAkSrScznCHlruffxUsJnhGxvUAUPw5TsOtVxEPO9arPbnhtBTt8EGH8LIpPJBUJLIgvnPshGLHt7ss2LHApQCC_-sJY76XVfHiqDn2_z_9aDsVZcEe63wVEVgKR8wV8k?purpose=fullsize",
+                  "content_size": {
+                    "width": 667,
+                    "height": 360
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/wNtizmrBnemQ7AHary0XcLTDZVN8JoAPQo2lb9yVwTdljvdBiEnquTDe_OkLpYReuODOLnaxV3bPF76bZww7fzcjv1hG9aGrm3LFm5_uzr7nPEwdFEi41mOl38Z8tqtj00UPlkevGW-enarLJCvYZaJatRis-A0o0mNb7DQSTxI?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 667,
+                    "height": 360
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.7616191904047976,
+                    "center_y_percent": 0.2111111111111111
+                  },
+                  "title": "L'origine de l'énergie solaire - Enseignement scientifique - Première générale - Fiche de révision | Annabac",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.annabac.com/modules-assets/images/pb_bac_09502_esm_1re/09502_C04_Fig01.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "schéma structure interne étoile simple zone radiative zone convective",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.cfa.harvard.edu/news/interiors-stars?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/G6czKUOtcK5Uo14wc_w7x30y-pwzgQ1HeIf3ykq6zxdzCursnpBOZli19NJaQc8_uOZTgdsvGuxTHpH_l-BbSP14ph2KZsdTMmpsvQhFrRpIQOBZ7i9-H4sDW67DJlsLLb_B3R8IdmCswVsEoD_kiHDGhNENj4DTFtV0P2__uUecx0-1NDGGhYC5g1gk_o73?purpose=fullsize",
+                  "content_size": {
+                    "width": 644,
+                    "height": 650
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/pjAOtnQn9sZQngU_btHS-MktTMRboxVw9ZB302yutXquP6Zz80t6ygqpAU6-1Zwp8m6i-28BpKb6Cd9e-lVrB3egFNxBS-EnANma2A3h0k04EgQmGbh2rF6Wg8wRgn6GjMWN3haWSes7uARVbkEHmpLs-Ow5NivHC3rZZWAgiZw?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 644,
+                    "height": 650
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.30124223602484473,
+                    "center_y_percent": 0.5276923076923077
+                  },
+                  "title": "The Interiors of Stars | Center for Astrophysics | Harvard & Smithsonian",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.cfa.harvard.edu/sites/default/files/styles/max_650x650/public/imported_image/su202002.jpg?itok=gY5exPJb"
+                },
+                "image_ref_id": null,
+                "image_search_query": "schéma oscillations étoile astérosismologie",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.stelvision.com/astro/quelles-sont-les-dimensions-de-lunivers/?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/jcn2GE_dWKZcfWQ3kom85pFNC3DnM5dwdNJnjwrbiXU6PpyKhLp8txgUVu5qDidb7FML5HybVXBh_bgwE7q26aZW5CpvN1flKET5BPd2tmeJnneQjrZtyc_Zany5fiCjFokfEDjBSZdxxGrXkJEffHIAROaFzIFtdujMBSAE4ew2luJUFVTh6qdjVFPK69NU?purpose=fullsize",
+                  "content_size": {
+                    "width": 1024,
+                    "height": 1024
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/e1utqyl84btpJSduoLgj1oCbgnB0-QDDiTB88w42tJsTXXzs29V6V8HfVU7HbpA_kxHqBNmHKqhhs2irMvIVnWiWgUszkwUZy9qqNUGXlgCBNMhPHNOCnEzSeLl4NlIAuy_o_DtKJxSvfryGzKBqOlseC8vWpY-V5okZyk56JAw?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1024,
+                    "height": 1024
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.4228515625,
+                    "center_y_percent": 0.0927734375
+                  },
+                  "title": "Quelles sont les dimensions de l'Univers ?",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.stelvision.com/astro/wp-content/uploads/2025/05/schema-parallaxe-1024x1024.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "schéma oscillations étoile astérosismologie",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.les-ailes-immortelles.net/forum/viewtopic.php?t=17548&utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/b5PCqhkmEjGLtqI2utJvuACopMrEF4Eh5e1WcKMhm45sbv0U92Ra6VZ4QK7DClKDRqkHWM03ePSaFv4sAFwNgO_Rmv7n_Rgnbr5Se2ycK11yRAAMT3iVJBS1R-1D-TF2NDJdjfMoXreV-g-QBl-sTgOKdzoe8BQNJH6NdmNi_gGvesjidO3MU9rJFI7iqBP5?purpose=fullsize",
+                  "content_size": {
+                    "width": 640,
+                    "height": 578
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/rVkbAQ6f_fv2qYKT0i-MpcM74QJhGhflfa9eybmjibTAD3WMguI0d2NqR_MVcOAmqYaD3ojIfuvBKcrzg6IyBE9oOIE38LL-hthxj4P9sG-ZBwbh0Y6qtUbBqbSJ2qDPppiBawffX3S61vmcom-dZ5tkj4ewAJ_XLpyZXoxJmfs?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 640,
+                    "height": 578
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.2671875,
+                    "center_y_percent": 0.11418685121107267
+                  },
+                  "title": "Bot Verification",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://i62.servimg.com/u/f62/11/27/27/42/lu201910.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "diagramme étoile modes p et g simplifié",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://fr.u-paris.fr/actualites/les-axes-de-rotation-des-etoiles-nous-parlent-de-leur-naissance?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/pKxLxPhDdgruYeDgz41exB0hI1wftpMI0zyO1QmvJXPTCIPl4rPYaK0r6_yC2vMwrC638PHX8wZn9MIdCccv3Qy5epVVOdjSA0-TGnOR89aUZ7wO_a2w18_5Z9kU10nPWa2fDXVXThpWaIsVoBzCjpnBNNE7ev0K6GwSfmI5Bz3BK72y-jdNBTTY8RYEpo4I?purpose=fullsize",
+                  "content_size": {
+                    "width": 1660,
+                    "height": 738
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/jewdCQjxglGT3Vw-l_XpSVhGyiybpmUWyXsc-9PXq4KZujx1ikRMOaRqhkAwMrNw_99W2WoVlHxLy8rp7vBRYQdcv7EhMR2BqzKwA86O7-avlsmc1BcOtSfse2uaWpiACZ66zATIXZloBF4nChZ9VXQRuCiA1tpao6Irer-mk_o?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1660,
+                    "height": 738
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.8114457831325301,
+                    "center_y_percent": 0.23848238482384823
+                  },
+                  "title": "Université Paris Cité| u-paris.fr | Les axes de rotation des étoiles nous parlent de leur naissance",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://fr.u-paris.fr/sites/default/files/styles/image_100_pcent/public/axe_rotation_etoile_0.png?itok=aDPEnSF2"
+                },
+                "image_ref_id": null,
+                "image_search_query": "schéma oscillations étoile astérosismologie",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.encyclopedie-energie.org/en/solar-energy-theoretical-basis/?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/Ayp-glB0gHFti9rYOzcuQooIcjfd0CkFXO4XJ20wUOl9PuvN3nh4gxkoZ77YPf16V5BsBSLGSdhHeRuDzxn1WXSQmJQvs_815VM2-FkGHXU37v5agTQtPi91YF1gMhQCBiAvHKz6g9V2QXfFkS7j7j8zidFbXPToKZTtHoAvPxxiwMhSEzqzBNJd-XSMNZ80?purpose=fullsize",
+                  "content_size": {
+                    "width": 700,
+                    "height": 523
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/qiDqaseNUFd2X1ZYr3Dsj_6I2vkbYAY5tNTU6tdjII2Twgs4NJhMfrARMsi1mUwQo1R2vIN38qhXIhfAkYS2YR_vPpkyoopPej6W66MtblL_xz20RDKYXg5CxgiPH_cmS3yS1m7er0swKThZTcIEDKx9sTes1weZ0X50AcFuoQ8?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 700,
+                    "height": 523
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.18,
+                    "center_y_percent": 0.11281070745697896
+                  },
+                  "title": "Solar energy: the theoretical basis - Encyclopédie de l'énergie",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.encyclopedie-energie.org/wp-content/uploads/2018/03/art164_fig1_schema_coupe_soleil-1.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "schéma structure interne étoile simple zone radiative zone convective",
+                "image_search_system": null
+              }
+            ],
+            "layout": "carousel",
+            "aspect_ratio": "1:1",
+            "blender_debug_info": null,
+            "invalid": false
+          },
+          {
+            "matched_text": "image_group{\"layout\":\"carousel\",\"aspect_ratio\":\"16:9\",\"query\":[\"courbe de lumière étoile simple\",\"light curve star oscillation simple graph\",\"graph luminosité étoile variation temps\",\"courbe luminosité astérosismologie\"],\"num_per_query\":1}",
+            "prefix": null,
+            "start_idx": 1358,
+            "end_idx": 1600,
+            "safe_urls": [
+              "https://images.openai.com/static-rsc-4/4x9AsFGXktHjDAuHa0_GZmaGHkpqcNyVRD0sgFkMyRswBOMMD5FUAYzg9v-NEJW_YltfKnNNUjMYGNv7I4oQ9DLkKrbzoDAxk1LcjvtZXznash43AqSzHhUet3yfa_MeWA9IWxaVhR_7XOLYc27SNNGjh_9wt59GkpPyIMYyHEjtIIr_V0nQtYlkzHvobA8y?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/LCXazL4McEwqq1uNDCchmgrx1DeinsROhuVeTfmgKYkFVephHpNS-DFmiYO6JJPSCvG6cwn7lnp5hsE6K9Sjy__4Rew3E5a5OiBGiFTPkjFZNwCweghxo2UKu0zpv3q7LA_zVZ4WMBHNCaJciSWMQg9TRqt7PXMRaxnYynygG6HpLNglVzvFZlaxUENjduzT?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/Tli8-YnEwrC9h9S6CAQmmk7l9daltj7V28EIAq2RpQP7qkZXs6DVI6h_V4lV75kajyRj34o2W0231cMzdaezkm5DZxbw8iHZ7ZE1caM7ZrCwLsF6FN9EW1CwcEhqkLqHKrzF9khcAJrmYY5R7JDeUitI41BPZR6aF6oO8_PVkrp31WHv2bfBnYsv5oOyLrso?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/X5m2zk6ltKakGTLNs3oDKclRP1tYFXNSK7QxRIAtAVMBIEc6fOXqOnT36CkfEWa_fgfNLFTEEMUdPF1g-j5DwkywF0cyvoiAa8CCnz1BGNndrBde6ZtJ400-CRsuOmgMZQfdNpb-ocTQnDLjrQybx_XSKAPLJifDXgvIAViaftEcFS5Ac0pHRv5vrIxNP85c?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/b5PCqhkmEjGLtqI2utJvuACopMrEF4Eh5e1WcKMhm45sbv0U92Ra6VZ4QK7DClKDRqkHWM03ePSaFv4sAFwNgO_Rmv7n_Rgnbr5Se2ycK11yRAAMT3iVJBS1R-1D-TF2NDJdjfMoXreV-g-QBl-sTgOKdzoe8BQNJH6NdmNi_gGvesjidO3MU9rJFI7iqBP5?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/bZEsfqevpZBE1hk_DKjNRyrlmyxGWP2KyGk9AI1uzwZA-Nwzv2Sb4_ab-AYKSxj3JQYpVVlbFx9gqbHiBVioNWq_ydMDY1D5qHOu9vQMFdK2VI01HGXRzWqKM1tmqjmNOrcLwvbc-CDsyfqYPfaiETa5PxPNhH0IWAB2PD0L9oioLFNHRKts74zX1KHCaavC?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/fOErUXQRFLrrul3AS9tjWGHjrrTXhJSlHYTJZn5Cj9Iv01lvOQjT2PQl_5cTV0763D8gWm_xBfabXRTf-OsH_sEFgjSdraMLAVe2fP8tL6OEBGOdv7WGTl0QnJMlT5iAqXOHAageaP-oGHpYdE6d9HLLm-koLhhrV_f-bmuLtpQbMYxf7NrW16IUgvzsziea?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/wjz-kdyA4kEYTlAJHi0u2_E18Rg_cpT57AJZBHJplH4A2em4YPRwelOBc70oCMlLGXIVko1HYQp4yQ95NP7fk5_BjhMbNdLuJDewdLsqtgheOklICTyDCCwCRT1CYUD1GXGpmTu0uj1b_FFhQddyTv4QlfEFeKkXtYLoPZLalaisvbjPpHqXd0msth7IJOn4?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/xAqJ_4ng1zBQrDkIPGc5w9mahanMhuS78PfE2PDK15pqdv8etdoRDXWfT6wX-F587WUONcxlqJYtmHGElPOpUtDubLfnka7CXqqyANhagC4qB-kDofnpySnLADoso_sUIvSO7vSGroJtS1IS4l8mXqx8ANXiZyzqIRrPg2JD8pWWqFDzLynUrTm3ES18Rw8X?purpose=fullsize"
+            ],
+            "refs": [],
+            "alt": "![Image](https://images.openai.com/static-rsc-4/4x9AsFGXktHjDAuHa0_GZmaGHkpqcNyVRD0sgFkMyRswBOMMD5FUAYzg9v-NEJW_YltfKnNNUjMYGNv7I4oQ9DLkKrbzoDAxk1LcjvtZXznash43AqSzHhUet3yfa_MeWA9IWxaVhR_7XOLYc27SNNGjh_9wt59GkpPyIMYyHEjtIIr_V0nQtYlkzHvobA8y?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/bZEsfqevpZBE1hk_DKjNRyrlmyxGWP2KyGk9AI1uzwZA-Nwzv2Sb4_ab-AYKSxj3JQYpVVlbFx9gqbHiBVioNWq_ydMDY1D5qHOu9vQMFdK2VI01HGXRzWqKM1tmqjmNOrcLwvbc-CDsyfqYPfaiETa5PxPNhH0IWAB2PD0L9oioLFNHRKts74zX1KHCaavC?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/b5PCqhkmEjGLtqI2utJvuACopMrEF4Eh5e1WcKMhm45sbv0U92Ra6VZ4QK7DClKDRqkHWM03ePSaFv4sAFwNgO_Rmv7n_Rgnbr5Se2ycK11yRAAMT3iVJBS1R-1D-TF2NDJdjfMoXreV-g-QBl-sTgOKdzoe8BQNJH6NdmNi_gGvesjidO3MU9rJFI7iqBP5?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/wjz-kdyA4kEYTlAJHi0u2_E18Rg_cpT57AJZBHJplH4A2em4YPRwelOBc70oCMlLGXIVko1HYQp4yQ95NP7fk5_BjhMbNdLuJDewdLsqtgheOklICTyDCCwCRT1CYUD1GXGpmTu0uj1b_FFhQddyTv4QlfEFeKkXtYLoPZLalaisvbjPpHqXd0msth7IJOn4?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/X5m2zk6ltKakGTLNs3oDKclRP1tYFXNSK7QxRIAtAVMBIEc6fOXqOnT36CkfEWa_fgfNLFTEEMUdPF1g-j5DwkywF0cyvoiAa8CCnz1BGNndrBde6ZtJ400-CRsuOmgMZQfdNpb-ocTQnDLjrQybx_XSKAPLJifDXgvIAViaftEcFS5Ac0pHRv5vrIxNP85c?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/fOErUXQRFLrrul3AS9tjWGHjrrTXhJSlHYTJZn5Cj9Iv01lvOQjT2PQl_5cTV0763D8gWm_xBfabXRTf-OsH_sEFgjSdraMLAVe2fP8tL6OEBGOdv7WGTl0QnJMlT5iAqXOHAageaP-oGHpYdE6d9HLLm-koLhhrV_f-bmuLtpQbMYxf7NrW16IUgvzsziea?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/LCXazL4McEwqq1uNDCchmgrx1DeinsROhuVeTfmgKYkFVephHpNS-DFmiYO6JJPSCvG6cwn7lnp5hsE6K9Sjy__4Rew3E5a5OiBGiFTPkjFZNwCweghxo2UKu0zpv3q7LA_zVZ4WMBHNCaJciSWMQg9TRqt7PXMRaxnYynygG6HpLNglVzvFZlaxUENjduzT?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/xAqJ_4ng1zBQrDkIPGc5w9mahanMhuS78PfE2PDK15pqdv8etdoRDXWfT6wX-F587WUONcxlqJYtmHGElPOpUtDubLfnka7CXqqyANhagC4qB-kDofnpySnLADoso_sUIvSO7vSGroJtS1IS4l8mXqx8ANXiZyzqIRrPg2JD8pWWqFDzLynUrTm3ES18Rw8X?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/Tli8-YnEwrC9h9S6CAQmmk7l9daltj7V28EIAq2RpQP7qkZXs6DVI6h_V4lV75kajyRj34o2W0231cMzdaezkm5DZxbw8iHZ7ZE1caM7ZrCwLsF6FN9EW1CwcEhqkLqHKrzF9khcAJrmYY5R7JDeUitI41BPZR6aF6oO8_PVkrp31WHv2bfBnYsv5oOyLrso?purpose=fullsize)",
+            "prompt_text": null,
+            "type": "image_group",
+            "images": [
+              {
+                "image_result": {
+                  "url": "https://imagine.gsfc.nasa.gov/features/yba/M31_velocity/lightcurve/lightcurve_more.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/4x9AsFGXktHjDAuHa0_GZmaGHkpqcNyVRD0sgFkMyRswBOMMD5FUAYzg9v-NEJW_YltfKnNNUjMYGNv7I4oQ9DLkKrbzoDAxk1LcjvtZXznash43AqSzHhUet3yfa_MeWA9IWxaVhR_7XOLYc27SNNGjh_9wt59GkpPyIMYyHEjtIIr_V0nQtYlkzHvobA8y?purpose=fullsize",
+                  "content_size": {
+                    "width": 550,
+                    "height": 428
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/h_logXQwrt-NiP5M_f8Jvc464VL8nxRVl9_cG_gnAto6OG84of_PdJR7uf3TAxWOTegexRQnqxRYxmZt6RfvL6ReZ14Fl7fO3FyQasFVJ13cX1853W0x9RlxqGCP58slBfQs-NHK1S8_nw-d3V8mLbDABCer8J7HdO6T5pGJ2jY?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 550,
+                    "height": 428
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.46545454545454545,
+                    "center_y_percent": 0.028037383177570093
+                  },
+                  "title": "Imagine the Universe!",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://imagine.gsfc.nasa.gov/features/yba/M31_velocity/lightcurve/images/lightcurve_example.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "light curve star oscillation simple graph",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://lsintspl3.wgbh.org/en-us/plotting-brightness-data-2/?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/bZEsfqevpZBE1hk_DKjNRyrlmyxGWP2KyGk9AI1uzwZA-Nwzv2Sb4_ab-AYKSxj3JQYpVVlbFx9gqbHiBVioNWq_ydMDY1D5qHOu9vQMFdK2VI01HGXRzWqKM1tmqjmNOrcLwvbc-CDsyfqYPfaiETa5PxPNhH0IWAB2PD0L9oioLFNHRKts74zX1KHCaavC?purpose=fullsize",
+                  "content_size": {
+                    "width": 875,
+                    "height": 1055
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/EjV_uLGdzEcy-qfcdKNboFCpyOHbj8zs1VsUmjvcIFuENB0WP-Sy1lMWQ-4VFk1Yh9e5dJPP7HPspeAzPUoF4Citl9mjSOqbN4b047hYf9eTstqV_fqi1PEfWvxYETlNUN11FKpSYmGDbuRvjjBkf6P23zZDafPjpR2hp_4_Q9o?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 875,
+                    "height": 1055
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.4491428571428571,
+                    "center_y_percent": 0.9355450236966825
+                  },
+                  "title": "Plotting Brightness Data  :",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://ilp-media.wgbh.org/filer_public_thumbnails/filer_public/d7/aa/f0000000-0000-4000-8000-c12ca92b939e/buac18-img-lightcurve3d_v2.png__875x1055_q85_crop_subsampling-2_upscale.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "light curve star oscillation simple graph",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.les-ailes-immortelles.net/forum/viewtopic.php?t=17548&utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/b5PCqhkmEjGLtqI2utJvuACopMrEF4Eh5e1WcKMhm45sbv0U92Ra6VZ4QK7DClKDRqkHWM03ePSaFv4sAFwNgO_Rmv7n_Rgnbr5Se2ycK11yRAAMT3iVJBS1R-1D-TF2NDJdjfMoXreV-g-QBl-sTgOKdzoe8BQNJH6NdmNi_gGvesjidO3MU9rJFI7iqBP5?purpose=fullsize",
+                  "content_size": {
+                    "width": 640,
+                    "height": 578
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/rVkbAQ6f_fv2qYKT0i-MpcM74QJhGhflfa9eybmjibTAD3WMguI0d2NqR_MVcOAmqYaD3ojIfuvBKcrzg6IyBE9oOIE38LL-hthxj4P9sG-ZBwbh0Y6qtUbBqbSJ2qDPppiBawffX3S61vmcom-dZ5tkj4ewAJ_XLpyZXoxJmfs?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 640,
+                    "height": 578
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.2671875,
+                    "center_y_percent": 0.11418685121107267
+                  },
+                  "title": "Bot Verification",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://i62.servimg.com/u/f62/11/27/27/42/lu201910.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "courbe de lumière étoile simple",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://media4.obspm.fr/public/ressources_lu/pages_etalonnage-primaire/cepheides_impression.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/wjz-kdyA4kEYTlAJHi0u2_E18Rg_cpT57AJZBHJplH4A2em4YPRwelOBc70oCMlLGXIVko1HYQp4yQ95NP7fk5_BjhMbNdLuJDewdLsqtgheOklICTyDCCwCRT1CYUD1GXGpmTu0uj1b_FFhQddyTv4QlfEFeKkXtYLoPZLalaisvbjPpHqXd0msth7IJOn4?purpose=fullsize",
+                  "content_size": {
+                    "width": 489,
+                    "height": 365
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/00xFz91v37tVplbNmw9jB3_1nlNcJiMCZ4e5bSs_5urcFTh37AwQWZwXbAo6wFBMQd9CFVn9236PzFZARTzb2vCpBCtB-EXOLttqMHbZeiLG4jMHmHos5I0y7l758G-LwOML7fGvZI1iocN6_ks9tgv-opzg_pFh__I-_pi2Ylw?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 489,
+                    "height": 365
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.50920245398773,
+                    "center_y_percent": 0.9534246575342465
+                  },
+                  "title": "Les étoiles variables céphéides : Page pour l'impression",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://media4.obspm.fr/public/ressources_lu/pages_etalonnage-primaire/rspuplum.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "courbe de lumière étoile simple",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://lightkurve.github.io/lightkurve/tutorials/3-science-examples/asteroseismology-estimating-mass-and-radius.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/X5m2zk6ltKakGTLNs3oDKclRP1tYFXNSK7QxRIAtAVMBIEc6fOXqOnT36CkfEWa_fgfNLFTEEMUdPF1g-j5DwkywF0cyvoiAa8CCnz1BGNndrBde6ZtJ400-CRsuOmgMZQfdNpb-ocTQnDLjrQybx_XSKAPLJifDXgvIAViaftEcFS5Ac0pHRv5vrIxNP85c?purpose=fullsize",
+                  "content_size": {
+                    "width": 737,
+                    "height": 400
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/ezw0x0JZ-xMk4Jdfu8UjZzLgvRdyA4juvsdiVokljiRsQPdz9NPnEyOhQiDJP5FgSdMoEYwVv0EKnDoVZCUZZfOz8_ZDwdLi3JWouw_3sJafQolyqEwqsPqHIoGUusQq9gra2h3A4qvfOtMC2eYGw4PFc7yjsvBUs44TgCEfZaE?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 737,
+                    "height": 400
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.49796472184531887,
+                    "center_y_percent": 0.92
+                  },
+                  "title": "How to estimate a star’s mass and radius using asteroseismology — Lightkurve",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://lightkurve.github.io/lightkurve/_images/tutorials_3-science-examples_asteroseismology-estimating-mass-and-radius_10_0.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "light curve star oscillation simple graph",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://leblob.fr/videos/mesurer-univers-grace-aux-etoiles-qui-clignotent?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/fOErUXQRFLrrul3AS9tjWGHjrrTXhJSlHYTJZn5Cj9Iv01lvOQjT2PQl_5cTV0763D8gWm_xBfabXRTf-OsH_sEFgjSdraMLAVe2fP8tL6OEBGOdv7WGTl0QnJMlT5iAqXOHAageaP-oGHpYdE6d9HLLm-koLhhrV_f-bmuLtpQbMYxf7NrW16IUgvzsziea?purpose=fullsize",
+                  "content_size": {
+                    "width": 1260,
+                    "height": 610
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/C9HWvGt2X6ZhBOt8UiGtOeHsvM_V_wEbWa7IVi-jb27p02WCHLFWRscnCUgNU19hrjIjHS2LCnHywhqChukMiE14JErdGq1YfuXnX7tKV6B5ZsNMnwZboi8cM5sy6-Pj0KVASvcoiI62_Dbj1buMj8pJ1hLw3lNdI_wnlMLljw0?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1260,
+                    "height": 610
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.6761904761904762,
+                    "center_y_percent": 0.10819672131147541
+                  },
+                  "title": "Mesurer l’Univers grâce aux étoiles « qui clignotent » | Le blob, l'extra-média",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://leblob.fr/sites/default/files/styles/full_container/public/2021-03/etoile.jpg?h=5ce1001e&itok=qmV6rwWA"
+                },
+                "image_ref_id": null,
+                "image_search_query": "courbe de lumière étoile simple",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.space.fm/astronomy/starsgalaxies/variableperiodic.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/LCXazL4McEwqq1uNDCchmgrx1DeinsROhuVeTfmgKYkFVephHpNS-DFmiYO6JJPSCvG6cwn7lnp5hsE6K9Sjy__4Rew3E5a5OiBGiFTPkjFZNwCweghxo2UKu0zpv3q7LA_zVZ4WMBHNCaJciSWMQg9TRqt7PXMRaxnYynygG6HpLNglVzvFZlaxUENjduzT?purpose=fullsize",
+                  "content_size": {
+                    "width": 615,
+                    "height": 418
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/JQ9fpElki8so0jaZ_-3uTTPPFHXCLFGCmFUq0jkGBbQUty3JHSpRtO3yTi4VZGyFXSPtcuzLazJk3PoGCz7hC05mi5-XgInAbHJ6M3QSUfiSCl4GnwCSwKuTqIaPYRgwSsuKvvRW9suZ8_zPIiSxcjPLVoHCduZ6C55YiB5DzUU?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 615,
+                    "height": 418
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.18048780487804877,
+                    "center_y_percent": 0.050239234449760764
+                  },
+                  "title": "Short and Long Variable Star Light Curves | Starlight | Space FM",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.space.fm/astronomy/images/diagrams/longperiodlightcurve.gif"
+                },
+                "image_ref_id": null,
+                "image_search_query": "light curve star oscillation simple graph",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://media4.obspm.fr/public/ressources_lu/pages_etalonnage-primaire/cepheides_impression.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/xAqJ_4ng1zBQrDkIPGc5w9mahanMhuS78PfE2PDK15pqdv8etdoRDXWfT6wX-F587WUONcxlqJYtmHGElPOpUtDubLfnka7CXqqyANhagC4qB-kDofnpySnLADoso_sUIvSO7vSGroJtS1IS4l8mXqx8ANXiZyzqIRrPg2JD8pWWqFDzLynUrTm3ES18Rw8X?purpose=fullsize",
+                  "content_size": {
+                    "width": 500,
+                    "height": 500
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/2qg2mYL8dTGj2YWHZqAHeNxq1GS3pA5ks-dZKbaSXwYFrZZ5zPq5YPj-Y2T9GrFuTf_fC0uTATypvmE3pn0XLAusnM4dlKenZbDJl25QyDrPyOqXJyDmy_2YgWd8gqVcL1C8Lg14w-4uigDpxdgKWt3R8fYtUYHR8iQ_mf_uQQw?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 500,
+                    "height": 500
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.518,
+                    "center_y_percent": 0.922
+                  },
+                  "title": "Les étoiles variables céphéides : Page pour l'impression",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://media4.obspm.fr/public/ressources_lu/pages_etalonnage-primaire/periodelumceph.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "courbe luminosité astérosismologie",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://svs.gsfc.nasa.gov/14883/?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/Tli8-YnEwrC9h9S6CAQmmk7l9daltj7V28EIAq2RpQP7qkZXs6DVI6h_V4lV75kajyRj34o2W0231cMzdaezkm5DZxbw8iHZ7ZE1caM7ZrCwLsF6FN9EW1CwcEhqkLqHKrzF9khcAJrmYY5R7JDeUitI41BPZR6aF6oO8_PVkrp31WHv2bfBnYsv5oOyLrso?purpose=fullsize",
+                  "content_size": {
+                    "width": 1920,
+                    "height": 1080
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/z0D8l1p6ND4lfx_jdvDWGjAv-O3ccdqDDgpFxx67e-EAZfEomjAqS--ypk9o-VEDFM3h8Y56LDf8w3AQnzs1ozVlSG02ARBRkJo_hJ1vuRrcB58LCcFV7QS1tyJHSWE1bv5VR5oP6_EYQjZ7LPQEjV9umOTwG4KC3NCH5bN3ezI?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1529,
+                    "height": 860
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.24635416666666668,
+                    "center_y_percent": 0.8231481481481482
+                  },
+                  "title": "NASA SVS | Mapping Stellar ‘Polka Dots’",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://svs.gsfc.nasa.gov/vis/a010000/a014800/a014883/SimpleStarLightCurve.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "light curve star oscillation simple graph",
+                "image_search_system": null
+              }
+            ],
+            "layout": "carousel",
+            "aspect_ratio": "16:9",
+            "blender_debug_info": null,
+            "invalid": false
+          },
+          {
+            "matched_text": "image_group{\"layout\":\"carousel\",\"aspect_ratio\":\"16:9\",\"query\":[\"transformée de fourier signal simple pédagogique\",\"fourier transform simple sinus decomposition\",\"spectre fréquence signal exemple simple\",\"analyse fréquentielle oscillation\"],\"num_per_query\":1}",
+            "prefix": null,
+            "start_idx": 1849,
+            "end_idx": 2110,
+            "safe_urls": [
+              "https://images.openai.com/static-rsc-4/EF1uukGcS1Pp6BIcT5DULKuWvvkSe-k69fPfVTE4mhui_dr0fltoXoyk_0a2vwCmFZiVCNEtAAvU9q854BqBVMGipbTkXqGcjEjgQjOLHkbby2lmoE_8q4qMRNngia-UbRNO9mX-OT-4jEFcHhxRv9UQF0pQTdDHLOtVlBIlQeS7H4zdpo8Y7SUAbvHbYs_N?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/KA7L8XTtBBfu3tETVuxHYr2IiNxSmi_7a6VYMz4i8JPmtqk1KQrz5uiLKQ5_StMyNzvPoH3NwVVZPlmzDXDfJNXof0DhiVoDmgE2r9dL-2BjV3UfASafz1ZfEbk9-Caqd4bUfSWPMLa7yRTYnkKQe1thg1bfTcF70fpgeIdNKPe53nPXUG9PYiIAwwuhX1sF?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/KnR4R222oXTWN4O3puGwkg3gJfzP4oD_h88MgpgxBMsHyB4GEZQJZvqmu7l1E86XaGvQ3GuzgYwAUK6cyST4ShPS78UH7CWPivHSx0c5T-igL1wz1lxgfC5SMX3TvS-uOrcNqtHQqxGeKLBVi_N_bTGdPutFDTsLYDpD47fteujTok6iC9K1N4UBYCFsdB-T?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/LonJvAPSXvWp0SMC5PV0eWKiWaCVlwLlPcd2JxzWSNHSFQP9p8wZtazqenRSYyi4JVbsOwWwpkNrS0zN0SOnUPcSWbSxnCdEiFszDumF5GlcCCUOdQ-MnlQZwz-t5ukZ-FS9l4Hb2OAzKOuTlIr15Vjct3_gZIW0oRLlpixrw5zH-M3IF7JHBikOAyoOp2Hg?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/qHDTxVTnE1G6AWvaWt7raaCyu8sbU3Az6Ohol2usGowdneD9HbDeTWoz90goghxTujSVcJS-oC8OsfDy6_vAgj4rODKblP-kH70mdyn-wZdZUFxTXIVy_O7xnxGxbeMd0jaKwiPkUteZ8Uj7P8d7f0P-lf7MWcMam_OLQJNwaUMFLsrPSipmBjkubtyRPjFp?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/umBMPdHNyTEMnrmE2LOlAWTVysKLujdu6e2aRvgTCu3GL6nP8d3Zv-Tsdl-jHF1AvQhahOfR9yuAw29UQqfs1voUq2URpKlEA9_r3d6l6hdA_QOv6vwpakXaN6KE_bd0gHc0YeGI4S5qzJzx9OPEwtDdGxEaNi0X3LzGRwKjtL4DDnKMEw-YgMAoB-BruyfR?purpose=fullsize"
+            ],
+            "refs": [],
+            "alt": "![Image](https://images.openai.com/static-rsc-4/KA7L8XTtBBfu3tETVuxHYr2IiNxSmi_7a6VYMz4i8JPmtqk1KQrz5uiLKQ5_StMyNzvPoH3NwVVZPlmzDXDfJNXof0DhiVoDmgE2r9dL-2BjV3UfASafz1ZfEbk9-Caqd4bUfSWPMLa7yRTYnkKQe1thg1bfTcF70fpgeIdNKPe53nPXUG9PYiIAwwuhX1sF?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/EF1uukGcS1Pp6BIcT5DULKuWvvkSe-k69fPfVTE4mhui_dr0fltoXoyk_0a2vwCmFZiVCNEtAAvU9q854BqBVMGipbTkXqGcjEjgQjOLHkbby2lmoE_8q4qMRNngia-UbRNO9mX-OT-4jEFcHhxRv9UQF0pQTdDHLOtVlBIlQeS7H4zdpo8Y7SUAbvHbYs_N?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/umBMPdHNyTEMnrmE2LOlAWTVysKLujdu6e2aRvgTCu3GL6nP8d3Zv-Tsdl-jHF1AvQhahOfR9yuAw29UQqfs1voUq2URpKlEA9_r3d6l6hdA_QOv6vwpakXaN6KE_bd0gHc0YeGI4S5qzJzx9OPEwtDdGxEaNi0X3LzGRwKjtL4DDnKMEw-YgMAoB-BruyfR?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/qHDTxVTnE1G6AWvaWt7raaCyu8sbU3Az6Ohol2usGowdneD9HbDeTWoz90goghxTujSVcJS-oC8OsfDy6_vAgj4rODKblP-kH70mdyn-wZdZUFxTXIVy_O7xnxGxbeMd0jaKwiPkUteZ8Uj7P8d7f0P-lf7MWcMam_OLQJNwaUMFLsrPSipmBjkubtyRPjFp?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/LonJvAPSXvWp0SMC5PV0eWKiWaCVlwLlPcd2JxzWSNHSFQP9p8wZtazqenRSYyi4JVbsOwWwpkNrS0zN0SOnUPcSWbSxnCdEiFszDumF5GlcCCUOdQ-MnlQZwz-t5ukZ-FS9l4Hb2OAzKOuTlIr15Vjct3_gZIW0oRLlpixrw5zH-M3IF7JHBikOAyoOp2Hg?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/KnR4R222oXTWN4O3puGwkg3gJfzP4oD_h88MgpgxBMsHyB4GEZQJZvqmu7l1E86XaGvQ3GuzgYwAUK6cyST4ShPS78UH7CWPivHSx0c5T-igL1wz1lxgfC5SMX3TvS-uOrcNqtHQqxGeKLBVi_N_bTGdPutFDTsLYDpD47fteujTok6iC9K1N4UBYCFsdB-T?purpose=fullsize)",
+            "prompt_text": null,
+            "type": "image_group",
+            "images": [
+              {
+                "image_result": {
+                  "url": "https://www.maxicours.com/se/cours/analyse-spectrale/?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/KA7L8XTtBBfu3tETVuxHYr2IiNxSmi_7a6VYMz4i8JPmtqk1KQrz5uiLKQ5_StMyNzvPoH3NwVVZPlmzDXDfJNXof0DhiVoDmgE2r9dL-2BjV3UfASafz1ZfEbk9-Caqd4bUfSWPMLa7yRTYnkKQe1thg1bfTcF70fpgeIdNKPe53nPXUG9PYiIAwwuhX1sF?purpose=fullsize",
+                  "content_size": {
+                    "width": 749,
+                    "height": 351
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/LinQ56kVNAn46h9ZlM2YTQ9Js0G3tiXeZsynfJMieZKTVPcqnBQ_64ZXBf4pOIULGHNzBzMBUGvsb0v_IwJhaQJVWWh1cZIinfqfTnO-qET3HLMXHLI-eIJ_P3U-YGq5upoI3O5xu2qSV7oKor5lKHv7C1TGx1mKlLoWR4iZ_Zc?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 749,
+                    "height": 351
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.4819759679572764,
+                    "center_y_percent": 0.03133903133903134
+                  },
+                  "title": "Analyse spectrale - myMaxicours",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.maxicours.com/se/media/img/4/1/1/4/411411.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "fourier transform simple sinus decomposition",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://forums.futura-sciences.com/mathematiques-superieur/589649-transformee-de-fourier.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/EF1uukGcS1Pp6BIcT5DULKuWvvkSe-k69fPfVTE4mhui_dr0fltoXoyk_0a2vwCmFZiVCNEtAAvU9q854BqBVMGipbTkXqGcjEjgQjOLHkbby2lmoE_8q4qMRNngia-UbRNO9mX-OT-4jEFcHhxRv9UQF0pQTdDHLOtVlBIlQeS7H4zdpo8Y7SUAbvHbYs_N?purpose=fullsize",
+                  "content_size": {
+                    "width": 580,
+                    "height": 448
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/dr92D5K65eIrzPM2Lhf0FfH3eKFCJUQBoGQvL-M4pQNw_iZkOGr_CXqvDpBWdDWBzsauqt1hawhDXW1V68D43v5p1u9nyZ45I-L42nbyCWilQqtNPraBAnvIqNYG8rQVuz5Q7PVniB8k0ousr2r5Tt7rp5a8yEs0n76RZ_bVLNE?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 580,
+                    "height": 448
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.24310344827586206,
+                    "center_y_percent": 0.09151785714285714
+                  },
+                  "title": "transformée de Fourier",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://forums.futura-sciences.com/attachments/mathematiques-superieur/211994d1362422340-transformee-de-fourier-tf_simple.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "transformée de fourier signal simple pédagogique",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.schoolmouv.fr/cours/les-sons-frequence-intensite-et-perception/fiche-de-cours?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/umBMPdHNyTEMnrmE2LOlAWTVysKLujdu6e2aRvgTCu3GL6nP8d3Zv-Tsdl-jHF1AvQhahOfR9yuAw29UQqfs1voUq2URpKlEA9_r3d6l6hdA_QOv6vwpakXaN6KE_bd0gHc0YeGI4S5qzJzx9OPEwtDdGxEaNi0X3LzGRwKjtL4DDnKMEw-YgMAoB-BruyfR?purpose=fullsize",
+                  "content_size": {
+                    "width": 1920,
+                    "height": 1080
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/23Zrgd7pcMYfTvGiVYaurAjSo4sLNkIcY_xv5p0opMMgmEQwhej0LYihYfeY5uqLJu1nnn1gnGbmlDXXQZ0j-Mb5cl8SiJFu31zgcsrY4vK7gxbZdKZNWXGi4GG3tuTZXonBXB9Xf7tPG5SgiJXsksqjGD6ci1BKxktGBmF6Ccw?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1529,
+                    "height": 860
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.42291666666666666,
+                    "center_y_percent": 0.09166666666666666
+                  },
+                  "title": "Les sons : fréquence, intensité et perception - Cours de 2nde",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://kronos-images.schoolmouv.fr/2-fnx-spc-c17-img03.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "spectre fréquence signal exemple simple",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.allaboutcircuits.com/technical-articles/what-is-the-fourier-transform/?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/qHDTxVTnE1G6AWvaWt7raaCyu8sbU3Az6Ohol2usGowdneD9HbDeTWoz90goghxTujSVcJS-oC8OsfDy6_vAgj4rODKblP-kH70mdyn-wZdZUFxTXIVy_O7xnxGxbeMd0jaKwiPkUteZ8Uj7P8d7f0P-lf7MWcMam_OLQJNwaUMFLsrPSipmBjkubtyRPjFp?purpose=fullsize",
+                  "content_size": {
+                    "width": 700,
+                    "height": 450
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/wWn6VsqVI-wsOKahik4c04W1gmGJK4qjHNlAck8_rbMZZ8Pf4G_QK1NyC5DIa0CRrpYwt6zh86r3XimDrrpGqNFk6gNtooAFxX1LqUY8t9WqwQpEO6du3zoUUJ_ZvYEK-VCRFEgQQxR3Cyj4AIO-xiVe5cwE5bAuUoxTl25Gqfg?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 700,
+                    "height": 450
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.3057142857142857,
+                    "center_y_percent": 0.10222222222222223
+                  },
+                  "title": "What Is the Fourier Transform? - Technical Articles",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.allaboutcircuits.com/uploads/articles/what-is-the-fourier-transform-rk-aac-image1.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "fourier transform simple sinus decomposition",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://fr.mathworks.com/help/wavelet/gs/choose-a-wavelet.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/LonJvAPSXvWp0SMC5PV0eWKiWaCVlwLlPcd2JxzWSNHSFQP9p8wZtazqenRSYyi4JVbsOwWwpkNrS0zN0SOnUPcSWbSxnCdEiFszDumF5GlcCCUOdQ-MnlQZwz-t5ukZ-FS9l4Hb2OAzKOuTlIr15Vjct3_gZIW0oRLlpixrw5zH-M3IF7JHBikOAyoOp2Hg?purpose=fullsize",
+                  "content_size": {
+                    "width": 560,
+                    "height": 420
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/a1l_6ezTZeTFaZuR5NXC5B7bNhPAJ8d1W66PTVZ0tqB6cNA82yAN9DIquA-pqndDh4qBpW-bi7RfHDsVjGH8I0FXbArHL5CXmukgr5BWKSuDQIAof_yR2zMlfqobmZmk-5ryjv0knNI7tu0S7HJLL4-U4aaYsFquNCbbq0AmobE?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 560,
+                    "height": 420
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.49107142857142855,
+                    "center_y_percent": 0.03333333333333333
+                  },
+                  "title": "Choisir une ondelette - MATLAB & Simulink",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://fr.mathworks.com/help/wavelet/gs/instantaneousfrequencyexample_01_fr.png"
+                },
+                "image_ref_id": null,
+                "image_search_query": "analyse fréquentielle oscillation",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.slideserve.com/plato-vaughan/les-signaux-powerpoint-ppt-presentation?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/KnR4R222oXTWN4O3puGwkg3gJfzP4oD_h88MgpgxBMsHyB4GEZQJZvqmu7l1E86XaGvQ3GuzgYwAUK6cyST4ShPS78UH7CWPivHSx0c5T-igL1wz1lxgfC5SMX3TvS-uOrcNqtHQqxGeKLBVi_N_bTGdPutFDTsLYDpD47fteujTok6iC9K1N4UBYCFsdB-T?purpose=fullsize",
+                  "content_size": {
+                    "width": 1024,
+                    "height": 768
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/ZFgwg4EVIw5iibtTIRYYs5dXOYYi7t6DJIpeGxlGgys6DzV9dkeixHtiGuN1X4yj-WUVJWinxIHWjrWUrB-eKtj1UHf81PudBUwsfCNpNhuRVoQpI05bWLIJ5zxl0ABuEyHXbJ5Bpzbg9RrePhuP6_kGWBseH2nuscIzpKddMeo?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1024,
+                    "height": 768
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.7265625,
+                    "center_y_percent": 0.12890625
+                  },
+                  "title": "PPT - Les Signaux PowerPoint Presentation, free download - ID:6919288",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://image3.slideserve.com/6919288/spectre-d-un-signal-non-p-riodique-l.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "spectre fréquence signal exemple simple",
+                "image_search_system": null
+              }
+            ],
+            "layout": "carousel",
+            "aspect_ratio": "16:9",
+            "blender_debug_info": null,
+            "invalid": false
+          },
+          {
+            "matched_text": "genui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"F(\\\\omega)=\\\\int_{-\\\\infty}^{+\\\\infty} f(t)e^{-i\\\\omega t}\\\\,dt\"}}",
+            "prefix": "genui",
+            "start_idx": 2325,
+            "end_idx": 2451,
+            "safe_urls": null,
+            "refs": [],
+            "alt": "F(\\omega)=\\int_{-\\infty}^{+\\infty} f(t)e^{-i\\omega t}\\,dt",
+            "prompt_text": null,
+            "type": "alt_text",
+            "render_as": "latex"
+          },
+          {
+            "matched_text": "image_group{\"layout\":\"carousel\",\"aspect_ratio\":\"16:9\",\"query\":[\"télescope spatial kepler illustration\",\"satellite corot dessin\",\"kepler observant étoile schéma\",\"télescope spatial astérosismologie\"],\"num_per_query\":1}",
+            "prefix": null,
+            "start_idx": 2630,
+            "end_idx": 2850,
+            "safe_urls": [
+              "https://images.openai.com/static-rsc-4/68FwGEOBi_LTZ09V-2BMNetGlPtYiL4jP2hcLnYrVZ21eu9P9KInJMJJaakPQvKhoADAy9kvJMz349kDSUJ5pjuY8B4xS4OAT44ELnbsFru3z2FD2OZ_VKjMlrVmgqRFx-E_wOvj_LN25A_g3cQDr3CoMt12rPjOlDFuLoedGazd-_710uQXtU2oxGnv5CFx?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/8Ce1fMe0k77psm-m2WggqSJJy3pFBj_MmQ7y6RLGBQOX6XR9wWdBiVQnPz1wVIyCFXQxjGBOx_ILKYvUqq2rjLnLzPWmyYowqvUe6g_ShgvBnSlHa6lwetgRXZ7m9uVWm6SWYiQixwp7bOyaoACrBRTmlx2K49b4UEGjqf7om5UB5zzkpH-fFN3QYdKare8H?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/IElG2r408AxHoEn7hi2w1nfJ4nWeNEX_kv8vXPOD4NWlc4pF9RXQyuCMhBFRimiJBJRbEK821DTo-S2RgxoD_icF7FfgUf_6AIkieIiFm0jf8WaRQHfIMB37Nw1JX7T7d109hgIupg_-1XXu72glomYVIL9Y9e7YNVb263djWTIZ8xwqjorlDjaKtYx0yaK8?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/OtGRybBPAsR2HXLOS4fVswANFSOfF0c-vTcDjLIMG-EWeI0Glh5vGGPLSTKDSXCm37N-2BToEPKwI0wXjaqfUYlbknZyCEG5XAaHJlwRQTs_ODVxtkRb6Suka1CpST-H6akE57YrTT0UMQb3X_qix1PotY8VyZ7frlJXOO-pIcWIsSwJHPZJqWZGBwIiriv0?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/k3Q60boEJCz4HTlvFbhTDcq3eSu7zyttUx7B77hbK3cBcL9hThPYsrtEVMnbZ9MvivZP8Qy2lckFgdIKH9OSfi9UED4QyCceaIrTCPGNZpFCStROS2rRNkH5W9N2iLRAZriOuAdlL8Tt11z4zT2sUYM_J1s3TyOu41f4l826JJ33rdhJeQq1KnaDzIDNbC9S?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/nWKjqjfE3DsBbZ8z9_4ihjx1DQfjYCH9Y_2W965MNgkY5wmjyBxtkV_kZl2H1g6hbT0iVqKRZJuZTQ6jGsH8ryFl-ehqiq4vajx68ti4XhywkTTYxlIQh-x-Wsn9nNLrSE2wHHibY-rJt98WxHuAvl6nBudSA83TSgMGnAd-qqxUmNZOXzmK-ntur60jZCCJ?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/pgdJefjYEEin6CcTDYBVS6i9Ua-6WXrk8tu9-v_GzM5qX8XHfQQgjbwhuoXphgxDci4P317TFS0f9qKbW4npuBHb31S-Xxh3Rh4jQ8V-9F0OiBosSOeKDAMe2iEDMxmeUE14UGltkes40ATf7y2byr8JHkZveyXWiQBYhi8hhACTPGjdrTTEFM_ifgFMkeyW?purpose=fullsize"
+            ],
+            "refs": [],
+            "alt": "![Image](https://images.openai.com/static-rsc-4/k3Q60boEJCz4HTlvFbhTDcq3eSu7zyttUx7B77hbK3cBcL9hThPYsrtEVMnbZ9MvivZP8Qy2lckFgdIKH9OSfi9UED4QyCceaIrTCPGNZpFCStROS2rRNkH5W9N2iLRAZriOuAdlL8Tt11z4zT2sUYM_J1s3TyOu41f4l826JJ33rdhJeQq1KnaDzIDNbC9S?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/pgdJefjYEEin6CcTDYBVS6i9Ua-6WXrk8tu9-v_GzM5qX8XHfQQgjbwhuoXphgxDci4P317TFS0f9qKbW4npuBHb31S-Xxh3Rh4jQ8V-9F0OiBosSOeKDAMe2iEDMxmeUE14UGltkes40ATf7y2byr8JHkZveyXWiQBYhi8hhACTPGjdrTTEFM_ifgFMkeyW?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/68FwGEOBi_LTZ09V-2BMNetGlPtYiL4jP2hcLnYrVZ21eu9P9KInJMJJaakPQvKhoADAy9kvJMz349kDSUJ5pjuY8B4xS4OAT44ELnbsFru3z2FD2OZ_VKjMlrVmgqRFx-E_wOvj_LN25A_g3cQDr3CoMt12rPjOlDFuLoedGazd-_710uQXtU2oxGnv5CFx?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/OtGRybBPAsR2HXLOS4fVswANFSOfF0c-vTcDjLIMG-EWeI0Glh5vGGPLSTKDSXCm37N-2BToEPKwI0wXjaqfUYlbknZyCEG5XAaHJlwRQTs_ODVxtkRb6Suka1CpST-H6akE57YrTT0UMQb3X_qix1PotY8VyZ7frlJXOO-pIcWIsSwJHPZJqWZGBwIiriv0?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/8Ce1fMe0k77psm-m2WggqSJJy3pFBj_MmQ7y6RLGBQOX6XR9wWdBiVQnPz1wVIyCFXQxjGBOx_ILKYvUqq2rjLnLzPWmyYowqvUe6g_ShgvBnSlHa6lwetgRXZ7m9uVWm6SWYiQixwp7bOyaoACrBRTmlx2K49b4UEGjqf7om5UB5zzkpH-fFN3QYdKare8H?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/IElG2r408AxHoEn7hi2w1nfJ4nWeNEX_kv8vXPOD4NWlc4pF9RXQyuCMhBFRimiJBJRbEK821DTo-S2RgxoD_icF7FfgUf_6AIkieIiFm0jf8WaRQHfIMB37Nw1JX7T7d109hgIupg_-1XXu72glomYVIL9Y9e7YNVb263djWTIZ8xwqjorlDjaKtYx0yaK8?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/nWKjqjfE3DsBbZ8z9_4ihjx1DQfjYCH9Y_2W965MNgkY5wmjyBxtkV_kZl2H1g6hbT0iVqKRZJuZTQ6jGsH8ryFl-ehqiq4vajx68ti4XhywkTTYxlIQh-x-Wsn9nNLrSE2wHHibY-rJt98WxHuAvl6nBudSA83TSgMGnAd-qqxUmNZOXzmK-ntur60jZCCJ?purpose=fullsize)",
+            "prompt_text": null,
+            "type": "image_group",
+            "images": [
+              {
+                "image_result": {
+                  "url": "https://www.monkeyminionpress.com/products/kepler-space-telescope-10x10-giclee-print?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/k3Q60boEJCz4HTlvFbhTDcq3eSu7zyttUx7B77hbK3cBcL9hThPYsrtEVMnbZ9MvivZP8Qy2lckFgdIKH9OSfi9UED4QyCceaIrTCPGNZpFCStROS2rRNkH5W9N2iLRAZriOuAdlL8Tt11z4zT2sUYM_J1s3TyOu41f4l826JJ33rdhJeQq1KnaDzIDNbC9S?purpose=fullsize",
+                  "content_size": {
+                    "width": 864,
+                    "height": 864
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/YIG_Mu98kKZWwtJXtWqpnV9EjZ-gY7dgqIbXewpwl0B23_UtYqQM6XkleZ-zpbnt4kPOObq_dloVXIsktR0xO_KE99rgUaWfJf1ZRMwkdsYxMANPloWIm-87ytU3VgAUBn5Bycvw2gxPGdMyh30rV8SI8tMarEtzwg-X384iZVE?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 864,
+                    "height": 864
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.21064814814814814,
+                    "center_y_percent": 0.8819444444444444
+                  },
+                  "title": "Kepler Space Telescope 10x10 Giclee Print\n– Monkey Minion",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.monkeyminionpress.com/cdn/shop/files/image_e9eba6bb-a1eb-4936-b135-4d6ab905eb0d_864x.jpg?v=1685218616"
+                },
+                "image_ref_id": null,
+                "image_search_query": "télescope spatial kepler illustration",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.esa.int/ESA_Multimedia/Images/2009/12/COROT?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/pgdJefjYEEin6CcTDYBVS6i9Ua-6WXrk8tu9-v_GzM5qX8XHfQQgjbwhuoXphgxDci4P317TFS0f9qKbW4npuBHb31S-Xxh3Rh4jQ8V-9F0OiBosSOeKDAMe2iEDMxmeUE14UGltkes40ATf7y2byr8JHkZveyXWiQBYhi8hhACTPGjdrTTEFM_ifgFMkeyW?purpose=fullsize",
+                  "content_size": {
+                    "width": 3000,
+                    "height": 2250
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/E7eCI6j8GreBT1TvFjKuXgPimIKgEZQLEUMGfdsoxcjyoit9X3_cfMz1lmDnlTYB1t2a5ARMefV2BCSvs_CW9XUAj7ihdHV07P_XVMwxnN7rjMmgWtKbvQKI_SLRQQCUOIsdgfE0nFYav0rEe-NvFWNeN5pNDRD6z0Wu_ar7QUs?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1147,
+                    "height": 860
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.477,
+                    "center_y_percent": 0.5862222222222222
+                  },
+                  "title": "ESA - COROT",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.esa.int/var/esa/storage/images/esa_multimedia/images/2009/12/corot/9724910-3-eng-GB/COROT.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "satellite corot dessin",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.science-et-vie.com/ciel-et-espace/un-systeme-a-sept-planetes-revele-dans-le-nouveau-catalogue-dexoplanetes-de-la-mission-kepler-117661.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/68FwGEOBi_LTZ09V-2BMNetGlPtYiL4jP2hcLnYrVZ21eu9P9KInJMJJaakPQvKhoADAy9kvJMz349kDSUJ5pjuY8B4xS4OAT44ELnbsFru3z2FD2OZ_VKjMlrVmgqRFx-E_wOvj_LN25A_g3cQDr3CoMt12rPjOlDFuLoedGazd-_710uQXtU2oxGnv5CFx?purpose=fullsize",
+                  "content_size": {
+                    "width": 850,
+                    "height": 710
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/SJF_zAokPKLyBCrSSq5pATl46-aZMwfDZqPxgJb2hRfowe5WfiEyjNiXuoka6oftePqQ1ukOKx7qFX6wVweGSplRmkcjYsfkNdp6kyfh_v3BFO8PpHmbiwoDmF45iQN6bPi4cyxNb-wELYjjh15_3slhrp-aB_PpNljT1ShDJbo?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 850,
+                    "height": 710
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.47058823529411764,
+                    "center_y_percent": 0.9464788732394366
+                  },
+                  "title": "Un système à sept planètes révélé dans le nouveau catalogue d’exoplanètes de la mission Kepler - Science et vie",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.science-et-vie.com/wp-content/uploads/scienceetvie/2023/11/catalogue-etoiles-exoplanetes-kepler.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "kepler observant étoile schéma",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://sorae.info/astronomy/20230608-k2-campaign-19.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/OtGRybBPAsR2HXLOS4fVswANFSOfF0c-vTcDjLIMG-EWeI0Glh5vGGPLSTKDSXCm37N-2BToEPKwI0wXjaqfUYlbknZyCEG5XAaHJlwRQTs_ODVxtkRb6Suka1CpST-H6akE57YrTT0UMQb3X_qix1PotY8VyZ7frlJXOO-pIcWIsSwJHPZJqWZGBwIiriv0?purpose=fullsize",
+                  "content_size": {
+                    "width": 1280,
+                    "height": 1024
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/SiWAnC6XSVDhUqqJhSAhL6t40KTCC6TBmV7Zfiky9AM21JpbzXWNRgGzQcpamBlMl9464X0hhX0KnA6AxIPHA3xQCa9qIFtS_raHi9I3SMshe0uuZ0i3-F3etFkJMnZYF3ZH8-TOEanaETbyeVw8wIlV69QUxK70kQ_-LUkBvKM?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1075,
+                    "height": 860
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.496875,
+                    "center_y_percent": 0.4130859375
+                  },
+                  "title": "「ケプラー」最期のデータから惑星を発見　ノイズの多いデータを分析",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://sorae.info/wp-content/uploads/2023/06/Kepler_K2_artistconcept.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "télescope spatial kepler illustration",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.esa.int/ESA_Multimedia/Images/2006/11/COROT_satellite_sketch?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/8Ce1fMe0k77psm-m2WggqSJJy3pFBj_MmQ7y6RLGBQOX6XR9wWdBiVQnPz1wVIyCFXQxjGBOx_ILKYvUqq2rjLnLzPWmyYowqvUe6g_ShgvBnSlHa6lwetgRXZ7m9uVWm6SWYiQixwp7bOyaoACrBRTmlx2K49b4UEGjqf7om5UB5zzkpH-fFN3QYdKare8H?purpose=fullsize",
+                  "content_size": {
+                    "width": 1920,
+                    "height": 1531
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/6YF8z-3i46HlzqapKQY2-_ngNlww7DSIhQjhsZl3Tk5JSapJWNa3_x2kctePo0Fzo8GIw6wjSVj6pqb1o3VQbipXqt5Sykdge5XTY1FbVXLZ_hj1yfUpA_m_awMipZFIruUb5f55e1hvj6l9wG5yiu8v9oSmc55psSIilCxjjGI?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1079,
+                    "height": 860
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.2625,
+                    "center_y_percent": 0.4448073154800784
+                  },
+                  "title": "ESA - COROT satellite sketch",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.esa.int/var/esa/storage/images/esa_multimedia/images/2006/11/corot_satellite_sketch/9824413-3-eng-GB/COROT_satellite_sketch_pillars.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "satellite corot dessin",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://lejournal.cnrs.fr/infographies/exoplanetes-a-la-recherche-de-nouveaux-mondes?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/IElG2r408AxHoEn7hi2w1nfJ4nWeNEX_kv8vXPOD4NWlc4pF9RXQyuCMhBFRimiJBJRbEK821DTo-S2RgxoD_icF7FfgUf_6AIkieIiFm0jf8WaRQHfIMB37Nw1JX7T7d109hgIupg_-1XXu72glomYVIL9Y9e7YNVb263djWTIZ8xwqjorlDjaKtYx0yaK8?purpose=fullsize",
+                  "content_size": {
+                    "width": 1199,
+                    "height": 575
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/JN3MekU9uROPfgH9puq1rSTZQeCFY0bjk6ZuhYSnBlK_94gAZJvAQ1OX0AWCNqw5hLnOQGzQ0W9syTTqr585NOWz8emUfHhNgdxlcM8W7hj0LgCjlW2IbXC87pEHteGllBkQG1GZdTq5MF53QEHcy8VmBDkurYDpif99jbwTkCE?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1199,
+                    "height": 575
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.6080066722268557,
+                    "center_y_percent": 0.4991304347826087
+                  },
+                  "title": "Exoplanètes: à la recherche de nouveaux mondes? | CNRS Le journal",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://lejournal.cnrs.fr/sites/default/files/styles/visuel_principal/public/assets/images/511895main_kepler-11_introshot_full.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "télescope spatial kepler illustration",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.cnrs.fr/fr/actualite/le-cnrs-defend-lavenir-de-lastronomie-aupres-de-lunion-europeenne?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/nWKjqjfE3DsBbZ8z9_4ihjx1DQfjYCH9Y_2W965MNgkY5wmjyBxtkV_kZl2H1g6hbT0iVqKRZJuZTQ6jGsH8ryFl-ehqiq4vajx68ti4XhywkTTYxlIQh-x-Wsn9nNLrSE2wHHibY-rJt98WxHuAvl6nBudSA83TSgMGnAd-qqxUmNZOXzmK-ntur60jZCCJ?purpose=fullsize",
+                  "content_size": {
+                    "width": 800,
+                    "height": 533
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/UJHai9T1-U1pJuz_fKDpt-pnSBGtRS_iDIJkOezOisW4ZWbL5636k4tOm-HSa3iiQucg4CzCZxwjSpzPai9h78voq6_EKRtzr3rQElhH3iXUfinR69X-pgtXJv286FZzkerfEPlJModM5hRVaBjkco8WIUxD9uFAfUQCI90-Ui4?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 800,
+                    "height": 533
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.505,
+                    "center_y_percent": 0.5947467166979362
+                  },
+                  "title": "Le CNRS défend l’avenir de l’astronomie auprès de l’Union européenne | CNRS",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.cnrs.fr/sites/default/files/styles/article/public/image/Loi%20spatiale_Photo%204%20%C2%A9Cyril%20FRESILLON%20LAM%20CNRS%20Images.jpg?itok=THsmamzb"
+                },
+                "image_ref_id": null,
+                "image_search_query": "télescope spatial astérosismologie",
+                "image_search_system": null
+              }
+            ],
+            "layout": "carousel",
+            "aspect_ratio": "16:9",
+            "blender_debug_info": null,
+            "invalid": false
+          },
+          {
+            "matched_text": "image_group{\"layout\":\"carousel\",\"aspect_ratio\":\"16:9\",\"query\":[\"16 cygni artist impression\",\"système stellaire 16 cygni\",\"constellation cygne étoile 16 cygni\",\"illustration étoile type solaire\"],\"num_per_query\":1}",
+            "prefix": null,
+            "start_idx": 3255,
+            "end_idx": 3471,
+            "safe_urls": [
+              "https://images.openai.com/static-rsc-4/7yB1aQfsPR3AEC5A2U28SltHHStvu66llCG06H5tgi6P7VEZ23Mnqm_e17cRCtkARWfQn8Rh2NlUeB9usPCgCqPPzKgHRemK0NuIsa4TMFl1umKkSULUGDn6bvcO9ekJu6YLCmKkTrbf_gujPiz-FQltY6YXQLrelDqh-Mu7RDNf0P0NOadmKngT9xwPQ9_P?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/AdmgYLGe0TCW3TbtnKSQ9CTp4SOg6tzZhQJQN8DHggwHTp93ZLAbWW4V86A3L2oeVM-xbTUD9j0zrNtr6Ehyg50uGpVKMJic2R_A69-iUxqvyBH5zLByAZ16p1YAlbWg8i9t8pyIjPiPTx3Now3xpDDbSW-Ba_S39wH0FtUlBEoq8u9lBECIA7MD83inuvKo?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/K64lDuVlpsiCVxYaO0ujtF2THS4Yf60l4xPiL45Wf4LjvGP23WUDgbEbQjc6YG3HwL9apchnLS_fDPwjCa7DcJOiTf9zsJdYmZj309fIh-ErKCbHwb7GUSoaXT-hRg4fG5CJWTCDhV-Io1I9XqEOIgbwRx7nPRVT3giq2gMVEJYrk4PSPoAspegKYIVrEDf5?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/P9jDhhY6PyH3qcTg7E90SJTVF9xc3SWAo8ba7wkAj22HstHmTLNUgK6Pcz2H6NwlYBMtN5v7zCzW2SmbNLTQUHOnWjQwF0HBl7r071Hb-9CmTQWYLkrHKXwy0mz76u8fLgSlJVbQAaiUs1aspMWpz61DHNMUm-YKf1Yd-w_sr8vdJIHLCQN9I8kLgRiaCAqZ?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/TD1fJZwstlPZXkRV8A07No55Os9zpKUjoa7MylOeI0YA8WZvVE14fp1_MWKmGxibQ_yFukrU2FHOH7ULkf78uawOOCH-crSFxP-3nIR5GQUQg8sMwkD31b8w3kzOaAiOSFKlwSJuyvtGogTMqf9NjRGA1xwjPk58_-xPtZD1rabIOaT-4WLsJ3xqvQAPajsQ?purpose=fullsize",
+              "https://images.openai.com/static-rsc-4/qvtLWc1gR97EdJvm7jjLdk9P15CpJt6ZpUEqGPyGG9_4JHaDaOx2YDLYiL4Av_UICfsmTPFQ-zo27xYMN20mkYkkgEDFjq0debddhbQAeNhNK760I4qiwrWM0zxb87FoL_HbuW9YOvwriq20aCp102jwgoq1-Lng5uwsDFwR4JG0ZMwXA2XGjVY4FxqIr3Cy?purpose=fullsize"
+            ],
+            "refs": [],
+            "alt": "![Image](https://images.openai.com/static-rsc-4/P9jDhhY6PyH3qcTg7E90SJTVF9xc3SWAo8ba7wkAj22HstHmTLNUgK6Pcz2H6NwlYBMtN5v7zCzW2SmbNLTQUHOnWjQwF0HBl7r071Hb-9CmTQWYLkrHKXwy0mz76u8fLgSlJVbQAaiUs1aspMWpz61DHNMUm-YKf1Yd-w_sr8vdJIHLCQN9I8kLgRiaCAqZ?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/AdmgYLGe0TCW3TbtnKSQ9CTp4SOg6tzZhQJQN8DHggwHTp93ZLAbWW4V86A3L2oeVM-xbTUD9j0zrNtr6Ehyg50uGpVKMJic2R_A69-iUxqvyBH5zLByAZ16p1YAlbWg8i9t8pyIjPiPTx3Now3xpDDbSW-Ba_S39wH0FtUlBEoq8u9lBECIA7MD83inuvKo?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/K64lDuVlpsiCVxYaO0ujtF2THS4Yf60l4xPiL45Wf4LjvGP23WUDgbEbQjc6YG3HwL9apchnLS_fDPwjCa7DcJOiTf9zsJdYmZj309fIh-ErKCbHwb7GUSoaXT-hRg4fG5CJWTCDhV-Io1I9XqEOIgbwRx7nPRVT3giq2gMVEJYrk4PSPoAspegKYIVrEDf5?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/7yB1aQfsPR3AEC5A2U28SltHHStvu66llCG06H5tgi6P7VEZ23Mnqm_e17cRCtkARWfQn8Rh2NlUeB9usPCgCqPPzKgHRemK0NuIsa4TMFl1umKkSULUGDn6bvcO9ekJu6YLCmKkTrbf_gujPiz-FQltY6YXQLrelDqh-Mu7RDNf0P0NOadmKngT9xwPQ9_P?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/qvtLWc1gR97EdJvm7jjLdk9P15CpJt6ZpUEqGPyGG9_4JHaDaOx2YDLYiL4Av_UICfsmTPFQ-zo27xYMN20mkYkkgEDFjq0debddhbQAeNhNK760I4qiwrWM0zxb87FoL_HbuW9YOvwriq20aCp102jwgoq1-Lng5uwsDFwR4JG0ZMwXA2XGjVY4FxqIr3Cy?purpose=fullsize)\n\n![Image](https://images.openai.com/static-rsc-4/TD1fJZwstlPZXkRV8A07No55Os9zpKUjoa7MylOeI0YA8WZvVE14fp1_MWKmGxibQ_yFukrU2FHOH7ULkf78uawOOCH-crSFxP-3nIR5GQUQg8sMwkD31b8w3kzOaAiOSFKlwSJuyvtGogTMqf9NjRGA1xwjPk58_-xPtZD1rabIOaT-4WLsJ3xqvQAPajsQ?purpose=fullsize)",
+            "prompt_text": null,
+            "type": "image_group",
+            "images": [
+              {
+                "image_result": {
+                  "url": "https://www.constellation-guide.com/constellation-list/cygnus-constellation/?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/P9jDhhY6PyH3qcTg7E90SJTVF9xc3SWAo8ba7wkAj22HstHmTLNUgK6Pcz2H6NwlYBMtN5v7zCzW2SmbNLTQUHOnWjQwF0HBl7r071Hb-9CmTQWYLkrHKXwy0mz76u8fLgSlJVbQAaiUs1aspMWpz61DHNMUm-YKf1Yd-w_sr8vdJIHLCQN9I8kLgRiaCAqZ?purpose=fullsize",
+                  "content_size": {
+                    "width": 662,
+                    "height": 415
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/10eDjTSWumUeph5l3MfZcrxFMDxxZIvwhBnNu7rFK-GWgVHV_j3x-oHHqlEcvwouIk8RKSNGD0V5UDQvPzaTIrAmFAEHBa8W-Zl9cjdwYChK-qbYEAeFwf0zXwMr3466J2eBT0L-D7NyNcFBvf-C2l2RpVGhRCBVmes3QHvuTIo?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 662,
+                    "height": 415
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.8987915407854985,
+                    "center_y_percent": 0.28433734939759037
+                  },
+                  "title": "Cygnus Constellation (the Swan): Stars, Myth, Facts, Location – Constellation Guide",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.constellation-guide.com/wp-content/uploads/2021/01/16-Cygni.webp"
+                },
+                "image_ref_id": null,
+                "image_search_query": "système stellaire 16 cygni",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://starwalk.space/fr/news/september-constellations?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/AdmgYLGe0TCW3TbtnKSQ9CTp4SOg6tzZhQJQN8DHggwHTp93ZLAbWW4V86A3L2oeVM-xbTUD9j0zrNtr6Ehyg50uGpVKMJic2R_A69-iUxqvyBH5zLByAZ16p1YAlbWg8i9t8pyIjPiPTx3Now3xpDDbSW-Ba_S39wH0FtUlBEoq8u9lBECIA7MD83inuvKo?purpose=fullsize",
+                  "content_size": {
+                    "width": 1920,
+                    "height": 1080
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/1_e6t9wm1Yn-kTXmNSw-Sy0T_ECCNqXMsP5qD02DfCm6jBtBPumBhT-rWoBR4Vf2GTOkMeiQ89f1ews_yhVFMvuMgNkoych6leNaj-bAMnkr0oEl-daGn23Xn6bYjBkSo-1Q0Vg0CsMi8C6bg4PbOv3r6bR7IL9lsyE3uTnTb6c?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1529,
+                    "height": 860
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.17291666666666666,
+                    "center_y_percent": 0.8833333333333333
+                  },
+                  "title": "Constellations de Septembre — Guide du Ciel Étoilé | Chercheur de Constellations | Aigle, Cygne, Capricorne | Nuit Étoilée",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://starwalk.space/gallery/images/cygnus-sw/fr/1920x1080.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "constellation cygne étoile 16 cygni",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.observatoire.echodesetoiles.fr/produit/observation-du-soleil/?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/K64lDuVlpsiCVxYaO0ujtF2THS4Yf60l4xPiL45Wf4LjvGP23WUDgbEbQjc6YG3HwL9apchnLS_fDPwjCa7DcJOiTf9zsJdYmZj309fIh-ErKCbHwb7GUSoaXT-hRg4fG5CJWTCDhV-Io1I9XqEOIgbwRx7nPRVT3giq2gMVEJYrk4PSPoAspegKYIVrEDf5?purpose=fullsize",
+                  "content_size": {
+                    "width": 800,
+                    "height": 800
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/Y72kjTEt-R6OvBVuzfEHLPlEVWU8Jx-vP05Yc_kCyAGQQdvL2h6lZ57vSwyJ-OUori6_7w6vPUT9UtZXgNUH_9v9lzwwKmHfV1T7j0R_ILwbGb3U-HM4FCoTtsF8R4dOk4ihGCi-IGTluFspFbRR1yzIRXcHbJ6oFCuyiMyEf4k?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 800,
+                    "height": 800
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.47375,
+                    "center_y_percent": 0.5
+                  },
+                  "title": "Observation du Soleil - L'écho des étoiles",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.observatoire.echodesetoiles.fr/wp-content/uploads/2020/12/le-soleil-le-soleil-est-notre-etoile.jpeg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "illustration étoile type solaire",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://sci.esa.int/web/gaia/-/54632-type-ia-supernova?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/7yB1aQfsPR3AEC5A2U28SltHHStvu66llCG06H5tgi6P7VEZ23Mnqm_e17cRCtkARWfQn8Rh2NlUeB9usPCgCqPPzKgHRemK0NuIsa4TMFl1umKkSULUGDn6bvcO9ekJu6YLCmKkTrbf_gujPiz-FQltY6YXQLrelDqh-Mu7RDNf0P0NOadmKngT9xwPQ9_P?purpose=fullsize",
+                  "content_size": {
+                    "width": 625,
+                    "height": 391
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/2OsrYHrQvyeS_5g60k-qxMjEds3ZXcdwfR4cTQS02sd3fl3fwsFCCfgSSchv4P7mMTYpCOG2ZqH8PlPV6dFMq_A2QtiDX8Ef8b5QpAKMtGhW_K8AGdgcuWo7g2XS9LE7l75Gjhjst9Xaiw98dpbxm3N2l7lcCAzn-YqA2KbVwa0?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 625,
+                    "height": 391
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.7056,
+                    "center_y_percent": 0.5575447570332481
+                  },
+                  "title": "ESA Science & Technology - Type Ia supernova",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://sci.esa.int/documents/33580/35361/1567216359405-Gaia_SNIa_Artist_Impression_625.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "16 cygni artist impression",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://www.cosmodixi.fr/ciel/cygne.php?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/qvtLWc1gR97EdJvm7jjLdk9P15CpJt6ZpUEqGPyGG9_4JHaDaOx2YDLYiL4Av_UICfsmTPFQ-zo27xYMN20mkYkkgEDFjq0debddhbQAeNhNK760I4qiwrWM0zxb87FoL_HbuW9YOvwriq20aCp102jwgoq1-Lng5uwsDFwR4JG0ZMwXA2XGjVY4FxqIr3Cy?purpose=fullsize",
+                  "content_size": {
+                    "width": 833,
+                    "height": 1024
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/UGYeOqxMHbIoQsq0QXKHIgokf8HCC1s-z-OMu2Gbe5ub9w5AL2KPqfJaNGKnohgEe-BEt69nDwG3mM0sfvS4HSC5kCTO2sSkaYrll58zZXYA9WdchOVSwFvLKa3CdLdQnKArim3v-04R-7iaZyGn61S2lNCUyzn2dNHn0x63q6U?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 833,
+                    "height": 1024
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.8871548619447779,
+                    "center_y_percent": 0.9716796875
+                  },
+                  "title": "Constellation du Cygne",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://www.cosmodixi.fr/ciel/cartes/cygne.webp"
+                },
+                "image_ref_id": null,
+                "image_search_query": "constellation cygne étoile 16 cygni",
+                "image_search_system": null
+              },
+              {
+                "image_result": {
+                  "url": "https://synchronique-editions.com/accueil/168-comment-son-nees-les-etoiles.html?utm_source=chatgpt.com",
+                  "content_url": "https://images.openai.com/static-rsc-4/TD1fJZwstlPZXkRV8A07No55Os9zpKUjoa7MylOeI0YA8WZvVE14fp1_MWKmGxibQ_yFukrU2FHOH7ULkf78uawOOCH-crSFxP-3nIR5GQUQg8sMwkD31b8w3kzOaAiOSFKlwSJuyvtGogTMqf9NjRGA1xwjPk58_-xPtZD1rabIOaT-4WLsJ3xqvQAPajsQ?purpose=fullsize",
+                  "content_size": {
+                    "width": 1000,
+                    "height": 1125
+                  },
+                  "thumbnail_url": "https://images.openai.com/static-rsc-4/kuN9LCzn8NQDgXP38mx0zy14hielKps_Bt6aBTm8pigPbXEjTOuwtLfygb8yshrhQnIJkKNxXafuwTy2co5ujjcZV-SsDuzxVOkCcSTLckr23XadkB0oW75_PHyg_qSHf_E4Kjap_6-FqQVbvkkBCkb2TGGkiGdQ4G6QQma4ShY?purpose=inline",
+                  "thumbnail_size": {
+                    "width": 1000,
+                    "height": 1125
+                  },
+                  "thumbnail_crop_info": {
+                    "center_x_percent": 0.179,
+                    "center_y_percent": 0.4951111111111111
+                  },
+                  "title": "COMMENT SONT NÉES LES ÉTOILES",
+                  "thumbnail_render_mode": "thumbnail_only",
+                  "show_url": true,
+                  "scores": null,
+                  "original_content_url": "https://synchronique-editions.com/478-large_default/comment-son-nees-les-etoiles.jpg"
+                },
+                "image_ref_id": null,
+                "image_search_query": "constellation cygne étoile 16 cygni",
+                "image_search_system": null
+              }
+            ],
+            "layout": "carousel",
+            "aspect_ratio": "16:9",
+            "blender_debug_info": null,
+            "invalid": false
+          }
+        ],
+        "story_events": [],
+        "resolved_model_slug": "gpt-5-5",
+        "search_result_groups": [],
+        "safe_urls": [
+          "https://images.openai.com/static-rsc-4/4x9AsFGXktHjDAuHa0_GZmaGHkpqcNyVRD0sgFkMyRswBOMMD5FUAYzg9v-NEJW_YltfKnNNUjMYGNv7I4oQ9DLkKrbzoDAxk1LcjvtZXznash43AqSzHhUet3yfa_MeWA9IWxaVhR_7XOLYc27SNNGjh_9wt59GkpPyIMYyHEjtIIr_V0nQtYlkzHvobA8y?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/68FwGEOBi_LTZ09V-2BMNetGlPtYiL4jP2hcLnYrVZ21eu9P9KInJMJJaakPQvKhoADAy9kvJMz349kDSUJ5pjuY8B4xS4OAT44ELnbsFru3z2FD2OZ_VKjMlrVmgqRFx-E_wOvj_LN25A_g3cQDr3CoMt12rPjOlDFuLoedGazd-_710uQXtU2oxGnv5CFx?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/7yB1aQfsPR3AEC5A2U28SltHHStvu66llCG06H5tgi6P7VEZ23Mnqm_e17cRCtkARWfQn8Rh2NlUeB9usPCgCqPPzKgHRemK0NuIsa4TMFl1umKkSULUGDn6bvcO9ekJu6YLCmKkTrbf_gujPiz-FQltY6YXQLrelDqh-Mu7RDNf0P0NOadmKngT9xwPQ9_P?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/8Ce1fMe0k77psm-m2WggqSJJy3pFBj_MmQ7y6RLGBQOX6XR9wWdBiVQnPz1wVIyCFXQxjGBOx_ILKYvUqq2rjLnLzPWmyYowqvUe6g_ShgvBnSlHa6lwetgRXZ7m9uVWm6SWYiQixwp7bOyaoACrBRTmlx2K49b4UEGjqf7om5UB5zzkpH-fFN3QYdKare8H?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/AdmgYLGe0TCW3TbtnKSQ9CTp4SOg6tzZhQJQN8DHggwHTp93ZLAbWW4V86A3L2oeVM-xbTUD9j0zrNtr6Ehyg50uGpVKMJic2R_A69-iUxqvyBH5zLByAZ16p1YAlbWg8i9t8pyIjPiPTx3Now3xpDDbSW-Ba_S39wH0FtUlBEoq8u9lBECIA7MD83inuvKo?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/Ayp-glB0gHFti9rYOzcuQooIcjfd0CkFXO4XJ20wUOl9PuvN3nh4gxkoZ77YPf16V5BsBSLGSdhHeRuDzxn1WXSQmJQvs_815VM2-FkGHXU37v5agTQtPi91YF1gMhQCBiAvHKz6g9V2QXfFkS7j7j8zidFbXPToKZTtHoAvPxxiwMhSEzqzBNJd-XSMNZ80?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/EF1uukGcS1Pp6BIcT5DULKuWvvkSe-k69fPfVTE4mhui_dr0fltoXoyk_0a2vwCmFZiVCNEtAAvU9q854BqBVMGipbTkXqGcjEjgQjOLHkbby2lmoE_8q4qMRNngia-UbRNO9mX-OT-4jEFcHhxRv9UQF0pQTdDHLOtVlBIlQeS7H4zdpo8Y7SUAbvHbYs_N?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/G6czKUOtcK5Uo14wc_w7x30y-pwzgQ1HeIf3ykq6zxdzCursnpBOZli19NJaQc8_uOZTgdsvGuxTHpH_l-BbSP14ph2KZsdTMmpsvQhFrRpIQOBZ7i9-H4sDW67DJlsLLb_B3R8IdmCswVsEoD_kiHDGhNENj4DTFtV0P2__uUecx0-1NDGGhYC5g1gk_o73?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/IElG2r408AxHoEn7hi2w1nfJ4nWeNEX_kv8vXPOD4NWlc4pF9RXQyuCMhBFRimiJBJRbEK821DTo-S2RgxoD_icF7FfgUf_6AIkieIiFm0jf8WaRQHfIMB37Nw1JX7T7d109hgIupg_-1XXu72glomYVIL9Y9e7YNVb263djWTIZ8xwqjorlDjaKtYx0yaK8?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/K64lDuVlpsiCVxYaO0ujtF2THS4Yf60l4xPiL45Wf4LjvGP23WUDgbEbQjc6YG3HwL9apchnLS_fDPwjCa7DcJOiTf9zsJdYmZj309fIh-ErKCbHwb7GUSoaXT-hRg4fG5CJWTCDhV-Io1I9XqEOIgbwRx7nPRVT3giq2gMVEJYrk4PSPoAspegKYIVrEDf5?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/KA7L8XTtBBfu3tETVuxHYr2IiNxSmi_7a6VYMz4i8JPmtqk1KQrz5uiLKQ5_StMyNzvPoH3NwVVZPlmzDXDfJNXof0DhiVoDmgE2r9dL-2BjV3UfASafz1ZfEbk9-Caqd4bUfSWPMLa7yRTYnkKQe1thg1bfTcF70fpgeIdNKPe53nPXUG9PYiIAwwuhX1sF?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/KnR4R222oXTWN4O3puGwkg3gJfzP4oD_h88MgpgxBMsHyB4GEZQJZvqmu7l1E86XaGvQ3GuzgYwAUK6cyST4ShPS78UH7CWPivHSx0c5T-igL1wz1lxgfC5SMX3TvS-uOrcNqtHQqxGeKLBVi_N_bTGdPutFDTsLYDpD47fteujTok6iC9K1N4UBYCFsdB-T?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/LCXazL4McEwqq1uNDCchmgrx1DeinsROhuVeTfmgKYkFVephHpNS-DFmiYO6JJPSCvG6cwn7lnp5hsE6K9Sjy__4Rew3E5a5OiBGiFTPkjFZNwCweghxo2UKu0zpv3q7LA_zVZ4WMBHNCaJciSWMQg9TRqt7PXMRaxnYynygG6HpLNglVzvFZlaxUENjduzT?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/LonJvAPSXvWp0SMC5PV0eWKiWaCVlwLlPcd2JxzWSNHSFQP9p8wZtazqenRSYyi4JVbsOwWwpkNrS0zN0SOnUPcSWbSxnCdEiFszDumF5GlcCCUOdQ-MnlQZwz-t5ukZ-FS9l4Hb2OAzKOuTlIr15Vjct3_gZIW0oRLlpixrw5zH-M3IF7JHBikOAyoOp2Hg?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/OtGRybBPAsR2HXLOS4fVswANFSOfF0c-vTcDjLIMG-EWeI0Glh5vGGPLSTKDSXCm37N-2BToEPKwI0wXjaqfUYlbknZyCEG5XAaHJlwRQTs_ODVxtkRb6Suka1CpST-H6akE57YrTT0UMQb3X_qix1PotY8VyZ7frlJXOO-pIcWIsSwJHPZJqWZGBwIiriv0?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/P9jDhhY6PyH3qcTg7E90SJTVF9xc3SWAo8ba7wkAj22HstHmTLNUgK6Pcz2H6NwlYBMtN5v7zCzW2SmbNLTQUHOnWjQwF0HBl7r071Hb-9CmTQWYLkrHKXwy0mz76u8fLgSlJVbQAaiUs1aspMWpz61DHNMUm-YKf1Yd-w_sr8vdJIHLCQN9I8kLgRiaCAqZ?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/TD1fJZwstlPZXkRV8A07No55Os9zpKUjoa7MylOeI0YA8WZvVE14fp1_MWKmGxibQ_yFukrU2FHOH7ULkf78uawOOCH-crSFxP-3nIR5GQUQg8sMwkD31b8w3kzOaAiOSFKlwSJuyvtGogTMqf9NjRGA1xwjPk58_-xPtZD1rabIOaT-4WLsJ3xqvQAPajsQ?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/Tli8-YnEwrC9h9S6CAQmmk7l9daltj7V28EIAq2RpQP7qkZXs6DVI6h_V4lV75kajyRj34o2W0231cMzdaezkm5DZxbw8iHZ7ZE1caM7ZrCwLsF6FN9EW1CwcEhqkLqHKrzF9khcAJrmYY5R7JDeUitI41BPZR6aF6oO8_PVkrp31WHv2bfBnYsv5oOyLrso?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/X5m2zk6ltKakGTLNs3oDKclRP1tYFXNSK7QxRIAtAVMBIEc6fOXqOnT36CkfEWa_fgfNLFTEEMUdPF1g-j5DwkywF0cyvoiAa8CCnz1BGNndrBde6ZtJ400-CRsuOmgMZQfdNpb-ocTQnDLjrQybx_XSKAPLJifDXgvIAViaftEcFS5Ac0pHRv5vrIxNP85c?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/b5PCqhkmEjGLtqI2utJvuACopMrEF4Eh5e1WcKMhm45sbv0U92Ra6VZ4QK7DClKDRqkHWM03ePSaFv4sAFwNgO_Rmv7n_Rgnbr5Se2ycK11yRAAMT3iVJBS1R-1D-TF2NDJdjfMoXreV-g-QBl-sTgOKdzoe8BQNJH6NdmNi_gGvesjidO3MU9rJFI7iqBP5?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/bZEsfqevpZBE1hk_DKjNRyrlmyxGWP2KyGk9AI1uzwZA-Nwzv2Sb4_ab-AYKSxj3JQYpVVlbFx9gqbHiBVioNWq_ydMDY1D5qHOu9vQMFdK2VI01HGXRzWqKM1tmqjmNOrcLwvbc-CDsyfqYPfaiETa5PxPNhH0IWAB2PD0L9oioLFNHRKts74zX1KHCaavC?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/fOErUXQRFLrrul3AS9tjWGHjrrTXhJSlHYTJZn5Cj9Iv01lvOQjT2PQl_5cTV0763D8gWm_xBfabXRTf-OsH_sEFgjSdraMLAVe2fP8tL6OEBGOdv7WGTl0QnJMlT5iAqXOHAageaP-oGHpYdE6d9HLLm-koLhhrV_f-bmuLtpQbMYxf7NrW16IUgvzsziea?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/jcn2GE_dWKZcfWQ3kom85pFNC3DnM5dwdNJnjwrbiXU6PpyKhLp8txgUVu5qDidb7FML5HybVXBh_bgwE7q26aZW5CpvN1flKET5BPd2tmeJnneQjrZtyc_Zany5fiCjFokfEDjBSZdxxGrXkJEffHIAROaFzIFtdujMBSAE4ew2luJUFVTh6qdjVFPK69NU?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/jv1JMQX0IUUW-bEWAPrOmRENOafoUJaQGwaPdrIq42JOU3BG5kWhKPWU_erPaoN6u--U600f7ivb52oU4NWGT4eJUcbnfVm_u9OZR1v2Y-iijtZsx6u4eDD-Tx188-uZYqBi0_3ZmWMWMYyhgQ2BfPQB0-m7wmNy9MtIdDcLUYYzTl2ZKQz41UH3190TgntW?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/k3Q60boEJCz4HTlvFbhTDcq3eSu7zyttUx7B77hbK3cBcL9hThPYsrtEVMnbZ9MvivZP8Qy2lckFgdIKH9OSfi9UED4QyCceaIrTCPGNZpFCStROS2rRNkH5W9N2iLRAZriOuAdlL8Tt11z4zT2sUYM_J1s3TyOu41f4l826JJ33rdhJeQq1KnaDzIDNbC9S?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/nWKjqjfE3DsBbZ8z9_4ihjx1DQfjYCH9Y_2W965MNgkY5wmjyBxtkV_kZl2H1g6hbT0iVqKRZJuZTQ6jGsH8ryFl-ehqiq4vajx68ti4XhywkTTYxlIQh-x-Wsn9nNLrSE2wHHibY-rJt98WxHuAvl6nBudSA83TSgMGnAd-qqxUmNZOXzmK-ntur60jZCCJ?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/pKxLxPhDdgruYeDgz41exB0hI1wftpMI0zyO1QmvJXPTCIPl4rPYaK0r6_yC2vMwrC638PHX8wZn9MIdCccv3Qy5epVVOdjSA0-TGnOR89aUZ7wO_a2w18_5Z9kU10nPWa2fDXVXThpWaIsVoBzCjpnBNNE7ev0K6GwSfmI5Bz3BK72y-jdNBTTY8RYEpo4I?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/pgdJefjYEEin6CcTDYBVS6i9Ua-6WXrk8tu9-v_GzM5qX8XHfQQgjbwhuoXphgxDci4P317TFS0f9qKbW4npuBHb31S-Xxh3Rh4jQ8V-9F0OiBosSOeKDAMe2iEDMxmeUE14UGltkes40ATf7y2byr8JHkZveyXWiQBYhi8hhACTPGjdrTTEFM_ifgFMkeyW?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/qHDTxVTnE1G6AWvaWt7raaCyu8sbU3Az6Ohol2usGowdneD9HbDeTWoz90goghxTujSVcJS-oC8OsfDy6_vAgj4rODKblP-kH70mdyn-wZdZUFxTXIVy_O7xnxGxbeMd0jaKwiPkUteZ8Uj7P8d7f0P-lf7MWcMam_OLQJNwaUMFLsrPSipmBjkubtyRPjFp?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/qvtLWc1gR97EdJvm7jjLdk9P15CpJt6ZpUEqGPyGG9_4JHaDaOx2YDLYiL4Av_UICfsmTPFQ-zo27xYMN20mkYkkgEDFjq0debddhbQAeNhNK760I4qiwrWM0zxb87FoL_HbuW9YOvwriq20aCp102jwgoq1-Lng5uwsDFwR4JG0ZMwXA2XGjVY4FxqIr3Cy?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/rJJirtuDf4tN3VFa6ONC3vP-I7A7G0Fvo09IBROuUZys_I7KzkrSSMMcAqWL1dGcAkSrScznCHlruffxUsJnhGxvUAUPw5TsOtVxEPO9arPbnhtBTt8EGH8LIpPJBUJLIgvnPshGLHt7ss2LHApQCC_-sJY76XVfHiqDn2_z_9aDsVZcEe63wVEVgKR8wV8k?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/umBMPdHNyTEMnrmE2LOlAWTVysKLujdu6e2aRvgTCu3GL6nP8d3Zv-Tsdl-jHF1AvQhahOfR9yuAw29UQqfs1voUq2URpKlEA9_r3d6l6hdA_QOv6vwpakXaN6KE_bd0gHc0YeGI4S5qzJzx9OPEwtDdGxEaNi0X3LzGRwKjtL4DDnKMEw-YgMAoB-BruyfR?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/wjz-kdyA4kEYTlAJHi0u2_E18Rg_cpT57AJZBHJplH4A2em4YPRwelOBc70oCMlLGXIVko1HYQp4yQ95NP7fk5_BjhMbNdLuJDewdLsqtgheOklICTyDCCwCRT1CYUD1GXGpmTu0uj1b_FFhQddyTv4QlfEFeKkXtYLoPZLalaisvbjPpHqXd0msth7IJOn4?purpose=fullsize",
+          "https://images.openai.com/static-rsc-4/xAqJ_4ng1zBQrDkIPGc5w9mahanMhuS78PfE2PDK15pqdv8etdoRDXWfT6wX-F587WUONcxlqJYtmHGElPOpUtDubLfnka7CXqqyANhagC4qB-kDofnpySnLADoso_sUIvSO7vSGroJtS1IS4l8mXqx8ANXiZyzqIRrPg2JD8pWWqFDzLynUrTm3ES18Rw8X?purpose=fullsize"
+        ],
+        "request_id": "f0000000-0000-4000-8000-fff783acffb4",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-5bfd9f770072",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "can_save": true,
+        "parent_id": "f0000000-0000-4000-8000-d3bbd45dd46c",
+        "model_switcher_deny": []
+      },
+      "recipient": "all",
+      "channel": "final"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-e732a0607938",
+      "author": {
+        "role": "user",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209633.887,
+      "update_time": 1779209639.971323,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Formule transformée de Fourier mais sans l'exponentielle."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "selected_github_repos": [],
+        "serialization_metadata": {
+          "custom_symbol_offsets": []
+        },
+        "request_id": "f0000000-0000-4000-8000-daa0a7074343",
+        "message_source": null,
+        "turn_exchange_id": "f0000000-0000-4000-8000-b1bc5bfc69d9",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-756590362737",
+      "author": {
+        "role": "assistant",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209632.838314,
+      "update_time": 1779211658.291836,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Tu peux utiliser la version “décomposition en sinusoïdes”, beaucoup plus simple et adaptée au Grand Oral :\n\ngenui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"f(t)=a_0+\\\\sum_{n=1}^{\\\\infty}\\\\left(a_n\\\\cos(n\\\\omega t)+b_n\\\\sin(n\\\\omega t)\\\\right)\"}}\n\n## Ce que tu peux dire à l’oral\n- Un signal complexe peut être décomposé en plusieurs sinusoïdes.\n- Chaque sinusoïde correspond à une fréquence particulière.\n- Cela permet d’identifier les modes de vibration de l’étoile.\n\n## Explication rapide des paramètres\n- \\(f(t)\\) : signal observé\n- \\(a_n\\) et \\(b_n\\) : amplitudes\n- \\(\\omega\\) : pulsation/fréquence\n- \\(n\\) : numéro du mode\n\nC’est souvent mieux pour le Grand Oral que la formule complexe avec l’exponentielle \\(e^{-i\\omega t}\\), car elle est plus intuitive visuellement."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 1.0,
+      "metadata": {
+        "finish_details": {
+          "type": "stop",
+          "stop_tokens": [
+            200002
+          ]
+        },
+        "is_complete": true,
+        "citations": [],
+        "content_references": [
+          {
+            "matched_text": "genui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"f(t)=a_0+\\\\sum_{n=1}^{\\\\infty}\\\\left(a_n\\\\cos(n\\\\omega t)+b_n\\\\sin(n\\\\omega t)\\\\right)\"}}",
+            "prefix": "genui",
+            "start_idx": 108,
+            "end_idx": 257,
+            "safe_urls": null,
+            "refs": [],
+            "alt": "f(t)=a_0+\\sum_{n=1}^{\\infty}\\left(a_n\\cos(n\\omega t)+b_n\\sin(n\\omega t)\\right)",
+            "prompt_text": null,
+            "type": "alt_text",
+            "render_as": "latex"
+          }
+        ],
+        "story_events": [],
+        "resolved_model_slug": "gpt-5-5",
+        "search_result_groups": [],
+        "request_id": "f0000000-0000-4000-8000-daa0a7074343",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-b1bc5bfc69d9",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "can_save": true,
+        "parent_id": "f0000000-0000-4000-8000-e732a0607938",
+        "model_switcher_deny": []
+      },
+      "recipient": "all",
+      "channel": "final"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-6d39c2bdf1a8",
+      "author": {
+        "role": "user",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209727.398,
+      "update_time": 1779209736.234109,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Que l'on reçoit d'une étoile n'est jamais négative, alors comment est-ce qu'on peut le transformer en sinusoïde? avec fourier"
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "selected_github_repos": [],
+        "serialization_metadata": {
+          "custom_symbol_offsets": []
+        },
+        "request_id": "f0000000-0000-4000-8000-6b4e441c760d",
+        "message_source": null,
+        "turn_exchange_id": "f0000000-0000-4000-8000-cc2ebdf2b0b4",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-ece6b85c123b",
+      "author": {
+        "role": "assistant",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209726.674323,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Parce que la transformée de Fourier ne travaille pas sur le fait que le signal soit positif ou négatif, mais sur ses **variations**.\n\nLa lumière reçue d’une étoile est effectivement toujours positive :\n- on ne peut pas avoir une “luminosité négative” ;\n- mais cette luminosité **augmente et diminue légèrement autour d’une valeur moyenne**.\n\nPar exemple :\n\n- luminosité moyenne : 100\n- puis :\n  - 100,1\n  - 99,9\n  - 100,2\n  - 99,8\n  - etc.\n\nCes petites variations peuvent être représentées comme des oscillations sinusoïdales.\n\nTu peux expliquer ça comme ceci à l’oral :\n\n> La luminosité de l’étoile reste toujours positive, mais elle varie légèrement autour d’une valeur moyenne. La transformée de Fourier analyse uniquement ces variations et cherche quelles fréquences sinusoïdales composent le signal.\n\nMathématiquement, on enlève souvent la moyenne du signal :\n\ngenui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"f(t)=L(t)-\\\\langle L \\\\rangle\"}}\n\noù :\n- \\(L(t)\\) = luminosité mesurée,\n- \\(\\langle L \\rangle\\) = luminosité moyenne.\n\nLe nouveau signal oscille alors autour de 0, ce qui permet une décomposition en sinus et cosinus.\n\nTu peux aussi donner une analogie très simple :\n\n- un électrocardiogramme reste positif globalement ;\n- une température peut rester au-dessus de 0°C ;\n- pourtant leurs variations peuvent être analysées avec Fourier.\n\nDonc Fourier ne nécessite pas un signal négatif : il suffit qu’il y ait des variations périodiques."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 1.0,
+      "metadata": {
+        "finish_details": {
+          "type": "stop",
+          "stop_tokens": [
+            200002
+          ]
+        },
+        "is_complete": true,
+        "citations": [],
+        "content_references": [
+          {
+            "matched_text": "genui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"f(t)=L(t)-\\\\langle L \\\\rangle\"}}",
+            "prefix": "genui",
+            "start_idx": 866,
+            "end_idx": 958,
+            "safe_urls": null,
+            "refs": [],
+            "alt": "f(t)=L(t)-\\langle L \\rangle",
+            "prompt_text": null,
+            "type": "alt_text",
+            "render_as": "latex"
+          }
+        ],
+        "story_events": [],
+        "resolved_model_slug": "gpt-5-5",
+        "search_result_groups": [],
+        "request_id": "f0000000-0000-4000-8000-6b4e441c760d",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-cc2ebdf2b0b4",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "can_save": true,
+        "parent_id": "f0000000-0000-4000-8000-6d39c2bdf1a8",
+        "model_switcher_deny": []
+      },
+      "recipient": "all",
+      "channel": "final"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-8d716ef50784",
+      "author": {
+        "role": "user",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209797.785,
+      "update_time": 1779209801.889846,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Pardon c'était bête y'avait le A0 de base"
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "selected_github_repos": [],
+        "serialization_metadata": {
+          "custom_symbol_offsets": []
+        },
+        "request_id": "f0000000-0000-4000-8000-8d1092419722",
+        "message_source": null,
+        "turn_exchange_id": "f0000000-0000-4000-8000-d07bae307fc5",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-ebc4c9429ba8",
+      "author": {
+        "role": "assistant",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209797.074993,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Non justement, c’est une très bonne remarque — c’est exactement le genre de question intelligente qu’un jury peut poser.\n\nEt oui, le terme constant :\n\ngenui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"a_0\"}}\n\nreprésente la valeur moyenne du signal, donc la luminosité “de base” de l’étoile.\n\nLes sinus et cosinus représentent seulement les petites variations autour de cette moyenne. Donc au final :\n\n- \\(a_0\\) → luminosité moyenne positive ;\n- les autres termes → oscillations autour de cette valeur.\n\nC’est même un bon point à comprendre parce que ça montre que :\n- la série de Fourier ne sert pas uniquement pour des signaux centrés sur 0 ;\n- elle peut aussi décrire un signal toujours positif avec une composante moyenne + des oscillations."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 1.0,
+      "metadata": {
+        "finish_details": {
+          "type": "stop",
+          "stop_tokens": [
+            200002
+          ]
+        },
+        "is_complete": true,
+        "citations": [],
+        "content_references": [
+          {
+            "matched_text": "genui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"a_0\"}}",
+            "prefix": "genui",
+            "start_idx": 151,
+            "end_idx": 217,
+            "safe_urls": null,
+            "refs": [],
+            "alt": "a_0",
+            "prompt_text": null,
+            "type": "alt_text",
+            "render_as": "latex"
+          }
+        ],
+        "story_events": [],
+        "resolved_model_slug": "gpt-5-5",
+        "search_result_groups": [],
+        "request_id": "f0000000-0000-4000-8000-8d1092419722",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-d07bae307fc5",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "can_save": true,
+        "parent_id": "f0000000-0000-4000-8000-8d716ef50784",
+        "model_switcher_deny": []
+      },
+      "recipient": "all",
+      "channel": "final"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-b9c5db377fcc",
+      "author": {
+        "role": "user",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209992.379,
+      "update_time": 1779210001.014385,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "comment dessiner facilement une fonction sinus ou cosinus"
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "selected_github_repos": [],
+        "serialization_metadata": {
+          "custom_symbol_offsets": []
+        },
+        "request_id": "f0000000-0000-4000-8000-5f7e8875846e",
+        "message_source": null,
+        "turn_exchange_id": "f0000000-0000-4000-8000-4adeeb341adc",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-24d5fd476abb",
+      "author": {
+        "role": "assistant",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779209991.410354,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Pour un support de Grand Oral, le plus simple est de retenir la “méthode des points-clés”. Tu n’as pas besoin d’un sinus parfait mathématiquement.\n\n# 1. Dessiner un axe\n\n- Axe horizontal : temps\n- Axe vertical : amplitude / luminosité\n\nPuis tu places quelques points repères.\n\n---\n\n# 2. Méthode ultra simple pour un sinus\n\ngenui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"y=\\\\sin(x)\"}}\n\n## Les points importants\nDans l’ordre :\n\n- départ au milieu\n- monte au maximum\n- revient au milieu\n- descend au minimum\n- revient au milieu\n\nDonc visuellement :\n\n```text\nmilieu → haut → milieu → bas → milieu\n```\n\nPuis tu relies avec une courbe fluide.\n\n---\n\n# 3. Pour un cosinus\n\ngenui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"y=\\\\cos(x)\"}}\n\nLe cosinus est le même dessin mais il commence en haut.\n\n## Ordre des points\n```text\nhaut → milieu → bas → milieu → haut\n```\n\n---\n\n# 4. Astuce visuelle très utile\n\nDessine d’abord :\n- une ligne horizontale centrale ;\n- les sommets ;\n- les creux.\n\nEnsuite seulement tu arrondis la courbe.\n\nÇa évite les sinus “cassés”.\n\n---\n\n# 5. Version encore plus rapide à reproduire\n\nTu peux penser à une vague régulière :\n\n```text\n~ ~ ~ ~ ~\n```\n\nmais plus propre et symétrique.\n\n---\n\n# 6. Astuce spéciale Grand Oral\n\nTu n’as pas besoin d’être parfaitement exact.\n\nLe jury veut surtout voir :\n- oscillation régulière ;\n- fréquence ;\n- amplitude ;\n- périodicité.\n\nMême un sinus approximatif fonctionne très bien sur un support oral."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 1.0,
+      "metadata": {
+        "finish_details": {
+          "type": "stop",
+          "stop_tokens": [
+            200002
+          ]
+        },
+        "is_complete": true,
+        "citations": [],
+        "content_references": [
+          {
+            "matched_text": "genui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"y=\\\\sin(x)\"}}",
+            "prefix": "genui",
+            "start_idx": 323,
+            "end_idx": 396,
+            "safe_urls": [],
+            "refs": [],
+            "alt": "genui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"y=\\\\sin(x)\"}}",
+            "prompt_text": null,
+            "type": "client_defined_widget",
+            "category": "learning_block",
+            "data": {
+              "content": "y=\\sin(x)",
+              "encoded_content": "eT1cc2luKHgp",
+              "matched_type": "GRAPHABLE_FUNCTION",
+              "widget_type": "math_block_widget_always_prefetch_v2",
+              "source": "CHATGPT_MATH_BLOCK_RENDER_SOURCE_GENUI_LEARNING_BLOCK"
+            }
+          },
+          {
+            "matched_text": "genui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"y=\\\\cos(x)\"}}",
+            "prefix": "genui",
+            "start_idx": 678,
+            "end_idx": 751,
+            "safe_urls": [],
+            "refs": [],
+            "alt": "genui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"y=\\\\cos(x)\"}}",
+            "prompt_text": null,
+            "type": "client_defined_widget",
+            "category": "learning_block",
+            "data": {
+              "content": "y=\\cos(x)",
+              "encoded_content": "eT1cY29zKHgp",
+              "matched_type": "GRAPHABLE_FUNCTION",
+              "widget_type": "math_block_widget_always_prefetch_v2",
+              "source": "CHATGPT_MATH_BLOCK_RENDER_SOURCE_GENUI_LEARNING_BLOCK"
+            }
+          }
+        ],
+        "story_events": [],
+        "resolved_model_slug": "gpt-5-5",
+        "code_blocks": {
+          "0": {
+            "id": "0wxszz",
+            "edited": false,
+            "previewable": false,
+            "preview_language": null
+          },
+          "1": {
+            "id": "suskja",
+            "edited": false,
+            "previewable": false,
+            "preview_language": null
+          },
+          "2": {
+            "id": "nmbdhw",
+            "edited": false,
+            "previewable": false,
+            "preview_language": null
+          }
+        },
+        "search_result_groups": [],
+        "request_id": "f0000000-0000-4000-8000-5f7e8875846e",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-4adeeb341adc",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "can_save": true,
+        "parent_id": "f0000000-0000-4000-8000-b9c5db377fcc",
+        "model_switcher_deny": []
+      },
+      "recipient": "all",
+      "channel": "final"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-d9fde934d93a",
+      "author": {
+        "role": "user",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779211673.61,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "explique dans un contexte classique"
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "selected_github_repos": [],
+        "serialization_metadata": {
+          "custom_symbol_offsets": []
+        },
+        "targeted_reply": "*   ω\\\\omegaω : pulsation/fréquence\n    \n*   nnn : numéro du mode",
+        "targeted_reply_source_message_id": "f0000000-0000-4000-8000-756590362737",
+        "targeted_reply_source_range": {
+          "start": 470,
+          "end": 502
+        },
+        "request_id": "f0000000-0000-4000-8000-6dad55589c17",
+        "message_source": null,
+        "turn_exchange_id": "f0000000-0000-4000-8000-531f138879ca",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-91634df0b1c9",
+      "author": {
+        "role": "assistant",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779211672.9356,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Dans un contexte “classique”, donc sans parler directement des étoiles, tu peux expliquer comme ça :\n\ngenui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"y=a_0+a_1\\\\sin(\\\\omega t)+a_2\\\\sin(2\\\\omega t)+a_3\\\\sin(3\\\\omega t)+\\\\cdots\"}}\n\n- \\(a_0\\) : valeur moyenne du signal ;\n- \\(a_1, a_2, a_3\\) : amplitudes des différentes oscillations ;\n- \\(t\\) : le temps ;\n- \\(\\omega\\) : la pulsation, liée à la fréquence de l’oscillation ;\n- \\(n\\) (dans \\(n\\omega\\)) : indique le numéro du mode ou de l’harmonique.\n\n---\n\n# Interprétation intuitive\n\n## \\(\\omega\\)\nC’est “la vitesse de vibration”.\n\n- petit \\(\\omega\\) → oscillation lente ;\n- grand \\(\\omega\\) → oscillation rapide.\n\nPar exemple :\n- une vague lente sur la mer → faible fréquence ;\n- une note aiguë → fréquence élevée.\n\n---\n\n# Le rôle de \\(n\\)\n\nLe nombre \\(n\\) multiplie la fréquence de base.\n\nDonc :\n- \\(1\\omega\\) = fréquence fondamentale ;\n- \\(2\\omega\\) = deux fois plus rapide ;\n- \\(3\\omega\\) = trois fois plus rapide.\n\nCe sont des harmoniques.\n\n---\n\n# Exemple concret : musique\n\nUne corde de guitare ne produit pas une seule vibration :\n- elle vibre globalement ;\n- mais aussi en demi-corde,\n- en tiers,\n- etc.\n\nDonc :\n- mode 1 → vibration principale ;\n- mode 2 → harmonique ;\n- mode 3 → autre harmonique.\n\nFourier retrouve toutes ces composantes.\n\n---\n\n# Phrase simple pour l’oral\n\n> La transformée de Fourier décompose un signal complexe en plusieurs oscillations simples de fréquences différentes. La fréquence de base est donnée par \\(\\omega\\), et les multiples \\(n\\omega\\) correspondent aux différents modes ou harmoniques du signal."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 1.0,
+      "metadata": {
+        "finish_details": {
+          "type": "stop",
+          "stop_tokens": [
+            200002
+          ]
+        },
+        "is_complete": true,
+        "citations": [],
+        "content_references": [
+          {
+            "matched_text": "genui{\"math_block_widget_always_prefetch_v2\":{\"content\":\"y=a_0+a_1\\\\sin(\\\\omega t)+a_2\\\\sin(2\\\\omega t)+a_3\\\\sin(3\\\\omega t)+\\\\cdots\"}}",
+            "prefix": "genui",
+            "start_idx": 102,
+            "end_idx": 240,
+            "safe_urls": null,
+            "refs": [],
+            "alt": "y=a_0+a_1\\sin(\\omega t)+a_2\\sin(2\\omega t)+a_3\\sin(3\\omega t)+\\cdots",
+            "prompt_text": null,
+            "type": "alt_text",
+            "render_as": "latex"
+          }
+        ],
+        "story_events": [],
+        "resolved_model_slug": "gpt-5-5",
+        "search_result_groups": [],
+        "request_id": "f0000000-0000-4000-8000-6dad55589c17",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-531f138879ca",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "can_save": true,
+        "parent_id": "f0000000-0000-4000-8000-3cba00c08f3c",
+        "model_switcher_deny": []
+      },
+      "recipient": "all",
+      "channel": "final"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-2d526fbb0e29",
+      "author": {
+        "role": "user",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779211949.251,
+      "update_time": 1779211995.144665,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "génère un caneva sur tout ce qu'un jury prof de physique chimie pourrait poser qui est kepler corot ect. et idem avec un prof de physique chimie"
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "selected_github_repos": [],
+        "serialization_metadata": {
+          "custom_symbol_offsets": []
+        },
+        "request_id": "f0000000-0000-4000-8000-494d06dca60f",
+        "message_source": null,
+        "turn_exchange_id": "f0000000-0000-4000-8000-b8360b174461",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-a64d2aeb12d4",
+      "author": {
+        "role": "assistant",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779211948.332813,
+      "update_time": null,
+      "content": {
+        "content_type": "code",
+        "language": "unknown",
+        "response_format_name": null,
+        "text": "{\"name\":\"questions_jury_grand_oral_asterosismologie\",\"type\":\"document\",\"content\":\"# Questions possibles du jury — Grand Oral Astérosismologie\\n\\n## Questions générales d’introduction\\n\\n- Pourquoi avoir choisi ce sujet ?\\n- Qu’est-ce qui vous intéresse dans l’astérosismologie ?\\n- Pourquoi parle-t-on de phénomènes ondulatoires ?\\n- Quelle est l’utilité d’étudier l’intérieur des étoiles ?\\n- Pourquoi ne peut-on pas observer directement le cœur d’une étoile ?\\n- En quoi cette méthode est-elle indirecte ?\\n- Quelle différence entre astronomie et astrophysique ?\\n\\n---\\n\\n# Questions d’un professeur de Physique-Chimie\\n\\n## Sur les étoiles\\n\\n- Qu’est-ce qu’un plasma ?\\n- Pourquoi une étoile est-elle chaude ?\\n- Quelle réaction se produit dans le cœur des étoiles ?\\n- Pourquoi les étoiles vibrent-elles ?\\n- Qu’est-ce qu’une oscillation ?\\n- Quelle différence entre une onde mécanique et une onde électromagnétique ?\\n- Pourquoi les oscillations modifient-elles la luminosité ?\\n- Comment la lumière transporte-t-elle l’information ?\\n\\n### Réponses rapides à connaître\\n\\n- Une étoile est un plasma : gaz ionisé contenant électrons et noyaux.\\n- L’énergie provient de la fusion nucléaire.\\n- Les oscillations provoquent des variations de pression, température et luminosité.\\n\\n---\\n\\n## Sur les modes p et g\\n\\n- Que signifie le “p” de mode p ?\\n- Que signifie le “g” de mode g ?\\n- Quelle est la différence physique entre les deux ?\\n- Pourquoi les modes p ressemblent-ils à des ondes sonores ?\\n- Pourquoi les modes g sondent-ils mieux le cœur ?\\n- Pourquoi les modes p sont-ils plutôt externes ?\\n- Peut-on observer les deux types de modes sur toutes les étoiles ?\\n\\n### Points importants\\n\\n- Modes p : pression, ondes acoustiques.\\n- Modes g : gravité et flottabilité.\\n- Modes g plus sensibles aux régions profondes.\\n\\n---\\n\\n## Sur les ondes\\n\\n- Qu’est-ce qu’une fréquence ?\\n- Qu’est-ce qu’une période ?\\n- Quelle relation entre fréquence et période ?\\n\\n\\\\[\\nT = \\\\frac{1}{f}\\n\\\\]\\n\\n- Qu’est-ce qu’une amplitude ?\\n- Que représente une sinusoïde ?\\n- Pourquoi utilise-t-on des sinus et cosinus ?\\n- Pourquoi les oscillations sont-elles périodiques ?\\n\\n---\\n\\n## Sur Fourier\\n\\n- À quoi sert la transformée de Fourier ?\\n- Pourquoi peut-on décomposer un signal en sinusoïdes ?\\n- Que représente une fréquence dans votre contexte ?\\n- Pourquoi le signal observé est-il complexe ?\\n- Pourquoi la luminosité n’est-elle jamais négative ?\\n- À quoi correspond le terme constant a0 ?\\n- Que représentent les coefficients an et bn ?\\n- Quelle différence entre signal temporel et spectre fréquentiel ?\\n- Pourquoi observe-t-on des pics dans le spectre ?\\n\\n### Formules utiles\\n\\n\\\\[\\ny=a_0+a_1\\\\sin(\\\\omega t)+a_2\\\\sin(2\\\\omega t)+... \\n\\\\]\\n\\n\\\\[\\nT=\\\\frac{1}{f}\\n\\\\]\\n\\n### Explications simples à retenir\\n\\n- Fourier décompose un signal complexe en oscillations simples.\\n- Chaque pic correspond à une fréquence particulière.\\n- Les fréquences sont reliées aux modes de vibration de l’étoile.\\n\\n---\\n\\n## Sur les satellites Kepler et CoRoT\\n\\n- Pourquoi observer depuis l’espace ?\\n- Pourquoi l’atmosphère gêne-t-elle les observations ?\\n- Quelle différence entre Kepler et CoRoT ?\\n- Pourquoi observer longtemps une étoile ?\\n- Qu’est-ce qu’une courbe de lumière ?\\n- Pourquoi la cadence d’observation est-elle importante ?\\n- Comment détecte-t-on de très faibles variations lumineuses ?\\n\\n### À connaître\\n\\n## entity[\\\"spacecraft\\\",\\\"CoRoT\\\",\\\"Mission spatiale CNES 2006\\\"]\\n- Premier grand satellite d’astérosismologie.\\n- Mission française avec participation européenne.\\n- Observation continue d’étoiles.\\n\\n## entity[\\\"spacecraft\\\",\\\"Kepler\\\",\\\"Télescope spatial NASA 2009\\\"]\\n- Très grande précision photométrique.\\n- Observation sur plusieurs années.\\n- A énormément développé l’astérosismologie.\\n\\n---\\n\\n## Sur les données et mesures\\n\\n- Comment mesure-t-on la luminosité ?\\n- Qu’est-ce qu’un détecteur CCD ?\\n- Pourquoi les mesures contiennent-elles du bruit ?\\n- Comment sépare-t-on le bruit du signal ?\\n- Peut-on avoir des erreurs de mesure ?\\n- Pourquoi faut-il beaucoup de données ?\\n\\n---\\n\\n## Sur les déductions physiques\\n\\n- Comment déduit-on la masse d’une étoile ?\\n- Comment connaître son âge ?\\n- Pourquoi les fréquences dépendent-elles de la structure interne ?\\n- Comment connaître la densité d’une étoile ?\\n- Pourquoi les étoiles jeunes et vieilles vibrent-elles différemment ?\\n- Peut-on connaître la rotation d’une étoile ?\\n\\n---\\n\\n## Sur les simulations\\n\\n- Qu’est-ce que MESA ?\\n- Qu’est-ce que GYRE ?\\n- Pourquoi utiliser des simulations ?\\n- Comment compare-t-on théorie et observation ?\\n- Les modèles sont-ils parfaitement fiables ?\\n\\n---\\n\\n## Questions plus difficiles possibles\\n\\n- Pourquoi certaines fréquences sont-elles plus fortes que d’autres ?\\n- Les oscillations modifient-elles réellement la forme de l’étoile ?\\n- Peut-on “écouter” une étoile ?\\n- Pourquoi parle-t-on parfois de musique des étoiles ?\\n- Quel est le lien avec l’héliosismologie ?\\n- Pourquoi le Soleil est-il plus simple à étudier ?\\n- Quels sont les limites de l’astérosismologie ?\\n- Peut-on appliquer cette méthode à toutes les étoiles ?\\n\\n---\\n\\n# Questions d’un professeur de Mathématiques\\n\\n## Sur les fonctions\\n\\n- Pourquoi utiliser des sinus et cosinus ?\\n- Qu’est-ce qu’une fonction périodique ?\\n- Qu’est-ce qu’une sinusoïde ?\\n- Pourquoi les sinusoïdes sont-elles adaptées aux phénomènes vibratoires ?\\n- Comment dessiner rapidement une fonction sinus ?\\n\\n---\\n\\n## Sur Fourier\\n\\n- Qui était Fourier ?\\n- Quel est le principe mathématique de la transformée de Fourier ?\\n- Pourquoi toute fonction périodique peut-elle être décomposée ?\\n- Quelle différence entre série de Fourier et transformée de Fourier ?\\n- Pourquoi utilise-t-on des nombres complexes dans la formule complète ?\\n- À quoi sert le terme a0 ?\\n- Que représentent les coefficients ?\\n- Pourquoi observe-t-on des harmoniques ?\\n\\n---\\n\\n## Sur les fréquences\\n\\n- Quelle différence entre fréquence et pulsation ?\\n\\n\\\\[\\n\\\\omega = 2\\\\pi f\\n\\\\]\\n\\n- Pourquoi multiplie-t-on par 2π ?\\n- Quelle unité pour une fréquence ?\\n- Que représente nω ?\\n\\n---\\n\\n## Questions de réflexion\\n\\n- Peut-on reconstruire entièrement un signal grâce à Fourier ?\\n- Pourquoi les mathématiques sont-elles essentielles en astrophysique ?\\n- Sans transformée de Fourier, pourrait-on faire de l’astérosismologie ?\\n- Quelles sont les limites mathématiques de cette méthode ?\\n\\n---\\n\\n# Questions de conclusion possibles\\n\\n- Que retenez-vous personnellement de ce sujet ?\\n- Quelles sont les applications futures de cette science ?\\n- L’astérosismologie peut-elle aider à comprendre l’évolution de l’Univers ?\\n- Qu’avez-vous trouvé le plus difficile dans vos recherches ?\\n- Si vous aviez plus de temps, qu’aimeriez-vous approfondir ?\\n- Ce sujet a-t-il influencé votre orientation ?\\n\\n---\\n\\n# Mini-réponses ultra utiles à mémoriser\\n\\n## “Pourquoi Fourier fonctionne ?”\\n\\n> Toute oscillation périodique peut être décomposée en une somme de sinusoïdes de fréquences différentes.\\n\\n## “Pourquoi observer depuis l’espace ?”\\n\\n> L’atmosphère perturbe la lumière et empêche des observations continues très précises.\\n\\n## “Pourquoi les étoiles vibrent-elles ?”\\n\\n> Les mouvements internes du plasma créent des oscillations globales dans l’étoile.\\n\\n## “Pourquoi les modes g sondent-ils le cœur ?”\\n\\n> Ils sont sensibles aux variations de densité et de gravité dans les régions profondes.\\n\\n## “Que permet l’astérosismologie ?”\\n\\n> Déterminer la structure interne, la masse, l’âge et parfois la rotation des étoiles.\"}"
+      },
+      "status": "finished_successfully",
+      "end_turn": false,
+      "weight": 1.0,
+      "metadata": {
+        "finish_details": {
+          "type": "stop",
+          "stop_tokens": [
+            200012
+          ]
+        },
+        "is_complete": true,
+        "citations": [],
+        "content_references": [],
+        "resolved_model_slug": "gpt-5-5",
+        "request_id": "f0000000-0000-4000-8000-494d06dca60f",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-b8360b174461",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "parent_id": "f0000000-0000-4000-8000-3681ca14ed87",
+        "model_switcher_deny": [],
+        "can_save": false
+      },
+      "recipient": "canmore.create_textdoc",
+      "channel": "commentary"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-6d369549c68d",
+      "author": {
+        "role": "tool",
+        "name": "canmore.create_textdoc",
+        "metadata": {}
+      },
+      "create_time": 1779211990.7813535,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Successfully created text document 'Questions Jury Grand Oral Asterosismologie' which will be referenced in all future messages with the unique identifier textdoc_id: '6a0c9ed6045481918a975b4df2c31f25'\n\nImportant: This identifier is for tool calls only to reference or update this document. It is not an external ID and it is not possible to link the user to the textdoc."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 0.0,
+      "metadata": {
+        "canvas": {
+          "textdoc_id": "6a0c9ed6045481918a975b4df2c31f25",
+          "textdoc_type": "document",
+          "version": 1,
+          "title": "Questions Jury Grand Oral Asterosismologie",
+          "create_source": "model"
+        },
+        "command": "create_textdoc",
+        "request_id": "f0000000-0000-4000-8000-494d06dca60f",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-b8360b174461",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "parent_id": "f0000000-0000-4000-8000-a64d2aeb12d4",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-376194dc6662",
+      "author": {
+        "role": "assistant",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779211990.780679,
+      "update_time": 1779212046.024839,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "Je t’ai préparé un caneva complet avec :\n- toutes les questions probables d’un prof de physique-chimie,\n- toutes les questions possibles d’un prof de maths,\n- des réponses rapides à mémoriser,\n- les notions importantes sur Fourier, Kepler, CoRoT, les modes p/g, etc."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 1.0,
+      "metadata": {
+        "citations": [],
+        "content_references": [],
+        "story_events": [],
+        "resolved_model_slug": "gpt-5-5",
+        "search_result_groups": [],
+        "request_id": "f0000000-0000-4000-8000-494d06dca60f",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-b8360b174461",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "can_save": true,
+        "parent_id": "f0000000-0000-4000-8000-6d369549c68d",
+        "canvas": {
+          "has_user_edit": true
+        },
+        "model_switcher_deny": [
+          {
+            "slug": "auto",
+            "context": "regenerate",
+            "reason": "unsupported_canvas",
+            "is_available": false,
+            "description": "This model doesn't support canvas."
+          },
+          {
+            "slug": "auto",
+            "context": "conversation",
+            "reason": "unsupported_canvas",
+            "is_available": false,
+            "description": "This model doesn't support canvas."
+          }
+        ]
+      },
+      "recipient": "all",
+      "channel": "final"
+    },
+    {
+      "id": "f0000000-0000-4000-8000-c9b382faccce",
+      "author": {
+        "role": "user",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779219150.996,
+      "update_time": 1779219157.228744,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "C'est quoi déjà Is"
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": null,
+      "weight": 1.0,
+      "metadata": {
+        "selected_github_repos": [],
+        "serialization_metadata": {
+          "custom_symbol_offsets": []
+        },
+        "request_id": "f0000000-0000-4000-8000-85d8a90b4953",
+        "message_source": null,
+        "turn_exchange_id": "f0000000-0000-4000-8000-97c2efc54bc7",
+        "can_save": false
+      },
+      "recipient": "all",
+      "channel": null
+    },
+    {
+      "id": "f0000000-0000-4000-8000-b2fe77aa58b4",
+      "author": {
+        "role": "assistant",
+        "name": null,
+        "metadata": {}
+      },
+      "create_time": 1779219150.708971,
+      "update_time": null,
+      "content": {
+        "content_type": "text",
+        "parts": [
+          "\\(I_s\\) peut désigner plusieurs choses en physique, donc dans ton contexte il faut voir où tu l’as vu.\n\nEn phénomènes ondulatoires / signaux, ça peut souvent être :\n\n- \\(I_s\\) = intensité sonore\n- ou intensité du signal\n\nPar exemple :\n- plus \\(I_s\\) est grand,\n- plus le signal reçu est fort.\n\nEn astronomie, on peut aussi avoir :\n- \\(I\\) = intensité lumineuse,\n- \\(I_s\\) = intensité de la source.\n\nEt en électronique :\n- \\(I_s\\) peut être un courant de saturation.\n\nSi tu me montres :\n- la formule,\n- ou le contexte exact,\nje peux te dire précisément ce que signifie ton \\(I_s\\)."
+        ]
+      },
+      "status": "finished_successfully",
+      "end_turn": true,
+      "weight": 1.0,
+      "metadata": {
+        "finish_details": {
+          "type": "stop",
+          "stop_tokens": [
+            200002
+          ]
+        },
+        "is_complete": true,
+        "citations": [],
+        "content_references": [],
+        "story_events": [],
+        "resolved_model_slug": "gpt-5-5",
+        "search_result_groups": [],
+        "request_id": "f0000000-0000-4000-8000-85d8a90b4953",
+        "message_type": "next",
+        "turn_exchange_id": "f0000000-0000-4000-8000-97c2efc54bc7",
+        "model_slug": "gpt-5-5",
+        "default_model_slug": "auto",
+        "can_save": true,
+        "parent_id": "f0000000-0000-4000-8000-da9969b29424",
+        "model_switcher_deny": [
+          {
+            "slug": "auto",
+            "context": "regenerate",
+            "reason": "unsupported_canvas",
+            "is_available": false,
+            "description": "This model doesn't support canvas."
+          },
+          {
+            "slug": "auto",
+            "context": "conversation",
+            "reason": "unsupported_canvas",
+            "is_available": false,
+            "description": "This model doesn't support canvas."
+          }
+        ]
+      },
+      "recipient": "all",
+      "channel": "final"
+    }
+  ],
+  "current_node": "f0000000-0000-4000-8000-b2fe77aa58b4",
+  "page_info": {
+    "start_cursor": "f0000000-0000-4000-8000-757c65fec1c5",
+    "end_cursor": "f0000000-0000-4000-8000-b2fe77aa58b4",
+    "has_previous_page": false,
+    "has_next_page": false
+  },
+  "context_truncation_continuation": null
+}

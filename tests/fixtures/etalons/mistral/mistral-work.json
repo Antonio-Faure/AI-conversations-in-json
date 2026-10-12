@@ -4,8 +4,8 @@
   "title": "Interaction sans texte",
   "url": "https://chat.mistral.ai/work/f0000000-0000-4000-8000-0dbcc445d9cd",
   "model": "GLM 5.3",
-  "started_at": "2026-09-24T14:27:00Z",
-  "last_message_at": "2026-09-24T17:36:00Z",
+  "started_at": "2026-09-24T12:27:39Z",
+  "last_message_at": "2026-09-24T15:36:16Z",
   "exported_at": "2026-09-28T07:34:32Z",
   "messages": [
     {
@@ -14,13 +14,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T14:27:00Z",
-      "texte": "Extrais le texte de cette image. Réponds UNIQUEMENT avec le texte extrait, sans guillemets ni autre texte.\n\n![image.png](https://mistralaichatupprodswe.blob.core.windows.net/chat-images/c1/33/cb/f0000000-0000-4000-8000-de394ab63e47/f0000000-0000-4000-8000-409c183262b4/f0000000-0000-4000-8000-4f1fe6859123?REDACTED)",
+      "timestamp": "2026-09-24T12:27:39Z",
+      "texte": "Extrais le texte de cette image. Réponds UNIQUEMENT avec le texte extrait, sans guillemets ni autre texte.\n\n![image.png](images/6f2c29d79ba1162fbe85.png)",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -28,7 +29,7 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T14:27:00Z",
+      "timestamp": "2026-09-24T12:27:42Z",
       "texte": "L'image ne contient pas de texte lisible. Elle montre un dégradé de couleurs en cercle central entouré de bandes verticales colorées (rouge, orange, jaune, vert, bleu, violet) et un petit rectangle noir à bordure blanche. Aucun texte n'a pu être extrait.",
       "code_blocks": [],
       "reasoning": "Try read_file.\n\nOCR gave a repetitive A–Z list, vision model says no visible text. Ask vision again more specifically? Likely image is a chart of alphabet. Best answer: the extracted text is the alphabet repeated. Provide concise text. Given repetition, output a representative transcription? The user wants extracted text only. The OCR result is essentially repeated alphabets. I'll output the text as extracted, condensed? It's enormous. Probably the image is an alphabet chart. Vision says no text. Conflicting. I'll do one more targeted vision query.",
@@ -37,7 +38,8 @@
       "tools": [
         "Analyse d'image",
         "Lecture de fichier"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -45,13 +47,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T14:28:00Z",
-      "texte": "Extrais le texte du fichier document.pdf. Réponds UNIQUEMENT avec le texte extrait, sans autre texte.\n\n[document.pdf](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/f0000000-0000-4000-8000-de394ab63e47/f0000000-0000-4000-8000-409c183262b4/f0000000-0000-4000-8000-09af46f4853b?REDACTED)",
+      "timestamp": "2026-09-24T12:28:14Z",
+      "texte": "Extrais le texte du fichier document.pdf. Réponds UNIQUEMENT avec le texte extrait, sans autre texte.\n\n[document.pdf](files/0e07461a11627c508acc.pdf)",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -59,7 +62,7 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T14:28:00Z",
+      "timestamp": "2026-09-24T12:28:14Z",
       "texte": "Document d'étalonnage\n\nCe document teste le parsing des pieces jointes.\n\nCle a valeur : alpha=1, beta=2, gamma=3.",
       "code_blocks": [],
       "reasoning": "",
@@ -67,7 +70,8 @@
       "sources": [],
       "tools": [
         "Lecture de fichier"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -75,13 +79,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T14:28:00Z",
-      "texte": "Lis le fichier donnees.json et extrais les noms des personnes sous forme de liste JSON. Affiche UNIQUEMENT la liste, sans texte avant ou après.\n\n[donnees.json](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/f0000000-0000-4000-8000-de394ab63e47/f0000000-0000-4000-8000-409c183262b4/f0000000-0000-4000-8000-65910853c230?REDACTED)",
+      "timestamp": "2026-09-24T12:28:26Z",
+      "texte": "Lis le fichier donnees.json et extrais les noms des personnes sous forme de liste JSON. Affiche UNIQUEMENT la liste, sans texte avant ou après.\n\n[donnees.json](files/19f6138dc913f8a75c21.json)",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -89,13 +94,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T14:28:00Z",
+      "timestamp": "2026-09-24T12:28:26Z",
       "texte": "[]",
       "code_blocks": [],
       "reasoning": "File has no persons. Output []? The file content has no person names. Answer with empty list.",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -103,13 +109,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T14:28:00Z",
+      "timestamp": "2026-09-24T12:28:40Z",
       "texte": "Dans ce texte : \"Section 1: Contenu A. Section 2: Contenu B. Section 3: Contenu C.\", liste les titres de section. Réponds avec une liste à puces de 3 éléments max.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -117,13 +124,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T14:28:00Z",
+      "timestamp": "2026-09-24T12:28:41Z",
       "texte": "- Section 1\n- Section 2\n- Section 3",
       "code_blocks": [],
       "reasoning": "Extract section titles. Titles are \"Section 1\", \"Section 2\", \"Section 3\".",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -131,13 +139,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T14:29:00Z",
-      "texte": "Transcris cet audio. Réponds UNIQUEMENT avec le texte transcrit, sans guillemets ni autre texte.\n\n[audio.mp3](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/f0000000-0000-4000-8000-de394ab63e47/f0000000-0000-4000-8000-409c183262b4/f0000000-0000-4000-8000-8871f1637184?REDACTED)",
+      "timestamp": "2026-09-24T12:29:03Z",
+      "texte": "Transcris cet audio. Réponds UNIQUEMENT avec le texte transcrit, sans guillemets ni autre texte.\n\n[audio.mp3](files/4559cd1ef5994acac060.mp3)",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -145,7 +154,7 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:51:00Z",
+      "timestamp": "2026-09-24T14:51:30Z",
       "texte": "La transcription est vide. Le fichier audio ne contient aucune piste audible (57 octets, aucun contenu transcrit).",
       "code_blocks": [],
       "reasoning": "No audible content; file is 57 bytes, essentially empty.",
@@ -153,7 +162,8 @@
       "sources": [],
       "tools": [
         "Lecture de fichier"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -161,13 +171,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:51:00Z",
-      "texte": "Utilise du code pour lire le fichier notes.txt et afficher son contenu. Réponds UNIQUEMENT avec le contenu du fichier.\n\n[notes.txt](https://mistralaichatupprodswe.blob.core.windows.net/chat-documents/c1/33/cb/f0000000-0000-4000-8000-de394ab63e47/f0000000-0000-4000-8000-409c183262b4/f0000000-0000-4000-8000-554c8f4f0c71?REDACTED)",
+      "timestamp": "2026-09-24T14:51:42Z",
+      "texte": "Utilise du code pour lire le fichier notes.txt et afficher son contenu. Réponds UNIQUEMENT avec le contenu du fichier.\n\n[notes.txt](files/2d11ee5be76d67044324.txt)",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -175,7 +186,7 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:51:00Z",
+      "timestamp": "2026-09-24T14:51:43Z",
       "texte": "Document d'etalonnage.\n\n- premiere puce\n- deuxieme puce\n\n| Cle | Valeur |\n| --- | --- |\n| a | 1 |\n| b | 2 |",
       "code_blocks": [],
       "reasoning": "",
@@ -183,7 +194,8 @@
       "sources": [],
       "tools": [
         "Lecture de fichier"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -191,13 +203,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:51:00Z",
+      "timestamp": "2026-09-24T14:51:57Z",
       "texte": "Crée un Canvas de type text/markdown nommé \"rapport\" avec le contenu \"# Rapport de test\\n\\nCeci est un rapport.\". Confirme UNIQUEMENT par \"Canvas rapport créé\".",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -205,7 +218,7 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:51:00Z",
+      "timestamp": "2026-09-24T14:51:57Z",
       "texte": "Canvas rapport créé.",
       "code_blocks": [],
       "reasoning": "Load canvas skill first, then create.",
@@ -216,7 +229,8 @@
       "tools": [
         "Compétence",
         "Canvas"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -224,13 +238,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:52:00Z",
+      "timestamp": "2026-09-24T14:52:12Z",
       "texte": "L'outil de génération d'images est-il disponible ? Si oui, génère une image avec le prompt \"cercle rouge\" et confirme par \"Image générée\". Sinon, réponds \"Non disponible\".",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -238,7 +253,7 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:52:00Z",
+      "timestamp": "2026-09-24T14:52:13Z",
       "texte": "Non disponible.",
       "code_blocks": [],
       "reasoning": "Check image_generation connector.",
@@ -247,7 +262,8 @@
       "tools": [
         "Recherche d'outil",
         "Génération d'image"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -255,13 +271,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:53:00Z",
+      "timestamp": "2026-09-24T14:53:14Z",
       "texte": "Affiche une vidéo directement dans le chat. Réponds UNIQUEMENT avec \"Impossible\".",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -269,13 +286,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:53:00Z",
+      "timestamp": "2026-09-24T14:53:14Z",
       "texte": "Impossible.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -283,13 +301,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:53:00Z",
+      "timestamp": "2026-09-24T14:53:24Z",
       "texte": "Affiche une liste à puces de 2 éléments, chacun ayant 2 sous-éléments imbriqués. Rien d'autre.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -297,13 +316,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:53:00Z",
+      "timestamp": "2026-09-24T14:53:24Z",
       "texte": "- Élément 1\n  - Sous-élément 1a\n  - Sous-élément 1b\n- Élément 2\n  - Sous-élément 2a\n  - Sous-élément 2b",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -311,13 +331,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T16:53:00Z",
+      "timestamp": "2026-09-24T14:53:38Z",
       "texte": "Crée un fichier texte téléchargeable nommé notes.txt contenant « Bonjour ». Fournis le fichier.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -325,7 +346,7 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T17:35:00Z",
+      "timestamp": "2026-09-24T15:35:55Z",
       "texte": "J'ai créé le fichier notes.txt contenant « Bonjour », présenté dans un canvas. Utilisez le contrôle d'export ou de téléchargement du canvas pour récupérer le fichier. Il n'existe pas d'autre mécanisme de téléchargement direct dans ce chat.",
       "code_blocks": [],
       "reasoning": "No download path exists. Can create a canvas instead, or explain. A canvas of text/markdown could be exportable. Simplest: create the file and note there's no direct download mechanism; canvas export is the available route. I could create a canvas named \"notes\" with content \"Bonjour\".",
@@ -335,7 +356,8 @@
       "sources": [],
       "tools": [
         "Canvas"
-      ]
+      ],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -343,13 +365,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T17:36:00Z",
+      "timestamp": "2026-09-24T15:36:00Z",
       "texte": "Affiche une ligne avec 3 emojis, puis une ligne en arabe et une ligne en chinois. Rien d'autre.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -357,13 +380,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T17:36:00Z",
+      "timestamp": "2026-09-24T15:36:01Z",
       "texte": "😀 🌟 🚀\nمرحبا بك\n你好，世界",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -371,13 +395,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T17:36:00Z",
+      "timestamp": "2026-09-24T15:36:16Z",
       "texte": "Résous en montrant explicitement ton raisonnement étape par étape, puis donne la réponse : un train parcourt 120 km en 1 h 30 ; quelle est sa vitesse moyenne ?",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-0dbcc445d9cd",
@@ -385,13 +410,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-24T17:36:00Z",
+      "timestamp": "2026-09-24T15:36:16Z",
       "texte": "Étape 1 : convertir la durée en heures.\n1 h 30 = 1,5 h.\n\nÉtape 2 : appliquer la formule de la vitesse moyenne.\nv = distance / durée = 120 / 1,5.\n\nÉtape 3 : calculer.\n120 / 1,5 = 80.\n\nRéponse : la vitesse moyenne est de 80 km/h.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     }
   ]
 }

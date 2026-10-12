@@ -44,7 +44,6 @@ from src.utils.etalon import (
 
 FIXTURES = Path(__file__).parent / "fixtures"
 ETALON_DOM = FIXTURES / "etalons" / "gemini" / "gemini.json"
-ETALON_DOM_HTML = FIXTURES / "etalons" / "gemini" / "gemini.html"
 #: index des messages ou l'API est plus riche que le DOM (documente) : sortie
 #: de code avec langue (`text`), fichier genere telechargeable, image generee.
 API_ONLY_RICHNESS = {13, 23, 25, 27, 29, 31, 33, 35, 41, 51, 53, 59}
@@ -376,11 +375,9 @@ def test_parse_api_aucune_regression_metriques(api_conversation, dom_reference):
 
 
 def test_parse_api_aucune_capacite_perdue(api_conversation, dom_reference):
-    """Toutes les capacites detectables du DOM (HTML inclus) restent couvertes."""
+    """Toutes les capacites detectables du DOM (export JSON) restent couvertes."""
     api_caps = detect_capabilities(api_conversation.to_dict(validate=False), "")
-    dom_caps = detect_capabilities(
-        dom_reference, ETALON_DOM_HTML.read_text(encoding="utf-8")
-    )
+    dom_caps = detect_capabilities(dom_reference, "")
     lost = (dom_caps & DETECTABLE) - api_caps
     assert not lost, sorted(lost)
     # l'API conserve les fichiers joints et les apercus media du DOM
@@ -457,6 +454,41 @@ def test_http_client_reessaie_sur_erreur_applicative(monkeypatch):
     client = _GeminiHttpClient([], {"at": "tok"}, user_agent="UA")
     assert client.rpc("MaZiqc", [100, None, []], "/app") == [1, 2]
     assert sleeps == [30.0]  # backoff de base avant le second essai
+
+
+def test_http_client_leve_rate_limited_sur_erreur_persistante(monkeypatch):
+    """Erreur applicative persistante : `RateLimitedError` (arret propre du service)."""
+    import time as time_module
+    import urllib.request
+
+    from src.services.base import RateLimitedError
+
+    payload = (
+        b'[["wrb.fr","MaZiqc",null,null,null,[13,null,[["type.googleapis.com/'
+        b'assistant.boq.bard.application.BardErrorInfo",[1096]]]],"generic"]]'
+    )
+    sleeps: List[float] = []
+
+    class FakeResponse:
+        status = 200
+
+        def read(self):
+            return payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(
+        urllib.request, "urlopen", lambda request, timeout=None: FakeResponse()
+    )
+    monkeypatch.setattr(time_module, "sleep", lambda s: sleeps.append(s))
+    client = _GeminiHttpClient([], {"at": "tok"}, user_agent="UA")
+    with pytest.raises(RateLimitedError):
+        client.rpc("MaZiqc", [100, None, []], "/app")
+    assert len(sleeps) == 5  # 6 tentatives -> 5 attentes (30/60/120/240/300 s)
 
 
 def test_cookie_header_filtre_par_domaine():

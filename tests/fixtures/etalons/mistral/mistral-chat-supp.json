@@ -4,8 +4,8 @@
   "title": "Formatting Text Styles",
   "url": "https://chat.mistral.ai/chat/f0000000-0000-4000-8000-50d7d0108767",
   "model": "GLM 5.3",
-  "started_at": "2026-09-26T03:16:00Z",
-  "last_message_at": "2026-09-26T03:18:00Z",
+  "started_at": "2026-09-26T01:16:29Z",
+  "last_message_at": "2026-09-26T01:18:09Z",
   "exported_at": "2026-09-27T22:08:54Z",
   "messages": [
     {
@@ -14,13 +14,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:16:00Z",
+      "timestamp": "2026-09-26T01:16:29Z",
       "texte": "Affiche la phrase suivante avec \"important\" en gras, \"secondaire\" en italique et \"inutile\" barré : \"Ce mot est important, ce mot est secondaire, et ce mot est inutile.\"",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -28,13 +29,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:16:00Z",
-      "texte": "Ce mot est important, ce mot est secondaire, et ce mot est inutile.",
+      "timestamp": "2026-09-26T01:16:29Z",
+      "texte": "Ce mot est **important**, ce mot est *secondaire*, et ce mot est ~~inutile~~.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -42,13 +44,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:16:00Z",
+      "timestamp": "2026-09-26T01:16:41Z",
       "texte": "Affiche une liste numérotée avec 3 étapes : \"Première étape\", \"Deuxième étape\", \"Troisième étape\".",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -56,13 +59,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:16:00Z",
+      "timestamp": "2026-09-26T01:16:42Z",
       "texte": "1. Première étape\n2. Deuxième étape\n3. Troisième étape",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -70,13 +74,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:16:00Z",
+      "timestamp": "2026-09-26T01:16:54Z",
       "texte": "Affiche la citation suivante : \"La vie, c'est comme une boîte de chocolats.\" — Forrest Gump. Utilise le format Markdown pour les citations.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -84,13 +89,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:16:00Z",
+      "timestamp": "2026-09-26T01:16:54Z",
       "texte": "> La vie, c'est comme une boîte de chocolats. — Forrest Gump",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -98,13 +104,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
+      "timestamp": "2026-09-26T01:17:05Z",
       "texte": "Affiche un séparateur horizontal.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -112,13 +119,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
+      "timestamp": "2026-09-26T01:17:06Z",
       "texte": "---\n\n##",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -126,13 +134,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
+      "timestamp": "2026-09-26T01:17:18Z",
       "texte": "Affiche la phrase suivante avec \"print('Hello')\" en code en ligne : \"Pour afficher un message, utilise print('Hello').\"",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -140,13 +149,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
-      "texte": "Pour afficher un message, utilise print('Hello').",
+      "timestamp": "2026-09-26T01:17:18Z",
+      "texte": "Pour afficher un message, utilise `print('Hello')`.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -154,13 +164,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
+      "timestamp": "2026-09-26T01:17:31Z",
       "texte": "Affiche un tableau Markdown avec 2 colonnes (Nom, Âge) et 2 lignes (Alice, 25) et (Bob, 30).",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -168,13 +179,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
-      "texte": "Exemple de tableau\n\n| Nom | Âge |\n| --- | --- |\n| Alice | 25 |\n| Bob | 30 |",
+      "timestamp": "2026-09-26T01:17:31Z",
+      "texte": "Exemple de tableau\n\n| Nom   | Âge |\n|-------|-----|\n| Alice | 25  |\n| Bob   | 30  |",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -182,13 +194,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
+      "timestamp": "2026-09-26T01:17:43Z",
       "texte": "Affiche la formule inline pour E = mc².",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -196,13 +209,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
-      "texte": "Voici la formule : $E = mc^2$ .",
+      "timestamp": "2026-09-26T01:17:43Z",
+      "texte": "Voici la formule : $E = mc^2$.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -210,13 +224,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
+      "timestamp": "2026-09-26T01:17:55Z",
       "texte": "Affiche le système d'équations suivant en LaTeX : x + y = 1 et 2x - y = 3.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -224,13 +239,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:17:00Z",
+      "timestamp": "2026-09-26T01:17:56Z",
       "texte": "Voici le système d'équations en LaTeX :\n\n$$\\begin{cases}\nx + y = 1 \\\\\n2x - y = 3\n\\end{cases}$$",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -238,13 +254,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:18:00Z",
+      "timestamp": "2026-09-26T01:18:09Z",
       "texte": "Affiche un exemple minimal de code Python qui calcule la somme de 2 et 3, avec coloration syntaxique. Explique en une phrase.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-50d7d0108767",
@@ -252,8 +269,8 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-26T03:18:00Z",
-      "texte": "```python\nsomme = 2 + 3\nprint(somme)  # Affiche 5\n```\n\nCe code calcule et affiche la somme de 2 et 3.",
+      "timestamp": "2026-09-26T01:18:09Z",
+      "texte": "```python\nsomme = 2 + 3\nprint(somme)  # Affiche 5\n```\nCe code calcule et affiche la somme de 2 et 3.",
       "code_blocks": [
         {
           "language": "python",
@@ -263,7 +280,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     }
   ]
 }

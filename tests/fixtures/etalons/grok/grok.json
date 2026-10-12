@@ -6,7 +6,7 @@
   "model": "grok-3",
   "started_at": "2026-09-24T17:50:33Z",
   "last_message_at": "2026-09-24T17:54:21Z",
-  "exported_at": "2026-09-27T22:01:54Z",
+  "exported_at": "2026-10-11T16:45:15Z",
   "messages": [
     {
       "conversation_id": "f0000000-0000-4000-8000-54304fc377d5",
@@ -20,7 +20,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-54304fc377d5",
@@ -34,7 +35,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-54304fc377d5",
@@ -48,7 +50,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-54304fc377d5",
@@ -62,7 +65,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-54304fc377d5",
@@ -76,7 +80,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-54304fc377d5",
@@ -90,7 +95,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-54304fc377d5",
@@ -104,7 +110,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-54304fc377d5",
@@ -118,7 +125,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     }
   ]
 }

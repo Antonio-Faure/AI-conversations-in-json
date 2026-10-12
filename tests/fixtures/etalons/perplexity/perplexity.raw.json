@@ -1,0 +1,1983 @@
+{
+  "background_entries": [],
+  "entries": [
+    {
+      "backend_uuid": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "context_uuid": "f0000000-0000-4000-8000-4cdc56dbe031",
+      "uuid": "f0000000-0000-4000-8000-5bc459910106",
+      "frontend_context_uuid": "f0000000-0000-4000-8000-461580e460b4",
+      "frontend_uuid": "f0000000-0000-4000-8000-5bc459910106",
+      "status": "COMPLETED",
+      "thread_title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "related_queries": [],
+      "display_model": "turbo",
+      "user_selected_model": "turbo",
+      "personalized": false,
+      "mode": "COPILOT",
+      "query_str": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "search_focus": "internet",
+      "source": "default",
+      "updated_datetime": "2026-09-24T17:50:19.994661",
+      "read_write_token": "f0000000-0000-4000-8000-a0598cf8d1dc",
+      "step_type": "FINAL",
+      "author_id": "f0000000-0000-4000-8000-c41906c4d902",
+      "author_username": "antonetmil4193",
+      "author_image": "https://imagedelivery.net/MPdwyYSWT8IY7lxgN3x3Uw/f0000000-0000-4000-8000-72d7d24303e4/thumbnail",
+      "bookmark_state": "NOT_BOOKMARKED",
+      "thread_access": 1,
+      "thread_url_slug": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "query_source": "default",
+      "privacy_state": "NONE",
+      "gpt4": false,
+      "sources": {
+        "sources": [
+          "web"
+        ]
+      },
+      "entry_created_datetime": "2026-09-24T09:38:40.983468+00:00",
+      "entry_updated_datetime": "2026-09-24T09:38:41.584648+00:00",
+      "blocks": [
+        {
+          "intended_usage": "plan",
+          "plan_block": {
+            "progress": "DONE",
+            "goals": [
+              {
+                "id": "0",
+                "description": "# Titre principal\n\n## Sous-titre 1\n\n## Sous-titre 2",
+                "final": true,
+                "todo_task_status": "INCOMPLETE"
+              }
+            ],
+            "final": true
+          }
+        },
+        {
+          "intended_usage": "workflow_root",
+          "workflow_block": {
+            "version": "1.0",
+            "status": "WORKFLOW_COMPLETED",
+            "headline": "",
+            "started_at": "2026-09-24T09:38:40.983468+00:00",
+            "completed_at": "2026-09-24T09:38:41.519109+00:00",
+            "predicted_completion_at": "",
+            "steps": [
+              {
+                "status": "WORKFLOW_COMPLETED",
+                "title": "",
+                "items": [
+                  {
+                    "id": "01925ca9686949dabdd4ba137139bbab",
+                    "type": "WORKFLOW_ITEM_TEXT",
+                    "payload": {
+                      "text_payload": {
+                        "text": "# Titre principal\n\n## Sous-titre 1\n\n## Sous-titre 2",
+                        "chunks": [
+                          "# Titre principal\n\n## Sous-titre 1\n\n## Sous-tit",
+                          "re 2"
+                        ],
+                        "variant": "answer",
+                        "is_streaming": false
+                      }
+                    },
+                    "display_mode": "WORKFLOW_ITEM_ALWAYS_EXPAND",
+                    "variant": "answer"
+                  }
+                ],
+                "started_at": "",
+                "completed_at": "",
+                "unnest_items": true,
+                "source_tier": "SOURCE_TIER_DEFAULT",
+                "id": "01925ca9686949dabdd4ba137139bbab"
+              }
+            ],
+            "snapshots": []
+          }
+        },
+        {
+          "intended_usage": "answer_tabs",
+          "answer_tabs_block": {
+            "modes": [
+              {
+                "answer_mode_type": "ANSWER"
+              },
+              {
+                "answer_mode_type": "IMAGE",
+                "has_preview": false
+              }
+            ],
+            "reformulated_queries": []
+          }
+        },
+        {
+          "intended_usage": "pending_followups",
+          "pending_followups_block": {
+            "followups": []
+          }
+        }
+      ],
+      "access_level": "PRIVATE_READ",
+      "answer_modes": [
+        {
+          "answer_mode_type": "ANSWER"
+        },
+        {
+          "answer_mode_type": "IMAGE",
+          "has_preview": false
+        }
+      ],
+      "structured_answer_block_usages": [
+        "workflow_root"
+      ],
+      "reconnectable": false,
+      "classifier_results": {
+        "personal_search": false,
+        "skip_search": false,
+        "widget_type": "GENERAL",
+        "hide_nav": false,
+        "hide_sources": false,
+        "image_generation": false,
+        "time_widget": false,
+        "mhe_predictions": {
+          "skip_search": false,
+          "image_generation_intent": false,
+          "time_widget": false,
+          "places_search_intent": false,
+          "shopping_intent": false,
+          "image_preview": false,
+          "video_preview": false,
+          "study_intent": null,
+          "personal_search": false,
+          "weather_widget": false,
+          "finance_widget_gating": false,
+          "calculator_widget": false,
+          "comet_nav_widget_combined_target": false,
+          "finance_agent_gating": false
+        },
+        "mhe_predictions_full": {
+          "skip_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "image_generation_intent": {
+            "is_true": false,
+            "probability": 0.00017929077,
+            "threshold": 0.98
+          },
+          "time_widget": {
+            "is_true": false,
+            "probability": 0.0009384155,
+            "threshold": 0.8
+          },
+          "places_search_intent": {
+            "is_true": false,
+            "probability": 0.03564453,
+            "threshold": 0.75
+          },
+          "shopping_intent": {
+            "is_true": false,
+            "probability": 0.00088119507,
+            "threshold": 0.8
+          },
+          "image_preview": {
+            "is_true": false,
+            "probability": 0.0019836426,
+            "threshold": 0.42
+          },
+          "video_preview": {
+            "is_true": false,
+            "probability": 0.0004310608,
+            "threshold": 0.5
+          },
+          "study_intent": null,
+          "personal_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "skip_personal_search": {
+            "is_true": true,
+            "probability": 0.99609375,
+            "threshold": 0.95
+          },
+          "weather_widget": {
+            "is_true": false,
+            "probability": 0.018798828,
+            "threshold": 0.4
+          },
+          "finance_widget_gating": {
+            "is_true": false,
+            "probability": 0.00075531006,
+            "threshold": 0.53
+          },
+          "calculator_widget": {
+            "is_true": false,
+            "probability": 0.0007324219,
+            "threshold": 0.3
+          },
+          "comet_nav_widget_combined_target": {
+            "is_true": false,
+            "probability": 0.0075683594,
+            "threshold": 0.5
+          },
+          "domain_subdomain": {
+            "label": "WRITING/TECHNICAL_WRITING",
+            "probability": 0.64453125
+          },
+          "finance_agent_gating": {
+            "is_true": false,
+            "probability": 0.00014019012,
+            "threshold": 0.7
+          }
+        }
+      },
+      "search_implementation_mode": "multi_step",
+      "query_language": "fr",
+      "search_mode": "SEARCH",
+      "social_info": {
+        "view_count": 0,
+        "fork_count": 0,
+        "like_count": 0,
+        "user_likes": false
+      },
+      "featured_images": []
+    },
+    {
+      "backend_uuid": "f0000000-0000-4000-8000-63ba44260069",
+      "context_uuid": "f0000000-0000-4000-8000-4cdc56dbe031",
+      "uuid": "f0000000-0000-4000-8000-a07664c45df5",
+      "frontend_context_uuid": "f0000000-0000-4000-8000-461580e460b4",
+      "frontend_uuid": "f0000000-0000-4000-8000-a07664c45df5",
+      "status": "COMPLETED",
+      "thread_title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "related_queries": [],
+      "display_model": "turbo",
+      "user_selected_model": "turbo",
+      "personalized": false,
+      "mode": "COPILOT",
+      "query_str": "Écris une phrase contenant du texte en gras, en italique et barré. Réponds uniquement avec cette phrase.",
+      "search_focus": "internet",
+      "source": "default",
+      "updated_datetime": "2026-09-24T17:50:19.994661",
+      "read_write_token": "f0000000-0000-4000-8000-a0598cf8d1dc",
+      "step_type": "FINAL",
+      "thread_access": 1,
+      "thread_url_slug": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "query_source": "default",
+      "privacy_state": "NONE",
+      "gpt4": false,
+      "sources": {
+        "sources": [
+          "web"
+        ]
+      },
+      "entry_created_datetime": "2026-09-24T09:54:43.323850+00:00",
+      "entry_updated_datetime": "2026-09-24T09:54:44.126403+00:00",
+      "blocks": [
+        {
+          "intended_usage": "plan",
+          "plan_block": {
+            "progress": "DONE",
+            "goals": [
+              {
+                "id": "0",
+                "description": "Voici une phrase avec du texte **en gras**, *en italique* et ~~barré~~.",
+                "final": true,
+                "todo_task_status": "INCOMPLETE"
+              }
+            ],
+            "final": true
+          }
+        },
+        {
+          "intended_usage": "workflow_root",
+          "workflow_block": {
+            "version": "1.0",
+            "status": "WORKFLOW_COMPLETED",
+            "headline": "",
+            "started_at": "2026-09-24T09:54:43.323850+00:00",
+            "completed_at": "2026-09-24T09:54:43.963440+00:00",
+            "predicted_completion_at": "",
+            "steps": [
+              {
+                "status": "WORKFLOW_COMPLETED",
+                "title": "",
+                "items": [
+                  {
+                    "id": "49897d7e900348afbf452f72a35283f2",
+                    "type": "WORKFLOW_ITEM_TEXT",
+                    "payload": {
+                      "text_payload": {
+                        "text": "Voici une phrase avec du texte **en gras**, *en italique* et ~~barré~~.",
+                        "chunks": [
+                          "Voici une phrase avec du texte **en gras**, *en italique",
+                          "* et ~~barr",
+                          "é~~."
+                        ],
+                        "variant": "answer",
+                        "is_streaming": false
+                      }
+                    },
+                    "display_mode": "WORKFLOW_ITEM_ALWAYS_EXPAND",
+                    "variant": "answer"
+                  }
+                ],
+                "started_at": "",
+                "completed_at": "",
+                "unnest_items": true,
+                "source_tier": "SOURCE_TIER_DEFAULT",
+                "id": "49897d7e900348afbf452f72a35283f2"
+              }
+            ],
+            "snapshots": []
+          }
+        },
+        {
+          "intended_usage": "answer_tabs",
+          "answer_tabs_block": {
+            "modes": [
+              {
+                "answer_mode_type": "ANSWER"
+              },
+              {
+                "answer_mode_type": "IMAGE",
+                "has_preview": false
+              }
+            ],
+            "reformulated_queries": []
+          }
+        },
+        {
+          "intended_usage": "pending_followups",
+          "pending_followups_block": {
+            "followups": []
+          }
+        }
+      ],
+      "access_level": "PRIVATE_READ",
+      "answer_modes": [
+        {
+          "answer_mode_type": "ANSWER"
+        },
+        {
+          "answer_mode_type": "IMAGE",
+          "has_preview": false
+        }
+      ],
+      "structured_answer_block_usages": [
+        "workflow_root"
+      ],
+      "reconnectable": false,
+      "classifier_results": {
+        "personal_search": false,
+        "skip_search": false,
+        "widget_type": "GENERAL",
+        "hide_nav": false,
+        "hide_sources": false,
+        "image_generation": false,
+        "time_widget": false,
+        "mhe_predictions": {
+          "skip_search": false,
+          "image_generation_intent": false,
+          "time_widget": false,
+          "places_search_intent": false,
+          "shopping_intent": false,
+          "image_preview": false,
+          "video_preview": false,
+          "study_intent": null,
+          "personal_search": false,
+          "weather_widget": false,
+          "finance_widget_gating": false,
+          "calculator_widget": false,
+          "comet_nav_widget_combined_target": false,
+          "finance_agent_gating": false
+        },
+        "mhe_predictions_full": {
+          "skip_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "image_generation_intent": {
+            "is_true": false,
+            "probability": 0.00024604797,
+            "threshold": 0.98
+          },
+          "time_widget": {
+            "is_true": false,
+            "probability": 0.0003566742,
+            "threshold": 0.8
+          },
+          "places_search_intent": {
+            "is_true": false,
+            "probability": 0.022338867,
+            "threshold": 0.75
+          },
+          "shopping_intent": {
+            "is_true": false,
+            "probability": 0.0008049011,
+            "threshold": 0.8
+          },
+          "image_preview": {
+            "is_true": false,
+            "probability": 0.0039367676,
+            "threshold": 0.42
+          },
+          "video_preview": {
+            "is_true": false,
+            "probability": 0.0003452301,
+            "threshold": 0.5
+          },
+          "study_intent": null,
+          "personal_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "skip_personal_search": {
+            "is_true": true,
+            "probability": 1.0,
+            "threshold": 0.95
+          },
+          "weather_widget": {
+            "is_true": false,
+            "probability": 0.011352539,
+            "threshold": 0.4
+          },
+          "finance_widget_gating": {
+            "is_true": false,
+            "probability": 0.00045776367,
+            "threshold": 0.53
+          },
+          "calculator_widget": {
+            "is_true": false,
+            "probability": 0.00077819824,
+            "threshold": 0.3
+          },
+          "comet_nav_widget_combined_target": {
+            "is_true": false,
+            "probability": 0.018554688,
+            "threshold": 0.5
+          },
+          "domain_subdomain": {
+            "label": "WRITING/TECHNICAL_WRITING",
+            "probability": 0.38476562
+          },
+          "finance_agent_gating": {
+            "is_true": false,
+            "probability": 0.00012302399,
+            "threshold": 0.7
+          }
+        }
+      },
+      "search_implementation_mode": "multi_step",
+      "query_language": "fr",
+      "search_mode": "SEARCH"
+    },
+    {
+      "backend_uuid": "f0000000-0000-4000-8000-398c3edad4ac",
+      "context_uuid": "f0000000-0000-4000-8000-4cdc56dbe031",
+      "uuid": "f0000000-0000-4000-8000-49ac96f18068",
+      "frontend_context_uuid": "f0000000-0000-4000-8000-461580e460b4",
+      "frontend_uuid": "f0000000-0000-4000-8000-49ac96f18068",
+      "status": "COMPLETED",
+      "thread_title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "related_queries": [],
+      "display_model": "turbo",
+      "user_selected_model": "turbo",
+      "personalized": false,
+      "mode": "COPILOT",
+      "query_str": "Crée une liste à puces avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "search_focus": "internet",
+      "source": "default",
+      "updated_datetime": "2026-09-24T17:50:19.994661",
+      "read_write_token": "f0000000-0000-4000-8000-a0598cf8d1dc",
+      "step_type": "FINAL",
+      "thread_access": 1,
+      "thread_url_slug": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "query_source": "default",
+      "privacy_state": "NONE",
+      "gpt4": false,
+      "sources": {
+        "sources": [
+          "web"
+        ]
+      },
+      "entry_created_datetime": "2026-09-24T10:17:50.696816+00:00",
+      "entry_updated_datetime": "2026-09-24T10:17:51.479882+00:00",
+      "blocks": [
+        {
+          "intended_usage": "plan",
+          "plan_block": {
+            "progress": "DONE",
+            "goals": [
+              {
+                "id": "0",
+                "description": "- Premier élément\n- Deuxième élément\n- Troisième élément",
+                "final": true,
+                "todo_task_status": "INCOMPLETE"
+              }
+            ],
+            "final": true
+          }
+        },
+        {
+          "intended_usage": "workflow_root",
+          "workflow_block": {
+            "version": "1.0",
+            "status": "WORKFLOW_COMPLETED",
+            "headline": "",
+            "started_at": "2026-09-24T10:17:50.696816+00:00",
+            "completed_at": "2026-09-24T10:17:51.406743+00:00",
+            "predicted_completion_at": "",
+            "steps": [
+              {
+                "status": "WORKFLOW_COMPLETED",
+                "title": "",
+                "items": [
+                  {
+                    "id": "d6aa80934d874e1ab9a5d537b7eb1762",
+                    "type": "WORKFLOW_ITEM_TEXT",
+                    "payload": {
+                      "text_payload": {
+                        "text": "- Premier élément\n- Deuxième élément\n- Troisième élément",
+                        "chunks": [
+                          "- Premier élément\n- Deuxième élément\n- Troisième élé",
+                          "ment"
+                        ],
+                        "variant": "answer",
+                        "is_streaming": false
+                      }
+                    },
+                    "display_mode": "WORKFLOW_ITEM_ALWAYS_EXPAND",
+                    "variant": "answer"
+                  }
+                ],
+                "started_at": "",
+                "completed_at": "",
+                "unnest_items": true,
+                "source_tier": "SOURCE_TIER_DEFAULT",
+                "id": "d6aa80934d874e1ab9a5d537b7eb1762"
+              }
+            ],
+            "snapshots": []
+          }
+        },
+        {
+          "intended_usage": "answer_tabs",
+          "answer_tabs_block": {
+            "modes": [
+              {
+                "answer_mode_type": "ANSWER"
+              },
+              {
+                "answer_mode_type": "IMAGE",
+                "has_preview": false
+              }
+            ],
+            "reformulated_queries": []
+          }
+        },
+        {
+          "intended_usage": "pending_followups",
+          "pending_followups_block": {
+            "followups": []
+          }
+        }
+      ],
+      "access_level": "PRIVATE_READ",
+      "answer_modes": [
+        {
+          "answer_mode_type": "ANSWER"
+        },
+        {
+          "answer_mode_type": "IMAGE",
+          "has_preview": false
+        }
+      ],
+      "structured_answer_block_usages": [
+        "workflow_root"
+      ],
+      "reconnectable": false,
+      "classifier_results": {
+        "personal_search": false,
+        "skip_search": false,
+        "widget_type": "GENERAL",
+        "hide_nav": false,
+        "hide_sources": false,
+        "image_generation": false,
+        "time_widget": false,
+        "mhe_predictions": {
+          "skip_search": false,
+          "image_generation_intent": false,
+          "time_widget": false,
+          "places_search_intent": false,
+          "shopping_intent": false,
+          "image_preview": false,
+          "video_preview": false,
+          "study_intent": null,
+          "personal_search": false,
+          "weather_widget": false,
+          "finance_widget_gating": false,
+          "calculator_widget": false,
+          "comet_nav_widget_combined_target": false,
+          "finance_agent_gating": false
+        },
+        "mhe_predictions_full": {
+          "skip_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "image_generation_intent": {
+            "is_true": false,
+            "probability": 9.6321106e-05,
+            "threshold": 0.98
+          },
+          "time_widget": {
+            "is_true": false,
+            "probability": 0.00031471252,
+            "threshold": 0.8
+          },
+          "places_search_intent": {
+            "is_true": false,
+            "probability": 0.018798828,
+            "threshold": 0.75
+          },
+          "shopping_intent": {
+            "is_true": false,
+            "probability": 0.0019302368,
+            "threshold": 0.8
+          },
+          "image_preview": {
+            "is_true": false,
+            "probability": 0.0033721924,
+            "threshold": 0.42
+          },
+          "video_preview": {
+            "is_true": false,
+            "probability": 0.00024604797,
+            "threshold": 0.5
+          },
+          "study_intent": null,
+          "personal_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "skip_personal_search": {
+            "is_true": true,
+            "probability": 0.99609375,
+            "threshold": 0.95
+          },
+          "weather_widget": {
+            "is_true": false,
+            "probability": 0.008605957,
+            "threshold": 0.4
+          },
+          "finance_widget_gating": {
+            "is_true": false,
+            "probability": 0.00021648407,
+            "threshold": 0.53
+          },
+          "calculator_widget": {
+            "is_true": false,
+            "probability": 0.0019836426,
+            "threshold": 0.3
+          },
+          "comet_nav_widget_combined_target": {
+            "is_true": false,
+            "probability": 0.014526367,
+            "threshold": 0.5
+          },
+          "domain_subdomain": {
+            "label": "WRITING/TECHNICAL_WRITING",
+            "probability": 0.375
+          },
+          "finance_agent_gating": {
+            "is_true": false,
+            "probability": 9.6321106e-05,
+            "threshold": 0.7
+          }
+        }
+      },
+      "search_implementation_mode": "multi_step",
+      "query_language": "fr",
+      "search_mode": "SEARCH"
+    },
+    {
+      "backend_uuid": "f0000000-0000-4000-8000-2bd32fea14be",
+      "context_uuid": "f0000000-0000-4000-8000-4cdc56dbe031",
+      "uuid": "f0000000-0000-4000-8000-46326ffbdc28",
+      "frontend_context_uuid": "f0000000-0000-4000-8000-461580e460b4",
+      "frontend_uuid": "f0000000-0000-4000-8000-46326ffbdc28",
+      "status": "COMPLETED",
+      "thread_title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "related_queries": [],
+      "display_model": "turbo",
+      "user_selected_model": "turbo",
+      "personalized": false,
+      "mode": "COPILOT",
+      "query_str": "Crée une liste numérotée avec exactement 3 éléments. Réponds uniquement avec la liste.",
+      "search_focus": "internet",
+      "source": "default",
+      "updated_datetime": "2026-09-24T17:50:19.994661",
+      "read_write_token": "f0000000-0000-4000-8000-a0598cf8d1dc",
+      "step_type": "FINAL",
+      "thread_access": 1,
+      "thread_url_slug": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "query_source": "default",
+      "privacy_state": "NONE",
+      "gpt4": false,
+      "sources": {
+        "sources": [
+          "web"
+        ]
+      },
+      "entry_created_datetime": "2026-09-24T10:48:05.019774+00:00",
+      "entry_updated_datetime": "2026-09-24T10:48:05.648719+00:00",
+      "blocks": [
+        {
+          "intended_usage": "plan",
+          "plan_block": {
+            "progress": "DONE",
+            "goals": [
+              {
+                "id": "0",
+                "description": "1. Premier élément\n2. Deuxième élément\n3. Troisième élément",
+                "final": true,
+                "todo_task_status": "INCOMPLETE"
+              }
+            ],
+            "final": true
+          }
+        },
+        {
+          "intended_usage": "workflow_root",
+          "workflow_block": {
+            "version": "1.0",
+            "status": "WORKFLOW_COMPLETED",
+            "headline": "",
+            "started_at": "2026-09-24T10:48:05.019774+00:00",
+            "completed_at": "2026-09-24T10:48:05.575665+00:00",
+            "predicted_completion_at": "",
+            "steps": [
+              {
+                "status": "WORKFLOW_COMPLETED",
+                "title": "",
+                "items": [
+                  {
+                    "id": "5af54710401e4caba548946671371f58",
+                    "type": "WORKFLOW_ITEM_TEXT",
+                    "payload": {
+                      "text_payload": {
+                        "text": "1. Premier élément\n2. Deuxième élément\n3. Troisième élément",
+                        "chunks": [
+                          "1. Premier élément\n2. Deuxième élément\n3. Troisième élé",
+                          "ment"
+                        ],
+                        "variant": "answer",
+                        "is_streaming": false
+                      }
+                    },
+                    "display_mode": "WORKFLOW_ITEM_ALWAYS_EXPAND",
+                    "variant": "answer"
+                  }
+                ],
+                "started_at": "",
+                "completed_at": "",
+                "unnest_items": true,
+                "source_tier": "SOURCE_TIER_DEFAULT",
+                "id": "5af54710401e4caba548946671371f58"
+              }
+            ],
+            "snapshots": []
+          }
+        },
+        {
+          "intended_usage": "answer_tabs",
+          "answer_tabs_block": {
+            "modes": [
+              {
+                "answer_mode_type": "ANSWER"
+              },
+              {
+                "answer_mode_type": "IMAGE",
+                "has_preview": false
+              }
+            ],
+            "reformulated_queries": []
+          }
+        },
+        {
+          "intended_usage": "pending_followups",
+          "pending_followups_block": {
+            "followups": []
+          }
+        }
+      ],
+      "access_level": "PRIVATE_READ",
+      "answer_modes": [
+        {
+          "answer_mode_type": "ANSWER"
+        },
+        {
+          "answer_mode_type": "IMAGE",
+          "has_preview": false
+        }
+      ],
+      "structured_answer_block_usages": [
+        "workflow_root"
+      ],
+      "reconnectable": false,
+      "classifier_results": {
+        "personal_search": false,
+        "skip_search": false,
+        "widget_type": "GENERAL",
+        "hide_nav": false,
+        "hide_sources": false,
+        "image_generation": false,
+        "time_widget": false,
+        "mhe_predictions": {
+          "skip_search": false,
+          "image_generation_intent": false,
+          "time_widget": false,
+          "places_search_intent": false,
+          "shopping_intent": false,
+          "image_preview": false,
+          "video_preview": false,
+          "study_intent": null,
+          "personal_search": false,
+          "weather_widget": false,
+          "finance_widget_gating": false,
+          "calculator_widget": false,
+          "comet_nav_widget_combined_target": false,
+          "finance_agent_gating": false
+        },
+        "mhe_predictions_full": {
+          "skip_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "image_generation_intent": {
+            "is_true": false,
+            "probability": 8.4877014e-05,
+            "threshold": 0.98
+          },
+          "time_widget": {
+            "is_true": false,
+            "probability": 0.00020313263,
+            "threshold": 0.8
+          },
+          "places_search_intent": {
+            "is_true": false,
+            "probability": 0.014526367,
+            "threshold": 0.75
+          },
+          "shopping_intent": {
+            "is_true": false,
+            "probability": 0.0015945435,
+            "threshold": 0.8
+          },
+          "image_preview": {
+            "is_true": false,
+            "probability": 0.0026245117,
+            "threshold": 0.42
+          },
+          "video_preview": {
+            "is_true": false,
+            "probability": 0.00014019012,
+            "threshold": 0.5
+          },
+          "study_intent": null,
+          "personal_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "skip_personal_search": {
+            "is_true": true,
+            "probability": 1.0,
+            "threshold": 0.95
+          },
+          "weather_widget": {
+            "is_true": false,
+            "probability": 0.008300781,
+            "threshold": 0.4
+          },
+          "finance_widget_gating": {
+            "is_true": false,
+            "probability": 0.00021648407,
+            "threshold": 0.53
+          },
+          "calculator_widget": {
+            "is_true": false,
+            "probability": 0.0014572144,
+            "threshold": 0.3
+          },
+          "comet_nav_widget_combined_target": {
+            "is_true": false,
+            "probability": 0.017456055,
+            "threshold": 0.5
+          },
+          "domain_subdomain": {
+            "label": "WRITING/TECHNICAL_WRITING",
+            "probability": 0.44726562
+          },
+          "finance_agent_gating": {
+            "is_true": false,
+            "probability": 9.012222e-05,
+            "threshold": 0.7
+          }
+        }
+      },
+      "search_implementation_mode": "multi_step",
+      "query_language": "fr",
+      "search_mode": "SEARCH"
+    },
+    {
+      "backend_uuid": "f0000000-0000-4000-8000-d3b0801630a6",
+      "context_uuid": "f0000000-0000-4000-8000-4cdc56dbe031",
+      "uuid": "f0000000-0000-4000-8000-ae683bdc3f57",
+      "frontend_context_uuid": "f0000000-0000-4000-8000-461580e460b4",
+      "frontend_uuid": "f0000000-0000-4000-8000-ae683bdc3f57",
+      "status": "COMPLETED",
+      "thread_title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "related_queries": [],
+      "display_model": "turbo",
+      "user_selected_model": "turbo",
+      "personalized": false,
+      "mode": "COPILOT",
+      "query_str": "Écris une citation Markdown avec le symbole >. Réponds uniquement avec la citation.",
+      "search_focus": "internet",
+      "source": "default",
+      "updated_datetime": "2026-09-24T17:50:19.994661",
+      "read_write_token": "f0000000-0000-4000-8000-a0598cf8d1dc",
+      "step_type": "FINAL",
+      "thread_access": 1,
+      "thread_url_slug": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "query_source": "default",
+      "privacy_state": "NONE",
+      "gpt4": false,
+      "sources": {
+        "sources": [
+          "web"
+        ]
+      },
+      "entry_created_datetime": "2026-09-24T11:20:18.153017+00:00",
+      "entry_updated_datetime": "2026-09-24T11:20:19.126091+00:00",
+      "blocks": [
+        {
+          "intended_usage": "plan",
+          "plan_block": {
+            "progress": "DONE",
+            "goals": [
+              {
+                "id": "0",
+                "description": "> Ceci est une citation Markdown.",
+                "final": true,
+                "todo_task_status": "INCOMPLETE"
+              }
+            ],
+            "final": true
+          }
+        },
+        {
+          "intended_usage": "workflow_root",
+          "workflow_block": {
+            "version": "1.0",
+            "status": "WORKFLOW_COMPLETED",
+            "headline": "",
+            "started_at": "2026-09-24T11:20:18.153017+00:00",
+            "completed_at": "2026-09-24T11:20:19.056913+00:00",
+            "predicted_completion_at": "",
+            "steps": [
+              {
+                "status": "WORKFLOW_COMPLETED",
+                "title": "",
+                "items": [
+                  {
+                    "id": "a2105bacc1d944019227638828ded26f",
+                    "type": "WORKFLOW_ITEM_TEXT",
+                    "payload": {
+                      "text_payload": {
+                        "text": "> Ceci est une citation Markdown.",
+                        "chunks": [
+                          ">",
+                          " Ceci est une citation Markd",
+                          "own."
+                        ],
+                        "variant": "answer",
+                        "is_streaming": false
+                      }
+                    },
+                    "display_mode": "WORKFLOW_ITEM_ALWAYS_EXPAND",
+                    "variant": "answer"
+                  }
+                ],
+                "started_at": "",
+                "completed_at": "",
+                "unnest_items": true,
+                "source_tier": "SOURCE_TIER_DEFAULT",
+                "id": "a2105bacc1d944019227638828ded26f"
+              }
+            ],
+            "snapshots": []
+          }
+        },
+        {
+          "intended_usage": "answer_tabs",
+          "answer_tabs_block": {
+            "modes": [
+              {
+                "answer_mode_type": "ANSWER"
+              },
+              {
+                "answer_mode_type": "IMAGE",
+                "has_preview": false
+              }
+            ],
+            "reformulated_queries": []
+          }
+        },
+        {
+          "intended_usage": "pending_followups",
+          "pending_followups_block": {
+            "followups": []
+          }
+        }
+      ],
+      "access_level": "PRIVATE_READ",
+      "answer_modes": [
+        {
+          "answer_mode_type": "ANSWER"
+        },
+        {
+          "answer_mode_type": "IMAGE",
+          "has_preview": false
+        }
+      ],
+      "structured_answer_block_usages": [
+        "workflow_root"
+      ],
+      "reconnectable": false,
+      "classifier_results": {
+        "personal_search": false,
+        "skip_search": false,
+        "widget_type": "GENERAL",
+        "hide_nav": false,
+        "hide_sources": false,
+        "image_generation": false,
+        "time_widget": false,
+        "mhe_predictions": {
+          "skip_search": false,
+          "image_generation_intent": false,
+          "time_widget": false,
+          "places_search_intent": false,
+          "shopping_intent": false,
+          "image_preview": false,
+          "video_preview": false,
+          "study_intent": null,
+          "personal_search": false,
+          "weather_widget": false,
+          "finance_widget_gating": false,
+          "calculator_widget": false,
+          "comet_nav_widget_combined_target": false,
+          "finance_agent_gating": false
+        },
+        "mhe_predictions_full": {
+          "skip_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "image_generation_intent": {
+            "is_true": false,
+            "probability": 0.00010871887,
+            "threshold": 0.98
+          },
+          "time_widget": {
+            "is_true": false,
+            "probability": 0.0004310608,
+            "threshold": 0.8
+          },
+          "places_search_intent": {
+            "is_true": false,
+            "probability": 0.018310547,
+            "threshold": 0.75
+          },
+          "shopping_intent": {
+            "is_true": false,
+            "probability": 0.0015945435,
+            "threshold": 0.8
+          },
+          "image_preview": {
+            "is_true": false,
+            "probability": 0.0073547363,
+            "threshold": 0.42
+          },
+          "video_preview": {
+            "is_true": false,
+            "probability": 0.0005340576,
+            "threshold": 0.5
+          },
+          "study_intent": null,
+          "personal_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "skip_personal_search": {
+            "is_true": true,
+            "probability": 1.0,
+            "threshold": 0.95
+          },
+          "weather_widget": {
+            "is_true": false,
+            "probability": 0.012451172,
+            "threshold": 0.4
+          },
+          "finance_widget_gating": {
+            "is_true": false,
+            "probability": 0.0009994507,
+            "threshold": 0.53
+          },
+          "calculator_widget": {
+            "is_true": false,
+            "probability": 0.0012054443,
+            "threshold": 0.3
+          },
+          "comet_nav_widget_combined_target": {
+            "is_true": false,
+            "probability": 0.031982422,
+            "threshold": 0.5
+          },
+          "domain_subdomain": {
+            "label": "WRITING/TECHNICAL_WRITING",
+            "probability": 0.3046875
+          },
+          "finance_agent_gating": {
+            "is_true": false,
+            "probability": 0.00023078918,
+            "threshold": 0.7
+          }
+        }
+      },
+      "search_implementation_mode": "multi_step",
+      "query_language": "fr",
+      "search_mode": "SEARCH"
+    },
+    {
+      "backend_uuid": "f0000000-0000-4000-8000-2fa946becf56",
+      "context_uuid": "f0000000-0000-4000-8000-4cdc56dbe031",
+      "uuid": "f0000000-0000-4000-8000-28ef5d40c81e",
+      "frontend_context_uuid": "f0000000-0000-4000-8000-461580e460b4",
+      "frontend_uuid": "f0000000-0000-4000-8000-28ef5d40c81e",
+      "status": "COMPLETED",
+      "thread_title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "related_queries": [],
+      "display_model": "turbo",
+      "user_selected_model": "turbo",
+      "personalized": false,
+      "mode": "COPILOT",
+      "query_str": "Écris le mot \"print\" en code inline. Réponds uniquement avec le code.",
+      "search_focus": "internet",
+      "source": "default",
+      "updated_datetime": "2026-09-24T17:50:19.994661",
+      "read_write_token": "f0000000-0000-4000-8000-a0598cf8d1dc",
+      "step_type": "FINAL",
+      "thread_access": 1,
+      "thread_url_slug": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "query_source": "default",
+      "privacy_state": "NONE",
+      "gpt4": false,
+      "sources": {
+        "sources": [
+          "web"
+        ]
+      },
+      "entry_created_datetime": "2026-09-24T11:52:36.461667+00:00",
+      "entry_updated_datetime": "2026-09-24T11:52:39.194389+00:00",
+      "blocks": [
+        {
+          "intended_usage": "plan",
+          "plan_block": {
+            "progress": "DONE",
+            "goals": [
+              {
+                "id": "0",
+                "description": "`print`",
+                "final": true,
+                "todo_task_status": "INCOMPLETE"
+              }
+            ],
+            "final": true
+          }
+        },
+        {
+          "intended_usage": "workflow_root",
+          "workflow_block": {
+            "version": "1.0",
+            "status": "WORKFLOW_COMPLETED",
+            "headline": "",
+            "started_at": "2026-09-24T11:52:36.461667+00:00",
+            "completed_at": "2026-09-24T11:52:39.086086+00:00",
+            "predicted_completion_at": "",
+            "steps": [
+              {
+                "status": "WORKFLOW_COMPLETED",
+                "title": "",
+                "items": [
+                  {
+                    "id": "b784ce69cb1445aa98c3ad3527632c3a",
+                    "type": "WORKFLOW_ITEM_TEXT",
+                    "payload": {
+                      "text_payload": {
+                        "text": "`print`",
+                        "chunks": [
+                          "`pr",
+                          "int`"
+                        ],
+                        "variant": "answer",
+                        "is_streaming": false
+                      }
+                    },
+                    "display_mode": "WORKFLOW_ITEM_ALWAYS_EXPAND",
+                    "variant": "answer"
+                  }
+                ],
+                "started_at": "",
+                "completed_at": "",
+                "unnest_items": true,
+                "source_tier": "SOURCE_TIER_DEFAULT",
+                "id": "b784ce69cb1445aa98c3ad3527632c3a"
+              }
+            ],
+            "snapshots": []
+          }
+        },
+        {
+          "intended_usage": "answer_tabs",
+          "answer_tabs_block": {
+            "modes": [
+              {
+                "answer_mode_type": "ANSWER"
+              },
+              {
+                "answer_mode_type": "IMAGE",
+                "has_preview": false
+              }
+            ],
+            "reformulated_queries": []
+          }
+        },
+        {
+          "intended_usage": "pending_followups",
+          "pending_followups_block": {
+            "followups": []
+          }
+        }
+      ],
+      "access_level": "PRIVATE_READ",
+      "answer_modes": [
+        {
+          "answer_mode_type": "ANSWER"
+        },
+        {
+          "answer_mode_type": "IMAGE",
+          "has_preview": false
+        }
+      ],
+      "structured_answer_block_usages": [
+        "workflow_root"
+      ],
+      "reconnectable": false,
+      "classifier_results": {
+        "personal_search": false,
+        "skip_search": false,
+        "widget_type": "GENERAL",
+        "hide_nav": false,
+        "hide_sources": false,
+        "image_generation": false,
+        "time_widget": false,
+        "mhe_predictions": {
+          "skip_search": false,
+          "image_generation_intent": false,
+          "time_widget": false,
+          "places_search_intent": false,
+          "shopping_intent": false,
+          "image_preview": false,
+          "video_preview": false,
+          "study_intent": null,
+          "personal_search": false,
+          "weather_widget": false,
+          "finance_widget_gating": false,
+          "calculator_widget": false,
+          "comet_nav_widget_combined_target": false,
+          "finance_agent_gating": false
+        },
+        "mhe_predictions_full": {
+          "skip_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "image_generation_intent": {
+            "is_true": false,
+            "probability": 0.00050354004,
+            "threshold": 0.98
+          },
+          "time_widget": {
+            "is_true": false,
+            "probability": 0.00077819824,
+            "threshold": 0.8
+          },
+          "places_search_intent": {
+            "is_true": false,
+            "probability": 0.031982422,
+            "threshold": 0.75
+          },
+          "shopping_intent": {
+            "is_true": false,
+            "probability": 0.005218506,
+            "threshold": 0.8
+          },
+          "image_preview": {
+            "is_true": false,
+            "probability": 0.003829956,
+            "threshold": 0.42
+          },
+          "video_preview": {
+            "is_true": false,
+            "probability": 0.00011587143,
+            "threshold": 0.5
+          },
+          "study_intent": null,
+          "personal_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "skip_personal_search": {
+            "is_true": true,
+            "probability": 0.99609375,
+            "threshold": 0.95
+          },
+          "weather_widget": {
+            "is_true": false,
+            "probability": 0.02722168,
+            "threshold": 0.4
+          },
+          "finance_widget_gating": {
+            "is_true": false,
+            "probability": 0.0021820068,
+            "threshold": 0.53
+          },
+          "calculator_widget": {
+            "is_true": false,
+            "probability": 0.0029754639,
+            "threshold": 0.3
+          },
+          "comet_nav_widget_combined_target": {
+            "is_true": false,
+            "probability": 0.036865234,
+            "threshold": 0.5
+          },
+          "domain_subdomain": {
+            "label": "PROGRAMMING/CODE_WRITING",
+            "probability": 0.7421875
+          },
+          "finance_agent_gating": {
+            "is_true": false,
+            "probability": 0.00088119507,
+            "threshold": 0.7
+          }
+        }
+      },
+      "search_implementation_mode": "multi_step",
+      "query_language": "fr",
+      "search_mode": "SEARCH"
+    },
+    {
+      "backend_uuid": "f0000000-0000-4000-8000-126ec4e3974c",
+      "context_uuid": "f0000000-0000-4000-8000-4cdc56dbe031",
+      "uuid": "f0000000-0000-4000-8000-e4f02c50fa43",
+      "frontend_context_uuid": "f0000000-0000-4000-8000-461580e460b4",
+      "frontend_uuid": "f0000000-0000-4000-8000-e4f02c50fa43",
+      "status": "COMPLETED",
+      "thread_title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+      "related_queries": [],
+      "display_model": "turbo",
+      "user_selected_model": "turbo",
+      "personalized": false,
+      "mode": "COPILOT",
+      "query_str": "Insère une image Markdown avec l’URL [https://via.placeholder.com/100](https://via.placeholder.com/100) et l’alt \"Test\". Réponds uniquement avec l’image.",
+      "search_focus": "internet",
+      "source": "default",
+      "attachments": [
+        "https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/56124129/f0000000-0000-4000-8000-3fa1d496e419/image.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Checksum-Mode=ENABLED&X-Amz-Credential=ASIA2F3EMEYEXKFPEI3V%2F20261012%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261012T112516Z&X-Amz-Expires=1424&X-Amz-Security-Token=IQoJb3JpZ2luX2VjELv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIG5GEcnLewx9UqNHcARUPJuvJP%2BWnkbwKYt6SYATsU47AiBtExCF7mFJEYv%2BXlgrpf0EsKPuvaXRqiBXcuK7RuwVYyqJBQiD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAEaDDY5OTc1MzMwOTcwNSIMcXLo3mhiKO5g27H0Kt0EUWr6nBDpxv7qXFb5bScT7Xb%2FD5tQC3m3SAtQuEJ5kag2MNFsQuJzQwRQ1NWC5JWMb70mJ8ugu3FYp8sF7PVxA0TsXrGhnktXoqDMAeAkkL%2BmrLAWXhDJlKFG%2B33%2F2ivAbNw1%2F6e%2B0H4iV78q213BVwr%2F5vdNn%2Buicrs7hz9ZSqVWyzHP0QPK%2FjJrwGI%2BxJTQQ7TxuM92sl25CkdA5k4wixNsC3op6%2FKLwVx4k3QLZqyHOaejFiaHqMFz2fyepvLN%2FWFl5KLl6aEhWkirkmnLBBTc16cL1wmFJr6eXSimTEFnRScnz8NUCOU2pPw%2BN%2B6KIhrcC60Um1Zjnj%2FIwDa1FSYGB%2F3BVGhRPSFh60%2FRAjjK8sNM62hvdHzfAYtgz%2Fdts1EF7X3YBEr0R8q44pDFBiuJDWmAdbF31%2FwGvNn%2BU%2F6T%2FA0Gb8MS77YZrX1nBBp61By4pDTkgjuUi0ElDFay6Xigas%2BXoSSHRNokyBp7QqrxoGMzr2Ql%2F%2BrIHcjKlxo1UNigiI%2FS06YOD9fEOdODSZ2x48kt17Xq03mwYIRnAFY%2Bf8Qx7OvG8N3v7jQk5tnxXa36fjmsdhFK099j1vWk4qZBXOhZ2ViIHgYEwhClMSEebAcWSh17CbFGdtfaHVfppIA%2Bx22xdkSdBT7PjTtFGgNCCWaFTQhdWl4ujZr3UyqjEEAUzXvsFTEzE1302mGxJhCTJVAOQ9fabEY9ukBCQhYnE6b%2BI60XWTVDFw2dhkt%2F4DFZgzV%2FjaFRJs0QQv5Dm3tt0GM7g3xDwQQ5IQnFJFJhtK52%2FAWugtZWpCEw2fay1gY6mQGXEb89ODQK%2FaVAkW3HqubdsujzyDQiDk5AQXSVGkTaWnCeg7REThqEliQyRj0DZnGA08ug6g2h9kYZ2NcyAkInNVlVvq2sH1%2BrrnXSdi2j3RUdS7dLIAaedhyvkbHnQmY5rVGCncD7vzUmwD54k3cYoRhWGGDdDTOsRNaQ2WweIKExSreD0njfEK8LYPrgWR1R5Kn%2BdQB602M%3D&X-Amz-SignedHeaders=host&x-id=GetObject&X-Amz-Signature=76394d2ab621cb0af2fee198c85f9b1b8e744c39a5a4ec04879583e6e2cfaaaf"
+      ],
+      "updated_datetime": "2026-09-24T17:50:19.994661",
+      "read_write_token": "f0000000-0000-4000-8000-a0598cf8d1dc",
+      "step_type": "FINAL",
+      "thread_access": 1,
+      "thread_url_slug": "f0000000-0000-4000-8000-7d3b48b1fa63",
+      "query_source": "default",
+      "privacy_state": "NONE",
+      "gpt4": false,
+      "sources": {
+        "sources": [
+          "web"
+        ]
+      },
+      "entry_created_datetime": "2026-09-24T17:50:18.186480+00:00",
+      "entry_updated_datetime": "2026-09-24T17:50:19.952454+00:00",
+      "blocks": [
+        {
+          "intended_usage": "plan",
+          "plan_block": {
+            "progress": "DONE",
+            "goals": [
+              {
+                "id": "0",
+                "description": "Vérification des fichiers disponibles",
+                "final": true,
+                "todo_task_status": "INCOMPLETE"
+              }
+            ],
+            "final": true
+          }
+        },
+        {
+          "intended_usage": "ask_text",
+          "markdown_block": {
+            "progress": "DONE",
+            "chunks": [
+              ""
+            ],
+            "chunk_starting_offset": 0,
+            "answer": ""
+          }
+        },
+        {
+          "intended_usage": "workflow_root",
+          "workflow_block": {
+            "version": "1.0",
+            "status": "WORKFLOW_COMPLETED",
+            "headline": "",
+            "started_at": "2026-09-24T17:50:18.408179+00:00",
+            "completed_at": "",
+            "predicted_completion_at": "",
+            "steps": [
+              {
+                "status": "WORKFLOW_COMPLETED",
+                "title": "Vérification des fichiers disponibles",
+                "items": [],
+                "started_at": "2026-09-24T17:50:18.408179+00:00",
+                "completed_at": "2026-09-24T17:50:18.408725+00:00",
+                "icon": "extract",
+                "tool_name": "list_files",
+                "source_tier": "SOURCE_TIER_DEFAULT",
+                "id": "prefill_list_files"
+              }
+            ],
+            "snapshots": []
+          }
+        },
+        {
+          "intended_usage": "web_results",
+          "web_result_block": {
+            "progress": "DONE",
+            "web_results": [
+              {
+                "name": "image.jpg",
+                "snippet": "",
+                "timestamp": "",
+                "url": "https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/56124129/f0000000-0000-4000-8000-3fa1d496e419/image.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Checksum-Mode=ENABLED&X-Amz-Credential=ASIA2F3EMEYEXKFPEI3V%2F20261012%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261012T112516Z&X-Amz-Expires=1424&X-Amz-Security-Token=IQoJb3JpZ2luX2VjELv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIG5GEcnLewx9UqNHcARUPJuvJP%2BWnkbwKYt6SYATsU47AiBtExCF7mFJEYv%2BXlgrpf0EsKPuvaXRqiBXcuK7RuwVYyqJBQiD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAEaDDY5OTc1MzMwOTcwNSIMcXLo3mhiKO5g27H0Kt0EUWr6nBDpxv7qXFb5bScT7Xb%2FD5tQC3m3SAtQuEJ5kag2MNFsQuJzQwRQ1NWC5JWMb70mJ8ugu3FYp8sF7PVxA0TsXrGhnktXoqDMAeAkkL%2BmrLAWXhDJlKFG%2B33%2F2ivAbNw1%2F6e%2B0H4iV78q213BVwr%2F5vdNn%2Buicrs7hz9ZSqVWyzHP0QPK%2FjJrwGI%2BxJTQQ7TxuM92sl25CkdA5k4wixNsC3op6%2FKLwVx4k3QLZqyHOaejFiaHqMFz2fyepvLN%2FWFl5KLl6aEhWkirkmnLBBTc16cL1wmFJr6eXSimTEFnRScnz8NUCOU2pPw%2BN%2B6KIhrcC60Um1Zjnj%2FIwDa1FSYGB%2F3BVGhRPSFh60%2FRAjjK8sNM62hvdHzfAYtgz%2Fdts1EF7X3YBEr0R8q44pDFBiuJDWmAdbF31%2FwGvNn%2BU%2F6T%2FA0Gb8MS77YZrX1nBBp61By4pDTkgjuUi0ElDFay6Xigas%2BXoSSHRNokyBp7QqrxoGMzr2Ql%2F%2BrIHcjKlxo1UNigiI%2FS06YOD9fEOdODSZ2x48kt17Xq03mwYIRnAFY%2Bf8Qx7OvG8N3v7jQk5tnxXa36fjmsdhFK099j1vWk4qZBXOhZ2ViIHgYEwhClMSEebAcWSh17CbFGdtfaHVfppIA%2Bx22xdkSdBT7PjTtFGgNCCWaFTQhdWl4ujZr3UyqjEEAUzXvsFTEzE1302mGxJhCTJVAOQ9fabEY9ukBCQhYnE6b%2BI60XWTVDFw2dhkt%2F4DFZgzV%2FjaFRJs0QQv5Dm3tt0GM7g3xDwQQ5IQnFJFJhtK52%2FAWugtZWpCEw2fay1gY6mQGXEb89ODQK%2FaVAkW3HqubdsujzyDQiDk5AQXSVGkTaWnCeg7REThqEliQyRj0DZnGA08ug6g2h9kYZ2NcyAkInNVlVvq2sH1%2BrrnXSdi2j3RUdS7dLIAaedhyvkbHnQmY5rVGCncD7vzUmwD54k3cYoRhWGGDdDTOsRNaQ2WweIKExSreD0njfEK8LYPrgWR1R5Kn%2BdQB602M%3D&X-Amz-SignedHeaders=host&x-id=GetObject&X-Amz-Signature=76394d2ab621cb0af2fee198c85f9b1b8e744c39a5a4ec04879583e6e2cfaaaf",
+                "is_attachment": true,
+                "is_image": false,
+                "is_code_interpreter": false,
+                "is_knowledge_card": false,
+                "is_navigational": false,
+                "is_widget": false,
+                "is_focused_web": false,
+                "is_client_context": false,
+                "is_memory": false,
+                "is_conversation_history": false,
+                "is_conversation_summary": false
+              }
+            ]
+          }
+        },
+        {
+          "intended_usage": "answer_tabs",
+          "answer_tabs_block": {
+            "modes": [
+              {
+                "answer_mode_type": "ANSWER"
+              },
+              {
+                "answer_mode_type": "IMAGE",
+                "has_preview": false
+              }
+            ],
+            "reformulated_queries": []
+          }
+        },
+        {
+          "intended_usage": "sources_answer_mode",
+          "sources_mode_block": {
+            "answer_mode_type": "SOURCES",
+            "progress": "DONE",
+            "web_results": [
+              {
+                "name": "image.jpg",
+                "snippet": "",
+                "timestamp": "",
+                "url": "https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/56124129/f0000000-0000-4000-8000-3fa1d496e419/image.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Checksum-Mode=ENABLED&X-Amz-Credential=ASIA2F3EMEYEXKFPEI3V%2F20261012%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261012T112516Z&X-Amz-Expires=1424&X-Amz-Security-Token=IQoJb3JpZ2luX2VjELv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIG5GEcnLewx9UqNHcARUPJuvJP%2BWnkbwKYt6SYATsU47AiBtExCF7mFJEYv%2BXlgrpf0EsKPuvaXRqiBXcuK7RuwVYyqJBQiD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAEaDDY5OTc1MzMwOTcwNSIMcXLo3mhiKO5g27H0Kt0EUWr6nBDpxv7qXFb5bScT7Xb%2FD5tQC3m3SAtQuEJ5kag2MNFsQuJzQwRQ1NWC5JWMb70mJ8ugu3FYp8sF7PVxA0TsXrGhnktXoqDMAeAkkL%2BmrLAWXhDJlKFG%2B33%2F2ivAbNw1%2F6e%2B0H4iV78q213BVwr%2F5vdNn%2Buicrs7hz9ZSqVWyzHP0QPK%2FjJrwGI%2BxJTQQ7TxuM92sl25CkdA5k4wixNsC3op6%2FKLwVx4k3QLZqyHOaejFiaHqMFz2fyepvLN%2FWFl5KLl6aEhWkirkmnLBBTc16cL1wmFJr6eXSimTEFnRScnz8NUCOU2pPw%2BN%2B6KIhrcC60Um1Zjnj%2FIwDa1FSYGB%2F3BVGhRPSFh60%2FRAjjK8sNM62hvdHzfAYtgz%2Fdts1EF7X3YBEr0R8q44pDFBiuJDWmAdbF31%2FwGvNn%2BU%2F6T%2FA0Gb8MS77YZrX1nBBp61By4pDTkgjuUi0ElDFay6Xigas%2BXoSSHRNokyBp7QqrxoGMzr2Ql%2F%2BrIHcjKlxo1UNigiI%2FS06YOD9fEOdODSZ2x48kt17Xq03mwYIRnAFY%2Bf8Qx7OvG8N3v7jQk5tnxXa36fjmsdhFK099j1vWk4qZBXOhZ2ViIHgYEwhClMSEebAcWSh17CbFGdtfaHVfppIA%2Bx22xdkSdBT7PjTtFGgNCCWaFTQhdWl4ujZr3UyqjEEAUzXvsFTEzE1302mGxJhCTJVAOQ9fabEY9ukBCQhYnE6b%2BI60XWTVDFw2dhkt%2F4DFZgzV%2FjaFRJs0QQv5Dm3tt0GM7g3xDwQQ5IQnFJFJhtK52%2FAWugtZWpCEw2fay1gY6mQGXEb89ODQK%2FaVAkW3HqubdsujzyDQiDk5AQXSVGkTaWnCeg7REThqEliQyRj0DZnGA08ug6g2h9kYZ2NcyAkInNVlVvq2sH1%2BrrnXSdi2j3RUdS7dLIAaedhyvkbHnQmY5rVGCncD7vzUmwD54k3cYoRhWGGDdDTOsRNaQ2WweIKExSreD0njfEK8LYPrgWR1R5Kn%2BdQB602M%3D&X-Amz-SignedHeaders=host&x-id=GetObject&X-Amz-Signature=76394d2ab621cb0af2fee198c85f9b1b8e744c39a5a4ec04879583e6e2cfaaaf",
+                "is_attachment": true,
+                "is_image": false,
+                "is_code_interpreter": false,
+                "is_knowledge_card": false,
+                "is_navigational": false,
+                "is_widget": false,
+                "is_focused_web": false,
+                "is_client_context": false,
+                "is_memory": false,
+                "is_conversation_history": false,
+                "is_conversation_summary": false
+              }
+            ],
+            "result_count": 1,
+            "rows": [
+              {
+                "web_result": {
+                  "name": "image.jpg",
+                  "snippet": "",
+                  "timestamp": "",
+                  "url": "https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/images/56124129/f0000000-0000-4000-8000-3fa1d496e419/image.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Checksum-Mode=ENABLED&X-Amz-Credential=ASIA2F3EMEYEXKFPEI3V%2F20261012%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261012T112516Z&X-Amz-Expires=1424&X-Amz-Security-Token=IQoJb3JpZ2luX2VjELv%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJGMEQCIG5GEcnLewx9UqNHcARUPJuvJP%2BWnkbwKYt6SYATsU47AiBtExCF7mFJEYv%2BXlgrpf0EsKPuvaXRqiBXcuK7RuwVYyqJBQiD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2F8BEAEaDDY5OTc1MzMwOTcwNSIMcXLo3mhiKO5g27H0Kt0EUWr6nBDpxv7qXFb5bScT7Xb%2FD5tQC3m3SAtQuEJ5kag2MNFsQuJzQwRQ1NWC5JWMb70mJ8ugu3FYp8sF7PVxA0TsXrGhnktXoqDMAeAkkL%2BmrLAWXhDJlKFG%2B33%2F2ivAbNw1%2F6e%2B0H4iV78q213BVwr%2F5vdNn%2Buicrs7hz9ZSqVWyzHP0QPK%2FjJrwGI%2BxJTQQ7TxuM92sl25CkdA5k4wixNsC3op6%2FKLwVx4k3QLZqyHOaejFiaHqMFz2fyepvLN%2FWFl5KLl6aEhWkirkmnLBBTc16cL1wmFJr6eXSimTEFnRScnz8NUCOU2pPw%2BN%2B6KIhrcC60Um1Zjnj%2FIwDa1FSYGB%2F3BVGhRPSFh60%2FRAjjK8sNM62hvdHzfAYtgz%2Fdts1EF7X3YBEr0R8q44pDFBiuJDWmAdbF31%2FwGvNn%2BU%2F6T%2FA0Gb8MS77YZrX1nBBp61By4pDTkgjuUi0ElDFay6Xigas%2BXoSSHRNokyBp7QqrxoGMzr2Ql%2F%2BrIHcjKlxo1UNigiI%2FS06YOD9fEOdODSZ2x48kt17Xq03mwYIRnAFY%2Bf8Qx7OvG8N3v7jQk5tnxXa36fjmsdhFK099j1vWk4qZBXOhZ2ViIHgYEwhClMSEebAcWSh17CbFGdtfaHVfppIA%2Bx22xdkSdBT7PjTtFGgNCCWaFTQhdWl4ujZr3UyqjEEAUzXvsFTEzE1302mGxJhCTJVAOQ9fabEY9ukBCQhYnE6b%2BI60XWTVDFw2dhkt%2F4DFZgzV%2FjaFRJs0QQv5Dm3tt0GM7g3xDwQQ5IQnFJFJhtK52%2FAWugtZWpCEw2fay1gY6mQGXEb89ODQK%2FaVAkW3HqubdsujzyDQiDk5AQXSVGkTaWnCeg7REThqEliQyRj0DZnGA08ug6g2h9kYZ2NcyAkInNVlVvq2sH1%2BrrnXSdi2j3RUdS7dLIAaedhyvkbHnQmY5rVGCncD7vzUmwD54k3cYoRhWGGDdDTOsRNaQ2WweIKExSreD0njfEK8LYPrgWR1R5Kn%2BdQB602M%3D&X-Amz-SignedHeaders=host&x-id=GetObject&X-Amz-Signature=76394d2ab621cb0af2fee198c85f9b1b8e744c39a5a4ec04879583e6e2cfaaaf",
+                  "is_attachment": true,
+                  "is_image": false,
+                  "is_code_interpreter": false,
+                  "is_knowledge_card": false,
+                  "is_navigational": false,
+                  "is_widget": false,
+                  "is_focused_web": false,
+                  "is_client_context": false,
+                  "is_memory": false,
+                  "is_conversation_history": false,
+                  "is_conversation_summary": false
+                },
+                "status": "REVIEWED"
+              }
+            ]
+          }
+        },
+        {
+          "intended_usage": "pending_followups",
+          "pending_followups_block": {
+            "followups": []
+          }
+        }
+      ],
+      "access_level": "PRIVATE_READ",
+      "answer_modes": [
+        {
+          "answer_mode_type": "ANSWER"
+        },
+        {
+          "answer_mode_type": "IMAGE",
+          "has_preview": false
+        },
+        {
+          "answer_mode_type": "SOURCES"
+        }
+      ],
+      "structured_answer_block_usages": [
+        "workflow_root",
+        "ask_text"
+      ],
+      "reconnectable": false,
+      "classifier_results": {
+        "personal_search": false,
+        "skip_search": false,
+        "widget_type": "GENERAL",
+        "hide_nav": false,
+        "hide_sources": false,
+        "image_generation": false,
+        "time_widget": false,
+        "mhe_predictions": {
+          "skip_search": false,
+          "image_generation_intent": false,
+          "time_widget": false,
+          "places_search_intent": false,
+          "shopping_intent": false,
+          "image_preview": false,
+          "video_preview": false,
+          "study_intent": null,
+          "personal_search": false,
+          "weather_widget": false,
+          "finance_widget_gating": false,
+          "calculator_widget": false,
+          "comet_nav_widget_combined_target": false,
+          "finance_agent_gating": false
+        },
+        "mhe_predictions_full": {
+          "skip_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "image_generation_intent": {
+            "is_true": false,
+            "probability": 0.7578125,
+            "threshold": 0.98
+          },
+          "time_widget": {
+            "is_true": false,
+            "probability": 0.0007324219,
+            "threshold": 0.8
+          },
+          "places_search_intent": {
+            "is_true": false,
+            "probability": 0.012451172,
+            "threshold": 0.75
+          },
+          "shopping_intent": {
+            "is_true": false,
+            "probability": 0.0013656616,
+            "threshold": 0.8
+          },
+          "image_preview": {
+            "is_true": false,
+            "probability": 0.12597656,
+            "threshold": 0.42
+          },
+          "video_preview": {
+            "is_true": false,
+            "probability": 0.0006866455,
+            "threshold": 0.5
+          },
+          "study_intent": null,
+          "personal_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "skip_personal_search": {
+            "is_true": true,
+            "probability": 0.9921875,
+            "threshold": 0.95
+          },
+          "weather_widget": {
+            "is_true": false,
+            "probability": 0.0037078857,
+            "threshold": 0.4
+          },
+          "finance_widget_gating": {
+            "is_true": false,
+            "probability": 0.0005340576,
+            "threshold": 0.53
+          },
+          "calculator_widget": {
+            "is_true": false,
+            "probability": 0.0019302368,
+            "threshold": 0.3
+          },
+          "comet_nav_widget_combined_target": {
+            "is_true": false,
+            "probability": 0.23632812,
+            "threshold": 0.5
+          },
+          "domain_subdomain": {
+            "label": "PROGRAMMING/WEB_DEVELOPMENT",
+            "probability": 0.66015625
+          },
+          "finance_agent_gating": {
+            "is_true": false,
+            "probability": 0.0007095337,
+            "threshold": 0.7
+          }
+        }
+      },
+      "search_implementation_mode": "multi_step",
+      "query_language": "fr",
+      "search_mode": "SEARCH"
+    }
+  ],
+  "first_entry": {
+    "backend_uuid": "f0000000-0000-4000-8000-7d3b48b1fa63",
+    "context_uuid": "f0000000-0000-4000-8000-4cdc56dbe031",
+    "uuid": "f0000000-0000-4000-8000-5bc459910106",
+    "frontend_context_uuid": "f0000000-0000-4000-8000-461580e460b4",
+    "frontend_uuid": "f0000000-0000-4000-8000-5bc459910106",
+    "status": "COMPLETED",
+    "thread_title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+    "related_queries": [],
+    "display_model": "turbo",
+    "user_selected_model": "turbo",
+    "personalized": false,
+    "mode": "COPILOT",
+    "query_str": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+    "search_focus": "internet",
+    "source": "default",
+    "updated_datetime": "2026-09-24T17:50:19.994661",
+    "read_write_token": "f0000000-0000-4000-8000-a0598cf8d1dc",
+    "step_type": "FINAL",
+    "author_id": "f0000000-0000-4000-8000-c41906c4d902",
+    "author_username": "antonetmil4193",
+    "author_image": "https://imagedelivery.net/MPdwyYSWT8IY7lxgN3x3Uw/f0000000-0000-4000-8000-72d7d24303e4/thumbnail",
+    "bookmark_state": "NOT_BOOKMARKED",
+    "thread_access": 1,
+    "thread_url_slug": "f0000000-0000-4000-8000-7d3b48b1fa63",
+    "query_source": "default",
+    "privacy_state": "NONE",
+    "gpt4": false,
+    "sources": {
+      "sources": [
+        "web"
+      ]
+    },
+    "entry_created_datetime": "2026-09-24T09:38:40.983468+00:00",
+    "entry_updated_datetime": "2026-09-24T09:38:41.584648+00:00",
+    "blocks": [
+      {
+        "intended_usage": "plan",
+        "plan_block": {
+          "progress": "DONE",
+          "goals": [
+            {
+              "id": "0",
+              "description": "# Titre principal\n\n## Sous-titre 1\n\n## Sous-titre 2",
+              "final": true,
+              "todo_task_status": "INCOMPLETE"
+            }
+          ],
+          "final": true
+        }
+      },
+      {
+        "intended_usage": "workflow_root",
+        "workflow_block": {
+          "version": "1.0",
+          "status": "WORKFLOW_COMPLETED",
+          "headline": "",
+          "started_at": "2026-09-24T09:38:40.983468+00:00",
+          "completed_at": "2026-09-24T09:38:41.519109+00:00",
+          "predicted_completion_at": "",
+          "steps": [
+            {
+              "status": "WORKFLOW_COMPLETED",
+              "title": "",
+              "items": [
+                {
+                  "id": "01925ca9686949dabdd4ba137139bbab",
+                  "type": "WORKFLOW_ITEM_TEXT",
+                  "payload": {
+                    "text_payload": {
+                      "text": "# Titre principal\n\n## Sous-titre 1\n\n## Sous-titre 2",
+                      "chunks": [
+                        "# Titre principal\n\n## Sous-titre 1\n\n## Sous-tit",
+                        "re 2"
+                      ],
+                      "variant": "answer",
+                      "is_streaming": false
+                    }
+                  },
+                  "display_mode": "WORKFLOW_ITEM_ALWAYS_EXPAND",
+                  "variant": "answer"
+                }
+              ],
+              "started_at": "",
+              "completed_at": "",
+              "unnest_items": true,
+              "source_tier": "SOURCE_TIER_DEFAULT",
+              "id": "01925ca9686949dabdd4ba137139bbab"
+            }
+          ],
+          "snapshots": []
+        }
+      },
+      {
+        "intended_usage": "answer_tabs",
+        "answer_tabs_block": {
+          "modes": [
+            {
+              "answer_mode_type": "ANSWER"
+            },
+            {
+              "answer_mode_type": "IMAGE",
+              "has_preview": false
+            }
+          ],
+          "reformulated_queries": []
+        }
+      },
+      {
+        "intended_usage": "pending_followups",
+        "pending_followups_block": {
+          "followups": []
+        }
+      }
+    ],
+    "access_level": "PRIVATE_READ",
+    "answer_modes": [
+      {
+        "answer_mode_type": "ANSWER"
+      },
+      {
+        "answer_mode_type": "IMAGE",
+        "has_preview": false
+      }
+    ],
+    "structured_answer_block_usages": [
+      "workflow_root"
+    ],
+    "reconnectable": false,
+    "classifier_results": {
+      "personal_search": false,
+      "skip_search": false,
+      "widget_type": "GENERAL",
+      "hide_nav": false,
+      "hide_sources": false,
+      "image_generation": false,
+      "time_widget": false,
+      "mhe_predictions": {
+        "skip_search": false,
+        "image_generation_intent": false,
+        "time_widget": false,
+        "places_search_intent": false,
+        "shopping_intent": false,
+        "image_preview": false,
+        "video_preview": false,
+        "study_intent": null,
+        "personal_search": false,
+        "weather_widget": false,
+        "finance_widget_gating": false,
+        "calculator_widget": false,
+        "comet_nav_widget_combined_target": false,
+        "finance_agent_gating": false
+      },
+      "mhe_predictions_full": {
+        "skip_search": {
+          "is_true": false,
+          "probability": null,
+          "threshold": null
+        },
+        "image_generation_intent": {
+          "is_true": false,
+          "probability": 0.00017929077,
+          "threshold": 0.98
+        },
+        "time_widget": {
+          "is_true": false,
+          "probability": 0.0009384155,
+          "threshold": 0.8
+        },
+        "places_search_intent": {
+          "is_true": false,
+          "probability": 0.03564453,
+          "threshold": 0.75
+        },
+        "shopping_intent": {
+          "is_true": false,
+          "probability": 0.00088119507,
+          "threshold": 0.8
+        },
+        "image_preview": {
+          "is_true": false,
+          "probability": 0.0019836426,
+          "threshold": 0.42
+        },
+        "video_preview": {
+          "is_true": false,
+          "probability": 0.0004310608,
+          "threshold": 0.5
+        },
+        "study_intent": null,
+        "personal_search": {
+          "is_true": false,
+          "probability": null,
+          "threshold": null
+        },
+        "skip_personal_search": {
+          "is_true": true,
+          "probability": 0.99609375,
+          "threshold": 0.95
+        },
+        "weather_widget": {
+          "is_true": false,
+          "probability": 0.018798828,
+          "threshold": 0.4
+        },
+        "finance_widget_gating": {
+          "is_true": false,
+          "probability": 0.00075531006,
+          "threshold": 0.53
+        },
+        "calculator_widget": {
+          "is_true": false,
+          "probability": 0.0007324219,
+          "threshold": 0.3
+        },
+        "comet_nav_widget_combined_target": {
+          "is_true": false,
+          "probability": 0.0075683594,
+          "threshold": 0.5
+        },
+        "domain_subdomain": {
+          "label": "WRITING/TECHNICAL_WRITING",
+          "probability": 0.64453125
+        },
+        "finance_agent_gating": {
+          "is_true": false,
+          "probability": 0.00014019012,
+          "threshold": 0.7
+        }
+      }
+    },
+    "search_implementation_mode": "multi_step",
+    "query_language": "fr",
+    "search_mode": "SEARCH",
+    "social_info": {
+      "view_count": 0,
+      "fork_count": 0,
+      "like_count": 0,
+      "user_likes": false
+    },
+    "featured_images": []
+  },
+  "has_next_page": false,
+  "latest_entry": null,
+  "next_cursor": null,
+  "status": "success",
+  "thread_metadata": {
+    "author_name": "Alex Martin",
+    "author_id": "f0000000-0000-4000-8000-c41906c4d902",
+    "author_image": "https://imagedelivery.net/MPdwyYSWT8IY7lxgN3x3Uw/f0000000-0000-4000-8000-72d7d24303e4/thumbnail",
+    "author_username": "antonetmil4193",
+    "bookmark_state": "NOT_BOOKMARKED",
+    "collection_info": null,
+    "created_at": "2026-09-24T09:38:40.916994",
+    "crons": null,
+    "is_frozen_thread": false,
+    "is_ask_deep_research": false,
+    "is_ask_asset_task": false,
+    "local_workspace_directories": null,
+    "locked_reason": null,
+    "mode": "2",
+    "parent_info": null,
+    "sensitive_claims_visibility": null,
+    "subscribe_entry_uuids": null,
+    "thread_status": "completed",
+    "thread_status_summary": null,
+    "thread_status_summary_enum": null,
+    "title": "Crée un titre principal et deux sous-titres en Markdown. Réponds uniquement avec les titres, sans autre texte.",
+    "unread": false,
+    "updated_at": "2026-09-24T17:50:19.994661",
+    "wake_at": null,
+    "workflow_snapshots": null
+  }
+}

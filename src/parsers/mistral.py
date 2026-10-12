@@ -405,13 +405,32 @@ class MistralParser(BaseParser):
         Le dernier message (``createdAt`` maximal) est la tete ; on remonte les
         liens ``parentId``/``parentVersion`` jusqu'au premier tour. Les
         versions non actives (branches d'edition/regeneration) ne sont donc pas
-        dans la chaine.
+        dans la chaine. Une branche abandonnee plus recente que la reponse
+        reelle (regeneration vide dont le parent a disparu) est ignoree : on
+        essaie les tetes suivantes tant que la chaine ne porte aucun tour
+        exploitable.
         """
         by_key: Dict[Any, Dict[str, Any]] = {}
         for raw in items:
             key = (str(raw.get("id") or ""), cls._api_version(raw))
             by_key.setdefault(key, raw)
-        head = max(items, key=lambda raw: str(raw.get("createdAt") or ""))
+        heads = sorted(
+            items, key=lambda raw: str(raw.get("createdAt") or ""), reverse=True
+        )
+        fallback: List[Dict[str, Any]] = []
+        for index, head in enumerate(heads):
+            chain = cls._api_walk_chain(head, by_key)
+            if index == 0:
+                fallback = chain
+            if any(cls._api_raw_has_content(raw) for raw in chain):
+                return chain
+        return fallback
+
+    @classmethod
+    def _api_walk_chain(
+        cls, head: Dict[str, Any], by_key: Dict[Any, Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Remonte `parentId`/`parentVersion` depuis une tete (plus ancien d'abord)."""
         chain: List[Dict[str, Any]] = []
         seen: set = set()
         current: Optional[Dict[str, Any]] = head
@@ -430,6 +449,23 @@ class MistralParser(BaseParser):
             )
         chain.reverse()
         return chain
+
+    @staticmethod
+    def _api_raw_has_content(raw: Dict[str, Any]) -> bool:
+        """Un tour porte-t-il un contenu exploitable (texte, chunk, piece jointe) ?"""
+        if str(raw.get("content") or "").strip():
+            return True
+        if raw.get("files"):
+            return True
+        for chunk in raw.get("contentChunks") or []:
+            if not isinstance(chunk, dict):
+                continue
+            if chunk.get("type") == "text":
+                if str(chunk.get("text") or "").strip():
+                    return True
+            elif chunk.get("type") in ("file_reference", "image_url", "canva"):
+                return True
+        return False
 
     def _api_build_message(
         self,

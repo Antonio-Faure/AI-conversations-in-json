@@ -1,0 +1,518 @@
+{
+  "background_entries": [],
+  "entries": [
+    {
+      "backend_uuid": "f0000000-0000-4000-8000-a3aebf3bff64",
+      "context_uuid": "f0000000-0000-4000-8000-3ee7b6671916",
+      "uuid": "f0000000-0000-4000-8000-aa2d841fe9e6",
+      "frontend_context_uuid": "f0000000-0000-4000-8000-41bd3f7e9bc8",
+      "frontend_uuid": "f0000000-0000-4000-8000-aa2d841fe9e6",
+      "status": "COMPLETED",
+      "thread_title": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+      "related_queries": [],
+      "display_model": "turbo",
+      "user_selected_model": "turbo",
+      "personalized": false,
+      "mode": "COPILOT",
+      "query_str": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+      "search_focus": "internet",
+      "source": "default",
+      "updated_datetime": "2026-09-26T21:39:01.923778",
+      "read_write_token": "f0000000-0000-4000-8000-0e551ed35e30",
+      "step_type": "FINAL",
+      "author_id": "f0000000-0000-4000-8000-c41906c4d902",
+      "author_username": "antonetmil4193",
+      "author_image": "https://imagedelivery.net/MPdwyYSWT8IY7lxgN3x3Uw/f0000000-0000-4000-8000-72d7d24303e4/thumbnail",
+      "bookmark_state": "NOT_BOOKMARKED",
+      "thread_access": 1,
+      "thread_url_slug": "f0000000-0000-4000-8000-a3aebf3bff64",
+      "query_source": "default",
+      "privacy_state": "NONE",
+      "gpt4": false,
+      "sources": {
+        "sources": [
+          "web"
+        ]
+      },
+      "entry_created_datetime": "2026-09-26T21:39:01.031991+00:00",
+      "entry_updated_datetime": "2026-09-26T21:39:01.899018+00:00",
+      "blocks": [
+        {
+          "intended_usage": "plan",
+          "plan_block": {
+            "progress": "DONE",
+            "goals": [
+              {
+                "id": "0",
+                "description": "---",
+                "final": true,
+                "todo_task_status": "INCOMPLETE"
+              }
+            ],
+            "final": true
+          }
+        },
+        {
+          "intended_usage": "workflow_root",
+          "workflow_block": {
+            "version": "1.0",
+            "status": "WORKFLOW_COMPLETED",
+            "headline": "",
+            "started_at": "2026-09-26T21:39:01.031991+00:00",
+            "completed_at": "2026-09-26T21:39:01.892725+00:00",
+            "predicted_completion_at": "",
+            "steps": [
+              {
+                "status": "WORKFLOW_COMPLETED",
+                "title": "",
+                "items": [
+                  {
+                    "id": "359256fd94a24861ad9dffd2a8e90da8",
+                    "type": "WORKFLOW_ITEM_TEXT",
+                    "payload": {
+                      "text_payload": {
+                        "text": "---",
+                        "chunks": [
+                          "---"
+                        ],
+                        "variant": "answer",
+                        "is_streaming": false
+                      }
+                    },
+                    "display_mode": "WORKFLOW_ITEM_ALWAYS_EXPAND",
+                    "variant": "answer"
+                  }
+                ],
+                "started_at": "",
+                "completed_at": "",
+                "unnest_items": true,
+                "source_tier": "SOURCE_TIER_DEFAULT",
+                "id": "359256fd94a24861ad9dffd2a8e90da8"
+              }
+            ],
+            "snapshots": []
+          }
+        },
+        {
+          "intended_usage": "answer_tabs",
+          "answer_tabs_block": {
+            "modes": [
+              {
+                "answer_mode_type": "ANSWER"
+              },
+              {
+                "answer_mode_type": "IMAGE",
+                "has_preview": false
+              }
+            ],
+            "reformulated_queries": []
+          }
+        },
+        {
+          "intended_usage": "pending_followups",
+          "pending_followups_block": {
+            "followups": []
+          }
+        }
+      ],
+      "access_level": "PRIVATE_READ",
+      "answer_modes": [
+        {
+          "answer_mode_type": "ANSWER"
+        },
+        {
+          "answer_mode_type": "IMAGE",
+          "has_preview": false
+        }
+      ],
+      "structured_answer_block_usages": [
+        "workflow_root"
+      ],
+      "reconnectable": false,
+      "classifier_results": {
+        "personal_search": false,
+        "skip_search": false,
+        "widget_type": "GENERAL",
+        "hide_nav": false,
+        "hide_sources": false,
+        "image_generation": false,
+        "time_widget": false,
+        "mhe_predictions": {
+          "skip_search": false,
+          "image_generation_intent": false,
+          "time_widget": false,
+          "places_search_intent": false,
+          "shopping_intent": false,
+          "image_preview": false,
+          "video_preview": false,
+          "study_intent": null,
+          "personal_search": false,
+          "weather_widget": false,
+          "finance_widget_gating": false,
+          "calculator_widget": false,
+          "comet_nav_widget_combined_target": false,
+          "finance_agent_gating": false
+        },
+        "mhe_predictions_full": {
+          "skip_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "image_generation_intent": {
+            "is_true": false,
+            "probability": 0.00077819824,
+            "threshold": 0.98
+          },
+          "time_widget": {
+            "is_true": false,
+            "probability": 0.0017547607,
+            "threshold": 0.8
+          },
+          "places_search_intent": {
+            "is_true": false,
+            "probability": 0.033691406,
+            "threshold": 0.75
+          },
+          "shopping_intent": {
+            "is_true": false,
+            "probability": 0.0020446777,
+            "threshold": 0.8
+          },
+          "image_preview": {
+            "is_true": false,
+            "probability": 0.004058838,
+            "threshold": 0.42
+          },
+          "video_preview": {
+            "is_true": false,
+            "probability": 0.0011672974,
+            "threshold": 0.5
+          },
+          "study_intent": null,
+          "personal_search": {
+            "is_true": false,
+            "probability": null,
+            "threshold": null
+          },
+          "skip_personal_search": {
+            "is_true": true,
+            "probability": 0.99609375,
+            "threshold": 0.95
+          },
+          "weather_widget": {
+            "is_true": false,
+            "probability": 0.022949219,
+            "threshold": 0.4
+          },
+          "finance_widget_gating": {
+            "is_true": false,
+            "probability": 0.0009994507,
+            "threshold": 0.53
+          },
+          "calculator_widget": {
+            "is_true": false,
+            "probability": 0.0019302368,
+            "threshold": 0.3
+          },
+          "comet_nav_widget_combined_target": {
+            "is_true": false,
+            "probability": 0.021606445,
+            "threshold": 0.5
+          },
+          "domain_subdomain": {
+            "label": "PROGRAMMING/TERMINOLOGY",
+            "probability": 0.30664062
+          },
+          "finance_agent_gating": {
+            "is_true": false,
+            "probability": 0.0003566742,
+            "threshold": 0.7
+          }
+        }
+      },
+      "search_implementation_mode": "multi_step",
+      "query_language": "fr",
+      "search_mode": "SEARCH",
+      "social_info": {
+        "view_count": 0,
+        "fork_count": 0,
+        "like_count": 0,
+        "user_likes": false
+      },
+      "featured_images": []
+    }
+  ],
+  "first_entry": {
+    "backend_uuid": "f0000000-0000-4000-8000-a3aebf3bff64",
+    "context_uuid": "f0000000-0000-4000-8000-3ee7b6671916",
+    "uuid": "f0000000-0000-4000-8000-aa2d841fe9e6",
+    "frontend_context_uuid": "f0000000-0000-4000-8000-41bd3f7e9bc8",
+    "frontend_uuid": "f0000000-0000-4000-8000-aa2d841fe9e6",
+    "status": "COMPLETED",
+    "thread_title": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+    "related_queries": [],
+    "display_model": "turbo",
+    "user_selected_model": "turbo",
+    "personalized": false,
+    "mode": "COPILOT",
+    "query_str": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+    "search_focus": "internet",
+    "source": "default",
+    "updated_datetime": "2026-09-26T21:39:01.923778",
+    "read_write_token": "f0000000-0000-4000-8000-0e551ed35e30",
+    "step_type": "FINAL",
+    "author_id": "f0000000-0000-4000-8000-c41906c4d902",
+    "author_username": "antonetmil4193",
+    "author_image": "https://imagedelivery.net/MPdwyYSWT8IY7lxgN3x3Uw/f0000000-0000-4000-8000-72d7d24303e4/thumbnail",
+    "bookmark_state": "NOT_BOOKMARKED",
+    "thread_access": 1,
+    "thread_url_slug": "f0000000-0000-4000-8000-a3aebf3bff64",
+    "query_source": "default",
+    "privacy_state": "NONE",
+    "gpt4": false,
+    "sources": {
+      "sources": [
+        "web"
+      ]
+    },
+    "entry_created_datetime": "2026-09-26T21:39:01.031991+00:00",
+    "entry_updated_datetime": "2026-09-26T21:39:01.899018+00:00",
+    "blocks": [
+      {
+        "intended_usage": "plan",
+        "plan_block": {
+          "progress": "DONE",
+          "goals": [
+            {
+              "id": "0",
+              "description": "---",
+              "final": true,
+              "todo_task_status": "INCOMPLETE"
+            }
+          ],
+          "final": true
+        }
+      },
+      {
+        "intended_usage": "workflow_root",
+        "workflow_block": {
+          "version": "1.0",
+          "status": "WORKFLOW_COMPLETED",
+          "headline": "",
+          "started_at": "2026-09-26T21:39:01.031991+00:00",
+          "completed_at": "2026-09-26T21:39:01.892725+00:00",
+          "predicted_completion_at": "",
+          "steps": [
+            {
+              "status": "WORKFLOW_COMPLETED",
+              "title": "",
+              "items": [
+                {
+                  "id": "359256fd94a24861ad9dffd2a8e90da8",
+                  "type": "WORKFLOW_ITEM_TEXT",
+                  "payload": {
+                    "text_payload": {
+                      "text": "---",
+                      "chunks": [
+                        "---"
+                      ],
+                      "variant": "answer",
+                      "is_streaming": false
+                    }
+                  },
+                  "display_mode": "WORKFLOW_ITEM_ALWAYS_EXPAND",
+                  "variant": "answer"
+                }
+              ],
+              "started_at": "",
+              "completed_at": "",
+              "unnest_items": true,
+              "source_tier": "SOURCE_TIER_DEFAULT",
+              "id": "359256fd94a24861ad9dffd2a8e90da8"
+            }
+          ],
+          "snapshots": []
+        }
+      },
+      {
+        "intended_usage": "answer_tabs",
+        "answer_tabs_block": {
+          "modes": [
+            {
+              "answer_mode_type": "ANSWER"
+            },
+            {
+              "answer_mode_type": "IMAGE",
+              "has_preview": false
+            }
+          ],
+          "reformulated_queries": []
+        }
+      },
+      {
+        "intended_usage": "pending_followups",
+        "pending_followups_block": {
+          "followups": []
+        }
+      }
+    ],
+    "access_level": "PRIVATE_READ",
+    "answer_modes": [
+      {
+        "answer_mode_type": "ANSWER"
+      },
+      {
+        "answer_mode_type": "IMAGE",
+        "has_preview": false
+      }
+    ],
+    "structured_answer_block_usages": [
+      "workflow_root"
+    ],
+    "reconnectable": false,
+    "classifier_results": {
+      "personal_search": false,
+      "skip_search": false,
+      "widget_type": "GENERAL",
+      "hide_nav": false,
+      "hide_sources": false,
+      "image_generation": false,
+      "time_widget": false,
+      "mhe_predictions": {
+        "skip_search": false,
+        "image_generation_intent": false,
+        "time_widget": false,
+        "places_search_intent": false,
+        "shopping_intent": false,
+        "image_preview": false,
+        "video_preview": false,
+        "study_intent": null,
+        "personal_search": false,
+        "weather_widget": false,
+        "finance_widget_gating": false,
+        "calculator_widget": false,
+        "comet_nav_widget_combined_target": false,
+        "finance_agent_gating": false
+      },
+      "mhe_predictions_full": {
+        "skip_search": {
+          "is_true": false,
+          "probability": null,
+          "threshold": null
+        },
+        "image_generation_intent": {
+          "is_true": false,
+          "probability": 0.00077819824,
+          "threshold": 0.98
+        },
+        "time_widget": {
+          "is_true": false,
+          "probability": 0.0017547607,
+          "threshold": 0.8
+        },
+        "places_search_intent": {
+          "is_true": false,
+          "probability": 0.033691406,
+          "threshold": 0.75
+        },
+        "shopping_intent": {
+          "is_true": false,
+          "probability": 0.0020446777,
+          "threshold": 0.8
+        },
+        "image_preview": {
+          "is_true": false,
+          "probability": 0.004058838,
+          "threshold": 0.42
+        },
+        "video_preview": {
+          "is_true": false,
+          "probability": 0.0011672974,
+          "threshold": 0.5
+        },
+        "study_intent": null,
+        "personal_search": {
+          "is_true": false,
+          "probability": null,
+          "threshold": null
+        },
+        "skip_personal_search": {
+          "is_true": true,
+          "probability": 0.99609375,
+          "threshold": 0.95
+        },
+        "weather_widget": {
+          "is_true": false,
+          "probability": 0.022949219,
+          "threshold": 0.4
+        },
+        "finance_widget_gating": {
+          "is_true": false,
+          "probability": 0.0009994507,
+          "threshold": 0.53
+        },
+        "calculator_widget": {
+          "is_true": false,
+          "probability": 0.0019302368,
+          "threshold": 0.3
+        },
+        "comet_nav_widget_combined_target": {
+          "is_true": false,
+          "probability": 0.021606445,
+          "threshold": 0.5
+        },
+        "domain_subdomain": {
+          "label": "PROGRAMMING/TERMINOLOGY",
+          "probability": 0.30664062
+        },
+        "finance_agent_gating": {
+          "is_true": false,
+          "probability": 0.0003566742,
+          "threshold": 0.7
+        }
+      }
+    },
+    "search_implementation_mode": "multi_step",
+    "query_language": "fr",
+    "search_mode": "SEARCH",
+    "social_info": {
+      "view_count": 0,
+      "fork_count": 0,
+      "like_count": 0,
+      "user_likes": false
+    },
+    "featured_images": []
+  },
+  "has_next_page": false,
+  "latest_entry": null,
+  "next_cursor": null,
+  "status": "success",
+  "thread_metadata": {
+    "author_name": "Alex Martin",
+    "author_id": "f0000000-0000-4000-8000-c41906c4d902",
+    "author_image": "https://imagedelivery.net/MPdwyYSWT8IY7lxgN3x3Uw/f0000000-0000-4000-8000-72d7d24303e4/thumbnail",
+    "author_username": "antonetmil4193",
+    "bookmark_state": "NOT_BOOKMARKED",
+    "collection_info": null,
+    "created_at": "2026-09-26T21:39:00.984718",
+    "crons": null,
+    "is_frozen_thread": false,
+    "is_ask_deep_research": false,
+    "is_ask_asset_task": false,
+    "local_workspace_directories": null,
+    "locked_reason": null,
+    "mode": "1",
+    "parent_info": null,
+    "sensitive_claims_visibility": null,
+    "subscribe_entry_uuids": null,
+    "thread_status": "completed",
+    "thread_status_summary": null,
+    "thread_status_summary_enum": null,
+    "title": "Insère un séparateur horizontal Markdown. Réponds uniquement avec le séparateur.",
+    "unread": false,
+    "updated_at": "2026-09-26T21:39:01.923778",
+    "wake_at": null,
+    "workflow_snapshots": null
+  }
+}

@@ -26,7 +26,12 @@ from ..parsers.base import ParseError
 from ..parsers.gemini import TURN_SELECTOR, GeminiParser, merge_turn_fragments
 from ..schema import ConversationRef, normalize_timestamp
 from ..utils.logging import get_logger
-from .base import BaseService, ScrapedPage, ServiceNotLoggedIn
+from .base import (
+    BaseService,
+    RateLimitedError,
+    ScrapedPage,
+    ServiceNotLoggedIn,
+)
 
 log = get_logger("services.gemini")
 
@@ -286,8 +291,8 @@ class _GeminiHttpClient:
                     "gemini: jeton de session refuse -> `run.py --login gemini`"
                 )
             if not self._wait_soft_error(attempt, _soft_error_code(text)):
-                raise RuntimeError(
-                    f"gemini: erreur applicative persistante sur {rpcid} "
+                raise RateLimitedError(
+                    f"gemini: limite de debit persistante sur {rpcid} "
                     f"(code {_soft_error_code(text)})"
                 )
         raise RuntimeError(f"gemini: erreur applicative sur {rpcid}")

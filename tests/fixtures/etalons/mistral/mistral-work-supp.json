@@ -4,8 +4,8 @@
   "title": "Formatting Text Elements",
   "url": "https://chat.mistral.ai/work/f0000000-0000-4000-8000-d5069dfe8099",
   "model": "GLM 5.3",
-  "started_at": "2026-09-25T21:18:00Z",
-  "last_message_at": "2026-09-25T21:20:00Z",
+  "started_at": "2026-09-25T19:18:02Z",
+  "last_message_at": "2026-09-25T19:20:01Z",
   "exported_at": "2026-09-27T22:06:46Z",
   "messages": [
     {
@@ -14,13 +14,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
+      "timestamp": "2026-09-25T19:18:02Z",
       "texte": "Affiche le mot \"important\" en gras, le mot \"optionnel\" en italique et le mot \"annulé\" en barré. Utilise uniquement ces trois mots, chacun sur une nouvelle ligne.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -28,13 +29,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
-      "texte": "important\noptionnel\nannulé",
+      "timestamp": "2026-09-25T19:18:04Z",
+      "texte": "**important**\n*optionnel*\n~~annulé~~",
       "code_blocks": [],
       "reasoning": "User explicitly asks for formatting despite preset instructions — explicit request wins.",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -42,13 +44,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
+      "timestamp": "2026-09-25T19:18:15Z",
       "texte": "Numérote ces étapes : première, deuxième, troisième. Utilise uniquement la liste numérotée, sans autre texte.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -56,13 +59,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
+      "timestamp": "2026-09-25T19:18:16Z",
       "texte": "1. première\n2. deuxième\n3. troisième",
       "code_blocks": [],
       "reasoning": "French numbered list, no other text.",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -70,13 +74,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
+      "timestamp": "2026-09-25T19:18:28Z",
       "texte": "Cite cette phrase en bloc : \"La simplicité est la sophistication suprême.\" Utilise uniquement la citation, sans autre texte.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -84,13 +89,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
+      "timestamp": "2026-09-25T19:18:28Z",
       "texte": "> La simplicité est la sophistication suprême.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -98,13 +104,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
+      "timestamp": "2026-09-25T19:18:41Z",
       "texte": "Crée un lien vers \"https://fr.wikipedia.org\" avec le texte \"Wikipédia\". Utilise uniquement le lien, sans autre texte.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -112,13 +119,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
+      "timestamp": "2026-09-25T19:18:41Z",
       "texte": "[Wikipédia](https://fr.wikipedia.org)",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -126,13 +134,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
+      "timestamp": "2026-09-25T19:18:53Z",
       "texte": "Affiche un séparateur horizontal. Utilise uniquement le séparateur, sans autre texte.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -140,13 +149,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:18:00Z",
+      "timestamp": "2026-09-25T19:18:53Z",
       "texte": "---",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -154,13 +164,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:19:00Z",
+      "timestamp": "2026-09-25T19:19:06Z",
       "texte": "Affiche le code \"print('Hello')\" en ligne. Utilise uniquement ce code, sans autre texte.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -168,13 +179,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:19:00Z",
-      "texte": "print('Hello')",
+      "timestamp": "2026-09-25T19:19:06Z",
+      "texte": "`print('Hello')`",
       "code_blocks": [],
       "reasoning": "Inline code.",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -182,13 +194,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:19:00Z",
+      "timestamp": "2026-09-25T19:19:19Z",
       "texte": "Affiche la formule E=mc^2 en LaTeX inline, suivie de \" — Équation d'Einstein\". Utilise uniquement cette ligne.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -196,13 +209,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:19:00Z",
+      "timestamp": "2026-09-25T19:19:19Z",
       "texte": "$E=mc^2$ — Équation d'Einstein",
       "code_blocks": [],
       "reasoning": "$E=mc^2$ inline LaTeX.",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -210,13 +224,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:19:00Z",
+      "timestamp": "2026-09-25T19:19:32Z",
       "texte": "Affiche une matrice 2x2 avec les éléments a, b, c, d en LaTeX, suivie de \" — Matrice\". Utilise uniquement ces éléments.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -224,13 +239,14 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:19:00Z",
+      "timestamp": "2026-09-25T19:19:33Z",
       "texte": "$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$ — Matrice",
       "code_blocks": [],
       "reasoning": "Matrix 2x2 with a, b, c, d.",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -238,13 +254,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:19:00Z",
+      "timestamp": "2026-09-25T19:19:46Z",
       "texte": "Donne un exemple minimal de requête SQL (1 ligne) qui sélectionne tout depuis une table \"users\". Utilise un bloc de code avec coloration syntaxique. Pas d'explication.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -252,7 +269,7 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:19:00Z",
+      "timestamp": "2026-09-25T19:19:47Z",
       "texte": "```sql\nSELECT * FROM users;\n```",
       "code_blocks": [
         {
@@ -263,7 +280,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -271,13 +289,14 @@
       "role": "user",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:20:00Z",
+      "timestamp": "2026-09-25T19:20:00Z",
       "texte": "Génère un CSV avec 2 colonnes (Nom,Âge) et 2 lignes (Alice,30) et (Bob,25). Affiche UNIQUEMENT le CSV, sans texte avant ou après.",
       "code_blocks": [],
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     },
     {
       "conversation_id": "f0000000-0000-4000-8000-d5069dfe8099",
@@ -285,7 +304,7 @@
       "role": "assistant",
       "platform": "mistral",
       "model": null,
-      "timestamp": "2026-09-25T21:20:00Z",
+      "timestamp": "2026-09-25T19:20:01Z",
       "texte": "```csv\nNom,Âge\nAlice,30\nBob,25\n```",
       "code_blocks": [
         {
@@ -296,7 +315,8 @@
       "reasoning": "",
       "artifacts": [],
       "sources": [],
-      "tools": []
+      "tools": [],
+      "variants": []
     }
   ]
 }

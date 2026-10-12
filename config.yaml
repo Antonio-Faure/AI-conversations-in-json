@@ -46,10 +46,13 @@ services:
   claude:
     enabled: true
     url: https://claude.ai/chats
+    api: true                  # REST /api/organizations (rapide) ; false = DOM
     engine: botasaurus         # Cloudflare bloque Playwright sur claude.ai
   gemini:
     enabled: true
     url: https://gemini.google.com/app
+    api: true                  # batchexecute (opt-in) ; absent/false = DOM
+    pacing_ms: 3000            # l'API batchexecute limite le debit en rafale
   perplexity:
     enabled: true
     url: https://www.perplexity.ai/
@@ -62,4 +65,5 @@ services:
   mistral:
     enabled: true
     url: https://chat.mistral.ai/work
+    api: true                  # tRPC /api/trpc (cookies) ; false = DOM
     engine: botasaurus         # Cloudflare bloque Playwright

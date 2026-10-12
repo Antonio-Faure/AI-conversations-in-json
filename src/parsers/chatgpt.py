@@ -271,6 +271,28 @@ def _api_sources(metadata: Dict[str, Any]) -> List[str]:
     return _dedupe([entry for entry in sources if entry])
 
 
+def _api_reference_images(text: str, metadata: Dict[str, Any]) -> str:
+    """Remplace les marqueurs `image_group` du texte par les images web associees.
+
+    Les carrousels d'images de la recherche web sont references dans le texte
+    par un marqueur `\\ue200image_group\\ue202{...}` ; leur markdown (`alt`) vit
+    dans `metadata.content_references`. Le DOM les rendait (images distantes,
+    ensuite telechargees) : l'API doit les remapper pour ne pas les perdre.
+    """
+    for ref in metadata.get("content_references") or []:
+        if not isinstance(ref, dict) or str(ref.get("type") or "") != "image_group":
+            continue
+        markdown = str(ref.get("alt") or "").strip()
+        if not markdown:
+            continue
+        marker = str(ref.get("matched_text") or "")
+        if marker and marker in text:
+            text = text.replace(marker, markdown, 1)
+        elif markdown not in text:
+            text = f"{text}\n\n{markdown}".strip() if text else markdown
+    return text
+
+
 def merge_turn_snapshots(
     snapshots: List[List[str]], html_by_key: Dict[str, str]
 ) -> List[str]:
@@ -650,6 +672,7 @@ class ChatGPTParser(BaseParser):
             text = _normalize_api_math(
                 _api_parts_text(content, metadata, unsupported=unsupported)
             )
+            text = _api_reference_images(text, metadata)
             message_id = str(raw.get("id") or "")
             if role == "user":
                 flush_pending(before_user=True)
