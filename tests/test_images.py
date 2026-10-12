@@ -58,6 +58,20 @@ def test_download_rejette_html(tmp_path):
     assert conv.messages[0].texte == "![a](https://x/page)"
 
 
+def test_download_preserve_les_liens_de_prose(tmp_path):
+    """Une URL d'image citee dans la prose reste un lien web (capacite `link`)."""
+    conv = _conv(
+        "Voir [https://x/1.png](https://x/1.png) puis ![a](https://x/1.png)"
+    )
+    stats = download_conversation_images(
+        conv, lambda url: (PNG, "image/png"), tmp_path / "images"
+    )
+    assert stats == {"downloaded": 1, "cached": 0, "failed": 0}
+    text = conv.messages[0].texte
+    assert "[https://x/1.png](https://x/1.png)" in text
+    assert "![a](images/" in text and text.endswith(".png)")
+
+
 def test_download_loader_none(tmp_path):
     conv = _conv("![a](https://x/page)")
     stats = download_conversation_images(conv, lambda url: None, tmp_path / "images")

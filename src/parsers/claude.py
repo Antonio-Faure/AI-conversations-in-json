@@ -23,6 +23,15 @@ rattache au message de la rangee.
 Le texte est rendu en markdown complet (titres, listes, tableaux, citations,
 separateurs, gras/italique/barre, code, LaTeX) ; les pieces jointes des tours
 user (images, fichiers) sont ajoutees en markdown.
+
+Chemin **API** (`parse_api`) : le JSON de `GET /api/organizations/<org>/
+chat_conversations/<id>?tree=True&rendering_mode=messages&render_all_tools=true`
+porte l'arbre complet (`chat_messages` relies par `parent_message_uuid`). La
+branche active est celle qui remonte de `current_leaf_message_uuid` ; les
+messages freres hors branche (editions utilisateur, regenerations) alimentent
+`Message.variants`. Les blocs `thinking` donnent `reasoning`, les `tool_use`
+donnent `tools`/`artifacts`, les `citations` donnent `sources`, les pieces
+jointes (`files`/`attachments`) sont ajoutees en markdown comme dans le DOM.
 """
 
 from __future__ import annotations
@@ -33,7 +42,7 @@ from typing import Any, Dict, List, Optional
 
 from bs4 import NavigableString, Tag
 
-from ..schema import Conversation
+from ..schema import Conversation, Variant
 from .base import BaseParser, ParseError
 
 UUID_RE = re.compile(r"/chat/([0-9a-fA-F]{8}-(?:[0-9a-fA-F-]{27}|[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}))")
@@ -98,6 +107,307 @@ def merge_transcript_rows(fragments: List[str], header_html: str = "") -> str:
         + "".join(ordered)
         + "</body></html>"
     )
+
+
+# -- mapping API (`/api/organizations/<org>/chat_conversations/<id>`) ----------
+
+#: libelles des outils de l'API (proches des cartes de statut du DOM)
+_API_TOOL_LABELS = {
+    "web_search": "Recherche web",
+    "web_fetch": "Lecture de page",
+    "bash_tool": "Exécution de code",
+    "create_file": "Création de fichier",
+    "present_files": "Fichiers présentés",
+    "memory_read": "Mémoire lue",
+    "memory_write": "Mémoire enregistrée",
+    "memory_str_replace": "Mémoire mise à jour",
+    "Artifact": "Artefact publié",
+}
+
+#: prefixe absolu des URL d'assets renvoyees par l'API (chemins relatifs)
+CLAUDE_BASE_URL = "https://claude.ai"
+
+#: nom par defaut des textes colles (l'API laisse `file_name` vide, l'UI les
+#: nomme ; le DOM expose ce nom)
+_API_PASTED_TEXT_NAMES = {"txt": "Texte collé.txt"}
+
+#: fichiers non-image sans URL de telechargement (blobs, pieces extraites) :
+#: seuls leur nom est rendu, comme dans le DOM.
+_API_BLOCK_EXT_RE = re.compile(r"\.([A-Za-z0-9]{1,5})$")
+
+#: URL nue hors syntaxe markdown (le DOM rend ces URL comme des liens `<a>`)
+_API_BARE_URL_RE = re.compile(r"(?<![\[\(<\"'=`])(https?://[^\s<>\[\]()\"'`]+)")
+_API_TRAILING_PUNCT = ".,;:!?»…"
+
+
+def _api_linkify(match: "re.Match[str]") -> str:
+    """Transforme une URL nue en lien markdown (ponctuation finale preservee)."""
+    url = match.group(1)
+    trailing = ""
+    while url and url[-1] in _API_TRAILING_PUNCT:
+        trailing = url[-1] + trailing
+        url = url[:-1]
+    return f"[{url}]({url}){trailing}" if url else match.group(0)
+
+
+def _api_autolink(text: str) -> str:
+    """Rend les URL nues en liens markdown, hors blocs/inline code.
+
+    Le DOM expose les URL comme des `<a>` (le parseur les convertit en
+    `[url](url)`) ; le texte API les laisse nues. On aligne le rendu sans
+    toucher au code (fences et code inline).
+    """
+    if "http" not in (text or ""):
+        return text
+    out: List[str] = []
+    for index, part in enumerate(re.split(r"(```.*?```)", text, flags=re.DOTALL)):
+        if index % 2:
+            out.append(part)
+            continue
+        for sub_index, sub in enumerate(re.split(r"(`[^`\n]*`)", part)):
+            if sub_index % 2:
+                out.append(sub)
+            else:
+                out.append(_API_BARE_URL_RE.sub(_api_linkify, sub))
+    return "".join(out)
+
+
+def _api_dedupe(items: List[str]) -> List[str]:
+    """Valeurs non vides, dedupliquees, ordre preserve."""
+    out: List[str] = []
+    seen = set()
+    for item in items:
+        value = str(item or "").strip()
+        if value and value not in seen:
+            seen.add(value)
+            out.append(value)
+    return out
+
+
+def _api_content(msg: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Blocs de contenu d'un message API (liste ; repli sur le champ `text`)."""
+    content = msg.get("content")
+    if isinstance(content, list):
+        return [block for block in content if isinstance(block, dict)]
+    if isinstance(content, str) and content.strip():
+        return [{"type": "text", "text": content}]
+    text = msg.get("text")
+    if isinstance(text, str) and text.strip():
+        return [{"type": "text", "text": text}]
+    return []
+
+
+def _api_text(msg: Dict[str, Any]) -> str:
+    """Texte markdown d'un message API (blocs `text` joints par paragraphe)."""
+    parts = [
+        str(block.get("text") or "")
+        for block in _api_content(msg)
+        if block.get("type") == "text" and str(block.get("text") or "").strip()
+    ]
+    return "\n\n".join(parts).strip()
+
+
+def _api_reasoning(msg: Dict[str, Any]) -> str:
+    """Raisonnement d'un message API (blocs `thinking` : texte ou resumes).
+
+    L'API masque le raisonnement integral (`thinking` vide, `thinking_hidden`)
+    et n'expose que les resumes (`summaries`) : on les joint dans l'ordre des
+    blocs, comme les cartes de reflexion du DOM.
+    """
+    lines: List[str] = []
+    for block in _api_content(msg):
+        if block.get("type") != "thinking":
+            continue
+        thinking = str(block.get("thinking") or "").strip()
+        if thinking:
+            lines.append(thinking)
+            continue
+        for summary in block.get("summaries") or []:
+            if isinstance(summary, dict):
+                value = str(summary.get("summary") or "").strip()
+                if value:
+                    lines.append(value)
+    return "\n".join(lines).strip()
+
+
+def _api_tool_label(block: Dict[str, Any]) -> str:
+    """Libelle d'un `tool_use` API (proche de la carte de statut du DOM)."""
+    name = str(block.get("name") or "").strip()
+    if name in _API_TOOL_LABELS:
+        return _API_TOOL_LABELS[name]
+    if block.get("mcp_server_url") or ":" in name:
+        # outil MCP (serveur distant) : le libelle porte le nom qualifie
+        return f"MCP {name}" if name else "Outil MCP"
+    message = str(block.get("message") or "").strip()
+    if message:
+        return message
+    integration = str(block.get("integration_name") or "").strip()
+    return integration or name or "Outil"
+
+
+def _api_tools(msg: Dict[str, Any]) -> List[str]:
+    """Outils d'un message API (`tool_use` -> libelles dedupliques)."""
+    labels = [
+        _api_tool_label(block)
+        for block in _api_content(msg)
+        if block.get("type") == "tool_use"
+    ]
+    return _api_dedupe(labels)
+
+
+def _api_artifact_entry(name: str, title: str = "") -> str:
+    """Entree d'artefact `Titre (ext)` (meme forme que le DOM)."""
+    stem = str(name or "").strip()
+    if not stem:
+        return ""
+    match = _API_BLOCK_EXT_RE.search(stem.rsplit("/", 1)[-1])
+    kind = match.group(1).lower() if match else ""
+    label = str(title or "").strip()
+    if not label:
+        base = stem.rsplit("/", 1)[-1]
+        if match:
+            base = base[: -len(match.group(0))]
+        label = base.replace("_", " ").replace("-", " ").strip()
+        label = label[:1].upper() + label[1:] if label else ""
+    if label and kind:
+        return f"{label} ({kind})"
+    return label or kind
+
+
+def _api_artifacts(msg: Dict[str, Any]) -> List[str]:
+    """Artefacts/canvas d'un message API (cartes `present_files`/`Artifact`)."""
+    entries: List[str] = []
+    for block in _api_content(msg):
+        if block.get("type") != "tool_use":
+            continue
+        name = str(block.get("name") or "")
+        data = block.get("input") or {}
+        if name == "present_files":
+            for path in data.get("filepaths") or []:
+                entries.append(_api_artifact_entry(str(path)))
+        elif name == "Artifact":
+            title = str(data.get("title") or "").strip()
+            entries.append(_api_artifact_entry(str(data.get("file_path") or ""), title))
+    return _api_dedupe(entries)
+
+
+def _api_sources(msg: Dict[str, Any]) -> List[str]:
+    """URL des citations web d'un message API (blocs `text` -> `citations`)."""
+    urls: List[str] = []
+    for block in _api_content(msg):
+        if block.get("type") != "text":
+            continue
+        for citation in block.get("citations") or []:
+            if isinstance(citation, dict):
+                url = str(citation.get("url") or "").strip()
+                if url.startswith(("http://", "https://")):
+                    urls.append(url)
+    return _api_dedupe(urls)[:25]
+
+
+def _api_asset_url(entry: Dict[str, Any]) -> str:
+    """URL absolue d'un asset de piece jointe API (`preview`/`document`)."""
+    for key in ("preview_url", "thumbnail_url"):
+        value = str(entry.get(key) or "").strip()
+        if value:
+            return value if value.startswith("http") else CLAUDE_BASE_URL + value
+    for key in ("document_asset", "preview_asset", "thumbnail_asset"):
+        asset = entry.get(key) or {}
+        value = str(asset.get("url") or "").strip()
+        if value:
+            return value if value.startswith("http") else CLAUDE_BASE_URL + value
+    return ""
+
+
+def _api_attachments(msg: Dict[str, Any]) -> str:
+    """Pieces jointes d'un message API en markdown (images et fichiers).
+
+    Les images (`files` `file_kind=image`) passent par l'URL `preview` (servie
+    sous cookies, telechargee en local) ; les documents par l'URL
+    `document_asset` ; les blobs sans URL (video/audio) et les pieces extraites
+    (`attachments`) ne portent que leur nom, comme dans le DOM.
+    """
+    entries: List[str] = []
+    for entry in msg.get("files") or []:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("file_name") or entry.get("path") or "").strip()
+        url = _api_asset_url(entry)
+        kind = str(entry.get("file_kind") or "")
+        if kind == "image" and url:
+            alt = name or "image"
+            entries.append(f"![{alt}]({url})")
+        elif name and url:
+            entries.append(f"[{name}]({url})")
+        elif name:
+            entries.append(name)
+    for entry in msg.get("attachments") or []:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("file_name") or "").strip()
+        if not name:
+            # texte colle : l'API ne nomme pas la piece, l'UI oui (comme le DOM)
+            kind = str(entry.get("file_type") or "").strip().lower()
+            name = _API_PASTED_TEXT_NAMES.get(kind, f"Piece jointe.{kind}" if kind else "")
+        url = _api_asset_url(entry)
+        if name and url:
+            entries.append(f"[{name}]({url})")
+        elif name:
+            entries.append(name)
+    return "\n\n".join(_api_dedupe(entries))
+
+
+def _api_message_text(msg: Dict[str, Any]) -> str:
+    """Texte markdown d'un message API, pieces jointes ajoutees (comme le DOM)."""
+    text = _api_autolink(_api_text(msg))
+    attachments = _api_attachments(msg)
+    if attachments:
+        return f"{text}\n\n{attachments}".strip() if text else attachments
+    return text
+
+
+def _api_active_chain(
+    messages: List[Dict[str, Any]], leaf: Optional[str]
+) -> List[Dict[str, Any]]:
+    """Branche active de l'arbre API (du plus ancien au plus recent).
+
+    Remonte de `current_leaf_message_uuid` vers la racine. Repli quand la
+    feuille est absente ou introuvable (conversation sans reponse, edition en
+    cours) : on part du message au plus grand `index` (derniere version).
+    """
+    by_uuid = {
+        str(msg.get("uuid")): msg for msg in messages if msg.get("uuid")
+    }
+    current = by_uuid.get(str(leaf)) if leaf else None
+    if current is None and messages:
+        current = max(messages, key=lambda msg: int(msg.get("index") or 0))
+    chain: List[Dict[str, Any]] = []
+    seen = set()
+    while current is not None:
+        uuid = str(current.get("uuid") or "")
+        if not uuid or uuid in seen:
+            break
+        seen.add(uuid)
+        chain.append(current)
+        current = by_uuid.get(str(current.get("parent_message_uuid") or ""))
+    chain.reverse()
+    return chain
+
+
+def _api_siblings(
+    messages: List[Dict[str, Any]], message: Dict[str, Any]
+) -> List[Dict[str, Any]]:
+    """Versions alternatives d'un message (freres de meme parent et de meme role)."""
+    parent = str(message.get("parent_message_uuid") or "")
+    sender = str(message.get("sender") or "")
+    siblings = [
+        msg
+        for msg in messages
+        if str(msg.get("parent_message_uuid") or "") == parent
+        and str(msg.get("sender") or "") == sender
+    ]
+    siblings.sort(key=lambda msg: int(msg.get("index") or 0))
+    return siblings
 
 
 class ClaudeParser(BaseParser):
@@ -185,6 +495,12 @@ class ClaudeParser(BaseParser):
         extra: Optional[Dict[str, Any]] = None,
     ) -> Conversation:
         extra = extra or {}
+        if extra.get("api"):
+            # chemin API (`/api/organizations/<org>/chat_conversations/<id>`) :
+            # le service passe le payload JSON brut, le HTML est ignore.
+            return self.parse_api(
+                extra["api"], conversation_id=conversation_id, extra=extra
+            )
         soup = self.make_soup(html)
 
         try:
@@ -280,6 +596,128 @@ class ClaudeParser(BaseParser):
         )
         self.log_parse(conv, model=model, title=title)
         return self.check(conv)
+
+    # -- mapping API -----------------------------------------------------------
+
+    def parse_api(
+        self,
+        data: Dict[str, Any],
+        *,
+        conversation_id: Optional[str] = None,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> Conversation:
+        """Construit la conversation depuis le JSON de l'API REST.
+
+        ``data`` est la reponse de ``/api/organizations/<org>/chat_conversations/
+        <id>?tree=True&rendering_mode=messages&render_all_tools=true`` :
+        ``{uuid, name, model, created_at, updated_at, current_leaf_message_uuid,
+        chat_messages[]}``. L'arbre est parcouru de la feuille vers la racine
+        pour isoler la branche active ; les messages freres hors branche
+        (editions, regenerations) sont attaches en ``Message.variants``. Les
+        blocs `thinking` alimentent `reasoning`, les `tool_use` alimentent
+        `tools`/`artifacts`, les `citations` alimentent `sources` et les pieces
+        jointes sont rendues en markdown comme dans le DOM.
+        """
+        extra = extra or {}
+        raw_messages = [
+            msg for msg in (data.get("chat_messages") or []) if isinstance(msg, dict)
+        ]
+        if not raw_messages:
+            raise ParseError("claude api: aucune donnee de conversation")
+
+        chain = _api_active_chain(raw_messages, data.get("current_leaf_message_uuid"))
+        if not chain:
+            raise ParseError("claude api: branche active introuvable")
+
+        messages: List[Any] = []
+        for raw in chain:
+            sender = str(raw.get("sender") or "")
+            role = "user" if sender == "human" else "assistant"
+            text = _api_message_text(raw)
+            reasoning = _api_reasoning(raw) if role == "assistant" else ""
+            tools = _api_tools(raw) if role == "assistant" else []
+            artifacts = _api_artifacts(raw) if role == "assistant" else []
+            sources = _api_sources(raw) if role == "assistant" else []
+            if not any((text, reasoning, tools, artifacts, sources)):
+                continue
+            metadata: Dict[str, Any] = {}
+            if role == "assistant":
+                metadata["tokens"] = None
+                if reasoning or any(
+                    block.get("type") == "thinking" for block in _api_content(raw)
+                ):
+                    metadata["had_thinking"] = True
+            message = self.msg(
+                role,
+                text,
+                raw.get("created_at"),
+                metadata,
+                message_id=str(raw.get("uuid") or ""),
+            )
+            if role == "assistant":
+                message.reasoning = reasoning
+                message.tools = tools
+                message.artifacts = artifacts
+                message.sources = sources
+            self._attach_api_variants(message, raw, raw_messages)
+            messages.append(message)
+
+        if not messages:
+            raise ParseError("claude api: aucun message exploitable")
+
+        conv_id = (
+            conversation_id
+            or data.get("uuid")
+            or extra.get("conversation_id")
+        )
+        if not conv_id:
+            raise ParseError("claude api: conversation_id manquant")
+
+        title = str(data.get("name") or extra.get("title_hint") or "").strip()
+        conv = Conversation(
+            platform=self.service_name,
+            conversation_id=str(conv_id),
+            title=title or "Claude conversation",
+            messages=messages,
+            model=str(data.get("model") or "") or None,
+            started_at=data.get("created_at"),
+            last_message_at=data.get("updated_at"),
+            url=f"{CLAUDE_BASE_URL}/chat/{conv_id}",
+        )
+        self.log_parse(conv, model=conv.model, title=conv.title)
+        return self.check(conv)
+
+    @classmethod
+    def _attach_api_variants(
+        cls,
+        message: Any,
+        raw: Dict[str, Any],
+        raw_messages: List[Dict[str, Any]],
+    ) -> None:
+        """Attache les versions alternatives d'un message (arbre API).
+
+        Les freres de meme parent et de meme role sont les versions natives
+        (edition utilisateur, regeneration) ; la version active (celle du fil)
+        est marquee `active=True`, comme le fait le mapper Mistral.
+        """
+        siblings = _api_siblings(raw_messages, raw)
+        if len(siblings) < 2:
+            return
+        kind = "edit" if message.role == "user" else "regeneration"
+        built: List[Variant] = []
+        for sibling in siblings:
+            text = _api_message_text(sibling)
+            built.append(
+                Variant(
+                    kind=kind,
+                    texte=text,
+                    model=None,
+                    timestamp=sibling.get("created_at"),
+                    message_id=str(sibling.get("uuid") or ""),
+                    active=str(sibling.get("uuid") or "") == str(raw.get("uuid") or ""),
+                )
+            )
+        message.variants = built
 
     # -- selection du contenu ------------------------------------------------
 

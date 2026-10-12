@@ -113,6 +113,26 @@ def _looks_like_image(data: bytes) -> bool:
     return head.startswith(b"<svg") or head.startswith(b"<?xml")
 
 
+def _rewrite_image_urls(text: str, mapping: Dict[str, str]) -> str:
+    """Reecrit les URL d'images markdown vers leur chemin local.
+
+    Seule la syntaxe `![alt](url)` est touchee : une meme URL citee dans la
+    prose (lien utilisateur vers l'image) reste un lien web.
+    """
+    if not text or not mapping:
+        return text
+
+    def repl(match: "re.Match[str]") -> str:
+        relpath = mapping.get(match.group(1))
+        if not relpath:
+            return match.group(0)
+        prefix = match.group(0)[: match.start(1) - match.start(0)]
+        suffix = match.group(0)[match.end(1) - match.start(0):]
+        return f"{prefix}{relpath}{suffix}"
+
+    return IMAGE_RE.sub(repl, text)
+
+
 def download_conversation_images(
     conv,
     loader: ImageLoader,
@@ -160,11 +180,7 @@ def download_conversation_images(
         stats["downloaded"] += 1
 
     for message in conv.messages:
-        text = message.texte
-        for url, relpath in mapping.items():
-            if url in text:
-                text = text.replace(url, relpath)
-        message.texte = text
+        message.texte = _rewrite_image_urls(message.texte, mapping)
 
     log_fields(
         log, 20, "images telechargees",
