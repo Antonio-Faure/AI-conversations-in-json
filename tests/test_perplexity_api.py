@@ -203,6 +203,191 @@ def test_metriques_api_sans_regression_sur_le_dom(api_conversation):
     assert api_metrics["lists"] == dom_metrics["lists"]
 
 
+# -- mapper API : forme « blocs markdown » (reponse diffusee) -----------------
+
+
+@pytest.fixture(scope="module")
+def blocks_payload():
+    return load_fixture("perplexity_api_thread_blocks.json")
+
+
+@pytest.fixture(scope="module")
+def blocks_conversation(blocks_payload):
+    return PerplexityParser().parse(
+        "",
+        conversation_id="f0000000-0000-4000-8000-34e0c27b401f",
+        extra={"api": blocks_payload},
+    )
+
+
+def test_parse_api_markdown_blocks_reponses_non_vides(blocks_conversation):
+    """Forme « blocs markdown » : les reponses assistant ne sont plus perdues.
+
+    Regression : le mapper ne lisait que les items `WORKFLOW_ITEM_TEXT` du
+    `workflow_block` ; les conversations ou la reponse vit dans des blocs
+    `markdown_block` (`ask_text` final + segments `ask_text_N_markdown`)
+    sortaient avec des messages assistant vides.
+    """
+    conv = blocks_conversation
+    assert [m.role for m in conv.messages] == ["user", "assistant"] * 3
+    assistants = [m for m in conv.messages if m.role == "assistant"]
+    assert all((m.texte or "").strip() for m in assistants)
+    assert all(len(m.texte) > 500 for m in assistants)
+    assert conv.model == "turbo"
+    assert conv.started_at == "2026-06-08T19:08:12Z"
+    assert conv.last_message_at == "2026-06-08T19:12:12Z"
+
+
+def test_parse_api_markdown_blocks_table_et_images(blocks_conversation):
+    first = blocks_conversation.messages[1]
+    # tableau markdown du segment « mesures » conserve tel quel
+    assert "| Mesure | Détail |" in first.texte
+    assert "|--------|" in first.texte
+    # images inline du bloc `inline_entity_block` (`ask_text_4_images`)
+    assert first.texte.count("![") == 2
+    assert "ATE_Maison-retrait-argiles-evaporation-secheresse_800.jpg" in first.texte
+    assert "ATE_Maison-gonflement-argiles-drainage_protections.jpg" in first.texte
+    # raisonnement (workflow), sources et outils restent mappes
+    assert first.reasoning
+    assert first.sources
+    assert first.tools == ["Recherche"]
+
+
+def test_parse_api_markdown_blocks_sans_duplication(
+    blocks_payload, blocks_conversation
+):
+    """Le bloc final `ask_text` prime : les segments ne sont pas re-concaténés."""
+    entry = blocks_payload["entries"][0]
+    final = next(
+        block["markdown_block"]["answer"]
+        for block in entry["blocks"]
+        if block.get("intended_usage") == "ask_text"
+    )
+    assistant = blocks_conversation.messages[1]
+    assert final.strip() in assistant.texte
+    assert assistant.texte.count("### Avant la construction") == 1
+    assert assistant.texte.count("### Aide financière possible") == 1
+
+
+def test_parse_api_markdown_segments_sans_bloc_final():
+    """Sans bloc final, les segments sont concatenes dans l'ordre du suffixe."""
+    payload = {
+        "entries": [
+            {
+                "uuid": "f0000000-0000-4000-8000-0000000000a1",
+                "query_str": "Question ?",
+                "blocks": [
+                    {
+                        "intended_usage": "ask_text_1_markdown",
+                        "markdown_block": {
+                            "progress": "DONE",
+                            "chunks": ["seconde"],
+                            "chunk_starting_offset": 0,
+                            "answer": "seconde partie",
+                        },
+                    },
+                    {
+                        "intended_usage": "ask_text_0_markdown",
+                        "markdown_block": {
+                            "progress": "DONE",
+                            "chunks": [],
+                            "chunk_starting_offset": 0,
+                            "answer": "premiere partie",
+                        },
+                    },
+                ],
+            }
+        ]
+    }
+    conv = PerplexityParser().parse(
+        "",
+        conversation_id="f0000000-0000-4000-8000-0000000000b1",
+        extra={"api": payload},
+    )
+    assert conv.messages[1].texte == "premiere partie\nseconde partie"
+
+
+def test_parse_api_markdown_chunks_en_repli():
+    """`answer` vide : les `chunks` (deltas de streaming) sont rejoues."""
+    payload = {
+        "entries": [
+            {
+                "uuid": "f0000000-0000-4000-8000-0000000000a2",
+                "query_str": "Question ?",
+                "blocks": [
+                    {
+                        "intended_usage": "ask_text",
+                        "markdown_block": {
+                            "progress": "DONE",
+                            "chunks": ["Bonjour", " le", " monde"],
+                            "chunk_starting_offset": 0,
+                            "answer": "",
+                        },
+                    }
+                ],
+            }
+        ]
+    }
+    conv = PerplexityParser().parse(
+        "",
+        conversation_id="f0000000-0000-4000-8000-0000000000b2",
+        extra={"api": payload},
+    )
+    assert conv.messages[1].texte == "Bonjour le monde"
+
+
+def test_parse_api_medias_images_et_videos():
+    """Blocs de medias : images en `![nom](image)`, videos en lien."""
+    payload = {
+        "entries": [
+            {
+                "uuid": "f0000000-0000-4000-8000-0000000000a3",
+                "query_str": "Question ?",
+                "blocks": [
+                    {
+                        "intended_usage": "ask_text",
+                        "markdown_block": {
+                            "progress": "DONE",
+                            "chunks": [],
+                            "chunk_starting_offset": 0,
+                            "answer": "Reponse.",
+                        },
+                    },
+                    {
+                        "intended_usage": "answer_media_items",
+                        "inline_entity_block": {
+                            "media_block": {
+                                "media_items": [
+                                    {
+                                        "medium": "image",
+                                        "image": "https://example.com/photo.jpg",
+                                        "url": "https://example.com/article",
+                                        "name": "Photo",
+                                    },
+                                    {
+                                        "medium": "video",
+                                        "image": "https://img.youtube.com/vi/x/hqdefault.jpg",
+                                        "url": "https://www.youtube.com/watch?v=x",
+                                        "name": "Video",
+                                    },
+                                ]
+                            }
+                        },
+                    },
+                ],
+            }
+        ]
+    }
+    conv = PerplexityParser().parse(
+        "",
+        conversation_id="f0000000-0000-4000-8000-0000000000b3",
+        extra={"api": payload},
+    )
+    texte = conv.messages[1].texte
+    assert "![Photo](https://example.com/photo.jpg)" in texte
+    assert "[Video](https://www.youtube.com/watch?v=x)" in texte
+
+
 # -- service : config et client ----------------------------------------------
 
 
