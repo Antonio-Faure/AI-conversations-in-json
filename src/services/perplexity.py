@@ -1,29 +1,188 @@
 """Scraper Perplexity (perplexity.ai).
 
+Chemin **API** (defaut, JSON-only) : la decouverte et le fil passent par les
+endpoints REST/GraphQL (`/rest/perplexity_ask/graphql`, `/rest/thread/<id>`)
+avec les cookies du profil ; le payload brut est archive dans
+`exports/perplexity/raw/<slug>.json` (artefact de re-parse), aucun HTML n'est
+genere. Le navigateur n'est ouvert qu'une fois, pour recuperer les cookies.
+
 Decouverte : l'API GraphQL de la library (persisted query) liste TOUT
 (la liste DOM est virtualisee et la sidebar ne montre que le recent).
-Fallback : collecteur DOM incrementiel si l'API change.
 
-Le fil d'une conversation est lui aussi virtualise : le DOM ne monte qu'une
-fenetre de messages (`min-height` reserves pour les autres). `scrape_conversation`
-remonte donc le conteneur `.scrollable-container` en accumulant les messages
-(HTML le plus long gagne) avant de reconstruire un HTML complet a parser.
+Repli **DOM** (opt-in `services.perplexity.dom: true`) : collecteur DOM
+incrementiel. Le fil est virtualise (`min-height` reserves) : `scrape_conversation`
+remonte le conteneur `.scrollable-container` en accumulant les messages (HTML
+le plus long gagne) avant de reconstruire un HTML complet a parser.
 """
 
 from __future__ import annotations
 
 import json
 import re
+import time
+import urllib.error
+import urllib.request
 from html import escape as html_escape
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlencode
 
 from ..parsers.base import ParseError
 from ..parsers.perplexity import PerplexityParser, merge_thread_messages
 from ..schema import ConversationRef
 from ..utils.logging import get_logger, log_fields
-from .base import BaseService, ConversationUnavailableError, ScrapedPage
+from .base import (
+    BaseService,
+    ConversationUnavailableError,
+    ScrapedPage,
+    ServiceNotLoggedIn,
+)
 
 log = get_logger("services")
+
+# -- chemin API (REST + GraphQL, cookies du profil) --------------------------
+
+#: base de l'API Perplexity
+API_BASE = "https://www.perplexity.ai"
+#: contenu d'un fil (`entries`, `thread_metadata`, pagination par curseur)
+API_THREAD_URL = API_BASE + "/rest/thread/{cid}"
+#: GraphQL (persisted queries) de la library et de la sidebar
+API_GRAPHQL_URL = API_BASE + "/rest/perplexity_ask/graphql"
+#: version applicative envoyee par l'app (`x-app-apiversion`)
+API_VERSION = "2.18"
+#: entrees demandees par page de fil (l'API en accepte >= 500 ; 100 reste doux)
+API_PAGE_SIZE = 100
+#: garde-fou de pagination du fil
+API_MAX_PAGES = 50
+#: 429 : le forfait gratuit limite les rafales ; on attend et on reessaie
+API_RETRY_ATTEMPTS = 6
+#: attente de base sur 429 (secondes), doublee a chaque tentative
+API_RETRY_WAIT_S = 30
+#: plafond de l'attente sur 429 (secondes)
+API_RETRY_WAIT_MAX_S = 300
+
+#: capacites de blocs demandees au fil (comme l'app : rend le payload complet)
+API_BLOCK_USE_CASES = (
+    "answer_modes", "media_items", "inline_entity_cards", "place_widgets",
+    "finance_widgets", "news_widgets", "shopping_widgets",
+    "search_result_widgets", "inline_images", "inline_assets",
+    "placeholder_cards", "diff_blocks", "entity_group_v2", "refinement_filters",
+    "canvas_mode", "maps_preview", "answer_tabs", "preserve_latex",
+    "in_context_suggestions", "pending_followups", "inline_claims",
+    "unified_assets", "workflow_steps", "workflow_widgets",
+    "navigation_results", "background_agents",
+)
+
+
+class PerplexityHttpError(RuntimeError):
+    """Reponse HTTP non exploitable de l'API Perplexity (statut conserve)."""
+
+    def __init__(self, status: int, url: str):
+        super().__init__(f"perplexity: HTTP {status} sur {url}")
+        self.status = status
+        self.url = url
+
+
+def _retry_after_s(headers: Any) -> Optional[float]:
+    """`Retry-After` numerique d'une reponse HTTP (None sinon)."""
+    try:
+        value = (headers or {}).get("Retry-After")
+        return float(value) if value else None
+    except (TypeError, ValueError):
+        return None
+
+
+class _PerplexityHttpClient:
+    """Requetes authentifiees (cookies du profil) sur l'API Perplexity.
+
+    Les cookies (httpOnly inclus) viennent de la session navigateur ouverte une
+    fois ; l'empreinte (User-Agent, langue) est reprise du profil pour rester
+    coherent avec eux. Sur 429, on attend (`Retry-After` puis exponentiel) et on
+    reessaie, comme le client ChatGPT.
+    """
+
+    def __init__(
+        self,
+        cookie_header: str,
+        *,
+        user_agent: Optional[str] = None,
+        accept_language: Optional[str] = None,
+        timeout_s: int = 45,
+    ):
+        self.cookie_header = cookie_header
+        self.user_agent = user_agent or (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        )
+        self.accept_language = accept_language or "en-US,en;q=0.9"
+        self.timeout_s = timeout_s
+
+    def _headers(self, accept: str, content_type: Optional[str] = None) -> Dict[str, str]:
+        headers = {
+            "User-Agent": self.user_agent,
+            "Cookie": self.cookie_header,
+            "Accept": accept,
+            "Accept-Language": self.accept_language,
+            "Referer": API_BASE + "/",
+            "x-app-apiversion": API_VERSION,
+            "x-app-apiclient": "default",
+        }
+        if content_type:
+            headers["Content-Type"] = content_type
+        return headers
+
+    def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
+        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon."""
+        if attempt + 1 >= API_RETRY_ATTEMPTS:
+            return False
+        wait_s = _retry_after_s(headers) or min(
+            API_RETRY_WAIT_MAX_S, API_RETRY_WAIT_S * (2**attempt)
+        )
+        log.warning(
+            "perplexity: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
+            wait_s, attempt + 1, API_RETRY_ATTEMPTS, url,
+        )
+        time.sleep(wait_s)
+        return True
+
+    def _request(
+        self, url: str, *, data: Optional[bytes] = None, accept: str = "application/json, text/plain, */*",
+    ) -> bytes:
+        """Requete GET/POST authentifiee ; 429 -> backoff ; autres erreurs levees."""
+        for attempt in range(API_RETRY_ATTEMPTS):
+            request = urllib.request.Request(
+                url,
+                data=data,
+                method="POST" if data is not None else "GET",
+                headers=self._headers(
+                    accept, "application/json" if data is not None else None
+                ),
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+                    return response.read()
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
+                    continue
+                raise PerplexityHttpError(exc.code, url) from exc
+            except urllib.error.URLError as exc:
+                raise RuntimeError(
+                    f"perplexity: requete echouee ({url}): {exc}"
+                ) from exc
+        raise RuntimeError(f"perplexity: 429 persistant sur {url}")
+
+    def get_json(self, url: str) -> Any:
+        raw = self._request(url)
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"perplexity: reponse non-JSON sur {url}") from exc
+
+    def post_json(self, url: str, payload: Dict[str, Any]) -> Any:
+        raw = self._request(url, data=json.dumps(payload).encode("utf-8"))
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"perplexity: reponse non-JSON sur {url}") from exc
 
 # -- collecte incrementale du fil (virtualisation) ---------------------------
 
@@ -330,9 +489,252 @@ class PerplexityService(BaseService):
         super().__init__(session, config)
         self._thread_models: Dict[str, str] = {}
         self._thread_updated: Dict[str, str] = {}
+        #: client HTTP de l'API (construit au premier appel en mode API)
+        self._http: Optional[_PerplexityHttpClient] = None
+        #: payload brut de la derniere conversation exportee en mode API
+        self._raw_payload: Optional[Dict[str, Any]] = None
 
     def build_parser(self) -> PerplexityParser:
         return PerplexityParser()
+
+    # -- chemin API (defaut) ----------------------------------------------------
+
+    def _api_config(self) -> Dict[str, Any]:
+        """Config du service (`services.perplexity` de la config globale)."""
+        services = (self.config or {}).get("services") or {}
+        return services.get(self.name) or {}
+
+    @property
+    def api_enabled(self) -> bool:
+        """True si le chemin API est actif (defaut), False pour le repli DOM.
+
+        Le DOM est le repli **opt-in** : `services.perplexity.dom: true` (ou
+        `api: false`) force l'ancien chemin navigateur.
+        """
+        cfg = self._api_config()
+        if cfg.get("dom"):
+            return False
+        return bool(cfg.get("api", True))
+
+    def _api_client(self) -> _PerplexityHttpClient:
+        """Client HTTP de l'API, cookies mints une fois via la session navigateur.
+
+        `session.goto(home)` ouvre la home connectee (botasaurus passe
+        Cloudflare) puis les cookies du contexte persistant sont repris ; tout
+        le reste se fait en HTTP pur, avec l'empreinte (UA/langue) du profil.
+        """
+        if self._http is not None:
+            return self._http
+        self.session.goto(self.home_url)
+        self.session.wait_ms(1500)
+        cookies = self.session.cookies() or []
+        cookie_header = "; ".join(
+            f"{c.get('name')}={c.get('value')}"
+            for c in cookies
+            if c.get("name")
+        )
+        if not cookie_header:
+            raise ServiceNotLoggedIn(
+                "perplexity: aucun cookie de session -> `run.py --login perplexity`"
+            )
+        fingerprint = getattr(self.session, "fingerprint", None) or {}
+        user_agent = str(fingerprint.get("user_agent") or "") or None
+        lang = str(fingerprint.get("lang") or "")
+        accept_language = f"{lang},{lang.split('-')[0]};q=0.9" if lang else None
+        self._http = _PerplexityHttpClient(
+            cookie_header,
+            user_agent=user_agent,
+            accept_language=accept_language,
+        )
+        log.debug("perplexity: client API pret (cookies=%s)", len(cookies))
+        return self._http
+
+    def _list_conversations_api(
+        self, limit: Optional[int] = None
+    ) -> List[ConversationRef]:
+        """Decouverte paginee par GraphQL (`LibraryRecentThreadsPaginationQuery`)."""
+        client = self._api_client()
+        refs: Dict[str, ConversationRef] = {}
+        cursor: Optional[str] = None
+        for page in range(80):  # 25/page : ~16 pages pour 400 threads
+            payload = {
+                "operationName": "LibraryRecentThreadsPaginationQuery",
+                "variables": {
+                    "count": 25, "cursor": cursor, "includeSearchPreview": False,
+                    "includeTemporary": None, "searchTerm": None,
+                    "sortOrder": "NEWEST", "sources": None, "statuses": None,
+                    "threadTypes": None,
+                },
+                "extensions": {
+                    "persistedQuery": {"version": 1, "sha256Hash": self.GRAPHQL_HASH}
+                },
+            }
+            try:
+                data = client.post_json(API_GRAPHQL_URL, payload)
+            except PerplexityHttpError as exc:
+                if exc.status in (401, 403):
+                    raise ServiceNotLoggedIn(
+                        f"perplexity: non authentifie (HTTP {exc.status}) -> "
+                        "`run.py --login perplexity`"
+                    ) from exc
+                raise
+            try:
+                threads = data["data"]["viewer"]["recentGroup"]["threads"]
+            except (KeyError, TypeError) as exc:
+                raise RuntimeError(
+                    "perplexity: structure GraphQL inattendue (decouverte)"
+                ) from exc
+            edges = threads.get("edges") or []
+            for edge in edges:
+                node = edge.get("node") or {}
+                cid = node.get("entryId") or node.get("slug")
+                if not cid:
+                    continue
+                refs[cid] = ConversationRef(
+                    service=self.name,
+                    id=cid,
+                    url=f"{API_BASE}/search/{cid}",
+                    title=(node.get("name") or node.get("title") or None),
+                )
+                display = node.get("displayModel") or {}
+                model_id = display.get("modelID") or node.get("modelID")
+                if model_id:
+                    self._thread_models[cid] = str(model_id)
+                updated = node.get("updatedAt")
+                if updated:
+                    self._thread_updated[cid] = str(updated)
+                if limit and len(refs) >= limit:
+                    break
+            log_fields(
+                log, 20, f"{self.name}: page API {page + 1}",
+                extra={"threads": len(edges), "cumul": len(refs)},
+            )
+            info = threads.get("pageInfo") or {}
+            if limit and len(refs) >= limit:
+                break
+            if not edges or str(info.get("hasNextPage")).lower() != "true":
+                break
+            cursor = info.get("endCursor") or (edges[-1].get("cursor"))
+            if not cursor:
+                break
+        if not refs:
+            log_fields(
+                log, 30,
+                f"{self.name}: aucune conversation decouverte via l'API "
+                f"(compte vide ou session anonyme ?)",
+            )
+        return list(refs.values())
+
+    @staticmethod
+    def _thread_url(cid: str, *, limit: int, cursor: Optional[str] = None) -> str:
+        """URL du fil : `from_first=true` = ordre chronologique + pagination avant."""
+        params = [
+            ("with_parent_info", "true"),
+            ("with_schematized_response", "true"),
+            ("version", API_VERSION),
+            ("source", "default"),
+            ("limit", str(limit)),
+            ("offset", "0"),
+            ("from_first", "true"),
+            ("with_first_entry", "true"),
+            ("with_latest_entry", "false"),
+        ]
+        if cursor:
+            params.append(("cursor", str(cursor)))
+        query = urlencode(params)
+        query += "".join(
+            f"&supported_block_use_cases={name}" for name in API_BLOCK_USE_CASES
+        )
+        return f"{API_THREAD_URL.format(cid=cid)}?{query}"
+
+    def _fetch_thread_api(
+        self, client: _PerplexityHttpClient, conversation_id: str
+    ) -> Dict[str, Any]:
+        """Payload du fil complet (pagination par curseur tant que `has_next_page`).
+
+        `has_next_page`/`next_cursor` sont serialises en chaines par l'API
+        (`"True"`, JSON de curseur) : on les normalise. Les entrees sont
+        dedupliquees par uuid (une page de bord peut recouvrir la precedente).
+        """
+        entries: List[Dict[str, Any]] = []
+        seen: set = set()
+        payload: Dict[str, Any] = {}
+        cursor: Optional[str] = None
+        for page in range(API_MAX_PAGES):
+            try:
+                payload = client.get_json(
+                    self._thread_url(conversation_id, limit=API_PAGE_SIZE, cursor=cursor)
+                )
+            except PerplexityHttpError as exc:
+                if exc.status == 404:
+                    raise ConversationUnavailableError(
+                        f"{self.name}: conversation inaccessible ({conversation_id}, HTTP 404)"
+                    ) from exc
+                if exc.status in (401, 403):
+                    raise ServiceNotLoggedIn(
+                        f"{self.name}: non authentifie (HTTP {exc.status}) -> "
+                        "`run.py --login perplexity`"
+                    ) from exc
+                raise
+            if not isinstance(payload, dict):
+                raise RuntimeError(
+                    f"{self.name}: payload de fil inattendu ({conversation_id})"
+                )
+            batch = payload.get("entries") or []
+            for entry in batch:
+                if not isinstance(entry, dict):
+                    continue
+                uid = entry.get("uuid")
+                if uid and uid in seen:
+                    continue
+                if uid:
+                    seen.add(uid)
+                entries.append(entry)
+            log_fields(
+                log, 20, f"{self.name}: page de fil {page + 1}",
+                extra={"entrees": len(batch), "cumul": len(entries)},
+            )
+            if str(payload.get("has_next_page")).lower() != "true":
+                break
+            next_cursor = payload.get("next_cursor")
+            if not next_cursor or next_cursor == cursor:
+                break
+            cursor = str(next_cursor)
+        merged = dict(payload)
+        merged["entries"] = entries
+        return merged
+
+    def _export_api(self, ref: ConversationRef) -> Tuple[Any, None]:
+        """Fil via l'API -> Conversation ; payload brut memorise (pas de HTML)."""
+        client = self._api_client()
+        data = self._fetch_thread_api(client, ref.id)
+        conv = self.parser.parse("", conversation_id=ref.id, extra={"api": data})
+        if not conv.url:
+            conv.url = self.conversation_url(ref)
+        self._raw_payload = data
+        return conv, None
+
+    def take_raw_payload(self) -> Optional[Dict[str, Any]]:
+        """Payload API de la derniere conversation exportee (consomme)."""
+        payload, self._raw_payload = self._raw_payload, None
+        return payload
+
+    def capture_message_screenshots(self, conversation, out_dir) -> int:
+        """Pas de screenshots en mode API (le DOM n'est pas rendu)."""
+        if self.api_enabled:
+            return 0
+        return super().capture_message_screenshots(conversation, out_dir)
+
+    def list_conversations(self, limit: Optional[int] = None) -> List[ConversationRef]:
+        if self.api_enabled:
+            return self._list_conversations_api(limit=limit)
+        return super().list_conversations(limit=limit)
+
+    def export_conversation_with_html(self, ref: ConversationRef) -> tuple:
+        """API (defaut) : payload JSON -> Conversation ; pas de HTML."""
+        if not self.api_enabled:
+            return super().export_conversation_with_html(ref)
+        return self._export_api(ref)
 
     def after_sidebar_open(self) -> None:
         """Ferme la banniere de consentement si elle revient."""
