@@ -367,6 +367,60 @@ def test_main_rappelle_la_reindexation_rag(tmp_path, monkeypatch, capsys):
     assert "rag_index.py --force" in out
 
 
+def test_reparse_one_statuts(tmp_path):
+    """`_reparse_one` : le statut retourne pilote les compteurs du rapport."""
+    json_path = _write_export(
+        tmp_path, "chatgpt", "sans-artefact",
+        {
+            "conversation_id": "c1",
+            "platform": "chatgpt",
+            "title": "T",
+            "url": "https://chatgpt.com/c/c1",
+            "messages": [{"role": "user", "texte": "bonjour"}],
+        },
+    )
+    assert reparse._reparse_one(
+        tmp_path, "chatgpt", json_path, {}, no_backup=True
+    ) == ["cleaned"]
+
+    notes = tmp_path / "chatgpt" / "notes.json"
+    notes.write_text(json.dumps({"note": "etranger"}), encoding="utf-8")
+    assert reparse._reparse_one(
+        tmp_path, "chatgpt", notes, {}, no_backup=True
+    ) == ["ignored"]
+
+    corrompu = tmp_path / "chatgpt" / "corrompu.json"
+    corrompu.write_text('{"conversation_id": ', encoding="utf-8")
+    assert reparse._reparse_one(
+        tmp_path, "chatgpt", corrompu, {}, no_backup=True
+    ) == ["failed"]
+
+
+def test_reparse_one_artefact_tronque_compte_aussi_le_mode(tmp_path):
+    """`kept` s'ajoute au mode de re-parse (compteurs du rapport inchanges)."""
+    json_path = _write_export(tmp_path, "grok", "t", _grok_conversation())
+    raw_dir = tmp_path / "grok" / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "t.json").write_text(
+        json.dumps({
+            "conversation": {
+                "conversationId": "g1",
+                "title": "T",
+                "createTime": "2026-05-01T09:00:00Z",
+                "modifyTime": "2026-05-01T09:01:00Z",
+            },
+            # scrape partiel : seule la reponse finale a ete recuperee
+            "responses": [
+                {"responseId": "r2", "sender": "assistant", "message": "Salut"},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    assert reparse._reparse_one(
+        tmp_path, "grok", json_path, {}, no_backup=True
+    ) == ["remapped", "kept"]
+
+
 def test_main_clean_backups_purge_explicite(tmp_path, monkeypatch, capsys):
     """`--clean-backups` : purge les `.json.bak`, jamais automatique."""
     json_path = _write_export(tmp_path, "grok", "t", _grok_conversation())

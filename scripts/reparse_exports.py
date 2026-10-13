@@ -187,6 +187,90 @@ def _clean_backups(exports: Path, platforms: List[str]) -> int:
     return 0
 
 
+def _reparse_one(
+    exports: Path,
+    platform: str,
+    json_path: Path,
+    index: Dict[str, Dict[str, Any]],
+    *,
+    no_backup: bool,
+) -> List[str]:
+    """Re-parse un JSON de conversation ; retourne les compteurs a incrementer.
+
+    Compteurs possibles : "remapped" (payload API), "reparsed" (HTML),
+    "cleaned" (sans artefact brut), "kept" (artefact tronque : archive
+    conservee), "ignored" (JSON etranger au schema), "failed" (illisible ou
+    erreur de parse). Une conversation conservee ("kept") est comptee en plus
+    dans le mode de re-parse, comme le rapport de fin le fait depuis toujours.
+    """
+    try:
+        old = json.loads(json_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ["failed"]
+    if not isinstance(old, dict) or not old.get("conversation_id"):
+        # JSON etranger au schema (sans id) : le laisser intact
+        return ["ignored"]
+    # metadonnees d'origine (timestamps/model) : la sauvegarde .bak si elle
+    # existe (elle precede un eventuel re-parse precedent)
+    meta_path = json_path.with_suffix(".json.bak")
+    old_meta = old
+    if meta_path.exists():
+        try:
+            old_meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            old_meta = old
+    # l'URL peut n'exister que dans le JSON courant (backfill posterieur)
+    if not old_meta.get("url") and old.get("url"):
+        old_meta["url"] = old["url"]
+    # artefact brut : HTML (plateformes DOM) ou payload API (raw/)
+    html_path = json_path.with_suffix(".html")
+    raw = load_raw_payload(exports, platform, json_path.stem)
+    try:
+        # API d'abord : pour les plateformes migrees, un .html residuel
+        # (ancien scrape DOM) ne doit pas gagner sur le payload brut
+        if platform in API_PLATFORMS and raw is not None:
+            conv = _reparse_api(platform, old_meta, raw)
+            counts = ["remapped"]
+        elif platform in DOM_PLATFORMS and html_path.exists():
+            conv = _reparse(platform, old_meta, html_path)
+            counts = ["reparsed"]
+        else:
+            # pas d'artefact brut (conversation migree, export ancien) :
+            # nettoyage direct du JSON, sans planter
+            conv = _clean_json(platform, old_meta)
+            counts = ["cleaned"]
+    except Exception as exc:  # noqa: BLE001
+        print(f"[{platform}] ECHEC {json_path.name}: {exc}")
+        return ["failed"]
+    # protection d'integrite : un artefact brut tronque (scrape partiel)
+    # produit moins de messages que le JSON existant -> ne pas degrader
+    # l'archive (le prochain reparse complet la rafraichira)
+    old_count = len(old.get("messages") or [])
+    if old_count and len(conv.messages) < old_count:
+        print(
+            f"[{platform}] conserve {json_path.name} "
+            f"(artefact brut tronque : {len(conv.messages)} < {old_count} messages)"
+        )
+        return counts + ["kept"]
+    # fusion : les anciens messages sont un prefixe -> ajout des nouveaux
+    # (meme regle que l'orchestrateur)
+    merged, _status, _appended = merge_conversation_json(
+        old, conv.to_dict(validate=False)
+    )
+    if not no_backup:
+        backup = json_path.with_suffix(".json.bak")
+        if not backup.exists():
+            shutil.copy2(json_path, backup)
+    write_json_atomic(json_path, merged)
+    entry = index.get(conv.conversation_id)
+    if entry is not None:
+        entry["title"] = conv.title or entry.get("title") or ""
+        entry["message_count"] = len(conv.messages)
+        entry["has_code"] = conv.has_code
+        entry["last_message_at"] = conv.last_message_at
+    return counts
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exports", type=Path)
@@ -221,75 +305,10 @@ def main() -> int:
             # API) : ne jamais les traiter comme des conversations
             if json_path.name in RESERVED_JSON_NAMES:
                 continue
-            try:
-                old = json.loads(json_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                totals["failed"] += 1
-                continue
-            if not isinstance(old, dict) or not old.get("conversation_id"):
-                # JSON etranger au schema (sans id) : le laisser intact
-                totals["ignored"] += 1
-                continue
-            # metadonnees d'origine (timestamps/model) : la sauvegarde .bak si
-            # elle existe (elle precede un eventuel re-parse precedent)
-            meta_path = json_path.with_suffix(".json.bak")
-            old_meta = old
-            if meta_path.exists():
-                try:
-                    old_meta = json.loads(meta_path.read_text(encoding="utf-8"))
-                except (OSError, json.JSONDecodeError):
-                    old_meta = old
-            # l'URL peut n'exister que dans le JSON courant (backfill posterieur)
-            if not old_meta.get("url") and old.get("url"):
-                old_meta["url"] = old["url"]
-            # artefact brut : HTML (plateformes DOM) ou payload API (raw/)
-            html_path = json_path.with_suffix(".html")
-            raw = load_raw_payload(exports, platform, json_path.stem)
-            try:
-                # API d'abord : pour les plateformes migrees, un .html residuel
-                # (ancien scrape DOM) ne doit pas gagner sur le payload brut
-                if platform in API_PLATFORMS and raw is not None:
-                    conv = _reparse_api(platform, old_meta, raw)
-                    totals["remapped"] += 1
-                elif platform in DOM_PLATFORMS and html_path.exists():
-                    conv = _reparse(platform, old_meta, html_path)
-                    totals["reparsed"] += 1
-                else:
-                    # pas d'artefact brut (conversation migree, export ancien) :
-                    # nettoyage direct du JSON, sans planter
-                    conv = _clean_json(platform, old_meta)
-                    totals["cleaned"] += 1
-            except Exception as exc:  # noqa: BLE001
-                print(f"[{platform}] ECHEC {json_path.name}: {exc}")
-                totals["failed"] += 1
-                continue
-            # protection d'integrite : un artefact brut tronque (scrape partiel)
-            # produit moins de messages que le JSON existant -> ne pas degrader
-            # l'archive (le prochain reparse complet la rafraichira)
-            old_count = len(old.get("messages") or [])
-            if old_count and len(conv.messages) < old_count:
-                totals["kept"] += 1
-                print(
-                    f"[{platform}] conserve {json_path.name} "
-                    f"(artefact brut tronque : {len(conv.messages)} < {old_count} messages)"
-                )
-                continue
-            # fusion : les anciens messages sont un prefixe -> ajout des nouveaux
-            # (meme regle que l'orchestrateur)
-            merged, _status, _appended = merge_conversation_json(
-                old, conv.to_dict(validate=False)
-            )
-            if not args.no_backup:
-                backup = json_path.with_suffix(".json.bak")
-                if not backup.exists():
-                    shutil.copy2(json_path, backup)
-            write_json_atomic(json_path, merged)
-            entry = index.get(conv.conversation_id)
-            if entry is not None:
-                entry["title"] = conv.title or entry.get("title") or ""
-                entry["message_count"] = len(conv.messages)
-                entry["has_code"] = conv.has_code
-                entry["last_message_at"] = conv.last_message_at
+            for status in _reparse_one(
+                exports, platform, json_path, index, no_backup=args.no_backup
+            ):
+                totals[status] += 1
         if index and list_path.exists():
             # meme writer que l'orchestrateur : tri par date + metadonnees
             # d'inventaire (platform/updated_at/count) au meme format
