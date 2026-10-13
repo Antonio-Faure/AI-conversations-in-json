@@ -345,3 +345,48 @@ def test_main_reparse_complet_met_a_jour_le_json(tmp_path, monkeypatch, capsys):
     data = json.loads(json_path.read_text(encoding="utf-8"))
     assert len(data["messages"]) == 2
     assert "0 conserves" in capsys.readouterr().out
+
+
+def test_main_rappelle_la_reindexation_rag(tmp_path, monkeypatch, capsys):
+    """Fin de run : rappel explicite de `rag_index.py --force` (pas d'auto-index)."""
+    _write_export(
+        tmp_path, "chatgpt", "sans-artefact",
+        {
+            "conversation_id": "c1",
+            "platform": "chatgpt",
+            "title": "T",
+            "url": "https://chatgpt.com/c/c1",
+            "messages": [{"role": "user", "texte": "bonjour"}],
+        },
+    )
+    _write_list(tmp_path / "chatgpt", [
+        {"conversation_id": "c1", "title": "T", "file": "sans-artefact"},
+    ])
+    assert _run_main(monkeypatch, tmp_path) == 0
+    out = capsys.readouterr().out
+    assert "rag_index.py --force" in out
+
+
+def test_main_clean_backups_purge_explicite(tmp_path, monkeypatch, capsys):
+    """`--clean-backups` : purge les `.json.bak`, jamais automatique."""
+    json_path = _write_export(tmp_path, "grok", "t", _grok_conversation())
+    _write_list(tmp_path / "grok", [
+        {"conversation_id": "g1", "title": "T", "file": "t"},
+    ])
+    backup = json_path.with_suffix(".json.bak")
+    backup.write_text("sauvegarde", encoding="utf-8")
+
+    # sans l'option : la sauvegarde reste (comportement par defaut)
+    assert _run_main(monkeypatch, tmp_path) == 0
+    assert backup.exists()
+
+    # avec l'option : purge explicite, JSON de conversation intact
+    before = json_path.read_text(encoding="utf-8")
+    monkeypatch.setattr(
+        sys, "argv",
+        ["reparse_exports.py", "--exports", str(tmp_path), "--clean-backups"],
+    )
+    assert reparse.main() == 0
+    assert not backup.exists()
+    assert json_path.read_text(encoding="utf-8") == before
+    assert "1 sauvegarde" in capsys.readouterr().out

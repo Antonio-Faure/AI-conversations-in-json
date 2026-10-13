@@ -32,6 +32,7 @@ from src.utils.calibration import (  # noqa: E402
     suite_from_path,
 )
 from src.utils.etalon import load_etalons, queue_coverage  # noqa: E402
+from src.utils.file_utils import write_json_atomic  # noqa: E402
 
 CAL_DIR = ROOT / "calibration"
 MANIFEST_PATH = CAL_DIR / "manifest.json"
@@ -120,7 +121,7 @@ def _missing_payload(name: str, manifest: Dict[str, Any], spec: Dict[str, Any]) 
 
 
 def _write(path: Path, payload: Dict[str, Any]) -> None:
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_json_atomic(path, payload)
 
 
 def _write_bootstraps(pending: list) -> Path:
@@ -193,7 +194,7 @@ def write_queue(name: str) -> int:
         ],
     }
     target = run_dir / "calibration_queue.json"
-    target.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_json_atomic(target, queue)
     print(f"{name}: {len(messages)} messages -> {target}")
     return 0
 
@@ -243,10 +244,8 @@ def write_complement(label: str) -> int:
     coverage = queue_coverage([m.get("text") or "" for m in messages], seen)
     missing = [messages[i - 1] for i in coverage["missing"]]
     target = _run_root() / label / "calibration_queue_supp.json"
-    target.write_text(
-        json.dumps({"bot": label, "source": "complement", "messages": missing},
-                   ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
+    write_json_atomic(
+        target, {"bot": label, "source": "complement", "messages": missing}
     )
     print(f"{label}: {len(missing)} tours manquants -> {target}")
     return 0

@@ -35,6 +35,11 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.utils.file_utils import write_text_atomic  # noqa: E402
+
 LOCAL_CONFIG = ROOT / "scripts" / "sanitize.local.json"
 
 # Namespace fixe : garantit un mapping stable entre deux executions.
@@ -235,7 +240,7 @@ def run(apply: bool) -> int:
         cleaned = sanitize_text(text)
         if cleaned != text:
             if apply:
-                path.write_text(cleaned, encoding="utf-8")
+                write_text_atomic(path, cleaned)
                 changed += 1
                 print(f"assaini: {rel}")
                 text = cleaned

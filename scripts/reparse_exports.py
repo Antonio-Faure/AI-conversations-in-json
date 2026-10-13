@@ -23,6 +23,11 @@ l'orchestrateur).
     .venv/bin/python scripts/reparse_exports.py
     .venv/bin/python scripts/reparse_exports.py --platform gemini
     .venv/bin/python scripts/reparse_exports.py --no-backup
+    .venv/bin/python scripts/reparse_exports.py --clean-backups
+
+Une fois les JSON regeneres, relancer explicitement la reindexation RAG
+(`scripts/rag_index.py --force`) : le cache de l'indexeur est base sur
+`exported_at`, que le reparse conserve.
 """
 
 from __future__ import annotations
@@ -32,7 +37,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -42,7 +47,11 @@ from src.orchestrator import load_config  # noqa: E402
 from src.parsers import PARSER_CLASSES  # noqa: E402
 from src.schema import Conversation, Message, extract_code_blocks, normalize_messages  # noqa: E402
 from src.utils.cleanup import clean_text  # noqa: E402
-from src.utils.file_utils import RESERVED_JSON_NAMES, merge_conversation_json  # noqa: E402
+from src.utils.file_utils import (  # noqa: E402
+    RESERVED_JSON_NAMES,
+    merge_conversation_json,
+    write_json_atomic,
+)
 from src.utils.raw_payload import load_raw_payload  # noqa: E402
 from src.utils.urls import (  # noqa: E402
     canonical_url_from_html,
@@ -163,11 +172,32 @@ def _clean_json(platform: str, old: Dict[str, Any]) -> Conversation:
     )
 
 
+def _clean_backups(exports: Path, platforms: List[str]) -> int:
+    """Purge explicite des sauvegardes `.json.bak` (jamais automatique).
+
+    Les `.bak` servent de repli de metadonnees lors d'un re-parse et ne sont
+    pas nettoyes par les runs normaux ; cette option les supprime uniquement
+    quand elle est demandee.
+    """
+    removed = 0
+    for platform in platforms:
+        for backup in sorted((exports / platform).glob("*.json.bak")):
+            backup.unlink()
+            removed += 1
+    print(f"termine : {removed} sauvegarde(s) .json.bak supprimee(s)")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exports", type=Path)
     parser.add_argument("--platform", action="append")
     parser.add_argument("--no-backup", action="store_true")
+    parser.add_argument(
+        "--clean-backups", action="store_true",
+        help="supprime les sauvegardes .json.bak des plateformes traitees, "
+             "puis quitte (jamais automatique)",
+    )
     args = parser.parse_args()
 
     config = load_config(ROOT / "config.yaml")
@@ -176,6 +206,8 @@ def main() -> int:
         d.name for d in exports.iterdir()
         if d.is_dir() and (d / "conversation_list.json").exists()
     )
+    if args.clean_backups:
+        return _clean_backups(exports, platforms)
 
     totals = {"reparsed": 0, "remapped": 0, "cleaned": 0, "kept": 0,
               "ignored": 0, "failed": 0}
@@ -255,10 +287,7 @@ def main() -> int:
                 backup = json_path.with_suffix(".json.bak")
                 if not backup.exists():
                     shutil.copy2(json_path, backup)
-            json_path.write_text(
-                json.dumps(merged, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
+            write_json_atomic(json_path, merged)
             entry = index.get(conv.conversation_id)
             if entry is not None:
                 entry["title"] = conv.title or entry.get("title") or ""
@@ -273,9 +302,7 @@ def main() -> int:
                 reverse=True,
             )
             data["count"] = len(data["conversations"])
-            list_path.write_text(
-                json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-            )
+            write_json_atomic(list_path, data)
         print(f"[{platform}] ok")
 
     print(
@@ -284,6 +311,12 @@ def main() -> int:
         f"(artefact tronque), {totals['ignored']} ignores (non-conversation), "
         f"{totals['failed']} echecs"
     )
+    if totals["reparsed"] + totals["remapped"] + totals["cleaned"]:
+        print(
+            "rappel : relancer `.venv/bin/python scripts/rag_index.py --force` "
+            "pour reindexer les JSON regeneres (exported_at conserve : sans "
+            "--force, l'indexeur saute les conversations)"
+        )
     return 0 if totals["failed"] == 0 else 1
 
 
