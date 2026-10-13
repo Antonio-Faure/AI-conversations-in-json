@@ -724,12 +724,6 @@ class PerplexityService(BaseService):
         self._raw_payload = data
         return conv, None
 
-    def capture_message_screenshots(self, conversation, out_dir) -> int:
-        """Pas de screenshots en mode API (le DOM n'est pas rendu)."""
-        if self.api_enabled:
-            return 0
-        return super().capture_message_screenshots(conversation, out_dir)
-
     def list_conversations(self, limit: Optional[int] = None) -> List[ConversationRef]:
         if self.api_enabled:
             return self._list_conversations_api(limit=limit)

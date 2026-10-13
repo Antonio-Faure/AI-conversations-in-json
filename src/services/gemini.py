@@ -627,12 +627,6 @@ class GeminiService(BaseService):
         self._raw_payload = payload
         return conv, None
 
-    def capture_message_screenshots(self, conversation, out_dir) -> int:
-        """Pas de screenshots en mode API (le DOM n'est pas rendu)."""
-        if self.api_enabled:
-            return 0
-        return super().capture_message_screenshots(conversation, out_dir)
-
     def after_sidebar_open(self) -> None:
         """Ouvre la sidebar (elle peut demarrer repliee) puis la liste complete."""
         for sel in self.sidebar_open_selectors:

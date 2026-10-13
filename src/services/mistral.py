@@ -661,12 +661,6 @@ class MistralService(BaseService):
         self._raw_payload = data
         return conv, None
 
-    def capture_message_screenshots(self, conversation, out_dir) -> int:
-        """Pas de screenshots en mode API (le DOM n'est pas rendu)."""
-        if self.api_enabled:
-            return 0
-        return super().capture_message_screenshots(conversation, out_dir)
-
     # -- decouverte (work uniquement) ------------------------------------------
 
     def _discover_once(self) -> Dict[str, ConversationRef]:

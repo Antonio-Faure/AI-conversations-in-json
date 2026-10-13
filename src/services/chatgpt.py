@@ -831,12 +831,6 @@ class ChatGPTService(BaseService):
         self._raw_payload = data
         return conv, None
 
-    def capture_message_screenshots(self, conversation, out_dir) -> int:
-        """Pas de screenshots en mode API (le DOM n'est pas rendu)."""
-        if self.api_enabled:
-            return 0
-        return super().capture_message_screenshots(conversation, out_dir)
-
     def extract_extras(self, ref: ConversationRef) -> Dict[str, Any]:
         data = self.session.evaluate(EXTRACT_REACT_META_JS) or {}
         extra: Dict[str, Any] = {"messages": data.get("messages") or {}}

@@ -607,8 +607,11 @@ class BaseService(ABC):
         suite, au lieu d'indexer la fenetre courante.
 
         Retourne le nombre de captures reussies. Sans selecteurs ou sans
-        navigateur (Grok) : ne fait rien.
+        navigateur (Grok) : ne fait rien. En mode API (aucun DOM rendu), la
+        garde `api_enabled` court-circuite tout.
         """
+        if getattr(self, "api_enabled", False):
+            return 0
         selectors = list(getattr(self.parser, "message_selectors", ()) or ())
         session = self.session
         if not selectors or not hasattr(session, "eval_body") or not hasattr(
