@@ -523,7 +523,11 @@ class BotasaurusSession:
         return self.looks_blocked() is None
 
     def interactive_login(self, service_name: str, login_url: str) -> None:
-        """Ouvre un navigateur visible pour connexion manuelle (profil persistant)."""
+        """Ouvre un navigateur visible pour connexion manuelle (profil persistant).
+
+        Fermer le navigateur (ou couper le processus) n'est pas un echec : le
+        profil est deja ecrit sur disque, on sort proprement.
+        """
         self.headless = False
         self.start()
         if login_url:
@@ -542,7 +546,17 @@ class BotasaurusSession:
         try:
             while True:
                 self.wait_ms(3000)
-                url = self.url().lower()
+                try:
+                    url = self.url().lower()
+                except Exception as exc:  # noqa: BLE001
+                    # navigateur ferme par l'utilisateur : le profil est deja
+                    # sauvegarde, ce n'est pas une erreur (consigne affichee).
+                    log_fields(
+                        log, 20,
+                        f"navigateur ferme — connexion {service_name} terminee",
+                        extra={"service": service_name, "error": str(exc)},
+                    )
+                    break
                 still_login = any(
                     part in url
                     for part in ("login", "signin", "sign-in", "auth", "accounts")
@@ -553,7 +567,7 @@ class BotasaurusSession:
                 ):
                     break
         except KeyboardInterrupt:
-            pass
+            log.info("connexion %s interrompue (Ctrl+C)", service_name)
         cookies = []
         try:
             cookies = self.driver.get_cookies() or []
