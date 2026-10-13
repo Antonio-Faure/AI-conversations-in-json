@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
@@ -175,13 +176,24 @@ def merge_conversation_json(
     return new, "rewritten", len(new_messages)
 
 
-def read_json(path: Path, default: Any = None) -> Any:
+def read_json(path: Path, default: Any = None, *, strict: bool = False) -> Any:
+    """Lit un JSON ; fichier absent -> `default`.
+
+    Un fichier present mais illisible (JSON invalide, erreur d'E/S) n'est
+    jamais avale silencieusement : un avertissement explicite (chemin + cause)
+    est ecrit sur stderr, puis `default` est renvoye pour les appelants
+    tolerants (inventaire, references de forme, payloads bruts...). Avec
+    `strict=True`, l'erreur est propagee (controle dur).
+    """
     path = Path(path)
     if not path.exists():
         return default
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (OSError, json.JSONDecodeError) as exc:
+        if strict:
+            raise
+        print(f"avertissement: JSON illisible {path} ({exc})", file=sys.stderr)
         return default
 
 
