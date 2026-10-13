@@ -177,8 +177,31 @@ class BaseParser(ABC):
 
     @classmethod
     def _clean_tree(cls, node: Tag) -> None:
-        # LaTeX : conserver la source TeX avant toute suppression (KaTeX rendu,
-        # Gemini data-math, ChatGPT data-math-source)
+        """Convertit l'arbre en texte markdown (in place), sans balises d'UI."""
+        cls._latex_nodes_to_text(node)
+        cls._button_images_to_markdown(node)
+        cls._citations_to_markdown(node)
+
+        for tag in node.find_all(DROP_TAGS):
+            tag.decompose()
+        for sel in ACTION_SELECTORS:
+            for tag in node.select(sel):
+                tag.decompose()
+
+        cls._pre_to_fence(node)
+        cls._images_to_markdown(node)
+        cls._links_to_markdown(node)
+
+        for br in node.find_all("br"):
+            br.replace_with(NavigableString("\n"))
+        for block in node.find_all(["p", "div", "li", "h1", "h2", "h3", "h4", "tr"]):
+            block.insert_before(NavigableString("\n"))
+            block.insert_after(NavigableString("\n"))
+
+    @classmethod
+    def _latex_nodes_to_text(cls, node: Tag) -> None:
+        """LaTeX : conserver la source TeX avant toute suppression (KaTeX rendu,
+        Gemini data-math, ChatGPT data-math-source)."""
         for katex in node.select("span.katex"):
             annotation = katex.find("annotation", attrs={"encoding": "application/x-tex"})
             if annotation is None:
@@ -203,8 +226,11 @@ class BaseParser(ABC):
             el.replace_with(
                 NavigableString(f"\n\\[{tex}\\]\n" if display else f" \\({tex}\\) ")
             )
-        # images de contenu piegees dans un bouton d'apercu : les remonter en
-        # markdown avant que le bouton ne soit supprime (DROP_TAGS)
+
+    @classmethod
+    def _button_images_to_markdown(cls, node: Tag) -> None:
+        """Images de contenu piegees dans un bouton d'apercu : les remonter en
+        markdown avant que le bouton ne soit supprime (DROP_TAGS)."""
         for button in node.find_all("button"):
             content_images = [
                 img for img in button.find_all("img")
@@ -219,18 +245,18 @@ class BaseParser(ABC):
                 )
                 button.replace_with(NavigableString(f"\n{markdown}\n"))
 
-        # citations inline (Perplexity) : conserver le lien avant suppression
+    @classmethod
+    def _citations_to_markdown(cls, node: Tag) -> None:
+        """Citations inline (Perplexity) : conserver le lien avant suppression."""
         for citation in node.select("span.citation"):
             url = citation.get("data-pplx-citation-url") or ""
             label = citation.get_text(" ", strip=True)
             if url and label:
                 citation.replace_with(NavigableString(f" [{label}]({url}) "))
 
-        for tag in node.find_all(DROP_TAGS):
-            tag.decompose()
-        for sel in ACTION_SELECTORS:
-            for tag in node.select(sel):
-                tag.decompose()
+    @classmethod
+    def _pre_to_fence(cls, node: Tag) -> None:
+        """Blocs ``<pre>`` -> fences markdown avec la langue detectee."""
         for pre in node.find_all("pre"):
             # Mistral : le bloc est encapsule avec un en-tete (langue) a retirer
             root = pre.find_parent(
@@ -255,7 +281,10 @@ class BaseParser(ABC):
                     lang = label.get_text(" ", strip=True).splitlines()[0].strip()
             code_text = (code or pre).get_text().rstrip()
             root.replace_with(NavigableString(f"\n```{lang}\n{code_text}\n```\n"))
-        # images distantes -> markdown (blob:/data: inutiles en export, ignores)
+
+    @classmethod
+    def _images_to_markdown(cls, node: Tag) -> None:
+        """Images distantes -> markdown (blob:/data: inutiles en export, ignores)."""
         for img in node.find_all("img"):
             src = img.get("src") or ""
             if src.startswith(("http://", "https://")):
@@ -263,7 +292,10 @@ class BaseParser(ABC):
                 img.replace_with(NavigableString(f"![{alt}]({src})"))
             else:
                 img.decompose()
-        # liens -> markdown [texte](url) ; ancres/relatifs = texte seul
+
+    @classmethod
+    def _links_to_markdown(cls, node: Tag) -> None:
+        """Liens -> markdown ``[texte](url)`` ; ancres/relatifs = texte seul."""
         for a in node.find_all("a"):
             href = (a.get("href") or "").strip()
             text = a.get_text(" ", strip=True)
@@ -279,11 +311,6 @@ class BaseParser(ABC):
                 a.replace_with(NavigableString(text))
             else:
                 a.unwrap()
-        for br in node.find_all("br"):
-            br.replace_with(NavigableString("\n"))
-        for block in node.find_all(["p", "div", "li", "h1", "h2", "h3", "h4", "tr"]):
-            block.insert_before(NavigableString("\n"))
-            block.insert_after(NavigableString("\n"))
 
     @staticmethod
     def _md_escape_label(label: str) -> str:
