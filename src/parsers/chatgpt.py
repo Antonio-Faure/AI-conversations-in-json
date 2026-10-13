@@ -1393,31 +1393,18 @@ class ChatGPTParser(BaseParser):
             return ""
         return cls._content_text(el)
 
+    _rstrip_list_lines = True
+
     @classmethod
-    def _render_list(cls, lst, depth: int = 0) -> List[str]:
-        """Liste HTML -> lignes markdown (puces, numeros, cases a cocher)."""
-        ordered = lst.name == "ol"
-        try:
-            start = int(lst.get("start") or 1)
-        except (TypeError, ValueError):
-            start = 1
-        lines: List[str] = []
-        for offset, li in enumerate(lst.find_all("li", recursive=False)):
-            checkbox = li.find("input", attrs={"type": "checkbox"})
-            if checkbox is not None:
-                marker = f"- [{'x' if checkbox.has_attr('checked') else ' '}]"
-            else:
-                marker = f"{start + offset}." if ordered else "-"
-            li_copy = copy.copy(li)
-            for sub in li_copy.find_all(["ul", "ol"]):
-                sub.decompose()
-            for box in li_copy.find_all("input"):
-                box.decompose()
-            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
-            lines.append(f"{'  ' * depth}{marker} {text}".rstrip())
-            for sub in li.find_all(["ul", "ol"], recursive=False):
-                lines.extend(cls._render_list(sub, depth + 1))
-        return lines
+    def _list_marker(cls, li, li_copy, *, ordered: bool, number: int) -> str:
+        """Cases a cocher (``input[type=checkbox]``) -> ``- [x]``."""
+        checkbox = li.find("input", attrs={"type": "checkbox"})
+        checked = checkbox is not None and checkbox.has_attr("checked")
+        for box in li_copy.find_all("input"):
+            box.decompose()
+        if checkbox is not None:
+            return f"- [{'x' if checked else ' '}]"
+        return f"{number}." if ordered else "-"
 
     @staticmethod
     def _role_of(turn) -> str:

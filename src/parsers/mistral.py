@@ -1356,22 +1356,3 @@ class MistralParser(BaseParser):
             if row_index == 0:
                 lines.append("| " + " | ".join(["---"] * len(values)) + " |")
         return "\n".join(lines)
-
-    @classmethod
-    def _render_list(cls, lst, depth: int = 0) -> List[str]:
-        ordered = lst.name == "ol"
-        try:
-            start = int(lst.get("start") or 1)
-        except (TypeError, ValueError):
-            start = 1
-        lines: List[str] = []
-        for offset, li in enumerate(lst.find_all("li", recursive=False)):
-            li_copy = copy.copy(li)
-            for sub in li_copy.find_all(["ul", "ol"]):
-                sub.decompose()
-            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
-            marker = f"{start + offset}." if ordered else "-"
-            lines.append(f"{'  ' * depth}{marker} {text}")
-            for sub in li.find_all(["ul", "ol"], recursive=False):
-                lines.extend(cls._render_list(sub, depth + 1))
-        return lines

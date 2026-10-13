@@ -316,6 +316,42 @@ class BaseParser(ABC):
 
     # -- rendu markdown commun (tableaux, listes, inline) --------------------
 
+    #: chatgpt/perplexity rognent l'espace final des lignes (item vide -> « - »)
+    _rstrip_list_lines: bool = False
+
+    @classmethod
+    def _list_marker(cls, li: Tag, li_copy: Tag, *, ordered: bool, number: int) -> str:
+        """Marqueur markdown d'un item (``-``, ``1.``, ``- [x]``).
+
+        ``li`` est l'item d'origine (recherche des cases a cocher) ; ``li_copy``
+        est la copie de travail, listes imbriquees retirees : les surcharges
+        peuvent y supprimer les cases a cocher avant l'extraction du texte.
+        """
+        return f"{number}." if ordered else "-"
+
+    @classmethod
+    def _render_list(cls, lst: Tag, depth: int = 0) -> List[str]:
+        """Liste HTML -> lignes markdown (puces, numeros, cases a cocher)."""
+        ordered = lst.name == "ol"
+        try:
+            start = int(lst.get("start") or 1)
+        except (TypeError, ValueError):
+            start = 1
+        lines: List[str] = []
+        for offset, li in enumerate(lst.find_all("li", recursive=False)):
+            li_copy = copy.copy(li)
+            for sub in li_copy.find_all(["ul", "ol"]):
+                sub.decompose()
+            marker = cls._list_marker(
+                li, li_copy, ordered=ordered, number=start + offset
+            )
+            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
+            line = f"{'  ' * depth}{marker} {text}"
+            lines.append(line.rstrip() if cls._rstrip_list_lines else line)
+            for sub in li.find_all(["ul", "ol"], recursive=False):
+                lines.extend(cls._render_list(sub, depth + 1))
+        return lines
+
     @classmethod
     def _table_markdown(cls, table: Tag) -> str:
         """Tableau HTML -> lignes markdown ``| ... |`` avec separateur."""

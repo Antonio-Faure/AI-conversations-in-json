@@ -918,33 +918,14 @@ class ClaudeParser(BaseParser):
         return cls.text_of(copy.copy(el))
 
     @classmethod
-    def _render_list(cls, lst: Tag, depth: int = 0) -> List[str]:
-        """``<ul>/<ol>`` -> lignes markdown, en gerant les checklists."""
-        ordered = lst.name == "ol"
-        try:
-            start = int(lst.get("start") or 1)
-        except (TypeError, ValueError):
-            start = 1
-        lines: List[str] = []
-        for offset, li in enumerate(lst.find_all("li", recursive=False)):
-            li_copy = copy.copy(li)
-            for sub in li_copy.find_all(["ul", "ol"]):
-                sub.decompose()
-            checkbox = li_copy.find("input", attrs={"type": "checkbox"})
-            checked = checkbox is not None and checkbox.has_attr("checked")
-            if checkbox is not None:
-                checkbox.decompose()
-            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
-            if checkbox is not None:
-                marker = "- [x]" if checked else "- [ ]"
-            elif ordered:
-                marker = f"{start + offset}."
-            else:
-                marker = "-"
-            lines.append(f"{'  ' * depth}{marker} {text}")
-            for sub in li.find_all(["ul", "ol"], recursive=False):
-                lines.extend(cls._render_list(sub, depth + 1))
-        return lines
+    def _list_marker(cls, li, li_copy, *, ordered: bool, number: int) -> str:
+        """Checklist Claude (``input[type=checkbox]``) -> ``- [x]`` / ``- [ ]``."""
+        checkbox = li_copy.find("input", attrs={"type": "checkbox"})
+        if checkbox is None:
+            return f"{number}." if ordered else "-"
+        checked = checkbox.has_attr("checked")
+        checkbox.decompose()
+        return "- [x]" if checked else "- [ ]"
 
     # -- pieces jointes ------------------------------------------------------
 
