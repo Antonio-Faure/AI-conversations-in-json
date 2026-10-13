@@ -878,44 +878,9 @@ class ClaudeParser(BaseParser):
             return 0
 
     @classmethod
-    def _inline_markdown(cls, node: Tag) -> None:
-        """Code en ligne, gras, italique et barre -> markdown (hors ``pre``)."""
-        for code in node.find_all("code"):
-            if code.find_parent("pre") is not None:
-                continue
-            content = code.get_text().strip()
-            if content:
-                code.replace_with(NavigableString(f"`{content}`"))
-            else:
-                code.decompose()
-
-        emphases = node.find_all(["b", "strong", "i", "em", "del", "s", "strike"])
-        markers = {
-            "b": "**",
-            "strong": "**",
-            "i": "*",
-            "em": "*",
-            "del": "~~",
-            "s": "~~",
-            "strike": "~~",
-        }
-        # du plus profond au plus externe : preserve l'imbrication
-        for el in sorted(emphases, key=lambda t: len(list(t.parents)), reverse=True):
-            if el.find_parent("pre") is not None:
-                continue
-            inner = cls._inline_text(el)
-            if inner:
-                marker = markers[el.name]
-                el.replace_with(NavigableString(f"{marker}{inner}{marker}"))
-            else:
-                el.decompose()
-
-    @classmethod
-    def _inline_text(cls, el: Optional[Tag]) -> str:
-        """Texte markdown inline (sans nouvelle structure de blocs)."""
-        if el is None:
-            return ""
-        return cls.text_of(copy.copy(el))
+    def _inline_code_text(cls, code: Tag) -> str:
+        """Code en ligne : Claude conserve les retours ligne internes."""
+        return code.get_text().strip()
 
     @classmethod
     def _list_marker(cls, li, li_copy, *, ordered: bool, number: int) -> str:

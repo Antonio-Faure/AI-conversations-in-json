@@ -1115,39 +1115,6 @@ class GeminiParser(BaseParser):
             )
 
     @classmethod
-    def _inline_markdown(cls, node) -> None:
-        """Code en ligne, gras, italique et barre -> markdown (hors ``pre``)."""
-        for code in node.find_all("code"):
-            if code.find_parent("pre") is not None:
-                continue
-            text = code.get_text(" ", strip=True)
-            if text:
-                code.replace_with(NavigableString(f"`{text}`"))
-            else:
-                code.decompose()
-
-        emphases = node.find_all(["b", "strong", "i", "em", "del", "s", "strike"])
-        markers = {
-            "b": "**",
-            "strong": "**",
-            "i": "*",
-            "em": "*",
-            "del": "~~",
-            "s": "~~",
-            "strike": "~~",
-        }
-        # du plus profond au plus externe : preserve l'imbrication
-        for el in sorted(emphases, key=lambda t: len(list(t.parents)), reverse=True):
-            if el.find_parent("pre") is not None:
-                continue
-            inner = cls._inline_text(el)
-            if inner:
-                marker = markers[el.name]
-                el.replace_with(NavigableString(f"{marker}{inner}{marker}"))
-            else:
-                el.decompose()
-
-    @classmethod
     def _generated_files(cls, node) -> None:
         """Puce de fichier genere -> nom du fichier, sans icone ni bouton."""
         for generated in node.find_all("generated-file"):
@@ -1163,13 +1130,6 @@ class GeminiParser(BaseParser):
             src = img.get("src") or ""
             if "drive-thirdparty.googleusercontent.com" in src:
                 img.decompose()
-
-    @classmethod
-    def _inline_text(cls, el) -> str:
-        """Texte markdown inline (sans nouvelle structure de blocs)."""
-        if el is None:
-            return ""
-        return cls.text_of(copy.copy(el))
 
     @classmethod
     def _file_attachments_markdown(cls, root) -> str:

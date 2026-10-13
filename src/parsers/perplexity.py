@@ -964,7 +964,7 @@ class PerplexityParser(BaseParser):
         if el is None:
             return ""
         node = copy.copy(el)
-        cls._inline_markup(node)
+        cls._inline_markdown(node)
         replacements: Dict[str, str] = {}
         cls._code_languages(node)
 
@@ -1031,47 +1031,8 @@ class PerplexityParser(BaseParser):
         if el is None:
             return ""
         work = copy.copy(el)
-        cls._inline_markup(work)
+        cls._inline_markdown(work)
         return cls.text_of(work)
-
-    #: balises d'emphase inline -> marqueur markdown
-    _EMPHASIS_MARKERS = {
-        "strong": "**", "b": "**",
-        "em": "*", "i": "*",
-        "s": "~~", "del": "~~", "strike": "~~",
-    }
-
-    @classmethod
-    def _inline_markup(cls, node: Tag) -> None:
-        """Convertit code inline, gras/italique/barre en marqueurs markdown.
-
-        ``BaseParser.text_of`` aplatit ces balises : sans conversion, la mise en
-        forme visible (cf. screenshot) etait perdue. Le code des blocs ``pre``
-        est laisse au chemin fenced ; les balises imbriquees sont traitees de la
-        plus profonde a la plus externe pour conserver l'imbrication.
-        """
-        for code in node.find_all("code"):
-            if code.find_parent("pre") is not None:
-                continue
-            text = code.get_text(" ", strip=True)
-            if text:
-                code.replace_with(NavigableString(f"`{text}`"))
-            else:
-                code.decompose()
-        emphases = node.find_all(list(cls._EMPHASIS_MARKERS))
-        for el in sorted(
-            emphases, key=lambda t: len(list(t.parents)), reverse=True
-        ):
-            if el.find_parent(["pre", "code"]) is not None:
-                continue  # le code n'a pas d'emphase markdown
-            marker = cls._EMPHASIS_MARKERS.get(el.name)
-            if not marker:
-                continue
-            inner = cls._inline_text(el)
-            if inner:
-                el.replace_with(NavigableString(f"{marker}{inner}{marker}"))
-            else:
-                el.decompose()
 
     _rstrip_list_lines = True
 

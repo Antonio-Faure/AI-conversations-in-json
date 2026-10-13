@@ -370,6 +370,51 @@ class BaseParser(ABC):
                 lines.append("| " + " | ".join(["---"] * width) + " |")
         return "\n".join(lines)
 
+    @classmethod
+    def _inline_text(cls, el: Optional[Tag]) -> str:
+        """Texte markdown inline (sans structure de blocs)."""
+        if el is None:
+            return ""
+        return cls.text_of(copy.copy(el))
+
+    @classmethod
+    def _inline_code_text(cls, code: Tag) -> str:
+        """Texte d'un code en ligne (surcharge : Claude garde les retours ligne)."""
+        return code.get_text(" ", strip=True)
+
+    @classmethod
+    def _inline_markdown(cls, node: Tag) -> None:
+        """Code en ligne, gras, italique et barre -> markdown (hors ``pre``)."""
+        for code in node.find_all("code"):
+            if code.find_parent("pre") is not None:
+                continue
+            content = cls._inline_code_text(code)
+            if content:
+                code.replace_with(NavigableString(f"`{content}`"))
+            else:
+                code.decompose()
+
+        emphases = node.find_all(["b", "strong", "i", "em", "del", "s", "strike"])
+        markers = {
+            "b": "**",
+            "strong": "**",
+            "i": "*",
+            "em": "*",
+            "del": "~~",
+            "s": "~~",
+            "strike": "~~",
+        }
+        # du plus profond au plus externe : preserve l'imbrication
+        for el in sorted(emphases, key=lambda t: len(list(t.parents)), reverse=True):
+            if el.find_parent("pre") is not None:
+                continue
+            inner = cls._inline_text(el)
+            if inner:
+                marker = markers[el.name]
+                el.replace_with(NavigableString(f"{marker}{inner}{marker}"))
+            else:
+                el.decompose()
+
     @staticmethod
     def extract_title(soup: BeautifulSoup, *selectors: str) -> Optional[str]:
         for sel in selectors:
