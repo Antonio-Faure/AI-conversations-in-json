@@ -246,3 +246,47 @@ def test_capture_variants_sans_bouton():
     service = ChatGPTService(session, {"variants": True})
     assert service._capture_variants() == {}
 
+
+class LostDialogSession(FakeSession):
+    """Dialogue « Versions » perdu pendant la navigation (course de rendu).
+
+    `_versions_wait_change` ne voit plus le dialogue alors que le fragment JS
+    le trouve encore : la capture doit abandonner proprement (pas d'AttributeError).
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.clicks = []
+        self.dialog_gone = False
+
+    def click_at(self, x, y):
+        self.clicks.append((x, y))
+
+    def eval_body(self, body):
+        if "voir les versions" in body and "let n = 0" in body:
+            return 1
+        if "scrollIntoView" in body:
+            return {"x": 10, "y": 20}
+        if "parseInt(m[1], 10)" in body:  # _VERSIONS_DIALOG_JS
+            if self.dialog_gone:
+                return None
+            return {
+                "ready": True,
+                "prev": True,
+                "next": False,
+                "ids": ["m1"],
+                "head": "v1",
+            }
+        if "dlg ? dlg.outerHTML : null" in body:  # _VERSIONS_FRAGMENT_JS
+            return "<div role='dialog'>Versions 2/2</div>"
+        if "new RegExp(" in body:  # _VERSIONS_CLICK_JS
+            if "previous version" in body:
+                self.dialog_gone = True
+            return {"x": 1, "y": 2}
+        return super().eval_body(body)
+
+
+def test_capture_versions_dialogue_perdu_abandonne_proprement():
+    session = LostDialogSession()
+    service = ChatGPTService(session, {"variants": True})
+    assert service._capture_versions_at(0) is None

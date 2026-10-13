@@ -33,6 +33,8 @@ from ..utils.logging import get_logger, log_fields
 from .base import (
     BaseService,
     ConversationUnavailableError,
+    EmptyConversationError,
+    RateLimitedError,
     ScrapedPage,
     ServiceNotLoggedIn,
 )
@@ -131,11 +133,19 @@ class _PerplexityHttpClient:
         return headers
 
     def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
-        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon."""
+        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
+
+        `Retry-After` est respecte mais plafonne : un en-tete de plusieurs
+        heures ne doit pas endormir le run.
+        """
         if attempt + 1 >= API_RETRY_ATTEMPTS:
             return False
-        wait_s = _retry_after_s(headers) or min(
-            API_RETRY_WAIT_MAX_S, API_RETRY_WAIT_S * (2**attempt)
+        wait_s = max(
+            0.0,
+            min(
+                API_RETRY_WAIT_MAX_S,
+                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
+            ),
         )
         log.warning(
             "perplexity: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
@@ -161,14 +171,19 @@ class _PerplexityHttpClient:
                 with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
                     return response.read()
             except urllib.error.HTTPError as exc:
-                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
-                    continue
+                if exc.code == 429:
+                    if self._wait_429(attempt, exc.headers, url):
+                        continue
+                    # limite du forfait epuisee : arreter le service proprement
+                    raise RateLimitedError(
+                        f"perplexity: 429 persistant sur {url}"
+                    ) from exc
                 raise PerplexityHttpError(exc.code, url) from exc
             except urllib.error.URLError as exc:
                 raise RuntimeError(
                     f"perplexity: requete echouee ({url}): {exc}"
                 ) from exc
-        raise RuntimeError(f"perplexity: 429 persistant sur {url}")
+        raise RateLimitedError(f"perplexity: 429 persistant sur {url}")
 
     def get_json(self, url: str) -> Any:
         raw = self._request(url)
@@ -709,6 +724,11 @@ class PerplexityService(BaseService):
         client = self._api_client()
         data = self._fetch_thread_api(client, ref.id)
         self.record_api_shape(data)
+        if not data.get("entries"):
+            # fil vide/erroné : conversation ignoree, pas comptee en echec
+            raise EmptyConversationError(
+                f"perplexity: conversation sans message ({ref.id})"
+            )
         conv = self.parser.parse("", conversation_id=ref.id, extra={"api": data})
         if not conv.url:
             conv.url = self.conversation_url(ref)
@@ -761,6 +781,7 @@ class PerplexityService(BaseService):
         """
         refs: Dict[str, ConversationRef] = {}
         cursor: Optional[str] = None
+        seen_cursors: set = set()
         try:
             for page in range(80):  # 25/page : ~14 pages pour 350 threads
                 data = self._graphql_page(cursor)
@@ -797,11 +818,16 @@ class PerplexityService(BaseService):
                     log, 20, f"{self.name}: page API {page + 1}",
                     extra={"threads": len(edges), "cumul": len(refs)},
                 )
-                if not edges or not info.get("hasNextPage"):
+                if not edges or str(info.get("hasNextPage")).lower() != "true":
                     break
-                cursor = info.get("endCursor") or (edges[-1].get("cursor"))
-                if not cursor:
+                next_cursor = info.get("endCursor") or (edges[-1].get("cursor"))
+                if not next_cursor:
                     break
+                next_cursor = str(next_cursor)
+                if next_cursor in seen_cursors:
+                    break
+                seen_cursors.add(next_cursor)
+                cursor = next_cursor
         except Exception as exc:  # noqa: BLE001
             log_fields(log, 30, f"{self.name}: decouverte API echouee ({exc})")
             return None

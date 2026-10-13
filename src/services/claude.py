@@ -39,6 +39,7 @@ from .base import (
     BaseService,
     ConversationUnavailableError,
     EmptyConversationError,
+    RateLimitedError,
     ScrapedPage,
     ServiceNotLoggedIn,
 )
@@ -114,11 +115,19 @@ class _ClaudeHttpClient:
         }
 
     def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
-        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon."""
+        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
+
+        `Retry-After` est respecte mais plafonne : un en-tete de plusieurs
+        heures ne doit pas endormir le run.
+        """
         if attempt + 1 >= API_RETRY_ATTEMPTS:
             return False
-        wait_s = _retry_after_s(headers) or min(
-            API_RETRY_WAIT_MAX_S, API_RETRY_WAIT_S * (2**attempt)
+        wait_s = max(
+            0.0,
+            min(
+                API_RETRY_WAIT_MAX_S,
+                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
+            ),
         )
         log.warning(
             "claude: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
@@ -142,7 +151,7 @@ class _ClaudeHttpClient:
                 return exc.code, exc.read() or b""
             except urllib.error.URLError as exc:
                 raise RuntimeError(f"claude: requete echouee ({url}): {exc}") from exc
-        raise RuntimeError(f"claude: 429 persistant sur {url}")
+        raise RateLimitedError(f"claude: 429 persistant sur {url}")
 
     def get_json(self, url: str) -> Any:
         status, raw = self.get(url)
@@ -150,6 +159,9 @@ class _ClaudeHttpClient:
             raise ServiceNotLoggedIn(
                 f"claude: non authentifie (HTTP {status}) -> `run.py --login claude`"
             )
+        if status == 429:
+            # limite de rafale epuisee : arreter le service proprement
+            raise RateLimitedError(f"claude: 429 persistant sur {url}")
         if status != 200:
             raise RuntimeError(f"claude: HTTP {status} sur {url}")
         try:
@@ -455,6 +467,9 @@ class ClaudeService(BaseService):
         """Org id de l'API (`/api/organizations`, repli `/api/account`)."""
         try:
             data = client.get_json(API_ORGANIZATIONS_URL)
+        except RateLimitedError:
+            # ne pas rejouer le backoff sur le repli : le service doit s'arreter
+            raise
         except RuntimeError as exc:
             log.debug("claude: /api/organizations indisponible: %s", exc)
             data = None
@@ -539,6 +554,8 @@ class ClaudeService(BaseService):
             raise ServiceNotLoggedIn(
                 f"claude: non authentifie (HTTP {status}) -> `run.py --login claude`"
             )
+        if status == 429:
+            raise RateLimitedError(f"claude: 429 persistant sur {url}")
         if status != 200:
             raise RuntimeError(f"claude: HTTP {status} sur {url}")
         try:

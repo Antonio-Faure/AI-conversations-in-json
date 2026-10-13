@@ -24,6 +24,7 @@ from src.schema import ConversationRef
 from src.services.base import (
     ConversationUnavailableError,
     EmptyConversationError,
+    RateLimitedError,
     ServiceNotLoggedIn,
 )
 from src.services.mistral import (
@@ -613,6 +614,24 @@ def test_api_client_sans_cookies_leve_service_not_logged_in(tmp_path):
         service._api_client()
 
 
+def test_call_batch_429_persistant_leve_rate_limited(monkeypatch):
+    """429 epuise : `RateLimitedError` (arret propre), pas RuntimeError."""
+    import time as time_module
+    import urllib.error
+    import urllib.request
+
+    def fake_urlopen(request, timeout=None):
+        raise urllib.error.HTTPError(
+            request.full_url, 429, "Too Many Requests", {}, None
+        )
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(time_module, "sleep", lambda s: None)
+    client = _MistralHttpClient("a=b")
+    with pytest.raises(RateLimitedError):
+        client.call_batch(("chat.last",), [{}])
+
+
 def test_trpc_url_encodage():
     url = _MistralHttpClient._trpc_url(
         ("chat.last",), [{"chatVisibility": "private"}]
@@ -782,6 +801,36 @@ def test_api_model_map_cache(monkeypatch):
     assert service._api_model_map() == {"glm-5-latest-short": "GLM 5.3"}
     assert service._api_model_map() == {"glm-5-latest-short": "GLM 5.3"}
     assert calls["n"] == 1
+
+
+def test_api_model_map_echec_non_mis_en_cache():
+    """Un echec transitoire de `settings.get` ne fige pas la map pour le run."""
+    calls = {"n": 0}
+
+    def settings():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("mistral: HTTP 429")
+        return {
+            "vibeWorkModelConfigs": {
+                "value": [
+                    {
+                        "model_alias": "glm-5-latest-short",
+                        "model_display_name": "GLM 5.3",
+                    }
+                ]
+            }
+        }
+
+    client = FakeTrpcClient({"settings.get": settings})
+    service = MistralService(
+        FakeSession(), {"services": {"mistral": {"api": True}}}
+    )
+    service._http = client
+    assert service._api_model_map() == {}
+    # le deuxieme essai (conversation suivante) retrouve les noms affiches
+    assert service._api_model_map() == {"glm-5-latest-short": "GLM 5.3"}
+    assert calls["n"] == 2
 
 
 def test_screenshots_api_noop():

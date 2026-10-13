@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from src.parsers.base import ParseError
@@ -315,3 +317,68 @@ def test_scrape_garde_la_page_si_l_accumulation_n_apporte_rien(monkeypatch):
     monkeypatch.setattr(service, "_collect_thread", lambda: "")
     page = service.scrape_conversation(REF)
     assert page.html == _RAW_INFLATE
+
+
+# -- decouverte GraphQL (garde de pagination) ---------------------------------
+
+
+def _graphql_threads(ids, has_next=False, cursor="CUR"):
+    """Document GraphQL minimal pour `discover_via_api` (via `eval_body`)."""
+    return {
+        "data": {
+            "viewer": {
+                "recentGroup": {
+                    "threads": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "entryId": cid,
+                                    "slug": cid,
+                                    "name": f"Titre {cid}",
+                                }
+                            }
+                            for cid in ids
+                        ],
+                        "pageInfo": {
+                            "hasNextPage": has_next,
+                            "endCursor": cursor if has_next else None,
+                        },
+                    }
+                }
+            }
+        }
+    }
+
+
+class GraphQLSession(BaseSession):
+    """Session factice : `discover_via_api` lit le JSON GraphQL via `eval_body`."""
+
+    def __init__(self, pages):
+        super().__init__([], [])
+        self.pages = list(pages)
+        self.calls = []
+
+    def eval_body(self, body):
+        if "LibraryRecentThreadsPaginationQuery" in body:
+            self.calls.append(body)
+            if not self.pages:
+                raise AssertionError("appel GraphQL inattendu")
+            return json.dumps(self.pages.pop(0))
+        return super().eval_body(body)
+
+
+def test_decouverte_api_has_next_page_normalise():
+    """`hasNextPage: "false"` (chaine) : la pagination s'arrete, pas 80 pages."""
+    session = GraphQLSession([_graphql_threads(["c1"], has_next="false")])
+    refs = _service(session).discover_via_api()
+    assert [ref.id for ref in refs] == ["c1"]
+    assert len(session.calls) == 1
+
+
+def test_decouverte_api_curseur_repete_arrete():
+    """`endCursor` identique renvoye : arret au 2e passage."""
+    page = _graphql_threads(["c1"], has_next=True, cursor="CUR")
+    session = GraphQLSession([page, page])
+    refs = _service(session).discover_via_api()
+    assert [ref.id for ref in refs] == ["c1"]
+    assert len(session.calls) == 2

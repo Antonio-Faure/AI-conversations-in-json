@@ -20,6 +20,7 @@ from src.parsers.claude import ClaudeParser
 from src.schema import ConversationRef
 from src.services.base import (
     ConversationUnavailableError,
+    RateLimitedError,
     ServiceNotLoggedIn,
 )
 from src.services.claude import (
@@ -667,6 +668,24 @@ def test_get_reessaie_sur_429(monkeypatch):
     status, raw = client.get("https://claude.ai/api/x")
     assert status == 200 and raw == b'{"ok": true}'
     assert calls["n"] == 2
+
+
+def test_429_persistant_leve_rate_limited(monkeypatch):
+    """429 epuise : `RateLimitedError` (arret propre), pas RuntimeError."""
+    import urllib.error
+    import urllib.request
+
+    monkeypatch.setattr("src.services.claude.time.sleep", lambda s: None)
+
+    def fake_urlopen(request, timeout=None):
+        raise urllib.error.HTTPError(
+            request.full_url, 429, "Too Many Requests", {}, None
+        )
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    client = _ClaudeHttpClient("sessionKey=sk")
+    with pytest.raises(RateLimitedError):
+        client.get_json("https://claude.ai/api/x")
 
 
 # -- telechargement des assets -------------------------------------------------

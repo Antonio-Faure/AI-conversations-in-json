@@ -199,11 +199,19 @@ class _GeminiHttpClient:
         }
 
     def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
-        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon."""
+        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
+
+        `Retry-After` est respecte mais plafonne : un en-tete de plusieurs
+        heures ne doit pas endormir le run.
+        """
         if attempt + 1 >= API_RETRY_ATTEMPTS:
             return False
-        wait_s = _retry_after_s(headers) or min(
-            API_RETRY_WAIT_MAX_S, API_RETRY_WAIT_S * (2**attempt)
+        wait_s = max(
+            0.0,
+            min(
+                API_RETRY_WAIT_MAX_S,
+                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
+            ),
         )
         log.warning(
             "gemini: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
@@ -511,6 +519,7 @@ class GeminiService(BaseService):
         """Decouverte paginee par API (RPC `MaZiqc`, curseur opaque)."""
         refs: Dict[str, ConversationRef] = {}
         cursor: Optional[str] = None
+        seen_cursors: set = set()
         for _ in range(API_MAX_PAGES):
             payload = [
                 API_LIST_PAGE_SIZE,
@@ -544,9 +553,17 @@ class GeminiService(BaseService):
                     break
             if limit and len(refs) >= limit:
                 break
-            cursor = str(data[1]) if isinstance(data, list) and len(data) > 1 and data[1] else None
-            if not cursor or not items:
+            next_cursor = (
+                str(data[1])
+                if isinstance(data, list) and len(data) > 1 and data[1]
+                else None
+            )
+            if not next_cursor or not items:
                 break
+            if next_cursor in seen_cursors:
+                break
+            seen_cursors.add(next_cursor)
+            cursor = next_cursor
         log.debug("gemini api: %s conversations decouvertes", len(refs))
         return list(refs.values())
 
@@ -559,14 +576,25 @@ class GeminiService(BaseService):
         """
         turns: List[Any] = []
         cursor: Optional[str] = None
+        seen_cursors: set = set()
         for _ in range(API_MAX_PAGES):
             payload = [f"c_{cid}", API_TURNS_PAGE_SIZE, cursor, 1, [0], [4], None, 1]
             data = self._rpc(API_CONVERSATION_RPC, payload, f"/app/{cid}")
             page = data[0] if isinstance(data, list) and data else []
-            turns.extend(page or [])
-            cursor = str(data[1]) if isinstance(data, list) and len(data) > 1 and data[1] else None
-            if not cursor or not page:
+            next_cursor = (
+                str(data[1])
+                if isinstance(data, list) and len(data) > 1 and data[1]
+                else None
+            )
+            if next_cursor and (next_cursor == cursor or next_cursor in seen_cursors):
+                # curseur deja vu : le serveur rejoue la meme page, ne pas
+                # concatener les tours une seconde fois (garde-fou)
                 break
+            turns.extend(page or [])
+            if not next_cursor or not page:
+                break
+            seen_cursors.add(next_cursor)
+            cursor = next_cursor
         turns.reverse()
         return turns
 

@@ -17,7 +17,7 @@ import pytest
 
 from src.parsers.chatgpt import API_FILE_DOWNLOAD_URL, ChatGPTParser
 from src.schema import ConversationRef
-from src.services.base import ServiceNotLoggedIn
+from src.services.base import RateLimitedError, ServiceNotLoggedIn
 from src.services.chatgpt import (
     API_PAGE_SIZE,
     ChatGPTService,
@@ -588,6 +588,28 @@ def test_list_conversations_api_limite():
     assert [r.id for r in refs] == ["c0", "c1", "c2"]
 
 
+def test_list_conversations_api_timestamps_normalises():
+    """Epoch du payload -> ISO : le tri de `conversation_list` reste homogene."""
+    page = {
+        "items": [
+            {
+                "id": "c1",
+                "title": "T",
+                "create_time": 1790169940.075207,
+                "update_time": 1790170216.609211,
+            }
+        ],
+        "total": 1,
+        "limit": API_PAGE_SIZE,
+        "offset": 0,
+    }
+    service = ChatGPTService(FakeSession(), {"services": {"chatgpt": {"api": True}}})
+    service._http = FakeClient([page])
+    refs = service.list_conversations()
+    assert refs[0].raw["started_at"] == "2026-09-23T13:25:40Z"
+    assert refs[0].raw["last_message_at"] == "2026-09-23T13:30:16Z"
+
+
 def test_fetch_conversation_api_remonte_les_pages_anciennes():
     recent = {
         "conversation_id": "c1",
@@ -716,6 +738,24 @@ def test_http_client_reessaie_sur_429(monkeypatch):
     assert raw == b'{"ok": true}'
     assert calls["n"] == 2
     assert sleeps == [7.0]  # Retry-After respecte
+
+
+def test_http_client_429_persistant_leve_rate_limited(monkeypatch):
+    """429 epuise : `RateLimitedError` (arret propre du service), pas RuntimeError."""
+    import time as time_module
+    import urllib.error
+    import urllib.request
+
+    def fake_urlopen(request, timeout=None):
+        raise urllib.error.HTTPError(
+            request.full_url, 429, "Too Many Requests", {}, None
+        )
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(time_module, "sleep", lambda s: None)
+    client = _ChatGPTHttpClient("a=b", access_token="tok")
+    with pytest.raises(RateLimitedError):
+        client.get_json("https://chatgpt.com/backend-api/x")
 
 
 def test_session_api_intercepte_les_assets():

@@ -705,6 +705,38 @@ def test_fetch_conversation_api_ordre_chronologique():
     assert client.calls[1][1][2] == "curseur-1"
 
 
+def test_list_conversations_api_curseur_repete_arrete():
+    """Curseur identique renvoye avec une page pleine : arret des le 2e passage."""
+    page = [
+        None,
+        "curseur-fige",
+        [
+            [f"c_{i:016x}", f"T{i}", None, None, None, None]
+            for i in range(API_LIST_PAGE_SIZE)
+        ],
+    ]
+    service = GeminiService(FakeSession(), {"services": {"gemini": {"api": True}}})
+    client = FakeClient([page, page])
+    service._http = client
+    refs = service.list_conversations()
+    assert len(refs) == API_LIST_PAGE_SIZE
+    assert len(client.calls) == 2
+
+
+def test_fetch_conversation_api_curseur_repete_arrete():
+    """Curseur de fil identique : pas 200 pages de tours concatenes."""
+    turn = [["c_c1", "r_1"], ["c_c1", "r_2", "rc_1"], ["q1", None, None, None, [[]]],
+            [[["rc_1", ["a1"]]]], [100, 0]]
+    page = [[turn], "curseur-fige"]
+    service = GeminiService(FakeSession(), {"services": {"gemini": {"api": True}}})
+    client = FakeClient([page, page])
+    service._http = client
+    turns = service._fetch_conversation_api("c1")
+    assert len(turns) == 1
+    # la page rejouee (meme curseur) n'est pas concatenee une seconde fois
+    assert len(client.calls) == 2
+
+
 def test_export_conversation_api_sans_html_avec_payload_brut(api_payload):
     """Mode API : pas de HTML, payload brut disponible pour l'archivage."""
     service = GeminiService(FakeSession(), {"services": {"gemini": {"api": True}}})

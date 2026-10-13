@@ -20,6 +20,8 @@ from src.schema import ConversationRef
 from src.services.base import (
     BaseService,
     ConversationUnavailableError,
+    EmptyConversationError,
+    RateLimitedError,
     ServiceNotLoggedIn,
 )
 from src.services.perplexity import (
@@ -606,6 +608,21 @@ def test_fetch_thread_api_401_session_perdue():
         service._fetch_thread_api(service._http, "cid")
 
 
+def test_export_api_fil_vide_ignore():
+    """Fil vide : `EmptyConversationError` (conversation ignoree), pas `failed`."""
+    service = _service()
+    service._http = FakeClient(
+        [{"entries": [], "has_next_page": "False", "thread_metadata": {"title": "T"}}]
+    )
+    ref = ConversationRef(
+        service="perplexity",
+        id="cid-vide",
+        url="https://www.perplexity.ai/search/cid-vide",
+    )
+    with pytest.raises(EmptyConversationError):
+        service.export_conversation_with_html(ref)
+
+
 def test_export_api_sans_html_avec_payload_brut(api_payload):
     service = _service()
     service._http = FakeClient([api_payload])
@@ -680,6 +697,24 @@ def test_http_client_erreur_non_429_leve(monkeypatch):
     with pytest.raises(PerplexityHttpError) as excinfo:
         client.get_json("https://www.perplexity.ai/rest/thread/x")
     assert excinfo.value.status == 403
+
+
+def test_http_client_429_persistant_leve_rate_limited(monkeypatch):
+    """429 epuise : `RateLimitedError` (arret propre), pas RuntimeError."""
+    import time as time_module
+    import urllib.error
+    import urllib.request
+
+    def fake_urlopen(request, timeout=None):
+        raise urllib.error.HTTPError(
+            request.full_url, 429, "Too Many Requests", {}, None
+        )
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(time_module, "sleep", lambda s: None)
+    client = _PerplexityHttpClient("a=b")
+    with pytest.raises(RateLimitedError):
+        client.get_json("https://www.perplexity.ai/rest/thread/x")
 
 
 def test_http_client_post_json(monkeypatch):

@@ -41,6 +41,7 @@ from ..services.base import (
     BaseService,
     ConversationUnavailableError,
     EmptyConversationError,
+    RateLimitedError,
     ServiceNotLoggedIn,
 )
 from ..utils.logging import get_logger
@@ -144,11 +145,19 @@ class _MistralHttpClient:
         return headers
 
     def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
-        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon."""
+        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
+
+        `Retry-After` est respecte mais plafonne : un en-tete de plusieurs
+        heures ne doit pas endormir le run.
+        """
         if attempt + 1 >= API_RETRY_ATTEMPTS:
             return False
-        wait_s = _retry_after_s(headers) or min(
-            API_RETRY_WAIT_MAX_S, API_RETRY_WAIT_S * (2**attempt)
+        wait_s = max(
+            0.0,
+            min(
+                API_RETRY_WAIT_MAX_S,
+                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
+            ),
         )
         log.warning(
             "mistral: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
@@ -177,7 +186,7 @@ class _MistralHttpClient:
                 raise RuntimeError(
                     f"mistral: requete echouee ({url}): {exc}"
                 ) from exc
-        raise RuntimeError(f"mistral: 429 persistant sur {url}")
+        raise RateLimitedError(f"mistral: 429 persistant sur {url}")
 
     def fetch(
         self, url: str, accept: str = "*/*"
@@ -237,6 +246,9 @@ class _MistralHttpClient:
             raise ServiceNotLoggedIn(
                 f"mistral: non authentifie (HTTP {status}) -> `run.py --login mistral`"
             )
+        if status == 429:
+            # limite de rafale epuisee : arreter le service proprement
+            raise RateLimitedError(f"mistral: 429 persistant sur {url}")
         if status not in (200, 207):
             raise RuntimeError(f"mistral: HTTP {status} sur {url}")
         try:
@@ -515,7 +527,11 @@ class MistralService(BaseService):
         return self._http
 
     def _api_model_map(self) -> Dict[str, str]:
-        """Alias de modele -> nom affiche (`settings.get`, une fois par run)."""
+        """Alias de modele -> nom affiche (`settings.get`, cache du run).
+
+        Un echec (429, reseau) n'est **pas** mis en cache : la conversation
+        suivante reessaiera, au lieu de perdre les noms affiches pour tout le run.
+        """
         if self._model_display_map is not None:
             return self._model_display_map
         mapping: Dict[str, str] = {}
@@ -533,7 +549,12 @@ class MistralService(BaseService):
                 if alias and display:
                     mapping.setdefault(alias, display)
         except Exception:  # noqa: BLE001 (repli : alias brut)
-            log.debug("mistral: map des modeles indisponible", exc_info=True)
+            log.debug(
+                "mistral: map des modeles indisponible (nouvel essai a la "
+                "prochaine conversation)",
+                exc_info=True,
+            )
+            return mapping
         self._model_display_map = mapping
         return mapping
 

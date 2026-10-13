@@ -34,9 +34,9 @@ from ..parsers.chatgpt import (
     merge_turn_snapshots,
     order_fragments_by_time,
 )
-from ..schema import ConversationRef
+from ..schema import ConversationRef, normalize_timestamp
 from ..utils.logging import get_logger
-from .base import BaseService, ScrapedPage, ServiceNotLoggedIn
+from .base import BaseService, RateLimitedError, ScrapedPage, ServiceNotLoggedIn
 
 log = get_logger("services.chatgpt")
 
@@ -120,12 +120,17 @@ class _ChatGPTHttpClient:
 
         La fenetre de quota du backend se rouvre en quelques minutes : on
         attend 45s, 90s... (plafonnee), en respectant `Retry-After` s'il est
-        present.
+        present (plafonne aussi : un en-tete de plusieurs heures ne doit pas
+        endormir le run).
         """
         if attempt + 1 >= API_RETRY_ATTEMPTS:
             return False
-        wait_s = _retry_after_s(headers) or min(
-            API_RETRY_WAIT_MAX_S, API_RETRY_WAIT_S * (2**attempt)
+        wait_s = max(
+            0.0,
+            min(
+                API_RETRY_WAIT_MAX_S,
+                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
+            ),
         )
         log.warning(
             "chatgpt: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
@@ -151,7 +156,7 @@ class _ChatGPTHttpClient:
                 raise RuntimeError(
                     f"chatgpt: requete echouee ({url}): {exc}"
                 ) from exc
-        raise RuntimeError(f"chatgpt: 429 persistant sur {url}")
+        raise RateLimitedError(f"chatgpt: 429 persistant sur {url}")
 
     def get_json(self, url: str) -> Any:
         status, raw = self.get(url)
@@ -159,6 +164,10 @@ class _ChatGPTHttpClient:
             raise ServiceNotLoggedIn(
                 f"chatgpt: non authentifie (HTTP {status}) -> `run.py --login chatgpt`"
             )
+        if status == 429:
+            # limite de rafale epuisee : arreter le service proprement (reprise
+            # plus tard) au lieu de faire echouer chaque conversation
+            raise RateLimitedError(f"chatgpt: 429 persistant sur {url}")
         if status != 200:
             raise RuntimeError(f"chatgpt: HTTP {status} sur {url}")
         try:
@@ -752,8 +761,10 @@ class ChatGPTService(BaseService):
                     url=f"{API_BASE}/c/{cid}",
                     title=item.get("title") or None,
                     raw={
-                        "started_at": item.get("create_time"),
-                        "last_message_at": item.get("update_time"),
+                        # l'API renvoie des epoch (float) : normaliser pour que
+                        # le tri de `conversation_list` reste homogene (ISO)
+                        "started_at": normalize_timestamp(item.get("create_time")),
+                        "last_message_at": normalize_timestamp(item.get("update_time")),
                     },
                 )
                 if limit and len(refs) >= limit:
@@ -1014,6 +1025,15 @@ class ChatGPTService(BaseService):
             dialog = self._versions_wait_change(dialog)
             if dialog is None:
                 break
+        if dialog is None:
+            # le dialogue s'est ferme/re-rendu pendant la navigation : le
+            # fragment JS peut encore le trouver, mais son etat est perdu.
+            log.warning(
+                "chatgpt: dialogue « Versions » perdu pendant la navigation "
+                "(bouton %s)",
+                index + 1,
+            )
+            return None
         fragments: List[str] = []
         ids: List[str] = []
         for _ in range(50):
