@@ -121,6 +121,47 @@ def test_filtres_platform_et_role(tmp_path):
     store.close()
 
 
+def test_filtres_platform_et_role_avant_le_knn(tmp_path):
+    """Filtre plateforme/role : k resultats pleins, pas tronques par le KNN.
+
+    Regression : sqlite-vec applique `k` avant les filtres de jointure ; avec
+    20 messages d'une autre plateforme plus proches, le filtre B ne renvoyait
+    aucun resultat (k consomme par les voisins non filtres).
+    """
+    store = VectorStore(tmp_path / "rag.db", dim=4)
+
+    def unit(*values):
+        arr = np.array(values, dtype="float32")
+        return arr / np.linalg.norm(arr)
+
+    # 20 messages A tres proches de la requete (tout le top-5 non filtre)
+    store.replace_conversation(
+        "a", "ca", "t", "v",
+        [_msg(f"a{i}", "user") for i in range(20)],
+        [unit(1.0, 0.05, 0, 0) for _ in range(20)],
+    )
+    # 5 messages B plus lointains, tous sous le top-5 non filtre
+    store.replace_conversation(
+        "b", "cb", "t", "v",
+        [_msg(f"b{i}", "assistant") for i in range(5)],
+        [unit(1.0, y, 0, 0) for y in (0.3, 0.5, 0.7, 1.0, 1.4)],
+    )
+    query = unit(1.0, 0.0, 0, 0)
+    assert all(r["platform"] == "a" for r in store.search(query, k=5))
+
+    only_b = store.search(query, k=5, platform="b")
+    assert len(only_b) == 5
+    assert {r["message_id"] for r in only_b} == {f"b{i}" for i in range(5)}
+    # tries par similarite decroissante
+    assert [r["message_id"] for r in only_b] == [f"b{i}" for i in range(5)]
+
+    only_assistant = store.search(query, k=5, role="assistant")
+    assert len(only_assistant) == 5
+    both = store.search(query, k=3, platform="b", role="assistant")
+    assert len(both) == 3
+    store.close()
+
+
 def test_remplacement_et_increment(tmp_path):
     store = VectorStore(tmp_path / "rag.db", dim=4)
     store.replace_conversation(
@@ -157,9 +198,35 @@ def test_keyword_score_et_tokenize():
     from src.rag.search import keyword_score, tokenize
 
     assert tokenize("Serveur Minecraft, serveur !") == ["serveur", "minecraft"]
+    # elision francaise : l'apostrophe separe les tokens
+    assert tokenize("l'IA d'aujourd'hui") == ["ia", "aujourd", "hui"]
     assert keyword_score("Un serveur minecraft", ["serveur", "minecraft"]) == 1.0
     assert keyword_score("Un serveur web", ["serveur", "minecraft"]) == 0.5
     assert keyword_score("exact phrase ici", ["phrase", "ici"], phrase="exact phrase") > 0.5
+
+
+def test_keyword_score_token_entier():
+    """Le mot-cle matche un token entier, pas une sous-chaine."""
+    from src.rag.search import keyword_score
+
+    # faux positifs de la sous-chaine : « ia » dans « maison » / « social »
+    assert keyword_score("une maison ancienne", ["ia"]) == 0.0
+    assert keyword_score("un réseau social", ["ia"]) == 0.0
+    assert keyword_score("l'IA générative", ["ia"]) == 1.0
+    # token entier : « serveur » ne matche pas « serveurs »
+    assert keyword_score("deux serveurs web", ["serveur"]) == 0.0
+    # casse et accents
+    assert keyword_score("LES DONNÉES du capteur", ["donnees"]) == 1.0
+    assert keyword_score("les donnees du capteur", ["données"]) == 1.0
+    assert keyword_score("SERVEUR", ["serveur"]) == 1.0
+
+
+def test_keyword_score_phrase_exacte_sans_accents():
+    from src.rag.search import keyword_score
+
+    assert keyword_score("la théorie des cordes", ["theorie"], phrase="theorie des cordes") == 1.0
+    # bonus phrase seul (terme absent) : phrase matchee malgre les accents
+    assert keyword_score("une théorie ancienne", ["physique"], phrase="une theorie") == 0.3
 
 
 def test_combined_search_semantique_et_mots_cles(tmp_path):

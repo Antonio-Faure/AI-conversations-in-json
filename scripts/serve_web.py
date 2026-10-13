@@ -54,6 +54,34 @@ CONTENT_TYPES = {
 
 MEDIA_RE = re.compile(r"^/media/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)$")
 
+#: plateformes servies (liste blanche : jamais de nom arbitraire dans un chemin)
+PLATFORMS = ("chatgpt", "claude", "gemini", "perplexity", "grok", "mistral")
+#: identifiants de conversation acceptes (pas de separateur de chemin)
+CONVERSATION_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+
+
+class ApiError(Exception):
+    """Parametre de requete invalide -> reponse JSON + statut HTTP."""
+
+    def __init__(self, message: str, status: int = 400):
+        super().__init__(message)
+        self.message = message
+        self.status = status
+
+
+def check_platform(platform: str) -> str:
+    """Valide un nom de plateforme contre la liste blanche."""
+    if platform not in PLATFORMS:
+        raise ApiError(f"plateforme inconnue: {platform!r}")
+    return platform
+
+
+def check_conversation_id(conversation_id: str) -> str:
+    """Valide un identifiant de conversation (pas de separateur de chemin)."""
+    if not CONVERSATION_ID_RE.match(conversation_id or ""):
+        raise ApiError("identifiant de conversation invalide")
+    return conversation_id
+
 
 class AppState:
     """Etat partage : store + embedder charges paresseusement (thread-safe)."""
@@ -87,11 +115,18 @@ class AppState:
         return self.embedder().encode_one(text)
 
     def conversation_file(self, platform: str, conversation_id: str):
+        # defense en profondeur : jamais de chemin hors de exports/<plateforme>
+        if platform not in PLATFORMS:
+            return None
+        base = (self.exports_dir / platform).resolve()
+        root = self.exports_dir.resolve()
+        if root not in base.parents:
+            return None
         store = self.store()
         path = store.conversation_file(platform, conversation_id)
         if path and Path(path).exists():
             return Path(path)
-        for candidate in (self.exports_dir / platform).glob("*.json"):
+        for candidate in base.glob("*.json"):
             if candidate.name == "conversation_list.json":
                 continue
             try:
@@ -152,6 +187,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._serve_static(path)
         except BrokenPipeError:
             pass
+        except ApiError as exc:
+            self._send_json({"error": exc.message}, exc.status)
         except Exception as exc:  # noqa: BLE001
             self._send_json({"error": str(exc)}, 500)
 
@@ -162,6 +199,9 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json({"error": "forbidden"}, 403)
             return
         platform, filename = match.groups()
+        if platform not in PLATFORMS:
+            self._send_json({"error": "forbidden"}, 403)
+            return
         base = self.state.exports_dir / platform
         for subdir in ("images", "files"):
             root = (base / subdir).resolve()
@@ -245,10 +285,22 @@ class Handler(BaseHTTPRequestHandler):
         query = (params.get("q") or [""])[0].strip()
         if not query:
             return {"query": query, "count": 0, "group_count": 0, "groups": []}
-        k = int((params.get("k") or ["30"])[0])
-        alpha = float((params.get("alpha") or ["0.6"])[0])
+        try:
+            k = int((params.get("k") or ["30"])[0])
+        except ValueError as exc:
+            raise ApiError("parametre k invalide (entier attendu)") from exc
+        try:
+            alpha = float((params.get("alpha") or ["0.6"])[0])
+        except ValueError as exc:
+            raise ApiError("parametre alpha invalide (nombre attendu)") from exc
+        if not 1 <= k <= 500:
+            raise ApiError("k doit etre entre 1 et 500")
+        if not 0.0 <= alpha <= 1.0:
+            raise ApiError("alpha doit etre entre 0 et 1")
         platforms_raw = (params.get("platforms") or [""])[0]
         platforms = [p for p in platforms_raw.split(",") if p] or None
+        for platform in platforms or ():
+            check_platform(platform)
         model = (params.get("model") or [""])[0] or None
         date_from = (params.get("date_from") or [""])[0] or None
         date_to = (params.get("date_to") or [""])[0] or None
@@ -314,6 +366,8 @@ class Handler(BaseHTTPRequestHandler):
         return row
 
     def _conversations(self, platform: str):
+        if platform:
+            check_platform(platform)
         platforms = [platform] if platform else sorted(
             d.name
             for d in self.state.exports_dir.iterdir()
@@ -348,7 +402,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def _conversation(self, platform: str, conversation_id: str):
         if not platform or not conversation_id:
-            return {"error": "platform et id requis"}
+            raise ApiError("platform et id requis")
+        check_platform(platform)
+        check_conversation_id(conversation_id)
         path = self.state.conversation_file(platform, conversation_id)
         if path is None:
             return {"error": "conversation introuvable"}

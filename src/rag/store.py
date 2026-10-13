@@ -221,15 +221,28 @@ class VectorStore:
         platform: Optional[str] = None,
         role: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Top-k messages par similarite cosinus (distance = 1 - cosine)."""
+        """Top-k messages par similarite cosinus (distance = 1 - cosine).
+
+        Les filtres `platform`/`role` sont appliques *avant* le k via
+        `rowid IN (sous-requete)` : sqlite-vec applique `k` avant les filtres
+        de jointure (`m.platform = ?`), ce qui renverrait moins de k resultats
+        (voire aucun) sur un petit sous-ensemble.
+        """
         clauses = ["v.embedding MATCH ?", "k = ?"]
         params: List[Any] = [serialize_float32(query_vector), int(k)]
+        meta_clauses: List[str] = []
         if platform:
-            clauses.append("m.platform = ?")
+            meta_clauses.append("platform = ?")
             params.append(platform)
         if role:
-            clauses.append("m.role = ?")
+            meta_clauses.append("role = ?")
             params.append(role)
+        if meta_clauses:
+            clauses.append(
+                "v.rowid IN (SELECT rowid FROM messages WHERE "
+                + " AND ".join(meta_clauses)
+                + ")"
+            )
         where = " AND ".join(clauses)
         rows = self.db.execute(
             f"""
