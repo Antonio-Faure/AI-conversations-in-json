@@ -43,10 +43,6 @@ from src.utils.etalon import (
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
-ETALON_DOM = FIXTURES / "etalons" / "gemini" / "gemini.json"
-#: index des messages ou l'API est plus riche que le DOM (documente) : sortie
-#: de code avec langue (`text`), fichier genere telechargeable, image generee.
-API_ONLY_RICHNESS = {13, 23, 25, 27, 29, 31, 33, 35, 41, 51, 53, 59}
 
 
 def load_fixture(name: str):

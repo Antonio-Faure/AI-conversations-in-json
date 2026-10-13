@@ -14,7 +14,6 @@ from src.schema import (
     Message,
     SchemaError,
     Variant,
-    build_conversation,
     extract_code_blocks,
     normalize_messages,
     normalize_timestamp,
@@ -195,7 +194,7 @@ class TestMessage:
 class TestConversation:
     @pytest.fixture()
     def conversation(self):
-        return build_conversation(
+        conv = Conversation(
             platform="chatgpt",
             conversation_id="abc123",
             title="Test",
@@ -205,6 +204,9 @@ class TestConversation:
             ],
             model="gpt-4",
         )
+        conv.derive_timestamps()
+        conv.validate()
+        return conv
 
     def test_json_standard_formate_plan(self, conversation):
         data = conversation.to_dict()

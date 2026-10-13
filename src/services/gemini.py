@@ -397,12 +397,6 @@ class GeminiService(BaseService):
     name = "gemini"
     home_url = "https://gemini.google.com/app"
 
-    sidebar_scroll_selectors = (
-        "conversation-history",
-        "mat-nav-list",
-        "aside mat-nav-list",
-        "aside",
-    )
     sidebar_ready_selectors = (
         "conversation-history a[href*='/app/']",
         "a[href*='/app/']",

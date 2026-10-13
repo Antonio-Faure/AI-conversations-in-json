@@ -224,8 +224,6 @@ class BaseService(ABC):
     home_url: str = ""
     #: page de decouverte (liste des conversations) si differente de home_url
     discover_url: str = ""
-    #: selectors des conteneurs scrollables de la sidebar
-    sidebar_scroll_selectors: tuple = ()
     #: selectors qui prouvent que la liste de conversations est chargee
     sidebar_ready_selectors: tuple = ()
     #: parties d'URL de login specifiques au service (complete LOGIN_URL_PARTS)

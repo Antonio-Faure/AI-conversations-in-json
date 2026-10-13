@@ -119,32 +119,6 @@ def js_click_body(sel: Sel) -> Optional[str]:
     return base
 
 
-def js_scroll_body(sel: Sel) -> Optional[str]:
-    """JS scrolant un conteneur et retournant [scrollHeight, at_bottom]."""
-    if sel.css is None:
-        return None
-    find = "const el = document.querySelector(" + json.dumps(sel.css) + ");"
-    if not sel.plain:
-        find = "const els = document.querySelectorAll(" + json.dumps(sel.css) + "); let el = null;"
-        if sel.text is not None:
-            find += (
-                "for (const e of els) {"
-                "  const t = (e.textContent || '').trim().replace(/\\s+/g, ' ').toLowerCase();"
-                "  if (t.includes(" + json.dumps(sel.text.lower()) + ")) { el = e; break; } }"
-            )
-        elif sel.exact is not None:
-            find += (
-                "for (const e of els) {"
-                "  if ((e.textContent || '').trim() === " + json.dumps(sel.exact) + ") { el = e; break; } }"
-            )
-    return (
-        find
-        + "if (!el) return null;"
-        + "el.scrollBy({top: el.clientHeight || 400, behavior: 'instant'});"
-        + "return [el.scrollHeight, el.scrollTop + el.clientHeight >= el.scrollHeight - 8];"
-    )
-
-
 def playwright_js_to_iife(script: str) -> str:
     """Convertit une fleche Playwright `() => ...` en corps JS pour run_js.
 

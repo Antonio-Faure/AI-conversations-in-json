@@ -81,7 +81,6 @@ class PerplexityHttpError(RuntimeError):
     def __init__(self, status: int, url: str):
         super().__init__(f"perplexity: HTTP {status} sur {url}")
         self.status = status
-        self.url = url
 
 
 def _retry_after_s(headers: Any) -> Optional[float]:
@@ -480,14 +479,6 @@ class PerplexityService(BaseService):
     GRAPHQL_ENDPOINT = "/rest/perplexity_ask/graphql"
     GRAPHQL_HASH = "e207cce86b2c9b67fca3ea7d8450d675ec86c0c429b38e42e88f3b027e7c8729"
 
-    sidebar_scroll_selectors = (
-        # UI 2026 : plus de <aside> ; la liste est dans `group/sidebar-*`.
-        "[class*='sidebar']",
-        "aside nav",
-        "[data-testid='history']",
-        "aside div.overflow-y-auto",
-        "aside",
-    )
     sidebar_ready_selectors = (
         "[class*='sidebar'] a[href*='/search/']",
         "aside a[href*='/search/']",

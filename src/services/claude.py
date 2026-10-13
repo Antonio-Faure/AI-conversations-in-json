@@ -375,12 +375,6 @@ class ClaudeService(BaseService):
     name = "claude"
     home_url = "https://claude.ai/chats"
 
-    sidebar_scroll_selectors = (
-        "[data-testid='sidebar-chats-list']",
-        "nav[aria-label='Chats']",
-        "aside nav",
-        "aside",
-    )
     sidebar_ready_selectors = (
         "a[href*='/chat/']",
         "[data-testid='sidebar-chats-list'] a",

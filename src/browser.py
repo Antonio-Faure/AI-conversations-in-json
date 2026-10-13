@@ -57,7 +57,6 @@ def stealth_js(languages: List[str]) -> str:
 
 @dataclass
 class ScrollResult:
-    reached_bottom: bool
     rounds: int
     last_height: int
 
@@ -319,12 +318,6 @@ class BrowserSession:
         except PlaywrightError:
             return False
 
-    def press_if_present(self, key: str) -> None:
-        try:
-            self.page.keyboard.press(key)
-        except PlaywrightError:
-            pass
-
     # -- interaction (drivers) ------------------------------------------------
 
     def click_any(self, selectors: Sequence[str], timeout_ms: int = 4000) -> Optional[str]:
@@ -422,48 +415,8 @@ class BrowserSession:
                 stable = 0
             last_height = height
             if at_bottom and stable >= stable_rounds:
-                return ScrollResult(True, rounds, height)
-        return ScrollResult(False, rounds, max(0, last_height))
-
-    def scroll_element_until_stable(
-        self,
-        selectors: Sequence[str],
-        max_rounds: int = 25,
-        pause_ms: int = 500,
-        stable_rounds: int = 2,
-    ) -> ScrollResult:
-        """Scrolle un conteneur (sidebar) jusqu'a stabilisation de scrollHeight."""
-        page = self.page
-        handle = None
-        for sel in selectors:
-            try:
-                handle = page.query_selector(sel)
-            except PlaywrightError:
-                handle = None
-            if handle is not None:
-                break
-        if handle is None:
-            return ScrollResult(True, 0, 0)
-        last_height = -1
-        stable = 0
-        height = 0
-        for i in range(max_rounds):
-            handle.evaluate(
-                "(el) => el.scrollBy({top: el.clientHeight || 400, behavior: 'instant'})"
-            )
-            page.wait_for_timeout(pause_ms)
-            height = handle.evaluate("el => el.scrollHeight")
-            reached = handle.evaluate(
-                "el => el.scrollTop + el.clientHeight >= el.scrollHeight - 8"
-            )
-            if height == last_height:
-                stable += 1
-            else:
-                stable = 0
-            last_height = height
-            if reached and stable >= stable_rounds:
-                return ScrollResult(True, i + 1, height)
-        return ScrollResult(False, max_rounds, height)
+                return ScrollResult(rounds, height)
+        return ScrollResult(rounds, max(0, last_height))
 
     # -- diagnostics -----------------------------------------------------------
 

@@ -89,8 +89,6 @@ PATH_KEYS = (
     "cookies_dir",
     "rag_db",
     "screenshot_dir",
-    "state_file",
-    "log_file",
 )
 
 DEFAULT_CONFIG: Dict[str, Any] = {

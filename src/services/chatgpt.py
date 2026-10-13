@@ -596,12 +596,6 @@ class ChatGPTService(BaseService):
     name = "chatgpt"
     home_url = "https://chatgpt.com/"
 
-    sidebar_scroll_selectors = (
-        "nav[aria-label='Chat history']",
-        "aside nav",
-        ".nav-scrollable-container",
-        "aside",
-    )
     sidebar_ready_selectors = (
         "nav[aria-label='Chat history'] a[href*='/c/']",
         "a[href*='/c/']",

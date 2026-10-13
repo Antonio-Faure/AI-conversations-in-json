@@ -1,6 +1,5 @@
 "use strict";
 
-const PLATFORMS = ["chatgpt", "claude", "gemini", "perplexity", "grok", "mistral"];
 const PLATFORM_LABEL = {
   chatgpt: "ChatGPT", claude: "Claude", gemini: "Gemini",
   perplexity: "Perplexity", grok: "Grok", mistral: "Mistral",

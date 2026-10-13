@@ -199,7 +199,6 @@ class ConversationTools:
         store: Any = None,
         embedder: Any = None,
     ):
-        self.config = config
         self.exports_dir = Path(config["output_dir"])
         self.db_path = Path(config["rag_db"])
         self.model_name = config.get("rag_model") or "BAAI/bge-m3"

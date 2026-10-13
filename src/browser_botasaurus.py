@@ -25,7 +25,6 @@ from .selectors import (
     Sel,
     js_click_body,
     js_presence_body,
-    js_scroll_body,
     playwright_js_to_iife,
     translate_selector,
 )
@@ -69,7 +68,6 @@ class BotasaurusSession:
         timeout_ms: int = 45000,
         chrome_executable_path: Optional[str] = None,
         enable_xvfb: bool = False,
-        service: Optional[str] = None,
         fingerprint: Optional[Dict[str, Any]] = None,
     ):
         self.profile_dir = Path(profile_dir or "profiles")
@@ -77,7 +75,6 @@ class BotasaurusSession:
         self.timeout_ms = int(timeout_ms)
         self.chrome_path = chrome_executable_path or None
         self.enable_xvfb = bool(enable_xvfb)
-        self.service = service
         self.fingerprint = fingerprint or {}
         self._driver = None
 
@@ -288,9 +285,6 @@ class BotasaurusSession:
                 return False
         return bool(self._run_js(body))
 
-    def press_if_present(self, key: str) -> None:
-        log.debug("press_if_present(%s) non supporte par le moteur botasaurus", key)
-
     # -- interaction (drivers) ------------------------------------------------
 
     def click_any(self, selectors: Sequence[str], timeout_ms: int = 4000) -> Optional[str]:
@@ -386,41 +380,8 @@ class BotasaurusSession:
                 stable = 0
             last_height = height
             if at_bottom and stable >= stable_rounds:
-                return ScrollResult(True, rounds, height)
-        return ScrollResult(False, rounds, max(0, last_height))
-
-    def scroll_element_until_stable(
-        self,
-        selectors: Sequence[str],
-        max_rounds: int = 25,
-        pause_ms: int = 500,
-        stable_rounds: int = 2,
-    ) -> ScrollResult:
-        body = None
-        for raw in selectors:
-            candidate = js_scroll_body(translate_selector(raw))
-            if candidate is not None:
-                body = candidate
-                break
-        if body is None:
-            return ScrollResult(True, 0, 0)
-        last_height = -1
-        stable = 0
-        height = 0
-        for i in range(max_rounds):
-            res = self._run_js(body)
-            self.wait_ms(pause_ms)
-            if not res:
-                return ScrollResult(True, i + 1, 0)  # conteneur absent : rien a scroller
-            height, reached = int(res[0] or 0), bool(res[1])
-            if height == last_height:
-                stable += 1
-            else:
-                stable = 0
-            last_height = height
-            if reached and stable >= stable_rounds:
-                return ScrollResult(True, i + 1, height)
-        return ScrollResult(False, max_rounds, height)
+                return ScrollResult(rounds, height)
+        return ScrollResult(rounds, max(0, last_height))
 
     # -- diagnostics ---------------------------------------------------------------
 

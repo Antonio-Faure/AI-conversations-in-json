@@ -405,15 +405,6 @@ class ChatGPTParser(BaseParser):
         "[data-testid^='conversation-turn']",
     )
 
-    TURN_SELECTORS = (
-        "[data-turn-key]",
-        "[data-chatgpt-search-unit-key]",
-        "[data-message-author-role][data-message-id]",
-        "[data-message-author-role]",
-        "div[data-message-id]",
-        "[data-testid^='conversation-turn']",
-        "main article[role='article']",
-    )
     CONTENT_SELECTORS = (
         NEW_ASSISTANT_TEXT,
         NEW_USER_TEXT,

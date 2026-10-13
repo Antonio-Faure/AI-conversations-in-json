@@ -449,11 +449,6 @@ class MistralService(BaseService):
     name = "mistral"
     home_url = BASE + "/work"
 
-    sidebar_scroll_selectors = (
-        "div.sidebar-dynamic-scroll-area-viewport",
-        "div.overflow-y-auto",
-        "aside",
-    )
     sidebar_ready_selectors = ("a[href^='/work/']", "a[href^='/chat/']")
     # pas de selecteur href*=login : les conversations peuvent contenir de tels
     # liens (faux positif -> "session perdue"). L'URL de login suffit.

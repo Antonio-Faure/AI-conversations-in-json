@@ -1,4 +1,4 @@
-"""Logging structure: sortie console lisible + fichier JSON lines."""
+"""Logging structure: sortie console lisible (champs `extra` en JSON)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import json
 import logging
 import sys
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 LOGGER_NAME = "aicv"
@@ -50,24 +49,6 @@ class ConsoleFormatter(logging.Formatter):
         return base
 
 
-class JsonFormatter(logging.Formatter):
-    """Une ligne JSON par record: ts, level, logger, msg + extras."""
-
-    def format(self, record: logging.LogRecord) -> str:
-        payload: Dict[str, Any] = {
-            "ts": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(
-                timespec="milliseconds"
-            ).replace("+00:00", "Z"),
-            "level": record.levelname,
-            "logger": record.name,
-            "msg": record.getMessage(),
-        }
-        payload.update(_extra_payload(record))
-        if record.exc_info:
-            payload["exc"] = self.formatException(record.exc_info)
-        return json.dumps(payload, ensure_ascii=False, default=str)
-
-
 def _extra_payload(record: logging.LogRecord) -> Dict[str, Any]:
     """Champs passes via `extra={...}` (tout ce qui n'est pas reserve)."""
     data = {}
@@ -77,27 +58,17 @@ def _extra_payload(record: logging.LogRecord) -> Dict[str, Any]:
     return data
 
 
-class JsonFileHandler(logging.FileHandler):
-    """FileHandler qui cree les dossiers parents a la demande."""
-
-    def __init__(self, filename: Path, encoding: str = "utf-8"):
-        Path(filename).parent.mkdir(parents=True, exist_ok=True)
-        super().__init__(str(filename), encoding=encoding)
-
-
 def setup_logging(
     level: int = logging.INFO,
-    log_file: Optional[Path] = None,
     console: bool = True,
 ) -> logging.Logger:
     """Configure (ou reconfigure) le logger racine du projet.
 
     - console: formatter lisible sur stderr
-    - log_file: formatter JSON lines pour exploitation machine
 
-    Idempotent et appelable deux fois: un appel precedent sans log_file (ex:
-    get_logger() au moment de l'import des modules) ne desactive pas le
-    fichier JSON demande plus tard par la CLI.
+    Idempotent et appelable deux fois: un appel precedent (ex: get_logger()
+    au moment de l'import des modules) ne desactive pas la console demandee
+    plus tard par la CLI.
     """
     logger = logging.getLogger(LOGGER_NAME)
     logger.setLevel(logging.DEBUG)
@@ -112,33 +83,15 @@ def setup_logging(
         logger.addHandler(stream)
     if configured:
         for h in logger.handlers:
-            if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler):
+            if isinstance(h, logging.StreamHandler):
                 h.setLevel(level)
-
-    want_file = str(Path(log_file)) if log_file else None
-    current_file = next(
-        (str(Path(h.baseFilename)) for h in logger.handlers if isinstance(h, JsonFileHandler)),
-        None,
-    )
-    if want_file != current_file:
-        for h in [h for h in logger.handlers if isinstance(h, JsonFileHandler)]:
-            h.close()
-            logger.removeHandler(h)
-        if want_file:
-            fh = JsonFileHandler(Path(want_file))
-            fh.setLevel(logging.DEBUG)
-            fh.setFormatter(JsonFormatter())
-            logger.addHandler(fh)
 
     logger._aicv_configured = True  # type: ignore[attr-defined]
     return logger
 
 
 def _has_stream_handler(logger: logging.Logger) -> bool:
-    return any(
-        isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler)
-        for h in logger.handlers
-    )
+    return any(isinstance(h, logging.StreamHandler) for h in logger.handlers)
 
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:

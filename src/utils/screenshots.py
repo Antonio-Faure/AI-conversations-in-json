@@ -14,7 +14,7 @@ dedupliques) et ignore les tours masques (display:none / taille nulle).
 from __future__ import annotations
 
 import json
-from typing import Iterable, List
+from typing import Iterable
 
 #: nombre max de tours captures (garde-fou)
 MAX_TURNS = 300
@@ -104,7 +104,3 @@ def screenshot_step_body(selectors: Iterable[str]) -> str:
     """Corps JS `return ...` : 'shot' (nouveau tour centre), 'advance' (charger
     la suite) ou 'done' (plus aucun tour monte)."""
     return _inject(selectors, STEP_BODY)
-
-
-def message_screenshot_names(count: int) -> List[str]:
-    return [f"message-{i + 1:02d}.png" for i in range(count)]

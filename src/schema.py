@@ -42,7 +42,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, List, Optional
 
 VALID_ROLES = ("user", "assistant", "system", "tool")
 
@@ -523,23 +523,3 @@ class ConversationRef:
         self.url = str(self.url).strip()
         if self.raw is None:
             self.raw = {}
-
-
-def build_conversation(
-    platform: str,
-    conversation_id: str,
-    title: str,
-    messages: Iterable[Message],
-    model: Optional[str] = None,
-) -> Conversation:
-    """Fabrique une conversation valide avec timestamps derives et exported_at."""
-    conv = Conversation(
-        platform=platform,
-        conversation_id=conversation_id,
-        title=title or "",
-        messages=list(messages),
-        model=model,
-    )
-    conv.derive_timestamps()
-    conv.validate()
-    return conv

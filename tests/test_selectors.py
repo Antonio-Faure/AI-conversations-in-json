@@ -6,7 +6,6 @@ from src.selectors import (
     Sel,
     js_click_body,
     js_presence_body,
-    js_scroll_body,
     playwright_js_to_iife,
     translate_selector,
 )
@@ -74,15 +73,6 @@ class TestJsBuilders:
         body = js_click_body(translate_selector("button:has-text('Sign in')"))
         assert "el.click()" in body
         assert "sign in" in body
-
-    def test_scroll_retourne_hauteur_et_bottom(self):
-        body = js_scroll_body(translate_selector("mat-nav-list"))
-        assert "scrollBy" in body
-        assert "scrollHeight" in body
-
-    def test_scroll_a_texte(self):
-        body = js_scroll_body(translate_selector("aside:has-text('Recent')"))
-        assert "recent" in body
 
 
 class TestPlaywrightJsToIife:

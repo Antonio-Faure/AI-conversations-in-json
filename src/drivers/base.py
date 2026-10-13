@@ -17,10 +17,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence
 
-from ..utils.logging import get_logger, log_fields
-
-log = get_logger("aicv.drivers")
-
 
 class ChatDriver:
     name = ""
@@ -197,9 +193,3 @@ class ChatDriver:
     def pause(self) -> None:
         if self.pacing_ms > 0:
             self.session.wait_ms(self.pacing_ms)
-
-    def log_progress(self, index: int, total: int, extra: Optional[dict] = None) -> None:
-        log_fields(
-            log, 20, f"{self.name}: message {index}/{total}",
-            extra={"driver": self.name, **(extra or {})},
-        )

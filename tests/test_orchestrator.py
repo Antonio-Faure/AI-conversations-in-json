@@ -90,9 +90,6 @@ class FakeService:
         conv = make_conversation(platform=self.name, conv_id=ref.id, title=ref.title)
         return conv, f"<html><body><div id='{ref.id}'>{ref.id}</div></body></html>"
 
-    def export_conversation(self, ref):
-        return self.export_conversation_with_html(ref)[0]
-
     def take_raw_payload(self):
         """Plateforme DOM : aucun payload API brut."""
         return None
