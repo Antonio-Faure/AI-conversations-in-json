@@ -823,6 +823,113 @@ def test_chatgpt_confirm_sent_refuse_champ_non_vide():
     assert driver.confirm_sent() is False
 
 
+class ChatGPTNewUISession(ChatGPTTranscriptSession):
+    """Session factice : UI « DIL » 2026, sans data-message-author-role.
+
+    Simule la persistance : chaque message envoye produit un tour assistant
+    (comptage + dernier texte), comme le DOM reel apres la reponse.
+    """
+
+    def __init__(self, last_user="", empty=True, page_text=""):
+        super().__init__(last_user=last_user, empty=empty, page_text=page_text)
+        self.assistant_count = 0
+        self.assistant_text = ""
+
+    def type_into(self, selectors, text):
+        result = super().type_into(selectors, text)
+        self.assistant_count += 1
+        self.assistant_text = f"reponse: {text}"
+        # le premier message attribue un id a la conversation (comme l'app)
+        self.url_value = (
+            "https://chatgpt.com/c/f0000000-0000-4000-8000-6a6e7700aa11"
+        )
+        return result
+
+    def is_element_present(self, selector):
+        return selector == "div#prompt-textarea[contenteditable='true']"
+
+    def eval_body(self, body):
+        if ":assistant" in body:
+            # requetes assistant (comptage via Set / dernier texte)
+            if "new Set()" in body:
+                return str(self.assistant_count)
+            return self.assistant_text
+        if "data-chatgpt-search-unit-key" in body:
+            return self.last_user
+        if "data-message-author-role='user'" in body:
+            # l'ancien selecteur est absent du DOM de la nouvelle UI
+            return ""
+        return super().eval_body(body)
+
+
+def _last_user_from_chains(html: str, chains) -> str:
+    """Applique la chaine de selecteurs du driver a un HTML (test hors navigateur)."""
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(html, "html.parser")
+    for container, inner in chains:
+        units = soup.select(container)
+        if not units:
+            continue
+        unit = units[-1]
+        node = unit.select_one(inner) if inner else unit
+        return (node or unit).get_text(" ", strip=True)
+    return ""
+
+
+def test_chatgpt_chaine_dernier_message_utilisateur_nouvelle_ui(fixture_html):
+    """UI DIL 2026 : le dernier message utilisateur n'a plus data-message-author-role."""
+    from src.drivers.chatgpt import USER_TEXT_CHAINS
+
+    html = fixture_html("chatgpt_new_ui.html")
+    assert "data-message-author-role" not in html
+    assert _last_user_from_chains(html, USER_TEXT_CHAINS) == "Affiche une image."
+
+
+def test_chatgpt_chaine_dernier_message_utilisateur_ancienne_ui(fixture_html):
+    """Ancienne UI : la chaine de repli continue de trouver le message utilisateur."""
+    from src.drivers.chatgpt import USER_TEXT_CHAINS
+
+    html = fixture_html("chatgpt_conversation.html")
+    assert _last_user_from_chains(html, USER_TEXT_CHAINS) == "Et pour la partie tests ?"
+
+
+def test_chatgpt_last_user_text_interroge_la_nouvelle_ui():
+    session = ChatGPTNewUISession(last_user="Affiche une image.")
+    driver = get_driver("chatgpt")(session)
+    assert driver._last_user_text() == "Affiche une image."
+
+
+def test_chatgpt_confirm_sent_nouvelle_ui():
+    """Un envoi dans l'UI DIL doit etre confirme (le tour utilisateur est retrouve)."""
+    session = ChatGPTNewUISession(last_user="Affiche une image.")
+    driver = get_driver("chatgpt")(session)
+    driver._pending_text = "Affiche une image."
+    assert driver.confirm_sent() is True
+
+
+def test_runner_envoi_confirme_sur_la_nouvelle_ui(tmp_path):
+    """Non-regression : un run d'etalonnage sur l'UI DIL ne finit plus en erreur."""
+    driver = get_driver("chatgpt")(ChatGPTNewUISession(last_user="m1"))
+    status = make_runner(tmp_path, driver, [{"text": "m1"}]).run()
+    assert status == "done"
+
+
+def test_chatgpt_selecteurs_assistant_couvrent_la_nouvelle_ui(fixture_html):
+    """Les selecteurs assistant doivent trouver les messages de l'UI DIL."""
+    from bs4 import BeautifulSoup
+
+    from src.drivers.chatgpt import ChatGPTDriver
+
+    soup = BeautifulSoup(fixture_html("chatgpt_new_ui.html"), "html.parser")
+    found = set()
+    for selector in ChatGPTDriver.assistant_selectors:
+        found.update(soup.select(selector))
+    assert len(found) >= 2
+    texts = " ".join(node.get_text(" ", strip=True) for node in found)
+    assert "Gras" in texts
+
+
 def test_chatgpt_detecte_limite_fichiers():
     """Le free tier bloque les conversations contenant des fichiers/images."""
     cls = get_driver("chatgpt")

@@ -13,6 +13,26 @@ from .base import ChatDriver
 #: utilisateur rendu dans le DOM.
 _PROBE_LEN = 40
 
+#: UI « DIL » (2026) : plus de `data-message-author-role`/`data-message-id`,
+#: les messages sont des unites `[data-chatgpt-search-unit-key="<tour>:<n>:user|assistant"]`
+#: (le role est le dernier segment, cf. `src/parsers/chatgpt.py`).
+_DIL_USER_UNIT = "[data-chatgpt-search-unit-key$=':user']"
+_DIL_USER_CONTENT = "[data-content-search-unit-key$=':user']"
+_DIL_USER_TEXT = "div.text-size-chat.whitespace-pre-wrap"
+_DIL_ASSISTANT_UNIT = "[data-chatgpt-search-unit-key$=':assistant']"
+_DIL_ASSISTANT_CONTENT = "[data-content-search-unit-key$=':assistant']"
+_DIL_ASSISTANT_TEXT = "[data-markdown-text-style='assistant-message']"
+
+#: Chaines de repli `(conteneur, texte)` pour le dernier message utilisateur :
+#: nouvelle UI « DIL » d'abord, ancienne UI ensuite. Le texte est cherche dans
+#: le conteneur ; s'il est absent, le conteneur entier sert de texte.
+USER_TEXT_CHAINS = (
+    (_DIL_USER_UNIT, _DIL_USER_TEXT),
+    (_DIL_USER_CONTENT, _DIL_USER_TEXT),
+    ("[data-user-message-bubble]", ""),
+    ("[data-message-author-role='user']", ""),
+)
+
 
 def _norm_text(value: str) -> str:
     """Normalise un texte pour comparer le message envoye au tour rendu."""
@@ -50,6 +70,12 @@ class ChatGPTDriver(ChatDriver):
         "button[aria-label*='Arreter']",
     )
     assistant_selectors = (
+        # UI « DIL » (2026) : texte markdown de la reponse (le conteneur de tour
+        # inclut les en-tetes d'activite « Worked for Xs », pas le texte seul).
+        _DIL_ASSISTANT_TEXT,
+        _DIL_ASSISTANT_UNIT,
+        _DIL_ASSISTANT_CONTENT,
+        # ancienne UI
         "[data-message-author-role='assistant']",
         "[data-testid^='conversation-turn']",
     )
@@ -154,12 +180,26 @@ class ChatGPTDriver(ChatDriver):
         return self._field_empty()
 
     def _last_user_text(self) -> str:
-        """Texte du dernier tour utilisateur rendu (dernier message envoye)."""
+        """Texte du dernier tour utilisateur rendu (dernier message envoye).
+
+        Nouvelle UI « DIL » (2026) : les unites `[data-chatgpt-search-unit-key]`
+        remplacent `[data-message-author-role]`. On parcourt `USER_TEXT_CHAINS`
+        dans l'ordre (nouvelle UI puis ancienne) et on retourne le premier
+        conteneur trouve.
+        """
+        chains = json.dumps([list(chain) for chain in USER_TEXT_CHAINS])
         body = (
-            "const els = document.querySelectorAll("
-            "\"[data-message-author-role='user']\");"
-            "if (!els.length) return '';"
-            "return els[els.length - 1].innerText || '';"
+            "const chains = %s;"
+            "for (const [sel, inner] of chains) {"
+            "  try {"
+            "    const els = document.querySelectorAll(sel);"
+            "    if (!els.length) continue;"
+            "    const unit = els[els.length - 1];"
+            "    const node = inner ? (unit.querySelector(inner) || unit) : unit;"
+            "    return (node.innerText || node.textContent || '').trim();"
+            "  } catch (e) {}"
+            "}"
+            "return '';" % chains
         )
         try:
             return str(self.session.eval_body(body) or "")

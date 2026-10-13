@@ -567,7 +567,9 @@ class BrowserSession:
         """Ouvre le navigateur visible pour que l'utilisateur se connecte.
 
         Attend que l'utilisateur navigue loin de la page de login (detected par
-        l'absence des selecteurs de login) puis sauvegarde le profil.
+        l'absence des selecteurs de login) puis sauvegarde le profil. Fermer le
+        navigateur (la consigne affichee) n'est pas un echec : le profil est
+        deja ecrit sur disque, on sort proprement.
         """
         self.start()
         page = self.page
@@ -587,6 +589,8 @@ class BrowserSession:
         try:
             while True:
                 page.wait_for_timeout(3000)
+                if page.is_closed():
+                    break
                 url = page.url.lower()
                 still_login = any(
                     part in url
@@ -604,4 +608,12 @@ class BrowserSession:
                     if not has_login_el:
                         break
         except KeyboardInterrupt:
-            pass
+            log.info("connexion %s interrompue (Ctrl+C)", service_name)
+        except PlaywrightError as exc:
+            # l'utilisateur a ferme le navigateur : le profil persistant est
+            # deja sauvegarde, ce n'est pas une erreur (consigne affichee).
+            log_fields(
+                log, 20,
+                f"navigateur ferme — connexion {service_name} terminee",
+                extra={"service": service_name, "error": str(exc)},
+            )
