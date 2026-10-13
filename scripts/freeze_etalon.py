@@ -32,6 +32,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.utils.etalon import etalons_file, load_etalons  # noqa: E402
+from src.utils.file_utils import write_text_atomic  # noqa: E402
 from scripts.sanitize import sanitize_text  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "etalons"
@@ -101,7 +102,7 @@ def main() -> int:
             # les fixtures gelees ne doivent contenir aucune trace personnelle
             for target in copied:
                 text = target.read_text(encoding="utf-8", errors="replace")
-                target.write_text(sanitize_text(text), encoding="utf-8")
+                write_text_atomic(target, sanitize_text(text))
             frozen += 1
             print(f"{platform}/{label}: gele")
     print(f"{frozen} conversation(s) gelee(s) dans {FIXTURES.relative_to(ROOT)}")

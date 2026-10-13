@@ -487,6 +487,26 @@ def test_http_client_leve_rate_limited_sur_erreur_persistante(monkeypatch):
     assert len(sleeps) == 5  # 6 tentatives -> 5 attentes (30/60/120/240/300 s)
 
 
+def test_http_client_429_persistant_leve_rate_limited(monkeypatch):
+    """429 HTTP epuise : `RateLimitedError` (arret propre), pas RuntimeError."""
+    import time as time_module
+    import urllib.error
+    import urllib.request
+
+    from src.services.base import RateLimitedError
+
+    def fake_urlopen(request, timeout=None):
+        raise urllib.error.HTTPError(
+            request.full_url, 429, "Too Many Requests", {}, None
+        )
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(time_module, "sleep", lambda s: None)
+    client = _GeminiHttpClient([], {"at": "tok"}, user_agent="UA")
+    with pytest.raises(RateLimitedError):
+        client.rpc("MaZiqc", [100, None, []], "/app")
+
+
 def test_cookie_header_filtre_par_domaine():
     client = _GeminiHttpClient(
         [

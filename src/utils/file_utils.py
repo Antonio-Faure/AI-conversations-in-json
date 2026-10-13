@@ -104,19 +104,27 @@ def conversation_paths(output_root: Path, platform: str, stem: str) -> tuple[Pat
 # -- ecriture atomique -----------------------------------------------------------
 
 
-def write_json_atomic(path: Path, payload: Any) -> Path:
+def write_json_atomic(path: Path, payload: Any, *, mode: Optional[int] = None) -> Path:
     """Ecriture atomique (tmp + os.replace) pour exports utilisables."""
     text = payload if isinstance(payload, str) else json.dumps(
         payload, ensure_ascii=False, indent=2
     )
-    return write_text_atomic(path, text)
+    return write_text_atomic(path, text, mode=mode)
 
 
-def write_text_atomic(path: Path, text: str) -> Path:
+def write_text_atomic(path: Path, text: str, *, mode: Optional[int] = None) -> Path:
+    """Ecriture atomique (tmp + os.replace).
+
+    `mode` (ex. 0o600 pour un fichier sensible) est applique au temporaire
+    avant le remplacement : le fichier final n'est jamais plus lisible que
+    demande, meme si l'ancien fichier avait des permissions larges.
+    """
     path = Path(path)
     ensure_dir(path.parent)
     tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
     tmp.write_text(text, encoding="utf-8")
+    if mode is not None:
+        os.chmod(tmp, mode)
     os.replace(tmp, path)
     return path
 

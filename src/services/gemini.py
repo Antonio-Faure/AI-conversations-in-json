@@ -273,12 +273,13 @@ class _GeminiHttpClient:
                 return exc.code, (exc.read() or b"").decode("utf-8", "replace")
             except urllib.error.URLError as exc:
                 raise RuntimeError(f"gemini: requete echouee ({url}): {exc}") from exc
-        raise RuntimeError(f"gemini: 429 persistant sur {url}")
+        raise RateLimitedError(f"gemini: 429 persistant sur {url}")
 
     def rpc(self, rpcid: str, payload: Any, source_path: str) -> Any:
         """Payload decode d'un RPC ; gere 429, erreurs douces et 401.
 
-        - 429 HTTP : attente (Retry-After puis backoff) dans `post` ;
+        - 429 HTTP : attente (Retry-After puis backoff) dans `post` ; s'il
+          persiste, `RateLimitedError` (arret propre du service) ;
         - erreur applicative transitoire (payload nul + `BardErrorInfo`, ex.
           limite de debit) : attente puis nouvel essai ;
         - 401/403 : `_ApiAuthError` (le service relit les jetons).
@@ -289,6 +290,8 @@ class _GeminiHttpClient:
                 raise _ApiAuthError(
                     f"gemini: non authentifie (HTTP {status}) -> `run.py --login gemini`"
                 )
+            if status == 429:
+                raise RateLimitedError(f"gemini: 429 persistant sur {rpcid}")
             if status != 200:
                 raise RuntimeError(f"gemini: HTTP {status} sur {rpcid}")
             data = _decode_batchexecute(text, rpcid)

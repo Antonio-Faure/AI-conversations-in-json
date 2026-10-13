@@ -284,3 +284,18 @@ def test_index_text_inclut_les_champs_pompes():
         assert marker in text
     assert index_text({"texte": ""}) == ""
     assert index_text({"texte": "", "reasoning": "pensee"}) == "[Raisonnement]\npensee"
+
+
+def test_base_restreinte_au_proprietaire(tmp_path):
+    """Base + WAL/SHM en 0600 : l'index n'est pas lisible par les autres."""
+    import stat
+
+    db_path = tmp_path / "rag.db"
+    store = VectorStore(db_path, dim=4)
+    try:
+        for suffix in ("", "-wal", "-shm"):
+            path = db_path.parent / f"{db_path.name}{suffix}"
+            if path.exists():
+                assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    finally:
+        store.close()

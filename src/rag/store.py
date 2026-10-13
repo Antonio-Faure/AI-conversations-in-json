@@ -8,6 +8,7 @@ Tables :
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -32,6 +33,18 @@ class VectorStore:
         sqlite_vec.load(self.db)
         self.db.enable_load_extension(False)
         self._create_schema()
+        self._restrict_permissions()
+
+    def _restrict_permissions(self) -> None:
+        """Base + WAL/SHM en 0600 (sqlite cree en 0644 selon l'umask).
+
+        L'index contient l'integralite des messages : il ne doit pas etre
+        lisible par les autres utilisateurs de la machine.
+        """
+        for suffix in ("", "-wal", "-shm"):
+            path = Path(f"{self.db_path}{suffix}")
+            if path.exists():
+                os.chmod(path, 0o600)
 
     def _create_schema(self) -> None:
         self.db.executescript(

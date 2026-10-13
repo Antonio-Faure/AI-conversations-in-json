@@ -244,7 +244,9 @@ def capture_cookies(service: str, cookies_dir: Path | str, config: Dict[str, Any
     updated = dict(file_config)
     updated["cookies"] = captured
     updated["captured_at"] = now_iso_z()
-    write_json_atomic(path, updated)
+    # 0600 : les cookies d'auth ne doivent pas etre lisibles par les autres
+    # utilisateurs de la machine.
+    write_json_atomic(path, updated, mode=0o600)
     print(f"[{service}] {len(captured)} cookie(s) enregistres dans {path}")
     print(f"[{service}] teste: scripts/check_cookies.py {service}")
     return 0
