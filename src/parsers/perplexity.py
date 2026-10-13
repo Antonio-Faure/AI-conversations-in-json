@@ -951,63 +951,13 @@ class PerplexityParser(BaseParser):
 
     # -- rendu markdown (listes, tableaux, titres, code) -----------------------
 
+    _content_token_prefix = "AICV_PPL"
+
     @classmethod
-    def _content_text(cls, el: Optional[Tag]) -> str:
-        """Texte markdown d'un contenu Perplexity.
-
-        ``BaseParser.text_of`` aplatit les ``<ul>/<ol>``, ``<table>`` et
-        ``<h1..h6>``. On les convertit en markdown sur une copie avant
-        l'extraction, puis on reinjecte les remplacements apres nettoyage
-        (qui supprime l'indentation des lignes) afin de conserver listes
-        imbriquees et separateurs.
-        """
-        if el is None:
-            return ""
-        node = copy.copy(el)
-        cls._inline_markup(node)
-        replacements: Dict[str, str] = {}
+    def _content_preprocess(cls, node: Tag) -> None:
+        """Pre-traitements Perplexity avant les blocs markdown."""
+        cls._inline_markdown(node)
         cls._code_languages(node)
-
-        # blockquotes : traiter les plus externes (recursion du contenu)
-        for index, quote in enumerate(node.find_all("blockquote")):
-            if quote.find_parent("blockquote") is not None:
-                continue
-            inner = cls._content_text(quote)
-            quoted = "\n".join(
-                f"> {line}" if line else ">" for line in inner.splitlines()
-            )
-            token = f"@@AICV_PPL_QUOTE_{index}@@"
-            replacements[token] = quoted
-            quote.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, table in enumerate(node.find_all("table")):
-            token = f"@@AICV_PPL_TABLE_{index}@@"
-            replacements[token] = cls._table_markdown(table)
-            table.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, lst in enumerate(node.find_all(["ul", "ol"])):
-            if lst.find_parent(["ul", "ol"]) is not None:
-                continue  # traitee avec sa liste parente
-            token = f"@@AICV_PPL_LIST_{index}@@"
-            replacements[token] = "\n".join(cls._render_list(lst))
-            lst.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, heading in enumerate(
-            node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
-        ):
-            level = int(heading.name[1])
-            title = re.sub(r"\s*\n\s*", " ", cls._inline_text(heading)).strip()
-            token = f"@@AICV_PPL_HEADING_{index}@@"
-            replacements[token] = f"{'#' * level} {title}".strip()
-            heading.replace_with(NavigableString(f"\n{token}\n"))
-
-        for hr in node.find_all("hr"):
-            hr.replace_with(NavigableString("\n@@AICV_PPL_HR@@\n"))
-
-        text = cls.text_of(node)
-        for token, markdown in replacements.items():
-            text = text.replace(token, markdown)
-        return text.replace("@@AICV_PPL_HR@@", "---")
 
     @staticmethod
     def _code_languages(node: Tag) -> None:
@@ -1031,93 +981,22 @@ class PerplexityParser(BaseParser):
         if el is None:
             return ""
         work = copy.copy(el)
-        cls._inline_markup(work)
+        cls._inline_markdown(work)
         return cls.text_of(work)
 
-    #: balises d'emphase inline -> marqueur markdown
-    _EMPHASIS_MARKERS = {
-        "strong": "**", "b": "**",
-        "em": "*", "i": "*",
-        "s": "~~", "del": "~~", "strike": "~~",
-    }
+    _rstrip_list_lines = True
 
     @classmethod
-    def _inline_markup(cls, node: Tag) -> None:
-        """Convertit code inline, gras/italique/barre en marqueurs markdown.
-
-        ``BaseParser.text_of`` aplatit ces balises : sans conversion, la mise en
-        forme visible (cf. screenshot) etait perdue. Le code des blocs ``pre``
-        est laisse au chemin fenced ; les balises imbriquees sont traitees de la
-        plus profonde a la plus externe pour conserver l'imbrication.
-        """
-        for code in node.find_all("code"):
-            if code.find_parent("pre") is not None:
-                continue
-            text = code.get_text(" ", strip=True)
-            if text:
-                code.replace_with(NavigableString(f"`{text}`"))
-            else:
-                code.decompose()
-        emphases = node.find_all(list(cls._EMPHASIS_MARKERS))
-        for el in sorted(
-            emphases, key=lambda t: len(list(t.parents)), reverse=True
-        ):
-            if el.find_parent(["pre", "code"]) is not None:
-                continue  # le code n'a pas d'emphase markdown
-            marker = cls._EMPHASIS_MARKERS.get(el.name)
-            if not marker:
-                continue
-            inner = cls._inline_text(el)
-            if inner:
-                el.replace_with(NavigableString(f"{marker}{inner}{marker}"))
-            else:
-                el.decompose()
-
-    @classmethod
-    def _table_markdown(cls, table: Tag) -> str:
-        """Tableau HTML -> lignes markdown ``| ... |`` avec separateur."""
-        rows: List[List[str]] = []
-        for tr in table.find_all("tr"):
-            cells = tr.find_all(["th", "td"])
-            rows.append([cls._inline_text(c).strip() for c in cells])
-        if not rows:
-            return ""
-        width = max(len(row) for row in rows)
-        lines: List[str] = []
-        for index, row in enumerate(rows):
-            padded = row + [""] * (width - len(row))
-            lines.append("| " + " | ".join(padded) + " |")
-            if index == 0:
-                lines.append("| " + " | ".join(["---"] * width) + " |")
-        return "\n".join(lines)
-
-    @classmethod
-    def _render_list(cls, lst: Tag, depth: int = 0) -> List[str]:
-        """Liste HTML -> lignes markdown (puces, numeros, cases a cocher)."""
-        ordered = lst.name == "ol"
-        try:
-            start = int(lst.get("start") or 1)
-        except (TypeError, ValueError):
-            start = 1
-        lines: List[str] = []
-        for offset, li in enumerate(lst.find_all("li", recursive=False)):
-            checkbox = li.select_one("[data-pplx-task-checkbox]")
-            if checkbox is not None:
-                button = checkbox.find("button")
-                checked = str(
-                    button.get("aria-checked") if button is not None else ""
-                ).lower() == "true"
-                marker = f"- [{'x' if checked else ' '}]"
-            else:
-                marker = f"{start + offset}." if ordered else "-"
-            li_copy = copy.copy(li)
-            for sub in li_copy.find_all(["ul", "ol"]):
-                sub.decompose()
-            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
-            lines.append(f"{'  ' * depth}{marker} {text}".rstrip())
-            for sub in li.find_all(["ul", "ol"], recursive=False):
-                lines.extend(cls._render_list(sub, depth + 1))
-        return lines
+    def _list_marker(cls, li, li_copy, *, ordered: bool, number: int) -> str:
+        """Cases a cocher Perplexity (``[data-pplx-task-checkbox]``)."""
+        checkbox = li.select_one("[data-pplx-task-checkbox]")
+        if checkbox is None:
+            return f"{number}." if ordered else "-"
+        button = checkbox.find("button")
+        checked = str(
+            button.get("aria-checked") if button is not None else ""
+        ).lower() == "true"
+        return f"- [{'x' if checked else ' '}]"
 
     #: noms de fichiers joints rendus en `<button>` (sans apercu image)
     _FILE_LABEL_RE = re.compile(

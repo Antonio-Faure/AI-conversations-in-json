@@ -40,7 +40,7 @@ import copy
 import re
 from typing import Any, Dict, List, Optional
 
-from bs4 import NavigableString, Tag
+from bs4 import Tag
 
 from ..schema import Conversation, Variant
 from .base import BaseParser, ParseError
@@ -66,9 +66,6 @@ ASSISTANT_CDS = "AssistantMessage"
 
 #: position absolue (0-based) d'une rangee du transcript virtualise
 ROW_INDEX_ATTR_RE = re.compile(r"data-index=['\"](\d+)['\"]")
-
-#: prefixe des jetons de remplacement markdown (post-nettoyage)
-_TOKEN = "@@AICV_CLAUDE_%s_%d@@"
 
 #: hotes/chemins des favicons et icones d'interface (jamais du contenu)
 _ICON_SRC_RE = re.compile(r"(gstatic\.com|google\.com/s2/favicons|/favicon)", re.IGNORECASE)
@@ -740,67 +737,15 @@ class ClaudeParser(BaseParser):
 
     # -- rendu markdown ------------------------------------------------------
 
+    _content_token_prefix = "AICV_CLAUDE"
+
     @classmethod
-    def _content_text(cls, el: Optional[Tag]) -> str:
-        """Texte markdown d'un contenu Claude (listes, tableaux, titres...).
-
-        ``BaseParser.text_of`` aplatit les ``<ul>/<ol>``, ``<table>``,
-        ``<h1..h6>``, ``<blockquote>``, ``<hr>`` et les mises en forme inline
-        (``strong``/``em``/``del``/``code``). On les convertit en markdown sur
-        une copie avant l'extraction, puis on reinjecte les remplacements apres
-        le nettoyage (qui supprime l'indentation des lignes) afin de conserver
-        listes imbriquees et separateurs.
-        """
-        if el is None:
-            return ""
-        node = copy.copy(el)
-        replacements: Dict[str, str] = {}
-
+    def _content_preprocess(cls, node: Tag) -> None:
+        """Pre-traitements Claude avant les blocs markdown."""
         cls._drop_ui_nodes(node)
         cls._preprocess_code_blocks(node)
         cls._normalize_images(node)
         cls._inline_markdown(node)
-
-        # blockquotes : traiter les plus externes (recursion du contenu)
-        for index, quote in enumerate(node.find_all("blockquote")):
-            if quote.find_parent("blockquote") is not None:
-                continue
-            inner = cls._content_text(quote)
-            quoted = "\n".join(
-                f"> {line}" if line else ">" for line in inner.splitlines()
-            )
-            token = _TOKEN % ("QUOTE", index)
-            replacements[token] = quoted
-            quote.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, table in enumerate(node.find_all("table")):
-            token = _TOKEN % ("TABLE", index)
-            replacements[token] = cls._table_markdown(table)
-            table.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, lst in enumerate(node.find_all(["ul", "ol"])):
-            if lst.find_parent(["ul", "ol"]) is not None:
-                continue  # traitee avec sa liste parente
-            token = _TOKEN % ("LIST", index)
-            replacements[token] = "\n".join(cls._render_list(lst))
-            lst.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, heading in enumerate(
-            node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
-        ):
-            level = int(heading.name[1])
-            title = re.sub(r"\s*\n\s*", " ", cls._inline_text(heading)).strip()
-            token = _TOKEN % ("HEADING", index)
-            replacements[token] = f"{'#' * level} {title}".rstrip()
-            heading.replace_with(NavigableString(f"\n{token}\n"))
-
-        for hr in node.find_all("hr"):
-            hr.replace_with(NavigableString("\n@@AICV_CLAUDE_HR@@\n"))
-
-        text = super().text_of(node)
-        for token, markdown in replacements.items():
-            text = text.replace(token, markdown)
-        return text.replace("@@AICV_CLAUDE_HR@@", "---")
 
     @classmethod
     def _drop_ui_nodes(cls, node: Tag) -> None:
@@ -878,91 +823,19 @@ class ClaudeParser(BaseParser):
             return 0
 
     @classmethod
-    def _inline_markdown(cls, node: Tag) -> None:
-        """Code en ligne, gras, italique et barre -> markdown (hors ``pre``)."""
-        for code in node.find_all("code"):
-            if code.find_parent("pre") is not None:
-                continue
-            content = code.get_text().strip()
-            if content:
-                code.replace_with(NavigableString(f"`{content}`"))
-            else:
-                code.decompose()
-
-        emphases = node.find_all(["b", "strong", "i", "em", "del", "s", "strike"])
-        markers = {
-            "b": "**",
-            "strong": "**",
-            "i": "*",
-            "em": "*",
-            "del": "~~",
-            "s": "~~",
-            "strike": "~~",
-        }
-        # du plus profond au plus externe : preserve l'imbrication
-        for el in sorted(emphases, key=lambda t: len(list(t.parents)), reverse=True):
-            if el.find_parent("pre") is not None:
-                continue
-            inner = cls._inline_text(el)
-            if inner:
-                marker = markers[el.name]
-                el.replace_with(NavigableString(f"{marker}{inner}{marker}"))
-            else:
-                el.decompose()
+    def _inline_code_text(cls, code: Tag) -> str:
+        """Code en ligne : Claude conserve les retours ligne internes."""
+        return code.get_text().strip()
 
     @classmethod
-    def _inline_text(cls, el: Optional[Tag]) -> str:
-        """Texte markdown inline (sans nouvelle structure de blocs)."""
-        if el is None:
-            return ""
-        return cls.text_of(copy.copy(el))
-
-    @classmethod
-    def _table_markdown(cls, table: Tag) -> str:
-        """Tableau HTML -> lignes markdown ``| ... |`` avec separateur."""
-        rows = []
-        for tr in table.find_all("tr"):
-            cells = tr.find_all(["th", "td"])
-            rows.append([cls._inline_text(c).strip() for c in cells])
-        if not rows:
-            return ""
-        width = max(len(row) for row in rows)
-        lines = []
-        for index, row in enumerate(rows):
-            padded = row + [""] * (width - len(row))
-            lines.append("| " + " | ".join(padded) + " |")
-            if index == 0:
-                lines.append("| " + " | ".join(["---"] * width) + " |")
-        return "\n".join(lines)
-
-    @classmethod
-    def _render_list(cls, lst: Tag, depth: int = 0) -> List[str]:
-        """``<ul>/<ol>`` -> lignes markdown, en gerant les checklists."""
-        ordered = lst.name == "ol"
-        try:
-            start = int(lst.get("start") or 1)
-        except (TypeError, ValueError):
-            start = 1
-        lines: List[str] = []
-        for offset, li in enumerate(lst.find_all("li", recursive=False)):
-            li_copy = copy.copy(li)
-            for sub in li_copy.find_all(["ul", "ol"]):
-                sub.decompose()
-            checkbox = li_copy.find("input", attrs={"type": "checkbox"})
-            checked = checkbox is not None and checkbox.has_attr("checked")
-            if checkbox is not None:
-                checkbox.decompose()
-            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
-            if checkbox is not None:
-                marker = "- [x]" if checked else "- [ ]"
-            elif ordered:
-                marker = f"{start + offset}."
-            else:
-                marker = "-"
-            lines.append(f"{'  ' * depth}{marker} {text}")
-            for sub in li.find_all(["ul", "ol"], recursive=False):
-                lines.extend(cls._render_list(sub, depth + 1))
-        return lines
+    def _list_marker(cls, li, li_copy, *, ordered: bool, number: int) -> str:
+        """Checklist Claude (``input[type=checkbox]``) -> ``- [x]`` / ``- [ ]``."""
+        checkbox = li_copy.find("input", attrs={"type": "checkbox"})
+        if checkbox is None:
+            return f"{number}." if ordered else "-"
+        checked = checkbox.has_attr("checked")
+        checkbox.decompose()
+        return "- [x]" if checked else "- [ ]"
 
     # -- pieces jointes ------------------------------------------------------
 

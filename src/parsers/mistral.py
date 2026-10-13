@@ -1206,70 +1206,32 @@ class MistralParser(BaseParser):
                 entries.append(markdown)
         return "\n\n".join(entries)
 
-    @classmethod
-    def _content_text(cls, el) -> str:
-        """Texte markdown d'un contenu (listes, tableaux, titres, `---`).
+    _content_token_prefix = "AICV_MISTRAL"
 
-        ``BaseParser.text_of`` aplatit les ``<ul>/<ol>``, ``<table>``,
-        ``<h1..h6>``, ``<blockquote>`` et ``<hr>``. On les convertit en markdown
-        sur une copie avant l'extraction, puis on reinjecte les remplacements
-        apres nettoyage (qui supprime l'indentation des lignes) afin de
-        conserver listes imbriquees et separateurs.
-        """
-        if el is None:
-            return ""
-        node = copy.copy(el)
-        replacements: Dict[str, str] = {}
+    @classmethod
+    def _content_preprocess(cls, node) -> None:
+        """Pre-traitements Mistral avant les blocs markdown."""
         cls._latex_to_markdown(node)
 
-        # blockquotes : les traiter en premier (recursion pour leur contenu) ;
-        # ne garder que les plus externes.
-        for index, quote in enumerate(node.find_all("blockquote")):
-            if quote.find_parent("blockquote") is not None:
-                continue
-            inner = cls._content_text(quote)
-            quoted = "\n".join(f"> {line}" if line else ">" for line in inner.splitlines())
-            token = f"@@AICV_MISTRAL_QUOTE_{index}@@"
-            replacements[token] = quoted
-            quote.replace_with(NavigableString(f"\n{token}\n"))
-
-        # tableaux rich-ui : la source HTML d'origine est stockee dans un attribut
+    @classmethod
+    def _extra_content_blocks(cls, node, replacements: Dict[str, str]) -> None:
+        """Tableaux rich-ui : source HTML d'origine puis grille ``role=table``."""
         for index, wrapper in enumerate(node.select("[data-rich-table-inner-html]")):
-            token = f"@@AICV_MISTRAL_RICH_TABLE_ATTR_{index}@@"
+            token = cls._content_token("RICH_TABLE_ATTR", index)
             replacements[token] = cls._rich_table_from_attr(wrapper)
             wrapper.replace_with(NavigableString(f"\n{token}\n"))
 
         for index, table in enumerate(node.select("[role='table']")):
-            token = f"@@AICV_MISTRAL_RICH_TABLE_{index}@@"
+            token = cls._content_token("RICH_TABLE", index)
             replacements[token] = cls._rich_table_markdown(table)
             table.replace_with(NavigableString(f"\n{token}\n"))
 
-        for index, table in enumerate(node.find_all("table")):
-            token = f"@@AICV_MISTRAL_TABLE_{index}@@"
-            replacements[token] = cls._table_markdown(table)
-            table.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, lst in enumerate(node.find_all(["ul", "ol"])):
-            if lst.find_parent(["ul", "ol"]) is not None:
-                continue  # traitee avec sa liste parente
-            token = f"@@AICV_MISTRAL_LIST_{index}@@"
-            replacements[token] = "\n".join(cls._render_list(lst))
-            lst.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, heading in enumerate(node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])):
-            level = int(heading.name[1])
-            title = re.sub(r"\s*\n\s*", " ", cls._content_text(heading)).strip()
-            token = f"@@AICV_MISTRAL_HEADING_{index}@@"
-            replacements[token] = f"{'#' * level} {title}"
-            heading.replace_with(NavigableString(f"\n{token}\n"))
-
-        for hr in node.find_all("hr"):
-            hr.replace_with(NavigableString("\n@@AICV_MISTRAL_HR@@\n"))
-
-        text = cls.text_of(node)
-        for token, markdown in replacements.items():
-            text = text.replace(token, markdown)
-        return text.replace("@@AICV_MISTRAL_HR@@", "---")
+    @classmethod
+    def _heading_markdown(cls, heading) -> str:
+        """Titre HTML -> ligne markdown (contenu recursif, sans rognage)."""
+        level = int(heading.name[1])
+        title = re.sub(r"\s*\n\s*", " ", cls._content_text(heading)).strip()
+        return f"{'#' * level} {title}"
 
     @classmethod
     def _latex_to_markdown(cls, node) -> None:
@@ -1298,24 +1260,6 @@ class MistralParser(BaseParser):
         node = copy.copy(el)
         cls._latex_to_markdown(node)
         return cls.text_of(node)
-
-    @classmethod
-    def _table_markdown(cls, table) -> str:
-        """Tableau HTML -> lignes markdown ``| ... |`` avec separateur."""
-        rows = []
-        for tr in table.find_all("tr"):
-            cells = tr.find_all(["th", "td"])
-            rows.append([cls._inline_text(c).strip() for c in cells])
-        if not rows:
-            return ""
-        width = max(len(row) for row in rows)
-        lines = []
-        for index, row in enumerate(rows):
-            padded = row + [""] * (width - len(row))
-            lines.append("| " + " | ".join(padded) + " |")
-            if index == 0:
-                lines.append("| " + " | ".join(["---"] * width) + " |")
-        return "\n".join(lines)
 
     @staticmethod
     def _is_action_cell(cell) -> bool:
@@ -1374,22 +1318,3 @@ class MistralParser(BaseParser):
             if row_index == 0:
                 lines.append("| " + " | ".join(["---"] * len(values)) + " |")
         return "\n".join(lines)
-
-    @classmethod
-    def _render_list(cls, lst, depth: int = 0) -> List[str]:
-        ordered = lst.name == "ol"
-        try:
-            start = int(lst.get("start") or 1)
-        except (TypeError, ValueError):
-            start = 1
-        lines: List[str] = []
-        for offset, li in enumerate(lst.find_all("li", recursive=False)):
-            li_copy = copy.copy(li)
-            for sub in li_copy.find_all(["ul", "ol"]):
-                sub.decompose()
-            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
-            marker = f"{start + offset}." if ordered else "-"
-            lines.append(f"{'  ' * depth}{marker} {text}")
-            for sub in li.find_all(["ul", "ol"], recursive=False):
-                lines.extend(cls._render_list(sub, depth + 1))
-        return lines

@@ -177,8 +177,31 @@ class BaseParser(ABC):
 
     @classmethod
     def _clean_tree(cls, node: Tag) -> None:
-        # LaTeX : conserver la source TeX avant toute suppression (KaTeX rendu,
-        # Gemini data-math, ChatGPT data-math-source)
+        """Convertit l'arbre en texte markdown (in place), sans balises d'UI."""
+        cls._latex_nodes_to_text(node)
+        cls._button_images_to_markdown(node)
+        cls._citations_to_markdown(node)
+
+        for tag in node.find_all(DROP_TAGS):
+            tag.decompose()
+        for sel in ACTION_SELECTORS:
+            for tag in node.select(sel):
+                tag.decompose()
+
+        cls._pre_to_fence(node)
+        cls._images_to_markdown(node)
+        cls._links_to_markdown(node)
+
+        for br in node.find_all("br"):
+            br.replace_with(NavigableString("\n"))
+        for block in node.find_all(["p", "div", "li", "h1", "h2", "h3", "h4", "tr"]):
+            block.insert_before(NavigableString("\n"))
+            block.insert_after(NavigableString("\n"))
+
+    @classmethod
+    def _latex_nodes_to_text(cls, node: Tag) -> None:
+        """LaTeX : conserver la source TeX avant toute suppression (KaTeX rendu,
+        Gemini data-math, ChatGPT data-math-source)."""
         for katex in node.select("span.katex"):
             annotation = katex.find("annotation", attrs={"encoding": "application/x-tex"})
             if annotation is None:
@@ -203,8 +226,11 @@ class BaseParser(ABC):
             el.replace_with(
                 NavigableString(f"\n\\[{tex}\\]\n" if display else f" \\({tex}\\) ")
             )
-        # images de contenu piegees dans un bouton d'apercu : les remonter en
-        # markdown avant que le bouton ne soit supprime (DROP_TAGS)
+
+    @classmethod
+    def _button_images_to_markdown(cls, node: Tag) -> None:
+        """Images de contenu piegees dans un bouton d'apercu : les remonter en
+        markdown avant que le bouton ne soit supprime (DROP_TAGS)."""
         for button in node.find_all("button"):
             content_images = [
                 img for img in button.find_all("img")
@@ -219,18 +245,18 @@ class BaseParser(ABC):
                 )
                 button.replace_with(NavigableString(f"\n{markdown}\n"))
 
-        # citations inline (Perplexity) : conserver le lien avant suppression
+    @classmethod
+    def _citations_to_markdown(cls, node: Tag) -> None:
+        """Citations inline (Perplexity) : conserver le lien avant suppression."""
         for citation in node.select("span.citation"):
             url = citation.get("data-pplx-citation-url") or ""
             label = citation.get_text(" ", strip=True)
             if url and label:
                 citation.replace_with(NavigableString(f" [{label}]({url}) "))
 
-        for tag in node.find_all(DROP_TAGS):
-            tag.decompose()
-        for sel in ACTION_SELECTORS:
-            for tag in node.select(sel):
-                tag.decompose()
+    @classmethod
+    def _pre_to_fence(cls, node: Tag) -> None:
+        """Blocs ``<pre>`` -> fences markdown avec la langue detectee."""
         for pre in node.find_all("pre"):
             # Mistral : le bloc est encapsule avec un en-tete (langue) a retirer
             root = pre.find_parent(
@@ -255,7 +281,10 @@ class BaseParser(ABC):
                     lang = label.get_text(" ", strip=True).splitlines()[0].strip()
             code_text = (code or pre).get_text().rstrip()
             root.replace_with(NavigableString(f"\n```{lang}\n{code_text}\n```\n"))
-        # images distantes -> markdown (blob:/data: inutiles en export, ignores)
+
+    @classmethod
+    def _images_to_markdown(cls, node: Tag) -> None:
+        """Images distantes -> markdown (blob:/data: inutiles en export, ignores)."""
         for img in node.find_all("img"):
             src = img.get("src") or ""
             if src.startswith(("http://", "https://")):
@@ -263,7 +292,10 @@ class BaseParser(ABC):
                 img.replace_with(NavigableString(f"![{alt}]({src})"))
             else:
                 img.decompose()
-        # liens -> markdown [texte](url) ; ancres/relatifs = texte seul
+
+    @classmethod
+    def _links_to_markdown(cls, node: Tag) -> None:
+        """Liens -> markdown ``[texte](url)`` ; ancres/relatifs = texte seul."""
         for a in node.find_all("a"):
             href = (a.get("href") or "").strip()
             text = a.get_text(" ", strip=True)
@@ -279,11 +311,6 @@ class BaseParser(ABC):
                 a.replace_with(NavigableString(text))
             else:
                 a.unwrap()
-        for br in node.find_all("br"):
-            br.replace_with(NavigableString("\n"))
-        for block in node.find_all(["p", "div", "li", "h1", "h2", "h3", "h4", "tr"]):
-            block.insert_before(NavigableString("\n"))
-            block.insert_after(NavigableString("\n"))
 
     @staticmethod
     def _md_escape_label(label: str) -> str:
@@ -313,6 +340,189 @@ class BaseParser(ABC):
         text = "\n".join(lines)
         text = NEWLINES_RE.sub("\n\n", text)
         return text.strip()
+
+    # -- rendu markdown commun (contenus, tableaux, listes, inline) ----------
+
+    #: chatgpt/perplexity rognent l'espace final des lignes (item vide -> « - »)
+    _rstrip_list_lines: bool = False
+
+    #: prefixe des jetons internes de remplacement (surcharge par parseur)
+    _content_token_prefix: str = "AICV"
+
+    @classmethod
+    def _list_marker(cls, li: Tag, li_copy: Tag, *, ordered: bool, number: int) -> str:
+        """Marqueur markdown d'un item (``-``, ``1.``, ``- [x]``).
+
+        ``li`` est l'item d'origine (recherche des cases a cocher) ; ``li_copy``
+        est la copie de travail, listes imbriquees retirees : les surcharges
+        peuvent y supprimer les cases a cocher avant l'extraction du texte.
+        """
+        return f"{number}." if ordered else "-"
+
+    @classmethod
+    def _render_list(cls, lst: Tag, depth: int = 0) -> List[str]:
+        """Liste HTML -> lignes markdown (puces, numeros, cases a cocher)."""
+        ordered = lst.name == "ol"
+        try:
+            start = int(lst.get("start") or 1)
+        except (TypeError, ValueError):
+            start = 1
+        lines: List[str] = []
+        for offset, li in enumerate(lst.find_all("li", recursive=False)):
+            li_copy = copy.copy(li)
+            for sub in li_copy.find_all(["ul", "ol"]):
+                sub.decompose()
+            marker = cls._list_marker(
+                li, li_copy, ordered=ordered, number=start + offset
+            )
+            text = re.sub(r"\s*\n\s*", " ", cls._content_text(li_copy)).strip()
+            line = f"{'  ' * depth}{marker} {text}"
+            lines.append(line.rstrip() if cls._rstrip_list_lines else line)
+            for sub in li.find_all(["ul", "ol"], recursive=False):
+                lines.extend(cls._render_list(sub, depth + 1))
+        return lines
+
+    @classmethod
+    def _table_markdown(cls, table: Tag) -> str:
+        """Tableau HTML -> lignes markdown ``| ... |`` avec separateur."""
+        rows: List[List[str]] = []
+        for tr in table.find_all("tr"):
+            cells = tr.find_all(["th", "td"])
+            rows.append([cls._inline_text(c).strip() for c in cells])
+        if not rows:
+            return ""
+        width = max(len(row) for row in rows)
+        lines: List[str] = []
+        for index, row in enumerate(rows):
+            padded = row + [""] * (width - len(row))
+            lines.append("| " + " | ".join(padded) + " |")
+            if index == 0:
+                lines.append("| " + " | ".join(["---"] * width) + " |")
+        return "\n".join(lines)
+
+    @classmethod
+    def _inline_text(cls, el: Optional[Tag]) -> str:
+        """Texte markdown inline (sans structure de blocs)."""
+        if el is None:
+            return ""
+        return cls.text_of(copy.copy(el))
+
+    @classmethod
+    def _inline_code_text(cls, code: Tag) -> str:
+        """Texte d'un code en ligne (surcharge : Claude garde les retours ligne)."""
+        return code.get_text(" ", strip=True)
+
+    @classmethod
+    def _inline_markdown(cls, node: Tag) -> None:
+        """Code en ligne, gras, italique et barre -> markdown (hors ``pre``)."""
+        for code in node.find_all("code"):
+            if code.find_parent("pre") is not None:
+                continue
+            content = cls._inline_code_text(code)
+            if content:
+                code.replace_with(NavigableString(f"`{content}`"))
+            else:
+                code.decompose()
+
+        emphases = node.find_all(["b", "strong", "i", "em", "del", "s", "strike"])
+        markers = {
+            "b": "**",
+            "strong": "**",
+            "i": "*",
+            "em": "*",
+            "del": "~~",
+            "s": "~~",
+            "strike": "~~",
+        }
+        # du plus profond au plus externe : preserve l'imbrication
+        for el in sorted(emphases, key=lambda t: len(list(t.parents)), reverse=True):
+            if el.find_parent("pre") is not None:
+                continue
+            inner = cls._inline_text(el)
+            if inner:
+                marker = markers[el.name]
+                el.replace_with(NavigableString(f"{marker}{inner}{marker}"))
+            else:
+                el.decompose()
+
+    @classmethod
+    def _content_token(cls, kind: str, index: Optional[int] = None) -> str:
+        """Jeton interne remplace apres le nettoyage (jamais visible en sortie)."""
+        suffix = "" if index is None else f"_{index}"
+        return f"@@{cls._content_token_prefix}_{kind}{suffix}@@"
+
+    @classmethod
+    def _content_preprocess(cls, node: Tag) -> None:
+        """Transformations du contenu avant les blocs markdown (surcharge)."""
+
+    @classmethod
+    def _extra_content_blocks(cls, node: Tag, replacements: Dict[str, str]) -> None:
+        """Blocs specifiques inseres entre blockquotes et tableaux (surcharge)."""
+
+    @classmethod
+    def _heading_markdown(cls, heading: Tag) -> str:
+        """Titre HTML -> ligne markdown ``# ...`` (texte inline)."""
+        level = int(heading.name[1])
+        title = re.sub(r"\s*\n\s*", " ", cls._inline_text(heading)).strip()
+        return f"{'#' * level} {title}".rstrip()
+
+    @classmethod
+    def _content_text(cls, el: Optional[Tag]) -> str:
+        """Texte markdown d'un contenu (blockquotes, tableaux, listes, titres, hr).
+
+        ``text_of`` aplatit la structure de blocs ; on la convertit en markdown
+        sur une copie, puis on reinjecte les remplacements apres le nettoyage
+        (qui supprime l'indentation des lignes) afin de conserver listes
+        imbriquees et separateurs. Les parseurs fournissent leurs pre-traitements
+        et formats via ``_content_preprocess`` / ``_extra_content_blocks`` /
+        ``_heading_markdown`` / ``_content_token_prefix``.
+        """
+        if el is None:
+            return ""
+        node = copy.copy(el)
+        replacements: Dict[str, str] = {}
+        cls._content_preprocess(node)
+
+        # blockquotes : traiter les plus externes (recursion du contenu)
+        for index, quote in enumerate(node.find_all("blockquote")):
+            if quote.find_parent("blockquote") is not None:
+                continue
+            inner = cls._content_text(quote)
+            quoted = "\n".join(
+                f"> {line}" if line else ">" for line in inner.splitlines()
+            )
+            token = cls._content_token("QUOTE", index)
+            replacements[token] = quoted
+            quote.replace_with(NavigableString(f"\n{token}\n"))
+
+        cls._extra_content_blocks(node, replacements)
+
+        for index, table in enumerate(node.find_all("table")):
+            token = cls._content_token("TABLE", index)
+            replacements[token] = cls._table_markdown(table)
+            table.replace_with(NavigableString(f"\n{token}\n"))
+
+        for index, lst in enumerate(node.find_all(["ul", "ol"])):
+            if lst.find_parent(["ul", "ol"]) is not None:
+                continue  # traitee avec sa liste parente
+            token = cls._content_token("LIST", index)
+            replacements[token] = "\n".join(cls._render_list(lst))
+            lst.replace_with(NavigableString(f"\n{token}\n"))
+
+        for index, heading in enumerate(
+            node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
+        ):
+            token = cls._content_token("HEADING", index)
+            replacements[token] = cls._heading_markdown(heading)
+            heading.replace_with(NavigableString(f"\n{token}\n"))
+
+        for hr in node.find_all("hr"):
+            hr.replace_with(NavigableString(f"\n{cls._content_token('HR')}\n"))
+
+        text = cls.text_of(node)
+        for token, markdown in replacements.items():
+            text = text.replace(token, markdown)
+        return text.replace(cls._content_token("HR"), "---")
 
     @staticmethod
     def extract_title(soup: BeautifulSoup, *selectors: str) -> Optional[str]:
