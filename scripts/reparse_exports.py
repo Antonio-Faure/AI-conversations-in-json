@@ -48,9 +48,12 @@ from src.parsers import PARSER_CLASSES  # noqa: E402
 from src.schema import Conversation, Message, extract_code_blocks, normalize_messages  # noqa: E402
 from src.utils.cleanup import clean_text  # noqa: E402
 from src.utils.file_utils import (  # noqa: E402
+    CONVERSATION_LIST_NAME,
     RESERVED_JSON_NAMES,
+    load_conversation_list,
     merge_conversation_json,
     resolve_cli_path,
+    save_conversation_list,
     write_json_atomic,
 )
 from src.utils.raw_payload import load_raw_payload  # noqa: E402
@@ -200,7 +203,7 @@ def main() -> int:
     exports = resolve_cli_path(args.exports or config["output_dir"], ROOT)
     platforms = args.platform or sorted(
         d.name for d in exports.iterdir()
-        if d.is_dir() and (d / "conversation_list.json").exists()
+        if d.is_dir() and (d / CONVERSATION_LIST_NAME).exists()
     )
     if args.clean_backups:
         return _clean_backups(exports, platforms)
@@ -209,13 +212,10 @@ def main() -> int:
               "ignored": 0, "failed": 0}
     for platform in platforms:
         directory = exports / platform
-        list_path = directory / "conversation_list.json"
-        index: Dict[str, Dict[str, Any]] = {}
-        if list_path.exists():
-            data = json.loads(list_path.read_text(encoding="utf-8"))
-            index = {
-                str(e.get("conversation_id")): e for e in data.get("conversations") or []
-            }
+        list_path = directory / CONVERSATION_LIST_NAME
+        # inventaire existant : seules les conversations deja listees sont
+        # mises a jour (le reparse ne cree pas d'entree)
+        index = load_conversation_list(list_path)
         for json_path in sorted(directory.glob("*.json")):
             # fichiers non-conversation du dossier (inventaire, rapport de forme
             # API) : ne jamais les traiter comme des conversations
@@ -291,14 +291,9 @@ def main() -> int:
                 entry["has_code"] = conv.has_code
                 entry["last_message_at"] = conv.last_message_at
         if index and list_path.exists():
-            data = json.loads(list_path.read_text(encoding="utf-8"))
-            data["conversations"] = sorted(
-                index.values(),
-                key=lambda e: (e.get("last_message_at") or "", e.get("title") or ""),
-                reverse=True,
-            )
-            data["count"] = len(data["conversations"])
-            write_json_atomic(list_path, data)
+            # meme writer que l'orchestrateur : tri par date + metadonnees
+            # d'inventaire (platform/updated_at/count) au meme format
+            save_conversation_list(list_path, platform, index)
         print(f"[{platform}] ok")
 
     print(

@@ -22,7 +22,14 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.orchestrator import load_config  # noqa: E402
-from src.utils.file_utils import resolve_cli_path, write_json_atomic  # noqa: E402
+from src.utils.file_utils import (  # noqa: E402
+    CONVERSATION_LIST_NAME,
+    RESERVED_JSON_NAMES,
+    load_conversation_list,
+    resolve_cli_path,
+    save_conversation_list,
+    write_json_atomic,
+)
 from src.utils.urls import (  # noqa: E402
     canonical_url_from_html,
     conversation_url,
@@ -53,21 +60,18 @@ def main() -> int:
     exports = resolve_cli_path(args.exports or config["output_dir"], ROOT)
     platforms = args.platform or sorted(
         d.name for d in exports.iterdir()
-        if d.is_dir() and (d / "conversation_list.json").exists()
+        if d.is_dir() and (d / CONVERSATION_LIST_NAME).exists()
     )
 
     total = 0
     for platform in platforms:
         directory = exports / platform
-        list_path = directory / "conversation_list.json"
-        index = {}
-        if list_path.exists():
-            data = json.loads(list_path.read_text(encoding="utf-8"))
-            index = {
-                str(e.get("conversation_id")): e for e in data.get("conversations") or []
-            }
+        list_path = directory / CONVERSATION_LIST_NAME
+        index = load_conversation_list(list_path)
         for json_path in sorted(directory.glob("*.json")):
-            if json_path.name == "conversation_list.json":
+            # fichiers non-conversation du dossier (inventaire, rapport de forme
+            # API) : ne jamais les traiter comme des conversations
+            if json_path.name in RESERVED_JSON_NAMES:
                 continue
             try:
                 payload = json.loads(json_path.read_text(encoding="utf-8"))
@@ -87,9 +91,9 @@ def main() -> int:
             if entry is not None:
                 entry["url"] = url
         if index and list_path.exists():
-            data = json.loads(list_path.read_text(encoding="utf-8"))
-            data["conversations"] = list(index.values())
-            write_json_atomic(list_path, data)
+            # meme writer que l'orchestrateur : tri par date + metadonnees
+            # d'inventaire (platform/updated_at/count) au meme format
+            save_conversation_list(list_path, platform, index)
         print(f"[{platform}] ok")
 
     print(f"termine : {total} URLs ajoutees/mises a jour")

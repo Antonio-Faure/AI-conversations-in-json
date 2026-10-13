@@ -390,3 +390,44 @@ def test_main_clean_backups_purge_explicite(tmp_path, monkeypatch, capsys):
     assert not backup.exists()
     assert json_path.read_text(encoding="utf-8") == before
     assert "1 sauvegarde" in capsys.readouterr().out
+
+
+def test_main_reecrit_inventaire_au_format_partage(tmp_path, monkeypatch, capsys):
+    """L'inventaire repasse par le writer partage : tri + metadonnees."""
+    json_path = _write_export(
+        tmp_path, "chatgpt", "b",
+        {
+            "conversation_id": "b",
+            "platform": "chatgpt",
+            "title": "B",
+            "url": "https://chatgpt.com/c/b",
+            "last_message_at": "2026-01-02T00:00:00Z",
+            "messages": [{"role": "user", "texte": "bonjour"}],
+        },
+    )
+    list_path = tmp_path / "chatgpt" / "conversation_list.json"
+    list_path.write_text(
+        json.dumps({
+            "platform": "chatgpt",
+            "updated_at": "2020-01-01T00:00:00Z",
+            "count": 99,
+            "conversations": [
+                {"conversation_id": "a", "title": "A", "file": "a",
+                 "last_message_at": "2026-01-03T00:00:00Z"},
+                {"conversation_id": "b", "title": "B", "file": "b",
+                 "last_message_at": "2026-01-02T00:00:00Z"},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    assert _run_main(monkeypatch, tmp_path) == 0
+    data = json.loads(list_path.read_text(encoding="utf-8"))
+    assert data["platform"] == "chatgpt"
+    assert data["count"] == 2
+    assert data["updated_at"] != "2020-01-01T00:00:00Z"
+    assert [e["conversation_id"] for e in data["conversations"]] == ["a", "b"]
+    entry = next(e for e in data["conversations"] if e["conversation_id"] == "b")
+    assert entry["message_count"] == 1
+    assert entry["last_message_at"] == "2026-01-02T00:00:00Z"
+    assert json.loads(json_path.read_text(encoding="utf-8"))["messages"][0]["texte"] == "bonjour"
+    assert "1 nettoyes" in capsys.readouterr().out
