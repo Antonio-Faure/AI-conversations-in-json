@@ -19,9 +19,6 @@ from __future__ import annotations
 
 import json
 import re
-import time
-import urllib.error
-import urllib.request
 from html import escape as html_escape
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
@@ -30,6 +27,7 @@ from ..parsers.base import ParseError
 from ..parsers.perplexity import PerplexityParser, merge_thread_messages
 from ..schema import ConversationRef
 from ..utils.logging import get_logger, log_fields
+from .api_client import CookieHttpClient
 from .base import (
     BaseService,
     ConversationUnavailableError,
@@ -83,23 +81,20 @@ class PerplexityHttpError(RuntimeError):
         self.status = status
 
 
-def _retry_after_s(headers: Any) -> Optional[float]:
-    """`Retry-After` numerique d'une reponse HTTP (None sinon)."""
-    try:
-        value = (headers or {}).get("Retry-After")
-        return float(value) if value else None
-    except (TypeError, ValueError):
-        return None
-
-
-class _PerplexityHttpClient:
+class _PerplexityHttpClient(CookieHttpClient):
     """Requetes authentifiees (cookies du profil) sur l'API Perplexity.
 
     Les cookies (httpOnly inclus) viennent de la session navigateur ouverte une
     fois ; l'empreinte (User-Agent, langue) est reprise du profil pour rester
-    coherent avec eux. Sur 429, on attend (`Retry-After` puis exponentiel) et on
-    reessaie, comme le client ChatGPT.
+    coherent avec eux. Le backoff 429 vient du client commun ; les erreurs HTTP
+    non rejouees sont levees en `PerplexityHttpError` (statut conserve).
     """
+
+    service = "perplexity"
+    _log = log
+    retry_attempts = API_RETRY_ATTEMPTS
+    retry_wait_s = API_RETRY_WAIT_S
+    retry_wait_max_s = API_RETRY_WAIT_MAX_S
 
     def __init__(
         self,
@@ -109,15 +104,17 @@ class _PerplexityHttpClient:
         accept_language: Optional[str] = None,
         timeout_s: int = 45,
     ):
-        self.cookie_header = cookie_header
-        self.user_agent = user_agent or (
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        super().__init__(
+            cookie_header,
+            user_agent=user_agent,
+            accept_language=accept_language,
+            timeout_s=timeout_s,
         )
-        self.accept_language = accept_language or "en-US,en;q=0.9"
-        self.timeout_s = timeout_s
 
-    def _headers(self, accept: str, content_type: Optional[str] = None) -> Dict[str, str]:
+    def _headers(
+        self, accept: str, content_type: Optional[str] = None, *,
+        url: Optional[str] = None,
+    ) -> Dict[str, str]:
         headers = {
             "User-Agent": self.user_agent,
             "Cookie": self.cookie_header,
@@ -131,58 +128,24 @@ class _PerplexityHttpClient:
             headers["Content-Type"] = content_type
         return headers
 
-    def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
-        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
-
-        `Retry-After` est respecte mais plafonne : un en-tete de plusieurs
-        heures ne doit pas endormir le run.
-        """
-        if attempt + 1 >= API_RETRY_ATTEMPTS:
-            return False
-        wait_s = max(
-            0.0,
-            min(
-                API_RETRY_WAIT_MAX_S,
-                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
-            ),
-        )
-        log.warning(
-            "perplexity: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
-            wait_s, attempt + 1, API_RETRY_ATTEMPTS, url,
-        )
-        time.sleep(wait_s)
-        return True
+    def _http_error(self, exc: Any, url: str) -> Tuple[int, bytes]:
+        """429 epuise : arret propre ; autre statut : `PerplexityHttpError`."""
+        if exc.code == 429:
+            # limite du forfait epuisee : arreter le service proprement
+            raise RateLimitedError(f"perplexity: 429 persistant sur {url}") from exc
+        raise PerplexityHttpError(exc.code, url) from exc
 
     def _request(
         self, url: str, *, data: Optional[bytes] = None, accept: str = "application/json, text/plain, */*",
     ) -> bytes:
         """Requete GET/POST authentifiee ; 429 -> backoff ; autres erreurs levees."""
-        for attempt in range(API_RETRY_ATTEMPTS):
-            request = urllib.request.Request(
-                url,
-                data=data,
-                method="POST" if data is not None else "GET",
-                headers=self._headers(
-                    accept, "application/json" if data is not None else None
-                ),
+        if data is None:
+            _, raw = self._send(url, accept)
+        else:
+            _, raw = self._send(
+                url, accept, data=data, method="POST", content_type="application/json"
             )
-            try:
-                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                    return response.read()
-            except urllib.error.HTTPError as exc:
-                if exc.code == 429:
-                    if self._wait_429(attempt, exc.headers, url):
-                        continue
-                    # limite du forfait epuisee : arreter le service proprement
-                    raise RateLimitedError(
-                        f"perplexity: 429 persistant sur {url}"
-                    ) from exc
-                raise PerplexityHttpError(exc.code, url) from exc
-            except urllib.error.URLError as exc:
-                raise RuntimeError(
-                    f"perplexity: requete echouee ({url}): {exc}"
-                ) from exc
-        raise RateLimitedError(f"perplexity: 429 persistant sur {url}")
+        return raw
 
     def get_json(self, url: str) -> Any:
         raw = self._request(url)
