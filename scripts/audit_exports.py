@@ -14,6 +14,12 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.utils.file_utils import CONVERSATION_LIST_NAME  # noqa: E402
+
 LINK_RE = re.compile(r"\[[^\]]+\]\((?:https?://|/)[^)]*\)|https?://[^\s)>]+")
 IMG_RE = re.compile(r"!\[[^\]]*\]\([^)]+\)|data:image/")
 HTML_RE = re.compile(
@@ -29,7 +35,7 @@ def audit_dir(root: Path) -> int:
     files = [
         f
         for f in sorted(root.glob("*/*.json"))
-        if f.name != "conversation_list.json"
+        if f.name != CONVERSATION_LIST_NAME
     ]
     if not files:
         print("aucun export")
