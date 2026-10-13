@@ -22,22 +22,15 @@ L'authentification se fait par les cookies du profil persistant
 from __future__ import annotations
 
 import json
-import time
-import urllib.error
 import urllib.parse
-import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..http_client import (
-    CookieAuthError,
-    DEFAULT_USER_AGENT,
-    host_in_domains,
-    load_cookie_header,
-)
+from ..http_client import CookieAuthError, host_in_domains, load_cookie_header
 from ..parsers.mistral import MistralParser, merge_message_fragments
 from ..schema import Conversation, ConversationRef
-from ..services.base import (
+from .api_client import CookieHttpClient
+from .base import (
     BaseService,
     ConversationUnavailableError,
     EmptyConversationError,
@@ -88,23 +81,22 @@ class _TrpcNotFound(RuntimeError):
     """Objet demande absent (procedure tRPC en erreur NOT_FOUND)."""
 
 
-def _retry_after_s(headers: Any) -> Optional[float]:
-    """`Retry-After` numerique d'une reponse HTTP (None sinon)."""
-    try:
-        value = (headers or {}).get("Retry-After")
-        return float(value) if value else None
-    except (TypeError, ValueError):
-        return None
-
-
-class _MistralHttpClient:
+class _MistralHttpClient(CookieHttpClient):
     """Requetes HTTP authentifiees (cookies) sur l'API tRPC de Mistral.
 
     Les procedures sont appelees en batch non-streaming
     (`trpc-accept: application/json`) : la reponse est un tableau JSON, une
     entree par procedure (`{"result": {"data": {"json": ...}}}` ou
-    `{"error": ...}`). Aucun navigateur n'est utilise.
+    `{"error": ...}`). Aucun navigateur n'est utilise ; le backoff 429 vient du
+    client commun (`CookieHttpClient`).
     """
+
+    service = "mistral"
+    _log = log
+    retry_attempts = API_RETRY_ATTEMPTS
+    retry_wait_s = API_RETRY_WAIT_S
+    retry_wait_max_s = API_RETRY_WAIT_MAX_S
+    default_accept_language = "fr-FR,fr;q=0.9"
 
     def __init__(
         self,
@@ -115,10 +107,12 @@ class _MistralHttpClient:
         timeout_s: int = 45,
         cookie_domains: Optional[Tuple[str, ...]] = None,
     ):
-        self.cookie_header = cookie_header
-        self.user_agent = user_agent or DEFAULT_USER_AGENT
-        self.accept_language = accept_language or "fr-FR,fr;q=0.9"
-        self.timeout_s = timeout_s
+        super().__init__(
+            cookie_header,
+            user_agent=user_agent,
+            accept_language=accept_language,
+            timeout_s=timeout_s,
+        )
         #: domaines autorises a recevoir le cookie (vide = aucun filtrage)
         self.cookie_domains = tuple(
             str(d).strip().lstrip(".").lower()
@@ -127,7 +121,7 @@ class _MistralHttpClient:
         )
 
     def _headers(
-        self, accept: str, trpc: bool = False, url: Optional[str] = None
+        self, accept: str, trpc: bool = False, *, url: Optional[str] = None
     ) -> Dict[str, str]:
         headers = {
             "User-Agent": self.user_agent,
@@ -144,77 +138,14 @@ class _MistralHttpClient:
             headers["x-trpc-source"] = "nextjs-react"
         return headers
 
-    def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
-        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
-
-        `Retry-After` est respecte mais plafonne : un en-tete de plusieurs
-        heures ne doit pas endormir le run.
-        """
-        if attempt + 1 >= API_RETRY_ATTEMPTS:
-            return False
-        wait_s = max(
-            0.0,
-            min(
-                API_RETRY_WAIT_MAX_S,
-                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
-            ),
-        )
-        log.warning(
-            "mistral: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
-            wait_s, attempt + 1, API_RETRY_ATTEMPTS, url,
-        )
-        time.sleep(wait_s)
-        return True
-
     def get(
         self, url: str, accept: str = "application/json, text/plain, */*", *,
         trpc: bool = False,
     ) -> Tuple[int, bytes]:
         """GET authentifie ; sur 429, attend et reessaie."""
-        for attempt in range(API_RETRY_ATTEMPTS):
-            request = urllib.request.Request(
-                url, headers=self._headers(accept, trpc=trpc, url=url)
-            )
-            try:
-                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                    return response.status, response.read()
-            except urllib.error.HTTPError as exc:
-                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
-                    continue
-                return exc.code, exc.read() or b""
-            except urllib.error.URLError as exc:
-                raise RuntimeError(
-                    f"mistral: requete echouee ({url}): {exc}"
-                ) from exc
-        raise RateLimitedError(f"mistral: 429 persistant sur {url}")
-
-    def fetch(
-        self, url: str, accept: str = "*/*"
-    ) -> Optional[Tuple[bytes, Optional[str]]]:
-        """(octets, content-type) d'une URL authentifiee ; None si echec.
-
-        Utilise pour telecharger les assets du markdown (images, pieces
-        jointes) sans navigateur.
-        """
-        for attempt in range(API_RETRY_ATTEMPTS):
-            request = urllib.request.Request(
-                url, headers=self._headers(accept, url=url)
-            )
-            try:
-                with urllib.request.urlopen(
-                    request, timeout=self.timeout_s
-                ) as response:
-                    ctype = (response.headers.get("Content-Type") or "").split(";")[0]
-                    return response.read(), (ctype.strip() or None)
-            except urllib.error.HTTPError as exc:
-                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
-                    continue
-                log.debug("mistral: fetch asset echoue (%s): HTTP %s", url, exc.code)
-                return None
-            except (urllib.error.URLError, OSError) as exc:
-                log.debug("mistral: fetch asset echoue (%s): %s", url, exc)
-                return None
-        return None
+        if trpc:
+            return self._send(url, accept, trpc=True)
+        return self._send(url, accept)
 
     @staticmethod
     def _trpc_url(procedures: Tuple[str, ...], inputs: List[Any]) -> str:
