@@ -115,16 +115,21 @@ function mdPlain(text) {
 
 function renderMarkdown(text) {
   const { text: protectedText, store } = protectMath(text);
-  let html;
-  try {
-    html = (typeof marked !== "undefined")
-      ? marked.parse(protectedText, { gfm: true, breaks: true })
-      : escapeHtml(protectedText).replace(/\n/g, "<br>");
-  } catch (err) {
-    html = escapeHtml(protectedText).replace(/\n/g, "<br>");
+  // fail-closed : sans DOMPurify (CDN bloque), jamais de HTML brut
+  const canSanitize = typeof DOMPurify !== "undefined";
+  let html = null;
+  if (canSanitize && typeof marked !== "undefined") {
+    try {
+      html = DOMPurify.sanitize(
+        marked.parse(protectedText, { gfm: true, breaks: true }),
+        { ADD_ATTR: ["target", "rel"] }
+      );
+    } catch (err) {
+      html = null;
+    }
   }
-  if (typeof DOMPurify !== "undefined") {
-    html = DOMPurify.sanitize(html, { ADD_ATTR: ["target", "rel"] });
+  if (html == null) {
+    html = escapeHtml(protectedText).replace(/\n/g, "<br>");
   }
   return restoreMath(html, store);
 }
