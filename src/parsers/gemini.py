@@ -823,83 +823,24 @@ class GeminiParser(BaseParser):
             file_tags = _api_file_tags(candidate)
             generated = _api_generated_images(candidate)
 
-            parts = _api_parts(turn[2] if len(turn) > 2 else None)
-            text = "\n\n".join(
-                chunk for chunk in (_api_part_text(part) for part in parts) if chunk
-            )
-            text = _api_normalize_text(
-                text, citations={}, file_tags={}, generated_images={}
-            )
-            attachments: List[str] = []
-            video_attached = False
-            for part in parts:
-                for node in _api_message_attachments(part):
-                    markdown = _api_attachment_markdown(node)
-                    if markdown and markdown not in attachments:
-                        attachments.append(markdown)
-                    if _api_attachment_mime(node).startswith("video/"):
-                        video_attached = True
-            if attachments:
-                block = "\n\n".join(attachments)
-                if block not in text:
-                    text = f"{text}\n\n{block}".strip() if text else block
-            timestamp = _api_timestamp(turn)
-            user_id = ""
-            if len(turn) > 0 and isinstance(turn[0], list) and len(turn[0]) > 1:
-                user_id = str(turn[0][1] or "")
-            if text or attachments:
-                messages.append(
-                    self.msg("user", text, timestamp, None, message_id=user_id)
-                )
+            user_message, video_attached = self._api_user_message(turn)
+            if user_message is not None:
+                messages.append(user_message)
 
-            assistant_raw = _api_assistant_text(turn)
-            assistant = _api_normalize_text(
-                assistant_raw,
-                citations=citations,
-                file_tags=file_tags,
-                generated_images=generated,
+            message, model, keep = self._api_assistant_message(
+                turn,
+                candidate,
+                citations,
+                file_tags,
+                generated,
+                user_video=video_attached,
             )
-            tools = _api_tools(turn, user_video=video_attached)
-            artifacts: List[str] = []
-            if re.search(r"```xml[^\n]*\n[^`]*<svg", assistant):
-                # artefact canvas/SVG : le DOM le signale par `svg-code-block`
-                artifacts.append("SVG")
-                if "Canvas" not in tools:
-                    tools.append("Canvas")
-            sources = [
-                label for marker, label in citations.items() if marker in assistant_raw
-            ]
-            model = _api_model(turn)
             if model:
                 models.append(model)
-            metadata: Dict[str, Any] = {"tokens": None}
-            # l'id de la reponse est porte par le candidat (`rc_..`), avec repli
-            # sur le champ 3 de la structure assistant (positions variables)
-            assistant_id = ""
-            if candidate is not None and isinstance(candidate[0], str):
-                assistant_id = candidate[0]
-            elif len(turn) > 3 and isinstance(turn[3], list) and len(turn[3]) > 3:
-                assistant_id = str(turn[3][3] or "")
-            message = self.msg(
-                "assistant",
-                assistant,
-                timestamp,
-                metadata,
-                message_id=assistant_id,
-                model=model,
-            )
-            if tools:
-                message.tools = tools
-            if artifacts:
-                message.artifacts = artifacts
-            if sources:
-                message.sources = sources
             # une reponse vide (rendu en echec, image pure...) est conservee
             # pour ne pas fusionner deux requetes utilisateur consecutives
             # (meme convention que le parseur DOM).
-            if assistant or tools or artifacts or sources or (
-                messages and messages[-1].role == "user"
-            ):
+            if keep or (messages and messages[-1].role == "user"):
                 messages.append(message)
 
         if not messages:
@@ -927,6 +868,102 @@ class GeminiParser(BaseParser):
         )
         self.log_parse(conv, model=conv.model, title=title)
         return self.check(conv)
+
+    def _api_user_message(self, turn: list) -> Tuple[Optional[Any], bool]:
+        """Message utilisateur d'un tour API (texte + pieces jointes).
+
+        Retourne ``(message, video_attached)`` : ``message`` vaut ``None`` si le
+        tour n'a ni texte ni piece jointe ; ``video_attached`` signale une video
+        jointe (marqueur « Analyse video » du DOM, ajoute aux outils de la
+        reponse).
+        """
+        parts = _api_parts(turn[2] if len(turn) > 2 else None)
+        text = "\n\n".join(
+            chunk for chunk in (_api_part_text(part) for part in parts) if chunk
+        )
+        text = _api_normalize_text(
+            text, citations={}, file_tags={}, generated_images={}
+        )
+        attachments: List[str] = []
+        video_attached = False
+        for part in parts:
+            for node in _api_message_attachments(part):
+                markdown = _api_attachment_markdown(node)
+                if markdown and markdown not in attachments:
+                    attachments.append(markdown)
+                if _api_attachment_mime(node).startswith("video/"):
+                    video_attached = True
+        if attachments:
+            block = "\n\n".join(attachments)
+            if block not in text:
+                text = f"{text}\n\n{block}".strip() if text else block
+        timestamp = _api_timestamp(turn)
+        user_id = ""
+        if len(turn) > 0 and isinstance(turn[0], list) and len(turn[0]) > 1:
+            user_id = str(turn[0][1] or "")
+        if not text and not attachments:
+            return None, video_attached
+        return (
+            self.msg("user", text, timestamp, None, message_id=user_id),
+            video_attached,
+        )
+
+    def _api_assistant_message(
+        self,
+        turn: list,
+        candidate: Optional[list],
+        citations: Dict[str, str],
+        file_tags: Dict[str, str],
+        generated: Dict[str, str],
+        *,
+        user_video: bool = False,
+    ) -> Tuple[Any, Optional[str], bool]:
+        """Message assistant d'un tour API (texte, outils, artefacts, sources).
+
+        Retourne ``(message, model, keep)`` : ``keep`` indique si la reponse est
+        a conserver meme vide (outils, artefacts ou sources presents).
+        """
+        assistant_raw = _api_assistant_text(turn)
+        assistant = _api_normalize_text(
+            assistant_raw,
+            citations=citations,
+            file_tags=file_tags,
+            generated_images=generated,
+        )
+        tools = _api_tools(turn, user_video=user_video)
+        artifacts: List[str] = []
+        if re.search(r"```xml[^\n]*\n[^`]*<svg", assistant):
+            # artefact canvas/SVG : le DOM le signale par `svg-code-block`
+            artifacts.append("SVG")
+            if "Canvas" not in tools:
+                tools.append("Canvas")
+        sources = [
+            label for marker, label in citations.items() if marker in assistant_raw
+        ]
+        model = _api_model(turn)
+        metadata: Dict[str, Any] = {"tokens": None}
+        # l'id de la reponse est porte par le candidat (`rc_..`), avec repli
+        # sur le champ 3 de la structure assistant (positions variables)
+        assistant_id = ""
+        if candidate is not None and isinstance(candidate[0], str):
+            assistant_id = candidate[0]
+        elif len(turn) > 3 and isinstance(turn[3], list) and len(turn[3]) > 3:
+            assistant_id = str(turn[3][3] or "")
+        message = self.msg(
+            "assistant",
+            assistant,
+            _api_timestamp(turn),
+            metadata,
+            message_id=assistant_id,
+            model=model,
+        )
+        if tools:
+            message.tools = tools
+        if artifacts:
+            message.artifacts = artifacts
+        if sources:
+            message.sources = sources
+        return message, model, bool(assistant or tools or artifacts or sources)
 
     CONTENT_OF_USER = (
         # parent de tous les .query-text-line (requete multi-ligne)
