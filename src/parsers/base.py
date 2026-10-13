@@ -314,6 +314,26 @@ class BaseParser(ABC):
         text = NEWLINES_RE.sub("\n\n", text)
         return text.strip()
 
+    # -- rendu markdown commun (tableaux, listes, inline) --------------------
+
+    @classmethod
+    def _table_markdown(cls, table: Tag) -> str:
+        """Tableau HTML -> lignes markdown ``| ... |`` avec separateur."""
+        rows: List[List[str]] = []
+        for tr in table.find_all("tr"):
+            cells = tr.find_all(["th", "td"])
+            rows.append([cls._inline_text(c).strip() for c in cells])
+        if not rows:
+            return ""
+        width = max(len(row) for row in rows)
+        lines: List[str] = []
+        for index, row in enumerate(rows):
+            padded = row + [""] * (width - len(row))
+            lines.append("| " + " | ".join(padded) + " |")
+            if index == 0:
+                lines.append("| " + " | ".join(["---"] * width) + " |")
+        return "\n".join(lines)
+
     @staticmethod
     def extract_title(soup: BeautifulSoup, *selectors: str) -> Optional[str]:
         for sel in selectors:

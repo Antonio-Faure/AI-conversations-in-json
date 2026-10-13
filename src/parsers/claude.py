@@ -918,24 +918,6 @@ class ClaudeParser(BaseParser):
         return cls.text_of(copy.copy(el))
 
     @classmethod
-    def _table_markdown(cls, table: Tag) -> str:
-        """Tableau HTML -> lignes markdown ``| ... |`` avec separateur."""
-        rows = []
-        for tr in table.find_all("tr"):
-            cells = tr.find_all(["th", "td"])
-            rows.append([cls._inline_text(c).strip() for c in cells])
-        if not rows:
-            return ""
-        width = max(len(row) for row in rows)
-        lines = []
-        for index, row in enumerate(rows):
-            padded = row + [""] * (width - len(row))
-            lines.append("| " + " | ".join(padded) + " |")
-            if index == 0:
-                lines.append("| " + " | ".join(["---"] * width) + " |")
-        return "\n".join(lines)
-
-    @classmethod
     def _render_list(cls, lst: Tag, depth: int = 0) -> List[str]:
         """``<ul>/<ol>`` -> lignes markdown, en gerant les checklists."""
         ordered = lst.name == "ol"
