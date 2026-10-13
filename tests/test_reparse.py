@@ -230,3 +230,118 @@ def test_main_payload_api_prime_sur_un_html_residuel(tmp_path, monkeypatch, caps
     assert len(data["messages"]) == 26
     out = capsys.readouterr().out
     assert "1 remappes" in out and "0 echecs" in out
+
+
+def _grok_message(mid, role, texte, ts):
+    """Message au schema complet (comme ecrit par l'orchestrateur)."""
+    return {
+        "conversation_id": "g1",
+        "message_id": mid,
+        "role": role,
+        "platform": "grok",
+        "model": None,
+        "timestamp": ts,
+        "texte": texte,
+        "code_blocks": [],
+        "reasoning": "",
+        "artifacts": [],
+        "sources": [],
+        "tools": [],
+        "variants": [],
+    }
+
+
+def _grok_conversation():
+    return {
+        "conversation_id": "g1",
+        "platform": "grok",
+        "title": "T",
+        "url": "https://grok.com/chat/g1",
+        "model": None,
+        "started_at": "2026-05-01T09:00:00Z",
+        "last_message_at": "2026-05-01T09:01:00Z",
+        "exported_at": "2026-05-02T00:00:00Z",
+        "messages": [
+            _grok_message("r1", "user", "Bonjour", "2026-05-01T09:00:00Z"),
+            _grok_message("r2", "assistant", "Salut", "2026-05-01T09:01:00Z"),
+        ],
+    }
+
+
+def test_main_ne_touche_pas_les_json_non_conversation(tmp_path, monkeypatch, capsys):
+    """`api_health.json` (et tout JSON sans id) reste intact."""
+    json_path = _write_export(
+        tmp_path, "grok", "t",
+        _grok_conversation(),
+    )
+    health = {"platform": "grok", "n": 20, "mean_score": 100.0}
+    (tmp_path / "grok" / "api_health.json").write_text(
+        json.dumps(health), encoding="utf-8"
+    )
+    notes = {"note": "fichier etranger au schema"}
+    (tmp_path / "grok" / "notes.json").write_text(json.dumps(notes), encoding="utf-8")
+    _write_list(tmp_path / "grok", [
+        {"conversation_id": "g1", "title": "T", "file": "t", "message_count": 2},
+    ])
+    assert _run_main(monkeypatch, tmp_path) == 0
+    assert json.loads((tmp_path / "grok" / "api_health.json").read_text()) == health
+    assert json.loads((tmp_path / "grok" / "notes.json").read_text()) == notes
+    assert len(json.loads(json_path.read_text())["messages"]) == 2
+    assert "1 ignores" in capsys.readouterr().out
+
+
+def test_main_payload_tronque_conserve_le_json_complet(tmp_path, monkeypatch, capsys):
+    """Un payload brut tronque (fenetre partielle) ne degrade pas l'archive."""
+    json_path = _write_export(tmp_path, "grok", "t", _grok_conversation())
+    raw = {
+        "conversation": {
+            "conversationId": "g1",
+            "title": "T",
+            "createTime": "2026-05-01T09:00:00Z",
+            "modifyTime": "2026-05-01T09:01:00Z",
+        },
+        # scrape partiel : seule la reponse finale a ete recuperee
+        "responses": [
+            {"responseId": "r2", "sender": "assistant", "message": "Salut"},
+        ],
+    }
+    raw_dir = tmp_path / "grok" / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "t.json").write_text(json.dumps(raw), encoding="utf-8")
+    _write_list(tmp_path / "grok", [
+        {"conversation_id": "g1", "title": "T", "file": "t", "message_count": 2},
+    ])
+    assert _run_main(monkeypatch, tmp_path) == 0
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    assert len(data["messages"]) == 2
+    assert data["messages"][0]["texte"] == "Bonjour"
+    assert "1 conserves" in capsys.readouterr().out
+
+
+def test_main_reparse_complet_met_a_jour_le_json(tmp_path, monkeypatch, capsys):
+    """Non-regression : un payload complet continue de rafraichir l'archive."""
+    old = _grok_conversation()
+    old["messages"] = old["messages"][:1]  # archive partielle (1 message)
+    json_path = _write_export(tmp_path, "grok", "t", old)
+    raw = {
+        "conversation": {
+            "conversationId": "g1",
+            "title": "T",
+            "createTime": "2026-05-01T09:00:00Z",
+            "modifyTime": "2026-05-01T09:01:00Z",
+        },
+        "responses": [
+            {"responseId": "r1", "sender": "human", "message": "Bonjour"},
+            {"responseId": "r2", "sender": "assistant", "message": "Salut"},
+        ],
+    }
+    raw_dir = tmp_path / "grok" / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "t.json").write_text(json.dumps(raw), encoding="utf-8")
+    _write_list(tmp_path / "grok", [
+        {"conversation_id": "g1", "title": "T", "file": "t", "message_count": 1},
+    ])
+    assert _run_main(monkeypatch, tmp_path) == 0
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    assert len(data["messages"]) == 2
+    assert "0 conserves" in capsys.readouterr().out

@@ -14,6 +14,12 @@
 - toutes : normalisation de l'alternance user/assistant ;
 - met a jour conversation_list.json (message_count, has_code, last_message_at).
 
+Protections : les JSON non-conversation du dossier (`conversation_list.json`,
+`api_health.json`, tout JSON sans `conversation_id`) sont ignores ; un artefact
+brut tronque ne degrade pas un JSON existant plus complet (moins de messages
+que l'archive -> conversation conservee et signalee, comme le statut `kept` de
+l'orchestrateur).
+
     .venv/bin/python scripts/reparse_exports.py
     .venv/bin/python scripts/reparse_exports.py --platform gemini
     .venv/bin/python scripts/reparse_exports.py --no-backup
@@ -36,6 +42,7 @@ from src.orchestrator import load_config  # noqa: E402
 from src.parsers import PARSER_CLASSES  # noqa: E402
 from src.schema import Conversation, Message, extract_code_blocks, normalize_messages  # noqa: E402
 from src.utils.cleanup import clean_text  # noqa: E402
+from src.utils.file_utils import RESERVED_JSON_NAMES, merge_conversation_json  # noqa: E402
 from src.utils.raw_payload import load_raw_payload  # noqa: E402
 from src.utils.urls import (  # noqa: E402
     canonical_url_from_html,
@@ -170,7 +177,8 @@ def main() -> int:
         if d.is_dir() and (d / "conversation_list.json").exists()
     )
 
-    totals = {"reparsed": 0, "remapped": 0, "cleaned": 0, "skipped": 0, "failed": 0}
+    totals = {"reparsed": 0, "remapped": 0, "cleaned": 0, "kept": 0,
+              "ignored": 0, "failed": 0}
     for platform in platforms:
         directory = exports / platform
         list_path = directory / "conversation_list.json"
@@ -181,12 +189,18 @@ def main() -> int:
                 str(e.get("conversation_id")): e for e in data.get("conversations") or []
             }
         for json_path in sorted(directory.glob("*.json")):
-            if json_path.name == "conversation_list.json":
+            # fichiers non-conversation du dossier (inventaire, rapport de forme
+            # API) : ne jamais les traiter comme des conversations
+            if json_path.name in RESERVED_JSON_NAMES:
                 continue
             try:
                 old = json.loads(json_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 totals["failed"] += 1
+                continue
+            if not isinstance(old, dict) or not old.get("conversation_id"):
+                # JSON etranger au schema (sans id) : le laisser intact
+                totals["ignored"] += 1
                 continue
             # metadonnees d'origine (timestamps/model) : la sauvegarde .bak si
             # elle existe (elle precede un eventuel re-parse precedent)
@@ -221,12 +235,28 @@ def main() -> int:
                 print(f"[{platform}] ECHEC {json_path.name}: {exc}")
                 totals["failed"] += 1
                 continue
+            # protection d'integrite : un artefact brut tronque (scrape partiel)
+            # produit moins de messages que le JSON existant -> ne pas degrader
+            # l'archive (le prochain reparse complet la rafraichira)
+            old_count = len(old.get("messages") or [])
+            if old_count and len(conv.messages) < old_count:
+                totals["kept"] += 1
+                print(
+                    f"[{platform}] conserve {json_path.name} "
+                    f"(artefact brut tronque : {len(conv.messages)} < {old_count} messages)"
+                )
+                continue
+            # fusion : les anciens messages sont un prefixe -> ajout des nouveaux
+            # (meme regle que l'orchestrateur)
+            merged, _status, _appended = merge_conversation_json(
+                old, conv.to_dict(validate=False)
+            )
             if not args.no_backup:
                 backup = json_path.with_suffix(".json.bak")
                 if not backup.exists():
                     shutil.copy2(json_path, backup)
             json_path.write_text(
-                json.dumps(conv.to_dict(validate=False), ensure_ascii=False, indent=2) + "\n",
+                json.dumps(merged, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
             entry = index.get(conv.conversation_id)
@@ -250,7 +280,9 @@ def main() -> int:
 
     print(
         f"termine : {totals['reparsed']} re-parses, {totals['remapped']} remappes "
-        f"(payload API), {totals['cleaned']} nettoyes, {totals['failed']} echecs"
+        f"(payload API), {totals['cleaned']} nettoyes, {totals['kept']} conserves "
+        f"(artefact tronque), {totals['ignored']} ignores (non-conversation), "
+        f"{totals['failed']} echecs"
     )
     return 0 if totals["failed"] == 0 else 1
 
