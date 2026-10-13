@@ -25,16 +25,14 @@ dans le DOM (`[data-cds-row-panel]`) qu'une fois le panneau ouvert.
 from __future__ import annotations
 
 import json
-import time
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..http_client import CookieAuthError, DEFAULT_USER_AGENT, load_cookie_header
+from ..http_client import CookieAuthError, load_cookie_header
 from ..parsers.claude import ClaudeParser, merge_transcript_rows
 from ..schema import Conversation, ConversationRef
 from ..utils.logging import get_logger
+from .api_client import CookieHttpClient
 from .base import (
     BaseService,
     ConversationUnavailableError,
@@ -71,22 +69,20 @@ API_RETRY_WAIT_MAX_S = 300
 TURN_SELECTOR = "[data-testid='transcript-row']"
 
 
-def _retry_after_s(headers: Any) -> Optional[float]:
-    """`Retry-After` numerique d'une reponse HTTP (None sinon)."""
-    try:
-        value = (headers or {}).get("Retry-After")
-        return float(value) if value else None
-    except (TypeError, ValueError):
-        return None
-
-
-class _ClaudeHttpClient:
+class _ClaudeHttpClient(CookieHttpClient):
     """Requetes GET authentifiees sur l'API claude.ai (cookies du profil).
 
     Les cookies (httpOnly inclus) viennent du contexte persistant ; l'UA et la
     langue doivent coller au profil (les cookies sont lies a l'empreinte du
-    navigateur). Aucun navigateur n'est utilise pour les lectures.
+    navigateur). Aucun navigateur n'est utilise pour les lectures. Le backoff
+    429 vient du client commun (`CookieHttpClient`).
     """
+
+    service = "claude"
+    _log = log
+    retry_attempts = API_RETRY_ATTEMPTS
+    retry_wait_s = API_RETRY_WAIT_S
+    retry_wait_max_s = API_RETRY_WAIT_MAX_S
 
     def __init__(
         self,
@@ -96,14 +92,16 @@ class _ClaudeHttpClient:
         accept_language: Optional[str] = None,
         timeout_s: int = 45,
     ):
-        self.cookie_header = cookie_header
-        self.user_agent = user_agent or DEFAULT_USER_AGENT
-        self.accept_language = accept_language or "en-US,en;q=0.9"
-        self.timeout_s = timeout_s
+        super().__init__(
+            cookie_header,
+            user_agent=user_agent,
+            accept_language=accept_language,
+            timeout_s=timeout_s,
+        )
         #: organisation courante (resolue au premier appel)
         self.org_id: Optional[str] = None
 
-    def _headers(self, accept: str) -> Dict[str, str]:
+    def _headers(self, accept: str, *, url: Optional[str] = None) -> Dict[str, str]:
         return {
             "User-Agent": self.user_agent,
             "Cookie": self.cookie_header,
@@ -113,86 +111,6 @@ class _ClaudeHttpClient:
             "anthropic-client-platform": "web_claude_ai",
             "anthropic-client-version": "1.0.0",
         }
-
-    def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
-        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
-
-        `Retry-After` est respecte mais plafonne : un en-tete de plusieurs
-        heures ne doit pas endormir le run.
-        """
-        if attempt + 1 >= API_RETRY_ATTEMPTS:
-            return False
-        wait_s = max(
-            0.0,
-            min(
-                API_RETRY_WAIT_MAX_S,
-                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
-            ),
-        )
-        log.warning(
-            "claude: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
-            wait_s, attempt + 1, API_RETRY_ATTEMPTS, url,
-        )
-        time.sleep(wait_s)
-        return True
-
-    def get(
-        self, url: str, accept: str = "application/json, text/plain, */*"
-    ) -> Tuple[int, bytes]:
-        """GET authentifie ; sur 429, attend et reessaie (limite de rafale)."""
-        for attempt in range(API_RETRY_ATTEMPTS):
-            request = urllib.request.Request(url, headers=self._headers(accept))
-            try:
-                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                    return response.status, response.read()
-            except urllib.error.HTTPError as exc:
-                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
-                    continue
-                return exc.code, exc.read() or b""
-            except urllib.error.URLError as exc:
-                raise RuntimeError(f"claude: requete echouee ({url}): {exc}") from exc
-        raise RateLimitedError(f"claude: 429 persistant sur {url}")
-
-    def get_json(self, url: str) -> Any:
-        status, raw = self.get(url)
-        if status in (401, 403):
-            raise ServiceNotLoggedIn(
-                f"claude: non authentifie (HTTP {status}) -> `run.py --login claude`"
-            )
-        if status == 429:
-            # limite de rafale epuisee : arreter le service proprement
-            raise RateLimitedError(f"claude: 429 persistant sur {url}")
-        if status != 200:
-            raise RuntimeError(f"claude: HTTP {status} sur {url}")
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise RuntimeError(f"claude: reponse non-JSON sur {url}") from exc
-
-    def fetch(
-        self, url: str, accept: str = "*/*"
-    ) -> Optional[Tuple[bytes, Optional[str]]]:
-        """(octets, content-type) d'une URL authentifiee ; None si echec.
-
-        Utilise pour telecharger les pieces jointes (images `preview`, PDF
-        `document_pdf`) : l'API exige les cookies du profil. Sur 429, attend et
-        reessaie comme `get`.
-        """
-        for attempt in range(API_RETRY_ATTEMPTS):
-            request = urllib.request.Request(url, headers=self._headers(accept))
-            try:
-                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                    ctype = (response.headers.get("Content-Type") or "").split(";")[0]
-                    return response.read(), (ctype.strip() or None)
-            except urllib.error.HTTPError as exc:
-                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
-                    continue
-                log.debug("claude: fetch asset echoue (%s): HTTP %s", url, exc.code)
-                return None
-            except (urllib.error.URLError, OSError) as exc:
-                log.debug("claude: fetch asset echoue (%s): %s", url, exc)
-                return None
-        return None
 
 
 class _ApiFetchSession:

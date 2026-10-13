@@ -23,12 +23,8 @@ from __future__ import annotations
 
 import json
 import re
-import time
-import urllib.error
-import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..http_client import DEFAULT_USER_AGENT
 from ..parsers.chatgpt import (
     ChatGPTParser,
     merge_turn_snapshots,
@@ -36,7 +32,8 @@ from ..parsers.chatgpt import (
 )
 from ..schema import ConversationRef, normalize_timestamp
 from ..utils.logging import get_logger
-from .base import BaseService, RateLimitedError, ScrapedPage, ServiceNotLoggedIn
+from .api_client import CookieHttpClient
+from .base import BaseService, ScrapedPage, ServiceNotLoggedIn
 
 log = get_logger("services.chatgpt")
 
@@ -67,22 +64,20 @@ def _is_file_download_url(url: str) -> bool:
     return url.startswith(API_FILE_DOWNLOAD_PREFIX) and url.endswith("/download")
 
 
-def _retry_after_s(headers: Any) -> Optional[float]:
-    """`Retry-After` numerique d'une reponse HTTP (None sinon)."""
-    try:
-        value = (headers or {}).get("Retry-After")
-        return float(value) if value else None
-    except (TypeError, ValueError):
-        return None
-
-
-class _ChatGPTHttpClient:
+class _ChatGPTHttpClient(CookieHttpClient):
     """Requetes GET authentifiees sur l'API backend de ChatGPT.
 
     Les cookies viennent de la session navigateur (profil persistant) ; le
     token et l'identifiant de compte sont recuperes via `/api/auth/session`.
-    Aucun navigateur n'est utilise pour les lectures.
+    Aucun navigateur n'est utilise pour les lectures. Le backoff 429 vient du
+    client commun (`CookieHttpClient`).
     """
+
+    service = "chatgpt"
+    _log = log
+    retry_attempts = API_RETRY_ATTEMPTS
+    retry_wait_s = API_RETRY_WAIT_S
+    retry_wait_max_s = API_RETRY_WAIT_MAX_S
 
     def __init__(
         self,
@@ -94,14 +89,16 @@ class _ChatGPTHttpClient:
         accept_language: Optional[str] = None,
         timeout_s: int = 45,
     ):
-        self.cookie_header = cookie_header
+        super().__init__(
+            cookie_header,
+            user_agent=user_agent,
+            accept_language=accept_language,
+            timeout_s=timeout_s,
+        )
         self.access_token = access_token
         self.account_id = account_id
-        self.user_agent = user_agent or DEFAULT_USER_AGENT
-        self.accept_language = accept_language or "en-US,en;q=0.9"
-        self.timeout_s = timeout_s
 
-    def _headers(self, accept: str) -> Dict[str, str]:
+    def _headers(self, accept: str, *, url: Optional[str] = None) -> Dict[str, str]:
         headers = {
             "User-Agent": self.user_agent,
             "Cookie": self.cookie_header,
@@ -114,93 +111,6 @@ class _ChatGPTHttpClient:
         if self.account_id:
             headers["chatgpt-account-id"] = self.account_id
         return headers
-
-    def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
-        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
-
-        La fenetre de quota du backend se rouvre en quelques minutes : on
-        attend 45s, 90s... (plafonnee), en respectant `Retry-After` s'il est
-        present (plafonne aussi : un en-tete de plusieurs heures ne doit pas
-        endormir le run).
-        """
-        if attempt + 1 >= API_RETRY_ATTEMPTS:
-            return False
-        wait_s = max(
-            0.0,
-            min(
-                API_RETRY_WAIT_MAX_S,
-                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
-            ),
-        )
-        log.warning(
-            "chatgpt: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
-            wait_s, attempt + 1, API_RETRY_ATTEMPTS, url,
-        )
-        time.sleep(wait_s)
-        return True
-
-    def get(
-        self, url: str, accept: str = "application/json, text/plain, */*"
-    ) -> Tuple[int, bytes]:
-        """GET authentifie ; sur 429, attend et reessaie (limite de rafale)."""
-        for attempt in range(API_RETRY_ATTEMPTS):
-            request = urllib.request.Request(url, headers=self._headers(accept))
-            try:
-                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                    return response.status, response.read()
-            except urllib.error.HTTPError as exc:
-                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
-                    continue
-                return exc.code, exc.read() or b""
-            except urllib.error.URLError as exc:
-                raise RuntimeError(
-                    f"chatgpt: requete echouee ({url}): {exc}"
-                ) from exc
-        raise RateLimitedError(f"chatgpt: 429 persistant sur {url}")
-
-    def get_json(self, url: str) -> Any:
-        status, raw = self.get(url)
-        if status in (401, 403):
-            raise ServiceNotLoggedIn(
-                f"chatgpt: non authentifie (HTTP {status}) -> `run.py --login chatgpt`"
-            )
-        if status == 429:
-            # limite de rafale epuisee : arreter le service proprement (reprise
-            # plus tard) au lieu de faire echouer chaque conversation
-            raise RateLimitedError(f"chatgpt: 429 persistant sur {url}")
-        if status != 200:
-            raise RuntimeError(f"chatgpt: HTTP {status} sur {url}")
-        try:
-            return json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise RuntimeError(f"chatgpt: reponse non-JSON sur {url}") from exc
-
-    def fetch(
-        self, url: str, accept: str = "*/*"
-    ) -> Optional[Tuple[bytes, Optional[str]]]:
-        """(octets, content-type) d'une URL authentifiee ; None si echec.
-
-        Utilise pour suivre l'URL signee renvoyee par
-        `/backend-api/files/<id>/download` (l'endpoint lui-meme ne renvoie que
-        du JSON). Sur 429, attend et reessaie comme `get`.
-        """
-        for attempt in range(API_RETRY_ATTEMPTS):
-            request = urllib.request.Request(url, headers=self._headers(accept))
-            try:
-                with urllib.request.urlopen(
-                    request, timeout=self.timeout_s
-                ) as response:
-                    ctype = (response.headers.get("Content-Type") or "").split(";")[0]
-                    return response.read(), (ctype.strip() or None)
-            except urllib.error.HTTPError as exc:
-                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
-                    continue
-                log.debug("chatgpt: fetch asset echoue (%s): HTTP %s", url, exc.code)
-                return None
-            except (urllib.error.URLError, OSError) as exc:
-                log.debug("chatgpt: fetch asset echoue (%s): %s", url, exc)
-                return None
-        return None
 
 
 class _ApiFetchSession:

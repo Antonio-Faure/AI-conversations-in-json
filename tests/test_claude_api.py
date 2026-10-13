@@ -613,7 +613,7 @@ def test_screenshots_ignores_en_mode_api():
 
 def test_backoff_429_respecte_retry_after(monkeypatch):
     sleeps = []
-    monkeypatch.setattr("src.services.claude.time.sleep", sleeps.append)
+    monkeypatch.setattr("src.services.api_client.time.sleep", sleeps.append)
     client = _ClaudeHttpClient("sessionKey=sk")
     assert client._wait_429(0, {"Retry-After": "12"}, "https://claude.ai/x") is True
     assert sleeps == [12.0]
@@ -621,7 +621,7 @@ def test_backoff_429_respecte_retry_after(monkeypatch):
 
 def test_backoff_429_exponentiel_plafonne(monkeypatch):
     sleeps = []
-    monkeypatch.setattr("src.services.claude.time.sleep", sleeps.append)
+    monkeypatch.setattr("src.services.api_client.time.sleep", sleeps.append)
     client = _ClaudeHttpClient("sessionKey=sk")
     assert client._wait_429(2, {}, "https://claude.ai/x") is True
     assert sleeps == [180.0]
@@ -630,7 +630,7 @@ def test_backoff_429_exponentiel_plafonne(monkeypatch):
 
 
 def test_backoff_429_epuise_abandonne(monkeypatch):
-    monkeypatch.setattr("src.services.claude.time.sleep", lambda s: None)
+    monkeypatch.setattr("src.services.api_client.time.sleep", lambda s: None)
     client = _ClaudeHttpClient("sessionKey=sk")
     assert client._wait_429(7, {}, "https://claude.ai/x") is False
 
@@ -640,7 +640,7 @@ def test_get_reessaie_sur_429(monkeypatch):
     import urllib.error
     import urllib.request
 
-    monkeypatch.setattr("src.services.claude.time.sleep", lambda s: None)
+    monkeypatch.setattr("src.services.api_client.time.sleep", lambda s: None)
     calls = {"n": 0}
 
     class FakeResponse:
@@ -675,7 +675,7 @@ def test_429_persistant_leve_rate_limited(monkeypatch):
     import urllib.error
     import urllib.request
 
-    monkeypatch.setattr("src.services.claude.time.sleep", lambda s: None)
+    monkeypatch.setattr("src.services.api_client.time.sleep", lambda s: None)
 
     def fake_urlopen(request, timeout=None):
         raise urllib.error.HTTPError(
