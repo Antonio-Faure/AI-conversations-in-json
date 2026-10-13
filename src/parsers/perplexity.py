@@ -866,9 +866,14 @@ class PerplexityParser(BaseParser):
         month = _FRENCH_MONTHS.get((month_raw or "").lower().rstrip("."))
         if not month:
             return None
-        candidate = datetime(
-            now.year, month, int(day_raw), hour, minute, tzinfo=timezone.utc
-        )
+        try:
+            candidate = datetime(
+                now.year, month, int(day_raw), hour, minute, tzinfo=timezone.utc
+            )
+        except ValueError:
+            # date impossible dans l'annee de reference (« 29 fevr. » hors
+            # bissextile, « 31 avr. »...) : horodatage optionnel ignore
+            return None
         if candidate > now + timedelta(days=2):
             try:
                 candidate = candidate.replace(year=now.year - 1)

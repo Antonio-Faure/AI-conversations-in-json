@@ -850,13 +850,17 @@ class MistralParser(BaseParser):
             month = _FRENCH_MONTHS.get(month_raw.lower().rstrip("."))
             if not month:
                 return None
-            return to_iso_z(
-                datetime(
-                    int(year), month, int(day),
-                    int(hour_raw), int(minute_raw),
-                    tzinfo=timezone.utc,
+            try:
+                return to_iso_z(
+                    datetime(
+                        int(year), month, int(day),
+                        int(hour_raw), int(minute_raw),
+                        tzinfo=timezone.utc,
+                    )
                 )
-            )
+            except ValueError:
+                # date impossible (« 29 fevr. 2025 ») : horodatage ignore
+                return None
         partial = _TS_DAY_RE.match(text)
         if partial:
             day_raw, month_raw, hour_raw, minute_raw = partial.groups()
@@ -866,9 +870,14 @@ class MistralParser(BaseParser):
             month = _FRENCH_MONTHS.get(month_raw.lower().rstrip("."))
             if not month:
                 return None
-            candidate = datetime(
-                now.year, month, int(day_raw), hour, minute, tzinfo=timezone.utc
-            )
+            try:
+                candidate = datetime(
+                    now.year, month, int(day_raw), hour, minute, tzinfo=timezone.utc
+                )
+            except ValueError:
+                # date impossible dans l'annee de reference (« 29 fevr. » hors
+                # bissextile, « 31 avr. »...) : horodatage optionnel ignore
+                return None
             if candidate > now + timedelta(days=2):
                 try:
                     candidate = candidate.replace(year=now.year - 1)

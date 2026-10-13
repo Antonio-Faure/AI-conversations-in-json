@@ -1964,6 +1964,19 @@ class TestPerplexityParser:
         conv = PerplexityParser().parse(html, conversation_id="c")
         assert conv.messages[0].timestamp is None
 
+    def test_horodatage_29_fevrier_hors_bissextile_ignore(self):
+        # « 29 fevr. » n'existe pas en 2026 (non bissextile) : pas de ValueError,
+        # l'horodatage optionnel est simplement ignore.
+        html = self._user(
+            '<div class="opacity-0">'
+            '<span class="whitespace-nowrap text-tertiary">29 févr., 19:01</span>'
+            "</div><span>Question.</span>"
+        )
+        conv = PerplexityParser().parse(
+            html, conversation_id="c", extra={"now": "2026-09-30T12:00:00Z"}
+        )
+        assert conv.messages[0].timestamp is None
+
     def test_outils_recherche_depuis_etape_workflow(self):
         html = self._assistant(
             '<div class="group/step-header">'
@@ -3436,6 +3449,25 @@ class TestMistralParser:
             self._rsc_page(body, payload), conversation_id="d-1"
         )
         assert conv.messages[0].timestamp == "2026-09-24T12:27:39Z"
+
+    def test_horodatage_29_fevrier_hors_bissextile_ignore(self):
+        # dates impossibles (« 29 fevr. » en 2025/2026) : pas de ValueError,
+        # l'horodatage optionnel est simplement ignore.
+        body = """
+          <div data-message-author-role="user" data-message-id="u-1">
+            <div class="select-text"><span>Bonjour.</span></div>
+            <div class="text-hint text-sm">29 févr., 14:27</div>
+          </div>
+          <div data-message-author-role="assistant" data-message-id="a-1">
+            <div data-message-part-type="answer">
+              <div class="markdown-container-style"><p>Salut.</p></div>
+            </div>
+            <div class="text-hint text-sm">29 févr. 2025, 14:28</div>
+          </div>
+        """
+        conv = MistralParser().parse(self._rsc_page(body), conversation_id="d-1")
+        assert conv.messages[0].timestamp is None
+        assert conv.messages[1].timestamp is None
 
     def test_sources_et_outils_depuis_payload_rsc(self):
         """`references` + resultats `web_search` -> sources ; tool_calls -> tools."""
