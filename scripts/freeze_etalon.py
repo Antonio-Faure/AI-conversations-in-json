@@ -21,40 +21,23 @@ parseur est detectee sans navigateur.
 from __future__ import annotations
 
 import argparse
-import json
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.utils.etalon import etalons_file, load_etalons  # noqa: E402
-from src.utils.file_utils import write_text_atomic  # noqa: E402
+from src.utils.file_utils import find_export_by_id, write_text_atomic  # noqa: E402
 from scripts.sanitize import sanitize_text  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "etalons"
 
 #: plateformes API : l'artefact gele est le payload brut (`raw/<stem>.json`)
 API_PLATFORMS = ("chatgpt", "claude", "gemini", "grok", "mistral", "perplexity")
-
-
-def _find_export(output_dir: Path, platform: str, conv_id: str) -> Optional[Path]:
-    directory = output_dir / platform
-    if not directory.is_dir():
-        return None
-    for path in sorted(directory.glob("*.json")):
-        if path.name == "conversation_list.json":
-            continue
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if payload.get("conversation_id") == conv_id:
-            return path
-    return None
 
 
 def main() -> int:
@@ -77,7 +60,7 @@ def main() -> int:
     for platform, etalons in entries.items():
         for etalon in etalons:
             label = etalon.get("label") or (etalon.get("id") or "")[:8]
-            export = _find_export(args.output, platform, etalon.get("id") or "")
+            export = find_export_by_id(args.output, platform, etalon.get("id") or "")
             if export is None:
                 print(f"{platform}/{label}: export absent", file=sys.stderr)
                 continue

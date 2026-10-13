@@ -19,11 +19,7 @@ if str(ROOT) not in sys.path:
 from src.orchestrator import load_config  # noqa: E402
 from src.rag.embeddings import Embedder  # noqa: E402
 from src.rag.store import VectorStore  # noqa: E402
-
-
-def _resolve(path_value) -> Path:
-    path = Path(path_value)
-    return path if path.is_absolute() else ROOT / path
+from src.utils.file_utils import resolve_cli_path  # noqa: E402
 
 
 def main() -> int:
@@ -37,7 +33,7 @@ def main() -> int:
     args = parser.parse_args()
 
     config = load_config(ROOT / "config.yaml")
-    db_path = _resolve(args.db or config["rag_db"])
+    db_path = resolve_cli_path(args.db or config["rag_db"], ROOT)
     model_name = args.model or config.get("rag_model")
 
     store = VectorStore(db_path)

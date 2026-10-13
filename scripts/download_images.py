@@ -23,7 +23,11 @@ if str(ROOT) not in sys.path:
 
 from src.orchestrator import load_config  # noqa: E402
 from src.schema import Conversation  # noqa: E402
-from src.utils.file_utils import write_json_atomic  # noqa: E402
+from src.utils.file_utils import (  # noqa: E402
+    CONVERSATION_LIST_NAME,
+    resolve_cli_path,
+    write_json_atomic,
+)
 from src.utils.images import IMAGES_SUBDIR, http_loader  # noqa: E402
 from src.utils.images import download_conversation_images  # noqa: E402
 
@@ -37,9 +41,7 @@ def main() -> int:
     args = parser.parse_args()
 
     config = load_config(ROOT / "config.yaml")
-    exports = args.exports or Path(config["output_dir"])
-    if not exports.is_absolute():
-        exports = ROOT / exports
+    exports = resolve_cli_path(args.exports or config["output_dir"], ROOT)
     platforms = args.platform or list(PLATFORMS)
 
     total = {"downloaded": 0, "cached": 0, "failed": 0}
@@ -49,7 +51,7 @@ def main() -> int:
         if not platform_dir.is_dir():
             continue
         for json_path in sorted(platform_dir.glob("*.json")):
-            if json_path.name == "conversation_list.json":
+            if json_path.name == CONVERSATION_LIST_NAME:
                 continue
             try:
                 data = json.loads(json_path.read_text(encoding="utf-8"))

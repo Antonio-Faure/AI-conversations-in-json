@@ -216,7 +216,7 @@ class TestMain:
 
     def test_chemins_resolus_relatifs_au_depot(self):
         config = {"output_dir": "exports", "profile_dir": "profiles"}
-        out = run_cli._resolve_paths(dict(config))
+        out = run_cli.resolve_config_paths(dict(config))
         assert out["output_dir"] == str(ROOT / "exports")
         assert out["profile_dir"] == str(ROOT / "profiles")
 
@@ -227,7 +227,7 @@ class TestLoginSession:
     def test_chatgpt_login_en_playwright(self):
         from src.browser import BrowserSession
 
-        config = run_cli._resolve_paths(run_cli.load_config())
+        config = run_cli.resolve_config_paths(run_cli.load_config())
         session = run_cli._login_session("chatgpt", config)
         assert isinstance(session, BrowserSession)
         assert not session.headless
@@ -235,7 +235,7 @@ class TestLoginSession:
     def test_login_utilise_engine_botasaurus(self):
         from src.browser_botasaurus import BotasaurusSession
 
-        config = run_cli._resolve_paths(run_cli.load_config())
+        config = run_cli.resolve_config_paths(run_cli.load_config())
         config["services"]["chatgpt"]["engine"] = "botasaurus"
         session = run_cli._login_session("chatgpt", config)
         assert isinstance(session, BotasaurusSession)

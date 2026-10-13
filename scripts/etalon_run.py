@@ -26,6 +26,7 @@ from src.drivers.runner import EtalonRunner, load_queue, load_state  # noqa: E40
 from src.orchestrator import (  # noqa: E402
     default_browser_factory,
     load_config,
+    resolve_config_paths,
     resolve_engine,
 )
 
@@ -33,15 +34,6 @@ from src.orchestrator import (  # noqa: E402
 RUN_ROOT = Path(
     os.environ.get("AICV_RUN_DIR") or (Path.home() / "Documents/code/aicv-run")
 )
-
-
-def _resolve_paths(config: dict) -> dict:
-    for key in ("output_dir", "profile_dir", "cookies_dir"):
-        value = config.get(key)
-        if value:
-            path = Path(value)
-            config[key] = str(path if path.is_absolute() else ROOT / path)
-    return config
 
 
 def main() -> int:
@@ -58,7 +50,7 @@ def main() -> int:
                         help="ouvre la page, liste les champs trouves + screenshot, n'envoie rien")
     args = parser.parse_args()
 
-    config = _resolve_paths(load_config(args.config))
+    config = resolve_config_paths(load_config(args.config))
     if args.headful:
         config["headless"] = False
     engine = args.engine or ("botasaurus" if args.bot == "grok" else resolve_engine(args.bot, config))

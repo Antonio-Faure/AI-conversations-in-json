@@ -18,7 +18,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Set
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -33,29 +33,11 @@ from src.utils.etalon import (  # noqa: E402
     load_etalons,
     regressions,
 )
-from src.utils.file_utils import write_json_atomic  # noqa: E402
-
-
-def _resolve(value: Path | str) -> Path:
-    """Chemin relatif -> racine du depot (comme les chemins de config)."""
-    path = Path(value)
-    return path if path.is_absolute() else ROOT / path
-
-
-def _find_export(output_dir: Path, platform: str, conv_id: str) -> Optional[Path]:
-    directory = output_dir / platform
-    if not directory.is_dir():
-        return None
-    for path in sorted(directory.glob("*.json")):
-        if path.name == "conversation_list.json":
-            continue
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if payload.get("conversation_id") == conv_id:
-            return path
-    return None
+from src.utils.file_utils import (  # noqa: E402
+    find_export_by_id,
+    resolve_cli_path,
+    write_json_atomic,
+)
 
 
 def _format_row(label: str, metrics: Dict[str, int], lost: List[str]) -> str:
@@ -72,7 +54,7 @@ def main() -> int:
     parser.add_argument("--update", action="store_true",
                         help="memorise les metriques courantes comme baseline")
     args = parser.parse_args()
-    args.output = _resolve(args.output)
+    args.output = resolve_cli_path(args.output, ROOT)
 
     config_path = etalons_file(args.config)
     if config_path.name.endswith(".example.json"):
@@ -94,7 +76,7 @@ def main() -> int:
             label = etalon.get("label") or conv_id[:8]
             expected |= set(etalon.get("expected_capabilities") or [])
             baseline_union |= set(etalon.get("detected_capabilities") or [])
-            path = _find_export(args.output, platform, conv_id)
+            path = find_export_by_id(args.output, platform, conv_id)
             if path is None:
                 print(f"  [MANQUE] {label:22} aucun export pour {conv_id}")
                 problems += 1

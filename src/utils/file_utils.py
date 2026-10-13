@@ -101,6 +101,20 @@ def conversation_paths(output_root: Path, platform: str, stem: str) -> tuple[Pat
     return directory / f"{stem}.json", directory / f"{stem}.html"
 
 
+def resolve_cli_path(
+    value: Path | str, root: Path, *, expanduser: bool = False
+) -> Path:
+    """Chemin d'une option CLI : relatif -> `root` (racine du depot).
+
+    `root` est fourni par l'appelant (le module du script) pour que la
+    resolution suive sa propre racine, meme si un test la remplace.
+    """
+    path = Path(value)
+    if expanduser:
+        path = path.expanduser()
+    return path if path.is_absolute() else Path(root) / path
+
+
 # -- ecriture atomique -----------------------------------------------------------
 
 
@@ -224,6 +238,26 @@ def load_conversation_list(path: Path) -> Dict[str, Dict[str, Any]]:
         if cid:
             index[str(cid)] = entry
     return index
+
+
+def find_export_by_id(
+    output_dir: Path, platform: str, conversation_id: str
+) -> Optional[Path]:
+    """JSON d'export d'une conversation, retrouve par son id.
+
+    Les JSON non-conversation du dossier (`conversation_list.json`,
+    `api_health.json`) et les fichiers illisibles sont ignores.
+    """
+    directory = Path(output_dir) / platform
+    if not directory.is_dir():
+        return None
+    for path in sorted(directory.glob("*.json")):
+        if path.name in RESERVED_JSON_NAMES:
+            continue
+        payload = read_json(path, default=None)
+        if isinstance(payload, dict) and payload.get("conversation_id") == conversation_id:
+            return path
+    return None
 
 
 def save_conversation_list(

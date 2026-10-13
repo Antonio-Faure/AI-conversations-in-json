@@ -23,11 +23,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.orchestrator import load_config  # noqa: E402
-
-
-def _resolve(value) -> Path:
-    path = Path(value)
-    return path if path.is_absolute() else ROOT / path
+from src.utils.file_utils import (  # noqa: E402
+    CONVERSATION_LIST_NAME,
+    resolve_cli_path,
+)
 
 
 def main() -> int:
@@ -38,16 +37,16 @@ def main() -> int:
     args = parser.parse_args()
 
     config = load_config(ROOT / "config.yaml")
-    exports = _resolve(args.exports or config["output_dir"])
+    exports = resolve_cli_path(args.exports or config["output_dir"], ROOT)
     platforms = args.platform or sorted(
         d.name for d in exports.iterdir()
-        if d.is_dir() and (d / "conversation_list.json").exists()
+        if d.is_dir() and (d / CONVERSATION_LIST_NAME).exists()
     )
 
     candidates = []
     for platform in platforms:
         for json_path in (exports / platform).glob("*.json"):
-            if json_path.name == "conversation_list.json":
+            if json_path.name == CONVERSATION_LIST_NAME:
                 continue
             try:
                 data = json.loads(json_path.read_text(encoding="utf-8"))

@@ -367,6 +367,60 @@ def test_main_rappelle_la_reindexation_rag(tmp_path, monkeypatch, capsys):
     assert "rag_index.py --force" in out
 
 
+def test_reparse_one_statuts(tmp_path):
+    """`_reparse_one` : le statut retourne pilote les compteurs du rapport."""
+    json_path = _write_export(
+        tmp_path, "chatgpt", "sans-artefact",
+        {
+            "conversation_id": "c1",
+            "platform": "chatgpt",
+            "title": "T",
+            "url": "https://chatgpt.com/c/c1",
+            "messages": [{"role": "user", "texte": "bonjour"}],
+        },
+    )
+    assert reparse._reparse_one(
+        tmp_path, "chatgpt", json_path, {}, no_backup=True
+    ) == ["cleaned"]
+
+    notes = tmp_path / "chatgpt" / "notes.json"
+    notes.write_text(json.dumps({"note": "etranger"}), encoding="utf-8")
+    assert reparse._reparse_one(
+        tmp_path, "chatgpt", notes, {}, no_backup=True
+    ) == ["ignored"]
+
+    corrompu = tmp_path / "chatgpt" / "corrompu.json"
+    corrompu.write_text('{"conversation_id": ', encoding="utf-8")
+    assert reparse._reparse_one(
+        tmp_path, "chatgpt", corrompu, {}, no_backup=True
+    ) == ["failed"]
+
+
+def test_reparse_one_artefact_tronque_compte_aussi_le_mode(tmp_path):
+    """`kept` s'ajoute au mode de re-parse (compteurs du rapport inchanges)."""
+    json_path = _write_export(tmp_path, "grok", "t", _grok_conversation())
+    raw_dir = tmp_path / "grok" / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "t.json").write_text(
+        json.dumps({
+            "conversation": {
+                "conversationId": "g1",
+                "title": "T",
+                "createTime": "2026-05-01T09:00:00Z",
+                "modifyTime": "2026-05-01T09:01:00Z",
+            },
+            # scrape partiel : seule la reponse finale a ete recuperee
+            "responses": [
+                {"responseId": "r2", "sender": "assistant", "message": "Salut"},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    assert reparse._reparse_one(
+        tmp_path, "grok", json_path, {}, no_backup=True
+    ) == ["remapped", "kept"]
+
+
 def test_main_clean_backups_purge_explicite(tmp_path, monkeypatch, capsys):
     """`--clean-backups` : purge les `.json.bak`, jamais automatique."""
     json_path = _write_export(tmp_path, "grok", "t", _grok_conversation())
@@ -390,3 +444,44 @@ def test_main_clean_backups_purge_explicite(tmp_path, monkeypatch, capsys):
     assert not backup.exists()
     assert json_path.read_text(encoding="utf-8") == before
     assert "1 sauvegarde" in capsys.readouterr().out
+
+
+def test_main_reecrit_inventaire_au_format_partage(tmp_path, monkeypatch, capsys):
+    """L'inventaire repasse par le writer partage : tri + metadonnees."""
+    json_path = _write_export(
+        tmp_path, "chatgpt", "b",
+        {
+            "conversation_id": "b",
+            "platform": "chatgpt",
+            "title": "B",
+            "url": "https://chatgpt.com/c/b",
+            "last_message_at": "2026-01-02T00:00:00Z",
+            "messages": [{"role": "user", "texte": "bonjour"}],
+        },
+    )
+    list_path = tmp_path / "chatgpt" / "conversation_list.json"
+    list_path.write_text(
+        json.dumps({
+            "platform": "chatgpt",
+            "updated_at": "2020-01-01T00:00:00Z",
+            "count": 99,
+            "conversations": [
+                {"conversation_id": "a", "title": "A", "file": "a",
+                 "last_message_at": "2026-01-03T00:00:00Z"},
+                {"conversation_id": "b", "title": "B", "file": "b",
+                 "last_message_at": "2026-01-02T00:00:00Z"},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    assert _run_main(monkeypatch, tmp_path) == 0
+    data = json.loads(list_path.read_text(encoding="utf-8"))
+    assert data["platform"] == "chatgpt"
+    assert data["count"] == 2
+    assert data["updated_at"] != "2020-01-01T00:00:00Z"
+    assert [e["conversation_id"] for e in data["conversations"]] == ["a", "b"]
+    entry = next(e for e in data["conversations"] if e["conversation_id"] == "b")
+    assert entry["message_count"] == 1
+    assert entry["last_message_at"] == "2026-01-02T00:00:00Z"
+    assert json.loads(json_path.read_text(encoding="utf-8"))["messages"][0]["texte"] == "bonjour"
+    assert "1 nettoyes" in capsys.readouterr().out
