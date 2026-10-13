@@ -17,6 +17,20 @@ par sa **compatibilite** avec ce vocabulaire :
   - cardinalite (15 %) : part des listes communes dont le bucket n'excede pas
     celui de la reference (une liste plus courte est normale).
 
+Le score des trois composantes est ensuite **pondere par la couverture** :
+part des champs de reference presents dans le live, au niveau 1 (`$.cle`) et au
+niveau des items des listes de niveau 1 (`$.messages[].role`). Une couverture
+nulle (`{}`, `null`) ramene le score a 75 % (BREAK) ; une couverture partielle
+penalise proportionnellement, sans exiger que les branches profondes
+optionnelles soient toutes presentes (le vocabulaire est une union : un payload
+reel ne couvre qu'une petite partie des chemins).
+
+S'y ajoute un garde-fou de perte de structure : une liste de premier niveau
+presente mais **videe** (`$.messages = []` alors que la reference y voit des
+objets) perd toute sa branche d'items -> listee dans `emptied_lists` et
+penalisee de 20 points par liste. C'est le signe d'une conversation tronquee,
+pas d'une liste optionnelle plus courte.
+
 Tolerances volontaires (les conversations sont heterogenes) : `null` est
 compatible avec tout type, un type compose (`int+str+null`) accepte ses
 membres, une liste plus courte que le maximum vu est compatible, un tag de
@@ -35,12 +49,21 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 #: profondeur maxi de l'arbre (au-dela : noeud marque `cut`)
 MAX_DEPTH = 12
 #: nombre maxi d'items fusionnes par liste (forme des items)
 MAX_LIST_SAMPLES = 200
+
+#: poids du score de compatibilite (structure, types, cardinalite ; somme = 1)
+STRUCTURE_WEIGHT = 0.60
+TYPES_WEIGHT = 0.25
+CARDINALITY_WEIGHT = 0.15
+#: plancher multiplicatif quand la couverture de la reference est nulle
+COVERAGE_FLOOR = 0.75
+#: penalite par liste de premier niveau videe (branche d'items perdue)
+EMPTIED_LIST_PENALTY = 20.0
 
 #: buckets de cardinalite de liste (bornes incluses)
 _BUCKETS: Tuple[Tuple[int, int, str], ...] = (
@@ -223,10 +246,15 @@ def compare_shapes(ref: Dict[str, Any], live: Dict[str, Any]) -> Dict[str, Any]:
 
     Ponderation : structure (chemins du live connus de la reference) 60 %,
     types (chemins communs au type compatible) 25 %, cardinalite (listes
-    communes sans depassement de bucket) 15 %. `removed` (branches de la
-    reference non utilisees par le payload) est informatif : il ne penalise
-    pas le score. Les ecarts penalisants (`added`, `type_changes`,
-    `cardinality_changes`, `format_changes`) sont listes par chemin.
+    communes sans depassement de bucket) 15 %. Le score est ensuite pondere
+    par la couverture (champs de niveau 1 et champs directs des items de
+    listes de niveau 1 presents dans le live) : `score * (0.75 + 0.25 *
+    couverture)`, donc un payload vide ou tronque ne peut plus scorer 100 %.
+    Une liste de premier niveau presente mais videe alors que la reference y
+    voit des objets (`emptied_lists`) penalise de 20 points par liste : c'est
+    une perte de structure, pas une liste simplement plus courte. Les ecarts
+    penalisants (`added`, `type_changes`, `cardinality_changes`,
+    `format_changes`) et informatifs (`removed`) sont listes par chemin.
     """
     ref_flat = flatten_shape(ref)
     live_flat = flatten_shape(live)
@@ -256,6 +284,16 @@ def compare_shapes(ref: Dict[str, Any], live: Dict[str, Any]) -> Dict[str, Any]:
         and set(live_flat[p].get("fmt") or []) - set(ref_flat[p].get("fmt") or [])
     ]
 
+    # couverture : champs de reference presents dans le live (niveau 1 et
+    # champs directs des items de listes de niveau 1) ; un payload vide,
+    # tronque ou degarni ne peut plus scorer 100 %
+    ref_cov = coverage_paths(ref_flat)
+    live_cov = coverage_paths(live_flat)
+    coverage = (
+        100.0 * len(ref_cov & live_cov) / len(ref_cov) if ref_cov else 100.0
+    )
+    emptied_lists = _emptied_top_lists(ref_flat, live_flat)
+
     structure = (
         100.0 * len(compatible) / len(live_paths) if live_paths else 100.0
     )
@@ -265,24 +303,94 @@ def compare_shapes(ref: Dict[str, Any], live: Dict[str, Any]) -> Dict[str, Any]:
         if list_paths
         else 100.0
     )
-    score = 0.6 * structure + 0.25 * types + 0.15 * cardinality
+    score = (
+        STRUCTURE_WEIGHT * structure
+        + TYPES_WEIGHT * types
+        + CARDINALITY_WEIGHT * cardinality
+    )
+    # ponderation par la couverture (couverture nulle -> 75 % du score)
+    score *= COVERAGE_FLOOR + (1.0 - COVERAGE_FLOOR) * coverage / 100.0
+    score -= EMPTIED_LIST_PENALTY * len(emptied_lists)
+    score = max(0.0, min(100.0, score))
     return {
         "score": round(score, 2),
         "level": level_for(score),
         "structure": round(structure, 2),
         "types": round(types, 2),
         "cardinality": round(cardinality, 2),
+        "coverage": round(coverage, 2),
         "added": added,
         "removed": removed,
         "type_changes": type_changes,
         "cardinality_changes": cardinality_changes,
         "format_changes": format_changes,
+        "emptied_lists": emptied_lists,
         "counts": {
             "ref_paths": len(ref_paths),
             "live_paths": len(live_paths),
             "common": len(common),
         },
     }
+
+
+def top_level_paths(paths: Iterable[str]) -> set:
+    """Champs de premier niveau (`$.cle`) d'un ensemble de chemins aplatis.
+
+    Les chemins d'items de liste (`$.cle[]`, `$.cle[][]`...) et les chemins
+    profonds sont exclus : seuls les noms de champs comptent.
+    """
+    return {path for path in paths if _is_top_level(path)}
+
+
+def coverage_paths(flat: Dict[str, Dict[str, Any]]) -> set:
+    """Champs utilises pour la couverture d'une reference aplatie.
+
+    Niveau 1 (`$.cle`) plus les champs directs des items des listes de
+    niveau 1 (`$.messages[].role`) : les branches profondes restent exclues
+    (trop variables d'un payload a l'autre pour peser dans le score).
+    """
+    paths = top_level_paths(flat)
+    for path in list(paths):
+        node = flat.get(path) or {}
+        if "list" not in types_of(node):
+            continue
+        item = node.get("i")
+        if isinstance(item, dict):
+            for child in (item.get("c") or {}):
+                paths.add(f"{path}[].{child}")
+    return paths
+
+
+def _is_top_level(path: str) -> bool:
+    """Vrai pour un chemin de champ de premier niveau (`$.cle`)."""
+    return path.startswith("$.") and path.count(".") == 1 and "[]" not in path
+
+
+def _emptied_top_lists(
+    ref_flat: Dict[str, Dict[str, Any]], live_flat: Dict[str, Dict[str, Any]]
+) -> List[str]:
+    """Listes de premier niveau presentes mais videes (branche d'items perdue).
+
+    Detecte le cas `$.messages = []` : le conteneur est present, mais la
+    reference y voit des objets et la branche d'items (`$.messages[]`) a
+    entierement disparu du live. Une liste optionnelle videe dont les items
+    sont scalaires (`$.safe_urls`) n'est pas concernee.
+    """
+    emptied: List[str] = []
+    for path, ref_node in ref_flat.items():
+        if not _is_top_level(path) or "list" not in types_of(ref_node):
+            continue
+        live_node = live_flat.get(path)
+        if not isinstance(live_node, dict) or "list" not in types_of(live_node):
+            continue
+        if str(live_node.get("n") or "0") != "0":
+            continue
+        ref_item = ref_node.get("i")
+        if not isinstance(ref_item, dict) or not (ref_item.get("c") or {}):
+            continue
+        if path + "[]" in ref_flat and path + "[]" not in live_flat:
+            emptied.append(path)
+    return sorted(emptied)
 
 
 # -- construction de l'arbre ---------------------------------------------------

@@ -178,13 +178,78 @@ class TestCompare:
         assert report["score"] < 100
         assert report["structure"] < 100
 
-    def test_sous_ensemble_compatible(self):
-        """Un payload qui n'utilise qu'une partie du vocabulaire score 100."""
+    def test_sous_ensemble_penalise_par_la_couverture(self):
+        """Un payload qui n'utilise qu'une partie du vocabulaire n'est plus 100.
+
+        Les chemins du live restent tous connus (structure 100) mais la
+        couverture de la reference est partielle -> score pondere, WARN.
+        """
         ref = shape_of({"a": 1, "b": {"c": "x"}, "l": [1, 2, 3]})
         live = shape_of({"a": 5})
         report = compare_shapes(ref, live)
-        assert report["score"] == 100.0
+        assert report["structure"] == 100.0
+        assert report["coverage"] == 33.33
+        assert report["score"] < 95
+        assert report["level"] == "WARN"
         assert report["removed"]  # branches non utilisees, informatif
+
+    def test_payload_vide_break(self):
+        """`{}` / `null` ne peuvent plus scorer 100 (faux negatif historique)."""
+        ref = shape_of({"a": 1, "b": {"c": "x"}, "l": [1, 2, 3]})
+        for payload in ({}, None):
+            report = compare_shapes(ref, shape_of(payload))
+            assert report["coverage"] == 0.0
+            assert report["level"] == "BREAK"
+            assert report["score"] < 80
+
+    def test_liste_riche_videe_penalisee(self):
+        """`messages=[]` alors que la reference y voit des objets : BREAK."""
+        ref = shape_of(
+            {
+                "conversation_id": "x",
+                "title": "t",
+                "messages": [{"id": "m1", "role": "user", "texte": "bonjour"}],
+            }
+        )
+        live = shape_of(
+            {"conversation_id": "x", "title": "t", "messages": []}
+        )
+        report = compare_shapes(ref, live)
+        assert report["emptied_lists"] == ["$.messages"]
+        assert report["level"] == "BREAK"
+        assert report["score"] < 80
+
+    def test_messages_degarnis_warn(self):
+        """Items presents mais champs d'items disparus -> couverture d'items."""
+        ref = shape_of(
+            {
+                "conversation_id": "x",
+                "title": "t",
+                "messages": [
+                    {"id": "m1", "role": "user", "texte": "bonjour", "ts": "x"},
+                    {"id": "m2", "role": "assistant", "texte": "salut", "ts": "y"},
+                ],
+            }
+        )
+        live = shape_of(
+            {
+                "conversation_id": "x",
+                "title": "t",
+                "messages": [{"id": "m1"}, {"id": "m2"}],
+            }
+        )
+        report = compare_shapes(ref, live)
+        assert report["emptied_lists"] == []
+        assert report["coverage"] == 57.14  # 4 champs sur 7 (3 + 4 items)
+        assert report["level"] == "WARN"
+
+    def test_liste_optionnelle_scalaire_videe_toleree(self):
+        """Une liste d'items scalaires videe (`safe_urls`) n'est pas une perte."""
+        ref = shape_of({"a": 1, "safe_urls": ["https://x.test/"]})
+        live = shape_of({"a": 1, "safe_urls": []})
+        report = compare_shapes(ref, live)
+        assert report["emptied_lists"] == []
+        assert report["score"] == 100.0
 
     def test_null_compatible_avec_tout_type(self):
         ref = shape_of({"a": 1, "b": "x", "c": True})
@@ -264,9 +329,14 @@ class TestMergeShapes:
         merged = merge_shapes([shape_of({"a": 1, "b": "x"}), shape_of({"a": 2, "c": True})])
         assert merged["t"] == "object"
         assert set(merged["c"]) == {"a", "b", "c"}
-        # chaque payload d'origine est compatible avec l'union
-        assert compare_shapes(merged, shape_of({"a": 1, "b": "x"}))["score"] == 100.0
-        assert compare_shapes(merged, shape_of({"a": 2, "c": True}))["score"] == 100.0
+        # chaque payload d'origine est structurellement compatible avec l'union ;
+        # la couverture reste partielle (l'union contient aussi les branches de
+        # l'autre payload), donc le score n'est plus 100
+        for payload in ({"a": 1, "b": "x"}, {"a": 2, "c": True}):
+            report = compare_shapes(merged, shape_of(payload))
+            assert report["structure"] == 100.0
+            assert report["coverage"] < 100.0
+            assert report["score"] < 100.0
 
     def test_type_compose_et_enfants_conserves(self):
         merged = merge_shapes(

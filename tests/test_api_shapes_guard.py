@@ -82,6 +82,18 @@ def test_signature_coherente_avec_la_forme(platform):
     )
 
 
+@pytest.mark.parametrize("platform", PLATFORMS)
+def test_reference_detecte_les_payloads_vides(platform):
+    """Un payload vide/null doit sortir en BREAK (plus de faux negatif 100 %)."""
+    ref = _reference(platform)["shape"]
+    for payload in ({}, None):
+        report = compare_shapes(ref, shape_of(payload))
+        assert report["level"] == "BREAK", (
+            f"{platform}: payload vide score {report['score']} "
+            f"({report['level']}) au lieu de BREAK"
+        )
+
+
 def _etalon_payloads(platform: str) -> list:
     """Payloads bruts des conversations d'etalon (vide si absents localement)."""
     etalons = etalons_file()
