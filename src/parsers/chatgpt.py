@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import copy
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from bs4 import NavigableString
 
@@ -291,6 +291,125 @@ def _api_reference_images(text: str, metadata: Dict[str, Any]) -> str:
         elif markdown not in text:
             text = f"{text}\n\n{markdown}".strip() if text else markdown
     return text
+
+
+def _api_message_kind(raw: Dict[str, Any]) -> str:
+    """Genre d'un message du payload API (branche du mapper).
+
+    - ``context`` : role `system` ou `model_editable_context`, ignore ;
+    - ``reasoning_recap`` / ``thoughts`` : tours internes de raisonnement ;
+    - ``tool`` : sortie d'outil (images generees rattachees au tour) ;
+    - ``internal`` : `code`/`execution_output`/`system_error`, ignores ;
+    - ``other`` : type non textuel ou message masque, ignore ;
+    - ``text`` : message visible du fil (utilisateur ou assistant).
+    """
+    author = raw.get("author") or {}
+    role = str(author.get("role") or "").lower()
+    content = raw.get("content") or {}
+    ctype = str(content.get("content_type") or "")
+    metadata = raw.get("metadata") or {}
+    if role == "system" or ctype in API_CONTEXT_TYPES:
+        return "context"
+    if ctype == "reasoning_recap":
+        return "reasoning_recap"
+    if ctype == "thoughts":
+        return "thoughts"
+    if role == "tool":
+        return "tool"
+    if ctype in API_INTERNAL_TYPES:
+        return "internal"
+    if ctype not in ("text", "multimodal_text") or metadata.get(
+        "is_visually_hidden_from_conversation"
+    ):
+        return "other"
+    return "text"
+
+
+class _PendingAssistant:
+    """Extras d'un tour assistant API en attente de rattachement.
+
+    L'API emet les tours internes (raisonnement `thoughts`/`reasoning_recap`,
+    appels d'outil, images generees) autour du message assistant visible : ils
+    sont accumules ici puis rattaches au message courant (`merge`) ou a un
+    message de fin de tour (`flush`), avec les memes cles que le parseur DOM.
+    """
+
+    def __init__(self) -> None:
+        self.reasoning: List[str] = []
+        self.tools: List[str] = []
+        self.images: List[str] = []
+
+    def reset(self) -> None:
+        self.reasoning = []
+        self.tools = []
+        self.images = []
+
+    def add_reasoning(self, parts: List[str]) -> None:
+        self.reasoning.extend(parts)
+
+    def add_tools(self, parts: List[str]) -> None:
+        self.tools.extend(parts)
+
+    def add_images(self, parts: List[str]) -> None:
+        self.images.extend(parts)
+
+    def extras(self) -> Tuple[List[str], str, List[str]]:
+        """(images, raisonnement, outils) normalises (dedupliques, joints)."""
+        images = _dedupe(self.images)
+        reasoning = "\n\n".join(_dedupe(self.reasoning)).strip()
+        tools = _dedupe(self.tools)
+        return images, reasoning, tools
+
+    def merge(self, message: Any) -> None:
+        """Rattache les extras a un message assistant existant."""
+        images, reasoning, tools = self.extras()
+        if images:
+            block = "\n\n".join(images)
+            message.texte = (
+                f"{message.texte}\n\n{block}".strip() if message.texte else block
+            )
+        if reasoning and not message.reasoning:
+            message.reasoning = reasoning
+        if tools:
+            message.tools = _dedupe(list(message.tools or []) + tools)
+
+    def flush(
+        self,
+        messages: List[Any],
+        make_message: Callable[..., Any],
+        *,
+        before_user: bool = False,
+    ) -> None:
+        """Ferme le tour assistant en attente (images generees puis extras).
+
+        Appele avant un message utilisateur (une image generee par l'outil
+        appartient au tour assistant precedent) et en fin de conversation.
+        Sans image, les extras seuls ne sont rattaches qu'en fin de
+        conversation : un tour reduit a des extras est garde vide pour ne
+        pas fusionner les deux messages `user` encadrants (historique).
+        """
+        images, reasoning, tools = self.extras()
+        if before_user and not images:
+            self.reset()
+            return
+        if not images and not reasoning and not tools:
+            self.reset()
+            return
+        if messages and messages[-1].role == "assistant":
+            if not images:
+                self.reset()
+                return
+            self.merge(messages[-1])
+        else:
+            message = make_message(
+                "assistant", "\n\n".join(images), None, {"tokens": None}
+            )
+            if reasoning:
+                message.reasoning = reasoning
+            if tools:
+                message.tools = tools
+            messages.append(message)
+        self.reset()
 
 
 def merge_turn_snapshots(
@@ -579,85 +698,29 @@ class ChatGPTParser(BaseParser):
 
         messages: List[Any] = []
         models: List[str] = []
-        pending: Dict[str, List[str]] = {"reasoning": [], "tools": [], "images": []}
+        pending = _PendingAssistant()
         #: types de parts non telechargeables rencontres (audio/video de la voix)
         unsupported: set = set()
-
-        def reset() -> None:
-            for key in pending:
-                pending[key] = []
-
-        def flush_pending(*, before_user: bool = False) -> None:
-            """Ferme le tour assistant en attente (images generees puis extras).
-
-            Appele avant un message utilisateur (une image generee par l'outil
-            appartient au tour assistant precedent) et en fin de conversation.
-            Sans image, les extras seuls ne sont rattaches qu'en fin de
-            conversation : un tour reduit a des extras est garde vide pour ne
-            pas fusionner les deux messages `user` encadrants (historique).
-            """
-            images = _dedupe(pending["images"])
-            reasoning = "\n\n".join(_dedupe(pending["reasoning"])).strip()
-            tools = _dedupe(pending["tools"])
-            if before_user and not images:
-                reset()
-                return
-            if not images and not reasoning and not tools:
-                reset()
-                return
-            if messages and messages[-1].role == "assistant":
-                if not images:
-                    reset()
-                    return
-                message = messages[-1]
-                block = "\n\n".join(images)
-                message.texte = (
-                    f"{message.texte}\n\n{block}".strip() if message.texte else block
-                )
-                if reasoning and not message.reasoning:
-                    message.reasoning = reasoning
-                if tools:
-                    message.tools = _dedupe(list(message.tools or []) + tools)
-            else:
-                message = self.msg(
-                    "assistant", "\n\n".join(images), None, {"tokens": None}
-                )
-                if reasoning:
-                    message.reasoning = reasoning
-                if tools:
-                    message.tools = tools
-                messages.append(message)
-            reset()
 
         for raw in raw_messages:
             if not isinstance(raw, dict):
                 continue
-            author = raw.get("author") or {}
-            role = str(author.get("role") or "").lower()
             content = raw.get("content") or {}
-            ctype = str(content.get("content_type") or "")
             metadata = raw.get("metadata") or {}
-            hidden = bool(metadata.get("is_visually_hidden_from_conversation"))
-
-            if role == "system" or ctype in API_CONTEXT_TYPES:
+            kind = _api_message_kind(raw)
+            if kind in ("context", "internal", "other"):
                 continue
-            if ctype == "reasoning_recap":
-                pending["reasoning"].extend(_api_reasoning(content, metadata))
+            if kind == "reasoning_recap":
+                pending.add_reasoning(_api_reasoning(content, metadata))
                 continue
-            if ctype == "thoughts":
-                pending["reasoning"].extend(_api_reasoning(content, metadata))
-                pending["tools"].extend(_api_tools(content))
+            if kind == "thoughts":
+                pending.add_reasoning(_api_reasoning(content, metadata))
+                pending.add_tools(_api_tools(content))
                 continue
-            if role == "tool":
+            if kind == "tool":
                 # image generee par l'outil : le DOM la rend dans la reponse
-                if ctype == "multimodal_text":
-                    pending["images"].extend(
-                        _api_multimodal_images(content, metadata)
-                    )
-                continue
-            if ctype in API_INTERNAL_TYPES:
-                continue
-            if ctype not in ("text", "multimodal_text") or hidden:
+                if str(content.get("content_type") or "") == "multimodal_text":
+                    pending.add_images(_api_multimodal_images(content, metadata))
                 continue
 
             text = _normalize_api_math(
@@ -665,20 +728,20 @@ class ChatGPTParser(BaseParser):
             )
             text = _api_reference_images(text, metadata)
             message_id = str(raw.get("id") or "")
+            role = str((raw.get("author") or {}).get("role") or "").lower()
             if role == "user":
-                flush_pending(before_user=True)
+                pending.flush(messages, self.msg, before_user=True)
                 messages.append(
                     self.msg(
                         "user", text, raw.get("create_time"), {},
                         message_id=message_id,
                     )
                 )
-                reset()
+                pending.reset()
                 continue
-            if role != "assistant":
-                continue
-            if str(raw.get("recipient") or "all") != "all":
-                # reponse intermediaire (appel d'outil) : jamais un message du fil
+            if role != "assistant" or str(raw.get("recipient") or "all") != "all":
+                # role inconnu, ou reponse intermediaire (appel d'outil) :
+                # jamais un message du fil
                 continue
 
             slug = metadata.get("model_slug")
@@ -689,23 +752,12 @@ class ChatGPTParser(BaseParser):
                 "assistant", text, raw.get("create_time"), {"tokens": None},
                 message_id=message_id, model=slug,
             )
-            images = _dedupe(pending["images"])
-            if images:
-                block = "\n\n".join(images)
-                message.texte = (
-                    f"{message.texte}\n\n{block}".strip() if message.texte else block
-                )
-            reasoning = "\n\n".join(_dedupe(pending["reasoning"])).strip()
-            if reasoning:
-                message.reasoning = reasoning
-            tools = _dedupe(pending["tools"])
-            if tools:
-                message.tools = tools
+            pending.merge(message)
             sources = _api_sources(metadata)
             if sources:
                 message.sources = sources
             messages.append(message)
-            reset()
+            pending.reset()
 
         if not messages:
             raise ParseError("chatgpt api: aucun message exploitable")
@@ -713,14 +765,24 @@ class ChatGPTParser(BaseParser):
         # tour assistant reduit a des extras (erreur/quota) ou a une image
         # generee (fin de conversation) : on le garde pour ne pas fusionner les
         # deux messages `user` encadrants.
-        flush_pending()
+        pending.flush(messages, self.msg)
         if unsupported:
             log.debug(
                 "chatgpt api: parts non telechargeables ignorees %s (%s)",
                 sorted(unsupported),
                 data.get("conversation_id"),
             )
+        return self._api_finalize(messages, models, data, extra, conversation_id)
 
+    def _api_finalize(
+        self,
+        messages: List[Any],
+        models: List[str],
+        data: Dict[str, Any],
+        extra: Dict[str, Any],
+        conversation_id: Optional[str],
+    ) -> Conversation:
+        """Assemble la Conversation du mapper API (identifiant, modele, titre)."""
         conv_id = (
             conversation_id
             or data.get("conversation_id")
