@@ -28,7 +28,7 @@ import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import yaml
@@ -38,7 +38,7 @@ from .http_client import CookieAuthError
 
 from .browser import BrowserSession
 from .parsers.base import ParseError
-from .schema import ConversationRef, SchemaError
+from .schema import Conversation, ConversationRef, SchemaError
 from .services.base import (
     ApiShapeBreakError,
     BaseService,
@@ -421,66 +421,9 @@ class Orchestrator:
             conv, html = service.export_conversation_with_html(ref)
             # payload API brut (plateformes API) : equivalent du HTML brut
             raw_payload = service.take_raw_payload()
-        except BlockedError as exc:
-            log_fields(
-                log, logging.ERROR, f"{service.name}: challenge anti-bot",
-                extra={"conversation_id": ref.id, "error": str(exc)},
-            )
-            return "blocked"
-        except ConversationUnavailableError as exc:
-            log_fields(
-                log, logging.WARNING,
-                f"{service.name}: conversation indisponible (marquee)",
-                extra={"conversation_id": ref.id, "reason": str(exc)},
-            )
-            entry = index.get(ref.id)
-            if entry is not None:
-                entry["unavailable"] = True
-            result.skipped.append(ref.id)
-            return None
-        except EmptyConversationError as exc:
-            log_fields(
-                log, logging.WARNING, f"{service.name}: conversation ignoree",
-                extra={"conversation_id": ref.id, "reason": str(exc)},
-            )
-            result.skipped.append(ref.id)
-            return None
-        except ServiceNotLoggedIn as exc:
-            log_fields(
-                log, logging.ERROR, f"{service.name}: session perdue",
-                extra={"conversation_id": ref.id, "error": str(exc)},
-            )
-            result.failed.append(ref.id)
-            return "stop"
-        except RateLimitedError as exc:
-            log_fields(
-                log, logging.WARNING,
-                f"{service.name}: limite de debit (service arrete, reprise ulterieure)",
-                extra={"conversation_id": ref.id, "error": str(exc)},
-            )
-            result.skipped.append(ref.id)
-            result.skipped_reason = str(exc)
-            return "stop"
-        except ApiShapeBreakError as exc:
-            log_fields(
-                log, logging.WARNING,
-                f"{service.name}: rupture de forme API (service arrete)",
-                extra={"conversation_id": ref.id, "error": str(exc)},
-            )
-            result.skipped.append(ref.id)
-            result.skipped_reason = str(exc)
-            return "stop"
-        except (ParseError, SchemaError) as exc:
-            log_fields(
-                log, logging.ERROR, f"{service.name}: parse/validate echoue",
-                extra={"conversation_id": ref.id, "error": str(exc)},
-            )
-            result.failed.append(ref.id)
-            return None
-        except Exception:
-            log.exception(f"{service.name}: erreur inattendue sur {ref.id}")
-            result.failed.append(ref.id)
-            return None
+        except Exception as exc:  # noqa: BLE001
+            # classification des erreurs du service (voir `_scrape_error`)
+            return self._scrape_error(service, result, ref, index, exc)
 
         conv.exported_at = now_iso_z()
         conv.platform = service.name
@@ -498,6 +441,145 @@ class Orchestrator:
             stem = unique_filename(f"{stem}-conv", ref.id, used)
         used.setdefault(stem, ref.id)
 
+        status, appended, existing = self._write_outputs(
+            service, result, ref, conv, html, raw_payload, stem
+        )
+
+        if status == "kept":
+            # scrape partiel : l'archive conservee est le JSON existant ; les
+            # compteurs de l'inventaire doivent le refleter, pas le scrape
+            # courant (sinon message_count/date sont degrades)
+            kept = existing if isinstance(existing, dict) else {}
+            kept_messages = kept.get("messages") or []
+            inventory = {
+                "title": kept.get("title") or title,
+                "url": kept.get("url") or conv.url,
+                "message_count": len(kept_messages),
+                "last_message_at": kept.get("last_message_at")
+                or entry.get("last_message_at"),
+                "has_code": any(
+                    isinstance(message, dict) and message.get("code_blocks")
+                    for message in kept_messages
+                ),
+            }
+        else:
+            inventory = {
+                "title": title,
+                "url": conv.url,
+                "message_count": len(conv.messages),
+                "last_message_at": conv.last_message_at,
+                "has_code": conv.has_code,
+            }
+        index[ref.id] = {
+            "conversation_id": ref.id,
+            **inventory,
+            "scraped": True,
+            "file": stem,
+            "scraped_at": now_iso_z(),
+        }
+        log_fields(
+            log, 20, f"{service.name}: {status}",
+            extra={
+                "conversation_id": ref.id,
+                "messages": len(conv.messages),
+                "appended": appended,
+                "file": stem,
+            },
+        )
+        return None
+
+    def _scrape_error(
+        self,
+        service: BaseService,
+        result: ServiceResult,
+        ref: ConversationRef,
+        index: Dict[str, Dict[str, Any]],
+        exc: Exception,
+    ) -> Optional[str]:
+        """Effets d'une erreur d'export : log, compteurs, statut de reprise.
+
+        Reprend la classification de l'ancienne chaine `except` (meme ordre,
+        `ConversationUnavailableError` avant son parent `EmptyConversationError`) :
+        retourne 'blocked' (challenge anti-bot), 'stop' (session perdue, limite
+        de debit, rupture de forme API) ou None (conversation ignoree/echouee).
+        """
+        if isinstance(exc, BlockedError):
+            log_fields(
+                log, logging.ERROR, f"{service.name}: challenge anti-bot",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            return "blocked"
+        if isinstance(exc, ConversationUnavailableError):
+            log_fields(
+                log, logging.WARNING,
+                f"{service.name}: conversation indisponible (marquee)",
+                extra={"conversation_id": ref.id, "reason": str(exc)},
+            )
+            entry = index.get(ref.id)
+            if entry is not None:
+                entry["unavailable"] = True
+            result.skipped.append(ref.id)
+            return None
+        if isinstance(exc, EmptyConversationError):
+            log_fields(
+                log, logging.WARNING, f"{service.name}: conversation ignoree",
+                extra={"conversation_id": ref.id, "reason": str(exc)},
+            )
+            result.skipped.append(ref.id)
+            return None
+        if isinstance(exc, ServiceNotLoggedIn):
+            log_fields(
+                log, logging.ERROR, f"{service.name}: session perdue",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            result.failed.append(ref.id)
+            return "stop"
+        if isinstance(exc, RateLimitedError):
+            log_fields(
+                log, logging.WARNING,
+                f"{service.name}: limite de debit (service arrete, reprise ulterieure)",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            result.skipped.append(ref.id)
+            result.skipped_reason = str(exc)
+            return "stop"
+        if isinstance(exc, ApiShapeBreakError):
+            log_fields(
+                log, logging.WARNING,
+                f"{service.name}: rupture de forme API (service arrete)",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            result.skipped.append(ref.id)
+            result.skipped_reason = str(exc)
+            return "stop"
+        if isinstance(exc, (ParseError, SchemaError)):
+            log_fields(
+                log, logging.ERROR, f"{service.name}: parse/validate echoue",
+                extra={"conversation_id": ref.id, "error": str(exc)},
+            )
+            result.failed.append(ref.id)
+            return None
+        log.exception(f"{service.name}: erreur inattendue sur {ref.id}")
+        result.failed.append(ref.id)
+        return None
+
+    def _write_outputs(
+        self,
+        service: BaseService,
+        result: ServiceResult,
+        ref: ConversationRef,
+        conv: Conversation,
+        html: Optional[str],
+        raw_payload: Any,
+        stem: str,
+    ) -> Tuple[str, int, Any]:
+        """Ecrit les sorties d'un scrape : JSON fusionne, artefacts bruts, captures.
+
+        Met a jour les compteurs du resultat (`unchanged`/`exported`/`patched`).
+        Retourne ``(status, appended, existing)`` : ``status`` de la fusion JSON
+        (`written`/`unchanged`/`patched`/`kept`/`rewritten`), ``existing`` le JSON
+        deja sur disque (l'inventaire s'y refere en scrape partiel).
+        """
         json_path, html_path = conversation_paths(self.output_dir, service.name, stem)
         # images : telechargement local pendant que la session est encore ouverte
         try:
@@ -542,49 +624,7 @@ class Orchestrator:
                 )
             except Exception:  # noqa: BLE001
                 log.debug("capture des screenshots ignoree", exc_info=True)
-
-        if status == "kept":
-            # scrape partiel : l'archive conservee est le JSON existant ; les
-            # compteurs de l'inventaire doivent le refleter, pas le scrape
-            # courant (sinon message_count/date sont degrades)
-            kept = existing if isinstance(existing, dict) else {}
-            kept_messages = kept.get("messages") or []
-            inventory = {
-                "title": kept.get("title") or title,
-                "url": kept.get("url") or conv.url,
-                "message_count": len(kept_messages),
-                "last_message_at": kept.get("last_message_at")
-                or entry.get("last_message_at"),
-                "has_code": any(
-                    isinstance(message, dict) and message.get("code_blocks")
-                    for message in kept_messages
-                ),
-            }
-        else:
-            inventory = {
-                "title": title,
-                "url": conv.url,
-                "message_count": len(conv.messages),
-                "last_message_at": conv.last_message_at,
-                "has_code": conv.has_code,
-            }
-        index[ref.id] = {
-            "conversation_id": ref.id,
-            **inventory,
-            "scraped": True,
-            "file": stem,
-            "scraped_at": now_iso_z(),
-        }
-        log_fields(
-            log, 20, f"{service.name}: {status}",
-            extra={
-                "conversation_id": ref.id,
-                "messages": len(conv.messages),
-                "appended": appended,
-                "file": stem,
-            },
-        )
-        return None
+        return status, appended, existing
 
     def _select_targets(
         self,
