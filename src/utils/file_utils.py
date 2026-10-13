@@ -12,6 +12,14 @@ from typing import Any, Dict, Optional
 
 #: nom reserve du repertoire de sortie d'une plateforme
 CONVERSATION_LIST_NAME = "conversation_list.json"
+#: nom du rapport de forme API (non-conversation, meme dossier d'exports)
+API_HEALTH_NAME = "api_health.json"
+#: noms des JSON non-conversation d'un dossier d'exports
+RESERVED_JSON_NAMES = frozenset({CONVERSATION_LIST_NAME, API_HEALTH_NAME})
+#: stems reserves : une conversation ne doit jamais produire ces noms, sous
+#: peine d'ecraser l'inventaire (`conversation_list.json`) ou le rapport de
+#: forme API (`api_health.json`)
+RESERVED_STEMS = frozenset(Path(name).stem for name in RESERVED_JSON_NAMES)
 
 
 def now_iso_z() -> str:
@@ -56,6 +64,10 @@ def unique_filename(
     base = slugify(title or "", max_length)
     if base in ("untitled", ""):
         base = "conversation"
+    if base in RESERVED_STEMS:
+        # un titre qui slugifie en `conversation_list`/`api_health` ecraserait
+        # un fichier reserve du dossier d'exports : desambiguiser
+        base = f"{base}-conv"
     owner = used.get(base)
     if owner is None or owner == conversation_id:
         used[base] = conversation_id

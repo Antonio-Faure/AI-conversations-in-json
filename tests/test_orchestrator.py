@@ -117,6 +117,32 @@ class RawPayloadService(FakeService):
         return payload
 
 
+class PartialDomService(FakeService):
+    """Scrape partiel au 2e passage (prefixe) : JSON et artefacts a conserver."""
+
+    name = "partialdom"
+    partial = False
+
+    def export_conversation_with_html(self, ref):
+        n = 2 if PartialDomService.partial else 3
+        conv = make_conversation(self.name, ref.id, n=n, title=ref.title)
+        marker = "PARTIEL" if PartialDomService.partial else "COMPLET"
+        return conv, f"<html>{marker}</html>"
+
+
+class PartialRawService(RawPayloadService):
+    """Plateforme API : payload brut tronque au 2e passage."""
+
+    name = "partialraw"
+    partial = False
+
+    def export_conversation_with_html(self, ref):
+        n = 2 if PartialRawService.partial else 3
+        conv = make_conversation(self.name, ref.id, n=n, title=ref.title)
+        self._raw = {"conversation_id": ref.id, "n": n}
+        return conv, None
+
+
 class NoHtmlService(FakeService):
     """Service sans HTML ni payload (garde-fou : rien ne doit planter)."""
 
@@ -271,6 +297,8 @@ def _reset_fake_state():
     FakeService.instances = []
     BlockedDiscoveryService.calls = 0
     BlockedOnceConversation.calls = 0
+    PartialDomService.partial = False
+    PartialRawService.partial = False
     yield
 
 
@@ -819,3 +847,97 @@ class TestSmartJson:
         new = {"conversation_id": "c", "messages": [{"texte": "a"}]}
         _, status, _ = merge_conversation_json(None, new)
         assert status == "written"
+
+
+class TestScrapePartiel:
+    """Un scrape partiel (`kept`) ne doit pas degrader l'archive ni ses artefacts."""
+
+    def test_kept_conserve_json_artefacts_et_inventaire(self, workdir):
+        tmp = workdir
+        registry = {"partialdom": PartialDomService, "partialraw": PartialRawService}
+        orch, _ = make_orchestrator(tmp, registry)
+        orch.run(mode="monthly")
+        html_path = tmp / "exports" / "partialdom" / "conversation-1.html"
+        raw_path = tmp / "exports" / "partialraw" / "raw" / "conversation-1.json"
+        assert "COMPLET" in html_path.read_text(encoding="utf-8")
+        assert json.loads(raw_path.read_text(encoding="utf-8"))["n"] == 3
+
+        PartialDomService.partial = True
+        PartialRawService.partial = True
+        orch2, _ = make_orchestrator(tmp, registry)
+        summary = orch2.run(mode="monthly")
+
+        # scrape partiel -> archive conservee (statut "kept")
+        assert summary.services["partialdom"].unchanged == ["c01", "c02", "c03"]
+        assert summary.services["partialraw"].unchanged == ["c01", "c02", "c03"]
+        dom_path = tmp / "exports" / "partialdom" / "conversation-1.json"
+        assert len(json.loads(dom_path.read_text(encoding="utf-8"))["messages"]) == 3
+        # artefacts bruts intacts (source de re-parse)
+        assert "COMPLET" in html_path.read_text(encoding="utf-8")
+        assert json.loads(raw_path.read_text(encoding="utf-8"))["n"] == 3
+        # inventaire coherent avec le JSON conserve, pas le scrape partiel
+        entry = next(
+            c for c in read_list(tmp, "partialdom")["conversations"]
+            if c["conversation_id"] == "c01"
+        )
+        assert entry["message_count"] == 3
+        assert entry["last_message_at"] == "2026-05-03T09:00:00Z"
+
+    def test_kept_sans_artefact_existant_ne_plante_pas(self, workdir):
+        """`kept` sur un JSON existant sans HTML/payload : rien a preserver."""
+        tmp = workdir
+        registry = {"partialdom": PartialDomService}
+        orch, _ = make_orchestrator(tmp, registry)
+        orch.run(mode="monthly")
+        html_path = tmp / "exports" / "partialdom" / "conversation-1.html"
+        html_path.unlink()  # artefact absent
+
+        PartialDomService.partial = True
+        orch2, _ = make_orchestrator(tmp, registry)
+        result = orch2.run(mode="monthly").services["partialdom"]
+        assert result.unchanged == ["c01", "c02", "c03"]
+        assert not html_path.exists()
+
+
+class TestSlugReserve:
+    """Un titre qui slugifie en fichier reserve doit etre desambiguise."""
+
+    def test_unique_filename_reserve_les_noms_non_conversation(self):
+        from src.utils.file_utils import unique_filename
+
+        used: dict = {}
+        assert unique_filename("conversation_list", "c1", used) == "conversation_list-conv"
+        assert unique_filename("api_health", "c2", used) == "api_health-conv"
+        # un titre voisin mais different n'est pas touche
+        assert unique_filename("Conversation List", "c3", used) == "conversation-list"
+
+    @pytest.mark.parametrize("title", ["conversation_list", "api_health"])
+    def test_titre_reserve_archive_et_retrouve_la_conversation(self, workdir, title):
+        from src.utils.file_utils import RESERVED_STEMS
+
+        tmp = workdir
+
+        class Reserved(FakeService):
+            name = "reserved"
+
+            def export_conversation_with_html(self, ref):
+                return make_conversation("reserved", ref.id, title=title), "<html/>"
+
+        orch, _ = make_orchestrator(tmp, {"reserved": Reserved})
+        result = orch.run(mode="monthly").services["reserved"]
+        assert len(result.exported) == 3
+
+        # l'inventaire reste l'inventaire ; chaque conversation a son JSON
+        listing = read_list(tmp, "reserved")
+        assert listing["count"] == 3
+        directory = tmp / "exports" / "reserved"
+        stems = [entry["file"] for entry in listing["conversations"]]
+        assert len(stems) == len(set(stems)) == 3
+        assert all(stem not in RESERVED_STEMS for stem in stems)
+        assert all((directory / f"{stem}.json").exists() for stem in stems)
+
+        # 2e passage : conversations retrouvees (plus de rescrape en boucle)
+        orch2, _ = make_orchestrator(tmp, {"reserved": Reserved})
+        second = orch2.run(mode="monthly").services["reserved"]
+        assert second.exported == []
+        assert sorted(second.unchanged) == ["c01", "c02", "c03"]

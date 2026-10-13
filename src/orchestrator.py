@@ -51,6 +51,7 @@ from .services.base import (
     ShapeMonitor,
 )
 from .utils.file_utils import (
+    RESERVED_STEMS,
     conversation_list_path,
     conversation_paths,
     load_conversation_list,
@@ -478,6 +479,10 @@ class Orchestrator:
         entry = index.get(ref.id) or {}
         title = conv.title or entry.get("title") or ref.title or ""
         stem = entry.get("file") or unique_filename(title, ref.id, used)
+        if stem in RESERVED_STEMS:
+            # stem produit par une ancienne version (titre `conversation_list` ou
+            # `api_health`) : le reparer pour ne pas ecraser un fichier reserve
+            stem = unique_filename(f"{stem}-conv", ref.id, used)
         used.setdefault(stem, ref.id)
 
         json_path, html_path = conversation_paths(self.output_dir, service.name, stem)
@@ -503,16 +508,19 @@ class Orchestrator:
             result.exported.append(json_path)
             if status == "patched":
                 result.patched.append(ref.id)
-        # HTML : plateformes DOM uniquement, toujours ecrase (rendu). Les
-        # plateformes API n'en produisent plus (html=None) : un .html residuel
-        # d'un ancien scrape DOM est supprime (bascule propre vers le JSON).
-        if html is not None:
-            write_text_atomic(html_path, html)
-        elif html_path.exists():
-            html_path.unlink()
-        # payload API brut : archive a chaque scrape, comme l'etait le HTML
-        if raw_payload is not None:
-            save_raw_payload(self.output_dir, service.name, stem, raw_payload)
+        # HTML : plateformes DOM uniquement (rendu). Les plateformes API n'en
+        # produisent plus (html=None) : un .html residuel d'un ancien scrape DOM
+        # est supprime (bascule propre vers le JSON). Sur scrape partiel (`kept`)
+        # les artefacts bruts ne sont pas touches : ils sont la source de
+        # re-parse (invariant AGENTS.md) et le JSON conserve est plus complet.
+        if status != "kept":
+            if html is not None:
+                write_text_atomic(html_path, html)
+            elif html_path.exists():
+                html_path.unlink()
+            # payload API brut : archive a chaque scrape, comme l'etait le HTML
+            if raw_payload is not None:
+                save_raw_payload(self.output_dir, service.name, stem, raw_payload)
         # screenshots par message (optionnel ; session encore ouverte)
         if self.config.get("screenshots"):
             try:
@@ -522,13 +530,34 @@ class Orchestrator:
             except Exception:  # noqa: BLE001
                 log.debug("capture des screenshots ignoree", exc_info=True)
 
+        if status == "kept":
+            # scrape partiel : l'archive conservee est le JSON existant ; les
+            # compteurs de l'inventaire doivent le refleter, pas le scrape
+            # courant (sinon message_count/date sont degrades)
+            kept = existing if isinstance(existing, dict) else {}
+            kept_messages = kept.get("messages") or []
+            inventory = {
+                "title": kept.get("title") or title,
+                "url": kept.get("url") or conv.url,
+                "message_count": len(kept_messages),
+                "last_message_at": kept.get("last_message_at")
+                or entry.get("last_message_at"),
+                "has_code": any(
+                    isinstance(message, dict) and message.get("code_blocks")
+                    for message in kept_messages
+                ),
+            }
+        else:
+            inventory = {
+                "title": title,
+                "url": conv.url,
+                "message_count": len(conv.messages),
+                "last_message_at": conv.last_message_at,
+                "has_code": conv.has_code,
+            }
         index[ref.id] = {
             "conversation_id": ref.id,
-            "title": title,
-            "url": conv.url,
-            "message_count": len(conv.messages),
-            "last_message_at": conv.last_message_at,
-            "has_code": conv.has_code,
+            **inventory,
             "scraped": True,
             "file": stem,
             "scraped_at": now_iso_z(),
