@@ -249,10 +249,23 @@ class BaseService(ABC):
 
     # -- monitoring de forme API -----------------------------------------------
 
+    #: True si le chemin API est actif quand `services.<name>.api` est absent
+    #: (opt-in pour ChatGPT/Gemini, actif par defaut pour Claude/Mistral)
+    api_default: bool = False
+
     def _api_config(self) -> Dict[str, Any]:
         """Config du service (`services.<name>` de la config globale)."""
         services = (self.config or {}).get("services") or {}
         return services.get(self.name) or {}
+
+    @property
+    def api_enabled(self) -> bool:
+        """True si le chemin API est actif (`services.<name>.api`).
+
+        Le defaut depend du service (`api_default`) ; Perplexity surcharge pour
+        son repli DOM opt-in (`services.perplexity.dom: true`).
+        """
+        return bool(self._api_config().get("api", self.api_default))
 
     def record_api_shape(self, payload: Any) -> Optional[Dict[str, Any]]:
         """Hook de monitoring : forme d'un payload API vs reference versionnee.

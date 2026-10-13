@@ -448,6 +448,8 @@ return (function(){
 class MistralService(BaseService):
     name = "mistral"
     home_url = BASE + "/work"
+    #: chemin API actif par defaut (`services.mistral.api: false` -> DOM)
+    api_default = True
 
     sidebar_ready_selectors = ("a[href^='/work/']", "a[href^='/chat/']")
     # pas de selecteur href*=login : les conversations peuvent contenir de tels
@@ -482,16 +484,6 @@ class MistralService(BaseService):
         return normalize_conversation_url(ref.url) or f"{BASE}/work/{ref.id}"
 
     # -- chemin API (defaut) -----------------------------------------------------
-
-    def _api_config(self) -> Dict[str, Any]:
-        """Config du service (`services.mistral` de la config globale)."""
-        services = (self.config or {}).get("services") or {}
-        return services.get(self.name) or {}
-
-    @property
-    def api_enabled(self) -> bool:
-        """True si le chemin API est actif (defaut ; `api: false` -> DOM)."""
-        return bool(self._api_config().get("api", True))
 
     def _api_client(self) -> _MistralHttpClient:
         """Client HTTP de l'API (cookies de `cookies/mistral.json`).

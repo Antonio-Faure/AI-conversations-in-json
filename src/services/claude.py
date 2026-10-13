@@ -374,6 +374,8 @@ return (function(){
 class ClaudeService(BaseService):
     name = "claude"
     home_url = "https://claude.ai/chats"
+    #: chemin API actif par defaut (`services.claude.api: false` -> DOM)
+    api_default = True
 
     sidebar_ready_selectors = (
         "a[href*='/chat/']",
@@ -401,16 +403,6 @@ class ClaudeService(BaseService):
         return ClaudeParser()
 
     # -- chemin API (defaut) ---------------------------------------------------
-
-    def _api_config(self) -> Dict[str, Any]:
-        """Config du service (`services.claude` de la config globale)."""
-        services = (self.config or {}).get("services") or {}
-        return services.get(self.name) or {}
-
-    @property
-    def api_enabled(self) -> bool:
-        """True si le chemin API est actif (defaut ; `services.claude.api: false`)."""
-        return bool(self._api_config().get("api", True))
 
     def _api_client(self) -> _ClaudeHttpClient:
         """Client HTTP de l'API, cookies mint une fois via la session navigateur.

@@ -628,16 +628,6 @@ class ChatGPTService(BaseService):
 
     # -- chemin API (opt-in) ---------------------------------------------------
 
-    def _api_config(self) -> Dict[str, Any]:
-        """Config du service (`services.chatgpt` de la config globale)."""
-        services = (self.config or {}).get("services") or {}
-        return services.get(self.name) or {}
-
-    @property
-    def api_enabled(self) -> bool:
-        """True si le chemin API est active (`services.chatgpt.api: true`)."""
-        return bool(self._api_config().get("api"))
-
     def _api_client(self) -> _ChatGPTHttpClient:
         """Client HTTP de l'API, token mint une fois via la session navigateur.
 

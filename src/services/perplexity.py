@@ -474,6 +474,8 @@ class PerplexityService(BaseService):
     home_url = "https://www.perplexity.ai/"
     #: la home ne montre que le recents ; la library liste tout
     discover_url = "https://www.perplexity.ai/library"
+    #: chemin API actif par defaut (`services.perplexity.dom: true` -> DOM)
+    api_default = True
 
     #: endpoint + hash de la persisted query LibraryRecentThreadsPaginationQuery
     GRAPHQL_ENDPOINT = "/rest/perplexity_ask/graphql"
@@ -503,11 +505,6 @@ class PerplexityService(BaseService):
 
     # -- chemin API (defaut) ----------------------------------------------------
 
-    def _api_config(self) -> Dict[str, Any]:
-        """Config du service (`services.perplexity` de la config globale)."""
-        services = (self.config or {}).get("services") or {}
-        return services.get(self.name) or {}
-
     @property
     def api_enabled(self) -> bool:
         """True si le chemin API est actif (defaut), False pour le repli DOM.
@@ -515,10 +512,9 @@ class PerplexityService(BaseService):
         Le DOM est le repli **opt-in** : `services.perplexity.dom: true` (ou
         `api: false`) force l'ancien chemin navigateur.
         """
-        cfg = self._api_config()
-        if cfg.get("dom"):
+        if self._api_config().get("dom"):
             return False
-        return bool(cfg.get("api", True))
+        return super().api_enabled
 
     def _api_client(self) -> _PerplexityHttpClient:
         """Client HTTP de l'API, cookies mints une fois via la session navigateur.
