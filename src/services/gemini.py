@@ -26,6 +26,7 @@ from ..parsers.base import ParseError
 from ..parsers.gemini import TURN_SELECTOR, GeminiParser, merge_turn_fragments
 from ..schema import ConversationRef, normalize_timestamp
 from ..utils.logging import get_logger
+from .api_client import CookieHttpClient
 from .base import (
     BaseService,
     RateLimitedError,
@@ -81,15 +82,6 @@ def _domain_matches(host: str, domain: str) -> bool:
     """Vrai si le cookie (domaine ``.google.com``) s'applique a l'hote."""
     domain = domain.lstrip(".")
     return host == domain or host.endswith("." + domain)
-
-
-def _retry_after_s(headers: Any) -> Optional[float]:
-    """`Retry-After` numerique d'une reponse HTTP (None sinon)."""
-    try:
-        value = (headers or {}).get("Retry-After")
-        return float(value) if value else None
-    except (TypeError, ValueError):
-        return None
 
 
 class _ApiAuthError(RuntimeError):
@@ -149,14 +141,21 @@ def _soft_error_code(text: str) -> Optional[int]:
     return int(match.group(1)) if match else None
 
 
-class _GeminiHttpClient:
+class _GeminiHttpClient(CookieHttpClient):
     """Requetes `batchexecute` authentifiees (cookies du profil + jetons).
 
     Les jetons (`at`, `f.sid`, `bl`) sont extraits une fois de la page
     connectee par le service ; les appels suivants sont du HTTP pur. L'en-tete
     `Cookie` est filtre par domaine comme le fait Chromium (un en-tete complet
-    melangeant les domaines fait repondre 401).
+    melangeant les domaines fait repondre 401). Le transport RPC (`post`/`rpc`)
+    reste specifique a Gemini ; seul le backoff 429 vient du client commun.
     """
+
+    service = "gemini"
+    _log = log
+    retry_attempts = API_RETRY_ATTEMPTS
+    retry_wait_s = API_RETRY_WAIT_S
+    retry_wait_max_s = API_RETRY_WAIT_MAX_S
 
     def __init__(
         self,
@@ -167,13 +166,16 @@ class _GeminiHttpClient:
         accept_language: str = "en-US,en;q=0.9",
         timeout_s: int = 45,
     ):
+        super().__init__(
+            None,
+            user_agent=user_agent,
+            accept_language=accept_language,
+            timeout_s=timeout_s,
+        )
         self.cookies = list(cookies or [])
         self.at = str(tokens.get("at") or "")
         self.sid = str(tokens.get("sid") or "")
         self.bl = str(tokens.get("bl") or "")
-        self.user_agent = user_agent
-        self.accept_language = accept_language
-        self.timeout_s = timeout_s
         self._reqid = random.randint(100000, 900000)
 
     def _cookie_header(self, url: str) -> str:
@@ -197,28 +199,6 @@ class _GeminiHttpClient:
             "Referer": API_BASE + "/",
             "X-Same-Domain": "1",
         }
-
-    def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
-        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
-
-        `Retry-After` est respecte mais plafonne : un en-tete de plusieurs
-        heures ne doit pas endormir le run.
-        """
-        if attempt + 1 >= API_RETRY_ATTEMPTS:
-            return False
-        wait_s = max(
-            0.0,
-            min(
-                API_RETRY_WAIT_MAX_S,
-                _retry_after_s(headers) or API_RETRY_WAIT_S * (2**attempt),
-            ),
-        )
-        log.warning(
-            "gemini: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
-            wait_s, attempt + 1, API_RETRY_ATTEMPTS, url,
-        )
-        time.sleep(wait_s)
-        return True
 
     def _wait_soft_error(self, attempt: int, code: Optional[int]) -> bool:
         """Attend (backoff) apres une erreur applicative transitoire."""
