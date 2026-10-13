@@ -105,6 +105,7 @@ class GrokService(BaseService):
     def list_conversations(self, limit: Optional[int] = None) -> List[ConversationRef]:
         refs: Dict[str, ConversationRef] = {}
         token: Optional[str] = None
+        seen_tokens: set = set()
         try:
             for _ in range(MAX_PAGES):
                 url = CONVERSATIONS_URL.format(size=PAGE_SIZE)
@@ -133,6 +134,10 @@ class GrokService(BaseService):
                 token = data.get("nextPageToken") or None
                 if not token or not conversations:
                     break
+                if token in seen_tokens:
+                    # pageToken identique renvoye : arret immediat (garde-fou)
+                    break
+                seen_tokens.add(token)
         except CookieAuthError as exc:
             raise ServiceNotLoggedIn(str(exc)) from exc
         return list(refs.values())

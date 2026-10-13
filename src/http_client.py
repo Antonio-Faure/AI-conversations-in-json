@@ -8,16 +8,37 @@ cookies de session (captures via `run.py --login grok`). Ce client minimal
 from __future__ import annotations
 
 import json
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional, Tuple
 
+from .utils.logging import get_logger
+
+log = get_logger("http_client")
+
 DEFAULT_USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 )
+
+#: 429 : attente et nouvel essai (Retry-After plafonne puis exponentiel)
+RETRY_ATTEMPTS = 6
+#: attente de base sur 429 (secondes), doublee a chaque tentative
+RETRY_WAIT_S = 30
+#: plafond de l'attente sur 429 (secondes)
+RETRY_WAIT_MAX_S = 300
+
+
+def _retry_after_s(headers: Any) -> Optional[float]:
+    """`Retry-After` numerique d'une reponse HTTP (None sinon)."""
+    try:
+        value = (headers or {}).get("Retry-After")
+        return float(value) if value else None
+    except (TypeError, ValueError):
+        return None
 
 
 class CookieAuthError(RuntimeError):
@@ -103,22 +124,56 @@ class CookieClient:
         headers["Cookie"] = self.cookie_header
         return headers
 
+    def _wait_429(self, attempt: int, headers: Any, url: str) -> bool:
+        """Attend (backoff) avant un nouvel essai apres un 429 ; False sinon.
+
+        `Retry-After` est respecte mais plafonne : un en-tete de plusieurs
+        heures ne doit pas endormir le run.
+        """
+        if attempt + 1 >= RETRY_ATTEMPTS:
+            return False
+        wait_s = max(
+            0.0,
+            min(
+                RETRY_WAIT_MAX_S,
+                _retry_after_s(headers) or RETRY_WAIT_S * (2**attempt),
+            ),
+        )
+        log.warning(
+            "%s: HTTP 429, nouvel essai dans %.0fs (%s/%s) %s",
+            self.service, wait_s, attempt + 1, RETRY_ATTEMPTS, url,
+        )
+        time.sleep(wait_s)
+        return True
+
     def get(self, url: str, accept: str = "application/json, text/plain, */*") -> Tuple[int, bytes]:
-        request = urllib.request.Request(url, headers=self._headers(accept, url=url))
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                return response.status, response.read()
-        except urllib.error.HTTPError as exc:
-            return exc.code, exc.read() or b""
-        except urllib.error.URLError as exc:
-            raise RuntimeError(f"{self.service}: requete echouee ({url}): {exc}") from exc
+        """GET avec cookies ; sur 429, attend et reessaie (limite de rafale)."""
+        for attempt in range(RETRY_ATTEMPTS):
+            request = urllib.request.Request(url, headers=self._headers(accept, url=url))
+            try:
+                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+                    return response.status, response.read()
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
+                    continue
+                return exc.code, exc.read() or b""
+            except urllib.error.URLError as exc:
+                raise RuntimeError(f"{self.service}: requete echouee ({url}): {exc}") from exc
+        raise RuntimeError(f"{self.service}: 429 persistant sur {url}")
 
     def get_json(self, url: str) -> Any:
         status, raw = self.get(url)
-        if status == 401:
+        if status in (401, 403):
             raise CookieAuthError(
-                f"{self.service}: non authentifie (401) -> `run.py --login {self.service}`"
+                f"{self.service}: non authentifie (HTTP {status}) -> "
+                f"`run.py --login {self.service}`"
             )
+        if status == 429:
+            # import tardif : `services.base` tire les services, qui importent
+            # ce module (eviter le cycle d'imports)
+            from .services.base import RateLimitedError
+
+            raise RateLimitedError(f"{self.service}: 429 persistant sur {url}")
         if status != 200:
             raise RuntimeError(f"{self.service}: HTTP {status} sur {url}")
         try:

@@ -70,3 +70,15 @@ def test_export_sans_html_et_payload_brut(tmp_path):
     assert payload == {"conversation": META, "responses": RESPONSES}
     # consomme : un export ulterieur ne le reecrit pas
     assert service.take_raw_payload() is None
+
+
+def test_decouverte_page_token_repete_arrete(tmp_path):
+    """`nextPageToken` identique renvoye : arret au 2e passage, pas 200 requetes."""
+    page = {
+        "conversations": [{"conversationId": "g1", "title": "T"}],
+        "nextPageToken": "tok-fige",
+    }
+    service = make_service(tmp_path, [page, page])
+    refs = service.list_conversations()
+    assert [ref.id for ref in refs] == ["g1"]
+    assert len(service.http.calls) == 2

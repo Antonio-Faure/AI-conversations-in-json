@@ -11,7 +11,8 @@ from pathlib import Path
 
 import pytest
 
-from src.http_client import CookieClient, host_in_domains
+from src.http_client import CookieAuthError, CookieClient, host_in_domains
+from src.services.base import RateLimitedError
 from src.services.grok import COOKIE_HOSTS as GROK_HOSTS, GrokService
 from src.services.mistral import (
     COOKIE_HOSTS as MISTRAL_HOSTS,
@@ -116,6 +117,70 @@ class TestGrokFetchSansFuite:
         assert _cookie_of(
             capture_requests, "https://assets.grok.com/x/content"
         ) == "sso=secret"
+
+
+class TestCookieClientRetry:
+    """429 : attente + nouvel essai ; 403 : erreur d'authentification (audit F4)."""
+
+    def test_429_transitoire_reessaie(self, tmp_path, monkeypatch):
+        import time as time_module
+        import urllib.error
+        import urllib.request
+
+        cookies = _write_cookies(tmp_path, "grok", "sso", "secret")
+        calls = {"n": 0}
+        sleeps = []
+
+        def fake_urlopen(request, timeout=None):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise urllib.error.HTTPError(
+                    request.full_url, 429, "Too Many Requests",
+                    {"Retry-After": "7"}, None,
+                )
+            return _FakeResponse(b"{}")
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        monkeypatch.setattr(time_module, "sleep", sleeps.append)
+        client = CookieClient("grok", cookies, cookie_domains=GROK_HOSTS)
+        status, raw = client.get("https://grok.com/rest/app-chat/conversations")
+        assert status == 200 and raw == b"{}"
+        assert calls["n"] == 2
+        assert sleeps == [7.0]  # Retry-After respecte
+
+    def test_429_persistant_leve_rate_limited(self, tmp_path, monkeypatch):
+        import time as time_module
+        import urllib.error
+        import urllib.request
+
+        cookies = _write_cookies(tmp_path, "grok", "sso", "secret")
+
+        def fake_urlopen(request, timeout=None):
+            raise urllib.error.HTTPError(
+                request.full_url, 429, "Too Many Requests", {}, None
+            )
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        monkeypatch.setattr(time_module, "sleep", lambda s: None)
+        client = CookieClient("grok", cookies, cookie_domains=GROK_HOSTS)
+        with pytest.raises(RateLimitedError):
+            client.get_json("https://grok.com/rest/app-chat/conversations")
+
+    def test_403_leve_cookie_auth_error(self, tmp_path, monkeypatch):
+        import urllib.error
+        import urllib.request
+
+        cookies = _write_cookies(tmp_path, "grok", "sso", "secret")
+
+        def fake_urlopen(request, timeout=None):
+            raise urllib.error.HTTPError(
+                request.full_url, 403, "Forbidden", {}, None
+            )
+
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        client = CookieClient("grok", cookies, cookie_domains=GROK_HOSTS)
+        with pytest.raises(CookieAuthError):
+            client.get_json("https://grok.com/rest/app-chat/conversations")
 
 
 class _FakeSession:
