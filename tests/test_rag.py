@@ -198,9 +198,35 @@ def test_keyword_score_et_tokenize():
     from src.rag.search import keyword_score, tokenize
 
     assert tokenize("Serveur Minecraft, serveur !") == ["serveur", "minecraft"]
+    # elision francaise : l'apostrophe separe les tokens
+    assert tokenize("l'IA d'aujourd'hui") == ["ia", "aujourd", "hui"]
     assert keyword_score("Un serveur minecraft", ["serveur", "minecraft"]) == 1.0
     assert keyword_score("Un serveur web", ["serveur", "minecraft"]) == 0.5
     assert keyword_score("exact phrase ici", ["phrase", "ici"], phrase="exact phrase") > 0.5
+
+
+def test_keyword_score_token_entier():
+    """Le mot-cle matche un token entier, pas une sous-chaine."""
+    from src.rag.search import keyword_score
+
+    # faux positifs de la sous-chaine : « ia » dans « maison » / « social »
+    assert keyword_score("une maison ancienne", ["ia"]) == 0.0
+    assert keyword_score("un réseau social", ["ia"]) == 0.0
+    assert keyword_score("l'IA générative", ["ia"]) == 1.0
+    # token entier : « serveur » ne matche pas « serveurs »
+    assert keyword_score("deux serveurs web", ["serveur"]) == 0.0
+    # casse et accents
+    assert keyword_score("LES DONNÉES du capteur", ["donnees"]) == 1.0
+    assert keyword_score("les donnees du capteur", ["données"]) == 1.0
+    assert keyword_score("SERVEUR", ["serveur"]) == 1.0
+
+
+def test_keyword_score_phrase_exacte_sans_accents():
+    from src.rag.search import keyword_score
+
+    assert keyword_score("la théorie des cordes", ["theorie"], phrase="theorie des cordes") == 1.0
+    # bonus phrase seul (terme absent) : phrase matchee malgre les accents
+    assert keyword_score("une théorie ancienne", ["physique"], phrase="une theorie") == 0.3
 
 
 def test_combined_search_semantique_et_mots_cles(tmp_path):

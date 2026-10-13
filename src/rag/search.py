@@ -8,6 +8,7 @@ Aucun resume, aucune deduplication : un resultat par message.
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -15,10 +16,15 @@ from sqlite_vec import serialize_float32
 
 from .store import VectorStore
 
-TOKEN_RE = re.compile(r"[\w'’\-]+", re.UNICODE)
+TOKEN_RE = re.compile(r"[\w\-]+", re.UNICODE)
 
 
 def tokenize(text: str, min_len: int = 2) -> List[str]:
+    """Tokens d'un texte : minuscules, sans apostrophes d'elision.
+
+    L'apostrophe separe les mots (`l'IA` -> `ia`, `aujourd'hui` ->
+    `aujourd`+`hui`) ; les tirets restent dans le token (`sous-titre`).
+    """
     seen: List[str] = []
     for token in TOKEN_RE.findall((text or "").lower()):
         if len(token) >= min_len and token not in seen:
@@ -26,14 +32,24 @@ def tokenize(text: str, min_len: int = 2) -> List[str]:
     return seen
 
 
+def _fold(text: str) -> str:
+    """Minuscule sans accents (comparaison de tokens insensible casse/accents)."""
+    decomposed = unicodedata.normalize("NFKD", (text or "").lower())
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+
+
 def keyword_score(texte: str, terms: List[str], phrase: str = "") -> float:
-    """Fraction de termes presents, plus bonus si la phrase exacte apparait."""
+    """Fraction de termes presents, plus bonus si la phrase exacte apparait.
+
+    Le matching se fait sur les **tokens entiers** (insensible a la casse et
+    aux accents) : « ia » ne matche plus « maison » ou « social ».
+    """
     if not terms:
         return 0.0
-    low = (texte or "").lower()
-    matched = sum(1 for term in terms if term in low)
+    tokens = {_fold(token) for token in tokenize(texte)}
+    matched = sum(1 for term in terms if _fold(term) in tokens)
     score = matched / len(terms)
-    if phrase and len(phrase) > 3 and phrase.lower() in low:
+    if phrase and len(phrase) > 3 and _fold(phrase) in _fold(texte):
         score = min(1.0, score + 0.3)
     return score
 
