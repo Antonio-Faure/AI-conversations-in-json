@@ -24,6 +24,7 @@ if str(ROOT) not in sys.path:
 
 from src.utils.etalon import queue_coverage  # noqa: E402
 from src.utils.etalon import etalons_file, load_etalons  # noqa: E402
+from src.utils.file_utils import find_export_by_id, read_json  # noqa: E402
 
 RUN_ROOT = Path(
     os.environ.get("AICV_RUN_DIR") or (Path.home() / "Documents/code/aicv-run")
@@ -39,20 +40,14 @@ def _queue_texts(label: str) -> List[str]:
 
 
 def _export_users(platform: str, conv_id: str) -> Optional[List[str]]:
-    directory = ROOT / "exports" / platform
-    if not directory.is_dir():
+    path = find_export_by_id(ROOT / "exports", platform, conv_id)
+    if path is None:
         return None
-    for path in sorted(directory.glob("*.json")):
-        if path.name == "conversation_list.json":
-            continue
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if payload.get("conversation_id") == conv_id:
-            return [m.get("texte") or "" for m in payload.get("messages") or []
-                    if m.get("role") == "user"]
-    return None
+    payload = read_json(path, default=None)
+    if not isinstance(payload, dict):
+        return None
+    return [m.get("texte") or "" for m in payload.get("messages") or []
+            if m.get("role") == "user"]
 
 
 def main() -> int:

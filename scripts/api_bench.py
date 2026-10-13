@@ -65,6 +65,7 @@ from src.utils.file_utils import (  # noqa: E402
     now_iso_z,
     platform_dir,
     read_json,
+    resolve_cli_path,
     write_json_atomic,
 )
 from src.utils.logging import get_logger, setup_logging  # noqa: E402
@@ -83,12 +84,6 @@ DIFF_DISPLAY_LIMIT = 15
 def shape_ref_path(platform: str) -> Path:
     """Chemin de la reference de forme d'une plateforme."""
     return SHAPES_DIR / f"{platform}.shape.json"
-
-
-def _resolve(value: Path | str) -> Path:
-    """Chemin relatif -> racine du depot (comme les chemins de config)."""
-    path = Path(value).expanduser()
-    return path if path.is_absolute() else ROOT / path
 
 
 def load_reference(platform: str) -> Optional[Dict[str, Any]]:
@@ -740,7 +735,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     setup_logging(level=logging.INFO if live else logging.WARNING, console=True)
     config = load_config(args.config)
     if args.exports:
-        config["output_dir"] = str(_resolve(args.exports))
+        config["output_dir"] = str(resolve_cli_path(args.exports, ROOT, expanduser=True))
     if args.command == "shape":
         return cmd_shape(args, config)
     if args.command == "update-ref":

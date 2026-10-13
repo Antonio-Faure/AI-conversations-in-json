@@ -50,6 +50,7 @@ from src.utils.cleanup import clean_text  # noqa: E402
 from src.utils.file_utils import (  # noqa: E402
     RESERVED_JSON_NAMES,
     merge_conversation_json,
+    resolve_cli_path,
     write_json_atomic,
 )
 from src.utils.raw_payload import load_raw_payload  # noqa: E402
@@ -76,11 +77,6 @@ DOM_PLATFORMS = ("chatgpt", "claude", "gemini", "mistral", "perplexity")
 #: residuel pour les plateformes migrees : chatgpt, claude, gemini, grok,
 #: mistral, perplexity)
 API_PLATFORMS = ("chatgpt", "claude", "gemini", "grok", "mistral", "perplexity")
-
-
-def _resolve(value) -> Path:
-    path = Path(value)
-    return path if path.is_absolute() else ROOT / path
 
 
 def _merge_old_metadata(conv: Conversation, old: Dict[str, Any]) -> Conversation:
@@ -201,7 +197,7 @@ def main() -> int:
     args = parser.parse_args()
 
     config = load_config(ROOT / "config.yaml")
-    exports = _resolve(args.exports or config["output_dir"])
+    exports = resolve_cli_path(args.exports or config["output_dir"], ROOT)
     platforms = args.platform or sorted(
         d.name for d in exports.iterdir()
         if d.is_dir() and (d / "conversation_list.json").exists()

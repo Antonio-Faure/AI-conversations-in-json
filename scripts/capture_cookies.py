@@ -21,16 +21,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.cookies import COOKIE_SERVICES, capture_cookies  # noqa: E402
-from src.orchestrator import load_config  # noqa: E402
-
-
-def _resolved_config() -> dict:
-    config = load_config(ROOT / "config.yaml")
-    profile_dir = Path(config.get("profile_dir") or (ROOT / "profiles"))
-    if not profile_dir.is_absolute():
-        profile_dir = ROOT / profile_dir
-    config["profile_dir"] = str(profile_dir)
-    return config
+from src.orchestrator import load_config, resolve_config_paths  # noqa: E402
 
 
 def main() -> int:
@@ -38,7 +29,7 @@ def main() -> int:
     parser.add_argument("services", nargs="+", choices=COOKIE_SERVICES,
                         help="service(s) a capturer")
     args = parser.parse_args()
-    config = _resolved_config()
+    config = resolve_config_paths(load_config(ROOT / "config.yaml"))
     code = 0
     for service in args.services:
         code |= capture_cookies(service, ROOT / "cookies", config)

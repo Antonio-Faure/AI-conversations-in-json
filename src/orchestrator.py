@@ -175,6 +175,21 @@ def load_config(path: Optional[Path | str] = None) -> Dict[str, Any]:
     return config
 
 
+def resolve_config_paths(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Resout les chemins de sortie/session (relatifs -> racine du depot).
+
+    `load_config` resout deja les chemins de la config ; ce helper sert apres
+    une surcharge CLI (`--output`) pour garder la meme regle, quel que soit le
+    cwd d'execution.
+    """
+    for key in ("output_dir", "profile_dir", "cookies_dir"):
+        value = config.get(key)
+        if value:
+            path = Path(value)
+            config[key] = str(path if path.is_absolute() else ROOT / path)
+    return config
+
+
 def default_registry() -> Dict[str, type]:
     from .services import SERVICE_CLASSES
 

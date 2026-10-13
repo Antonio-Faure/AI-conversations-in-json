@@ -32,7 +32,7 @@ from src.utils.calibration import (  # noqa: E402
     suite_from_path,
 )
 from src.utils.etalon import load_etalons, queue_coverage  # noqa: E402
-from src.utils.file_utils import write_json_atomic  # noqa: E402
+from src.utils.file_utils import find_export_by_id, write_json_atomic  # noqa: E402
 
 CAL_DIR = ROOT / "calibration"
 MANIFEST_PATH = CAL_DIR / "manifest.json"
@@ -199,22 +199,6 @@ def write_queue(name: str) -> int:
     return 0
 
 
-def _find_export(platform: str, conv_id: str) -> Optional[Path]:
-    directory = ROOT / "exports" / platform
-    if not directory.is_dir():
-        return None
-    for path in sorted(directory.glob("*.json")):
-        if path.name == "conversation_list.json":
-            continue
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if payload.get("conversation_id") == conv_id:
-            return path
-    return None
-
-
 def write_complement(label: str) -> int:
     """Ecrit `<run_dir>/calibration_queue_supp.json` avec les tours manquants.
 
@@ -236,7 +220,7 @@ def write_complement(label: str) -> int:
     messages = json.loads(queue_path.read_text(encoding="utf-8")).get("messages") or []
     seen: List[str] = []
     if platform and entry:
-        export = _find_export(platform, entry.get("id") or "")
+        export = find_export_by_id(ROOT / "exports", platform, entry.get("id") or "")
         if export is not None:
             payload = json.loads(export.read_text(encoding="utf-8"))
             seen = [m.get("texte") or "" for m in payload.get("messages") or []

@@ -29,7 +29,11 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.cookies import COOKIE_SERVICES, capture_cookies  # noqa: E402
-from src.orchestrator import Orchestrator, load_config  # noqa: E402
+from src.orchestrator import (  # noqa: E402
+    Orchestrator,
+    load_config,
+    resolve_config_paths,
+)
 from src.services import ACTIVE_SERVICES, SERVICE_CLASSES  # noqa: E402
 from src.utils.logging import setup_logging  # noqa: E402
 
@@ -117,16 +121,6 @@ def _apply_cli_overrides(config: dict, args: argparse.Namespace) -> dict:
     return config
 
 
-def _resolve_paths(config: dict) -> dict:
-    """Chemins relatifs = relatifs au depot, peu importe le cwd d'execution."""
-    for key in ("output_dir", "profile_dir", "cookies_dir"):
-        value = config.get(key)
-        if value:
-            path = Path(value)
-            config[key] = str(path if path.is_absolute() else ROOT / path)
-    return config
-
-
 def _login_session(service_name: str, config: dict):
     """Session de login : meme moteur que l'export (cookies lies a l'UA)."""
     from src.orchestrator import default_browser_factory, resolve_engine
@@ -177,7 +171,7 @@ def _print_summary(summary, config: dict) -> None:
 
 def main(argv=None) -> int:
     args = build_arg_parser().parse_args(argv)
-    config = _resolve_paths(_apply_cli_overrides(load_config(args.config), args))
+    config = resolve_config_paths(_apply_cli_overrides(load_config(args.config), args))
 
     setup_logging(level=logging.DEBUG if args.verbose else logging.INFO, console=True)
 
