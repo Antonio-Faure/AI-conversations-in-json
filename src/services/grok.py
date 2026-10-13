@@ -22,6 +22,12 @@ RESPONSES_URL = API_BASE + "/rest/app-chat/conversations/{cid}/responses"
 PAGE_SIZE = 50
 MAX_PAGES = 200
 
+#: hotes qui recoivent les cookies de session : la plateforme et ses assets
+#: (`assets.grok.com`), ainsi que l'infra xAI (`api.x.ai`, images generees).
+#: Les medias d'une conversation peuvent citer n'importe quel hote tiers : hors
+#: de cette liste, le telechargement se fait sans cookie (best-effort).
+COOKIE_HOSTS = ("grok.com", "x.ai")
+
 
 def _guess_mime(data: bytes) -> Optional[str]:
     """Type MIME devine par signature (les assets Grok sont derriere cookies)."""
@@ -83,7 +89,7 @@ class GrokService(BaseService):
     def __init__(self, session, config: Optional[Dict[str, Any]] = None):
         super().__init__(session, config)
         cookies_dir = Path((self.config or {}).get("cookies_dir") or "cookies")
-        self.http = CookieClient("grok", cookies_dir)
+        self.http = CookieClient("grok", cookies_dir, cookie_domains=COOKIE_HOSTS)
         self.session = _CookieFetchSession(self.http, session)
         #: payload brut de la derniere conversation exportee (API REST)
         self._raw_payload: Optional[Dict[str, Any]] = None

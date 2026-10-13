@@ -29,7 +29,12 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..http_client import CookieAuthError, DEFAULT_USER_AGENT, load_cookie_header
+from ..http_client import (
+    CookieAuthError,
+    DEFAULT_USER_AGENT,
+    host_in_domains,
+    load_cookie_header,
+)
 from ..parsers.mistral import MistralParser, merge_message_fragments
 from ..schema import Conversation, ConversationRef
 from ..services.base import (
@@ -44,6 +49,17 @@ from ..utils.urls import normalize_conversation_url
 log = get_logger("services.mistral")
 
 BASE = "https://chat.mistral.ai"
+
+#: hotes qui recoivent les cookies de session : la plateforme (`mistral.ai`),
+#: son CDN (`mistralai.com`) et les conteneurs Azure de ses pieces jointes.
+#: Les medias d'une conversation peuvent citer n'importe quel hote tiers : hors
+#: de cette liste, le telechargement se fait sans cookie (best-effort).
+COOKIE_HOSTS = (
+    "mistral.ai",
+    "mistralai.com",
+    "mistralaichatupprodswe.blob.core.windows.net",
+    "mistralaiblackforestprod.blob.core.windows.net",
+)
 
 # -- API tRPC (cookies) -------------------------------------------------------
 
@@ -96,20 +112,31 @@ class _MistralHttpClient:
         user_agent: Optional[str] = None,
         accept_language: Optional[str] = None,
         timeout_s: int = 45,
+        cookie_domains: Optional[Tuple[str, ...]] = None,
     ):
         self.cookie_header = cookie_header
         self.user_agent = user_agent or DEFAULT_USER_AGENT
         self.accept_language = accept_language or "fr-FR,fr;q=0.9"
         self.timeout_s = timeout_s
+        #: domaines autorises a recevoir le cookie (vide = aucun filtrage)
+        self.cookie_domains = tuple(
+            str(d).strip().lstrip(".").lower()
+            for d in (cookie_domains or ())
+            if str(d or "").strip()
+        )
 
-    def _headers(self, accept: str, trpc: bool = False) -> Dict[str, str]:
+    def _headers(
+        self, accept: str, trpc: bool = False, url: Optional[str] = None
+    ) -> Dict[str, str]:
         headers = {
             "User-Agent": self.user_agent,
-            "Cookie": self.cookie_header,
             "Accept": accept,
             "Accept-Language": self.accept_language,
             "Referer": BASE + "/work",
         }
+        # hote tiers : requete sans cookie (best-effort, l'asset peut etre public)
+        if not self.cookie_domains or host_in_domains(url or "", self.cookie_domains):
+            headers["Cookie"] = self.cookie_header
         if trpc:
             # batch non-streaming : le serveur renvoie un tableau JSON simple
             headers["trpc-accept"] = "application/json"
@@ -137,7 +164,7 @@ class _MistralHttpClient:
         """GET authentifie ; sur 429, attend et reessaie."""
         for attempt in range(API_RETRY_ATTEMPTS):
             request = urllib.request.Request(
-                url, headers=self._headers(accept, trpc=trpc)
+                url, headers=self._headers(accept, trpc=trpc, url=url)
             )
             try:
                 with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
@@ -161,7 +188,9 @@ class _MistralHttpClient:
         jointes) sans navigateur.
         """
         for attempt in range(API_RETRY_ATTEMPTS):
-            request = urllib.request.Request(url, headers=self._headers(accept))
+            request = urllib.request.Request(
+                url, headers=self._headers(accept, url=url)
+            )
             try:
                 with urllib.request.urlopen(
                     request, timeout=self.timeout_s
@@ -480,6 +509,7 @@ class MistralService(BaseService):
             cookie_header,
             user_agent=user_agent,
             accept_language=accept_language,
+            cookie_domains=COOKIE_HOSTS,
         )
         log.debug("mistral: client API pret")
         return self._http

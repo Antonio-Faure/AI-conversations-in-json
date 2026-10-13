@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import json
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 DEFAULT_USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -21,6 +22,25 @@ DEFAULT_USER_AGENT = (
 
 class CookieAuthError(RuntimeError):
     """Cookies absents ou invalides pour un service authentifie par cookies."""
+
+
+def host_in_domains(url: str, domains: Iterable[str]) -> bool:
+    """Vrai si l'hote de `url` appartient a l'un des domaines (ou sous-domaine).
+
+    Sert de liste blanche avant de joindre les cookies d'authentification :
+    `https://assets.grok.com/x` matche `grok.com`, mais `evilgrok.com` non.
+    """
+    try:
+        host = (urllib.parse.urlsplit(url).hostname or "").lower().rstrip(".")
+    except ValueError:  # URL invalide (ex. IPv6 malformee)
+        return False
+    if not host:
+        return False
+    for domain in domains:
+        domain = str(domain or "").strip().lstrip(".").lower().rstrip(".")
+        if domain and (host == domain or host.endswith("." + domain)):
+            return True
+    return False
 
 
 def load_cookie_header(cookies_dir: Path | str, service: str) -> str:
@@ -44,7 +64,14 @@ def load_cookie_header(cookies_dir: Path | str, service: str) -> str:
 
 
 class CookieClient:
-    """Requetes GET avec cookies persistants et User-Agent navigateur."""
+    """Requetes GET avec cookies persistants et User-Agent navigateur.
+
+    `cookie_domains` est une liste blanche d'hotes : le `Cookie` n'est joint
+    qu'aux URL de ces domaines (ou de leurs sous-domaines). Sans liste (defaut),
+    le comportement historique est conserve (cookie envoye partout) ; les
+    services qui telechargent des medias doivent en fournir une, sous peine
+    d'exfiltrer la session vers tout hote cite dans une conversation.
+    """
 
     def __init__(
         self,
@@ -52,22 +79,32 @@ class CookieClient:
         cookies_dir: Path | str,
         user_agent: Optional[str] = None,
         timeout_s: int = 45,
+        cookie_domains: Optional[Iterable[str]] = None,
     ):
         self.service = service
         self.cookie_header = load_cookie_header(cookies_dir, service)
         self.user_agent = user_agent or DEFAULT_USER_AGENT
         self.timeout_s = timeout_s
+        #: domaines autorises a recevoir le cookie (vide = aucun filtrage)
+        self.cookie_domains = tuple(
+            str(d).strip().lstrip(".").lower()
+            for d in (cookie_domains or ())
+            if str(d or "").strip()
+        )
 
-    def _headers(self, accept: str) -> Dict[str, str]:
-        return {
+    def _headers(self, accept: str, url: Optional[str] = None) -> Dict[str, str]:
+        headers = {
             "User-Agent": self.user_agent,
-            "Cookie": self.cookie_header,
             "Accept": accept,
             "Accept-Language": "en-US,en;q=0.9",
         }
+        if self.cookie_domains and not host_in_domains(url or "", self.cookie_domains):
+            return headers  # hote tiers : requete sans cookie (best-effort)
+        headers["Cookie"] = self.cookie_header
+        return headers
 
     def get(self, url: str, accept: str = "application/json, text/plain, */*") -> Tuple[int, bytes]:
-        request = urllib.request.Request(url, headers=self._headers(accept))
+        request = urllib.request.Request(url, headers=self._headers(accept, url=url))
         try:
             with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
                 return response.status, response.read()
