@@ -85,6 +85,12 @@ def shape_ref_path(platform: str) -> Path:
     return SHAPES_DIR / f"{platform}.shape.json"
 
 
+def _resolve(value: Path | str) -> Path:
+    """Chemin relatif -> racine du depot (comme les chemins de config)."""
+    path = Path(value).expanduser()
+    return path if path.is_absolute() else ROOT / path
+
+
 def load_reference(platform: str) -> Optional[Dict[str, Any]]:
     """Document de reference d'une plateforme (None si absent/invalide)."""
     doc = read_json(shape_ref_path(platform), default=None)
@@ -734,7 +740,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     setup_logging(level=logging.INFO if live else logging.WARNING, console=True)
     config = load_config(args.config)
     if args.exports:
-        config["output_dir"] = str(Path(args.exports).expanduser())
+        config["output_dir"] = str(_resolve(args.exports))
     if args.command == "shape":
         return cmd_shape(args, config)
     if args.command == "update-ref":

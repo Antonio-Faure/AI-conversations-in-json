@@ -39,6 +39,7 @@ from src.rag.search import combined_search  # noqa: E402
 from src.schema import parse_iso, to_iso_z  # noqa: E402
 from src.utils.file_utils import (  # noqa: E402
     CONVERSATION_LIST_NAME,
+    RESERVED_JSON_NAMES,
     load_conversation_list,
 )
 from src.utils.urls import conversation_url  # noqa: E402
@@ -70,14 +71,17 @@ def load_server_config(path: Optional[Path | str]) -> Dict[str, Any]:
     vit `src/`) ; ici le serveur peut etre pointe vers un config.yaml externe
     (worktree), donc on reprend les valeurs brutes du fichier et on les resout
     depuis SON dossier. Les valeurs par defaut/absolues restent inchangees.
+    Un fichier explicitement demande mais absent leve une erreur claire (un
+    serveur lance avec un mauvais chemin ne doit pas lire silencieusement les
+    exports par defaut).
     """
-    config = load_config(path)
     if path is None:
-        return config
+        return load_config(path)
     config_path = Path(path)
-    base = config_path.resolve().parent
     if not config_path.exists():
-        return config
+        raise FileNotFoundError(f"fichier de configuration introuvable: {config_path}")
+    config = load_config(config_path)
+    base = config_path.resolve().parent
     try:
         raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
     except (OSError, yaml.YAMLError):
@@ -263,6 +267,16 @@ class ConversationTools:
                     continue
                 yield name, path
 
+    def _read_conversation_file(self, path: Path) -> Dict[str, Any]:
+        """Charge un JSON de conversation ; erreur claire si illisible."""
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ConversationToolError(f"fichier illisible: {path} ({exc})") from exc
+        if not isinstance(data, dict):
+            raise ConversationToolError(f"fichier invalide (objet JSON attendu): {path}")
+        return data
+
     def _load_conversation(
         self, platform: str, conversation_id: str
     ) -> Tuple[Dict[str, Any], Path]:
@@ -279,7 +293,7 @@ class ConversationTools:
             if entry.get("file"):
                 candidate = platform_dir / f"{entry['file']}.json"
                 if candidate.exists():
-                    return json.loads(candidate.read_text(encoding="utf-8")), candidate
+                    return self._read_conversation_file(candidate), candidate
             if not entry.get("scraped"):
                 raise ConversationToolError(
                     f"conversation {conversation_id} non scrapee sur {platform} "
@@ -295,7 +309,7 @@ class ConversationTools:
             if entry.get("file"):
                 candidate = platform_dir / f"{entry['file']}.json"
                 if candidate.exists():
-                    return json.loads(candidate.read_text(encoding="utf-8")), candidate
+                    return self._read_conversation_file(candidate), candidate
         elif len(prefix_entries) > 1:
             ids = ", ".join(sorted(cid for cid, _ in prefix_entries)[:5])
             raise ConversationToolError(
@@ -315,7 +329,7 @@ class ConversationTools:
             if cid.startswith(conversation_id):
                 prefix_matches.append((cid, path))
         if len(prefix_matches) == 1:
-            data = json.loads(prefix_matches[0][1].read_text(encoding="utf-8"))
+            data = self._read_conversation_file(prefix_matches[0][1])
             return data, prefix_matches[0][1]
         if len(prefix_matches) > 1:
             ids = ", ".join(sorted(cid for cid, _ in prefix_matches)[:5])
@@ -758,7 +772,7 @@ class ConversationTools:
             files = [
                 p
                 for p in (self.exports_dir / name).glob("*.json")
-                if p.name != CONVERSATION_LIST_NAME
+                if p.name not in RESERVED_JSON_NAMES
             ]
             total_files += len(files)
             exports[name] = {
@@ -970,7 +984,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="fichier de configuration (defaut: <racine>/config.yaml)",
     )
     args = parser.parse_args(argv)
-    config = load_server_config(args.config)
+    try:
+        config = load_server_config(args.config)
+    except FileNotFoundError as exc:
+        print(f"erreur: {exc}", file=sys.stderr)
+        return 2
     tools = ConversationTools(config)
     build_server(tools).run(transport="stdio")
     return 0

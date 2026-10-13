@@ -451,7 +451,37 @@ def test_stats_sans_index_rag(tmp_path):
     assert "rag_index.py" in result["rag"]["error"]
 
 
+def test_stats_ignore_les_json_non_conversation(env):
+    """`api_health.json` (comme `conversation_list.json`) n'est pas un fichier de conversation."""
+    (env.exports / "alpha" / "api_health.json").write_text(
+        json.dumps({"platform": "alpha", "n": 3, "mean_score": 100.0}),
+        encoding="utf-8",
+    )
+    result = env.tools.stats()
+    assert result["exports"]["per_platform"]["alpha"]["files"] == 2
+    assert result["exports"]["total_files"] == 3
+
+
+def test_get_conversation_fichier_corrompu_erreur_detaillee(env):
+    """Un JSON de conversation corrompu -> erreur claire (chemin + cause)."""
+    (env.exports / "alpha" / "serveur-minecraft.json").write_text(
+        "{corrompu", encoding="utf-8"
+    )
+    with pytest.raises(mcp_conversations.ConversationToolError) as exc:
+        env.tools.get_conversation("alpha", "conv-c1-2026")
+    message = str(exc.value)
+    assert "fichier illisible" in message
+    assert "serveur-minecraft.json" in message
+
+
 # -- config ------------------------------------------------------------------------
+
+
+def test_config_absente_message_clair(tmp_path, capsys):
+    """`-c <fichier inexistant>` : message explicite (pas de traceback)."""
+    code = mcp_conversations.main(["--config", str(tmp_path / "absent.yaml")])
+    assert code == 2
+    assert "introuvable" in capsys.readouterr().err
 
 
 def test_config_chemins_resolus_depuis_le_fichier(tmp_path):

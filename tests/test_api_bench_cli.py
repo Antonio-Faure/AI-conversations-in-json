@@ -196,6 +196,22 @@ class TestShape:
 
 
 class TestReport:
+    def test_exports_relatif_resolu_depuis_la_racine(self, env, monkeypatch, capsys):
+        """`--exports relatif` doit pointer dans le depot, pas depuis le CWD."""
+        ailleurs = env / "ailleurs"
+        ailleurs.mkdir()
+        monkeypatch.chdir(ailleurs)
+        monkeypatch.setattr(api_bench, "ROOT", env)
+        health = env / "mes-exports" / "chatgpt" / "api_health.json"
+        health.parent.mkdir(parents=True)
+        health.write_text(
+            json.dumps({"platform": "chatgpt", "mean_score": 97.5}), encoding="utf-8"
+        )
+        code = api_bench.main(["report", "--exports", "mes-exports", "--json"])
+        assert code == 0
+        rows = json.loads(capsys.readouterr().out)
+        assert rows["chatgpt"]["mean_score"] == 97.5
+
     def test_agrege_api_health(self, env, capsys):
         health_dir = env / "exports" / "chatgpt"
         health_dir.mkdir(parents=True)

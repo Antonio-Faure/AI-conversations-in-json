@@ -22,6 +22,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.orchestrator import load_config  # noqa: E402
+from src.utils.file_utils import write_json_atomic  # noqa: E402
 from src.utils.urls import (  # noqa: E402
     canonical_url_from_html,
     conversation_url,
@@ -85,10 +86,7 @@ def main() -> int:
             )
             if payload.get("url") != url:
                 payload["url"] = url
-                json_path.write_text(
-                    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                    encoding="utf-8",
-                )
+                write_json_atomic(json_path, payload)
                 total += 1
             entry = index.get(conversation_id)
             if entry is not None:
@@ -96,9 +94,7 @@ def main() -> int:
         if index and list_path.exists():
             data = json.loads(list_path.read_text(encoding="utf-8"))
             data["conversations"] = list(index.values())
-            list_path.write_text(
-                json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-            )
+            write_json_atomic(list_path, data)
         print(f"[{platform}] ok")
 
     print(f"termine : {total} URLs ajoutees/mises a jour")

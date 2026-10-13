@@ -33,6 +33,13 @@ from src.utils.etalon import (  # noqa: E402
     load_etalons,
     regressions,
 )
+from src.utils.file_utils import write_json_atomic  # noqa: E402
+
+
+def _resolve(value: Path | str) -> Path:
+    """Chemin relatif -> racine du depot (comme les chemins de config)."""
+    path = Path(value)
+    return path if path.is_absolute() else ROOT / path
 
 
 def _find_export(output_dir: Path, platform: str, conv_id: str) -> Optional[Path]:
@@ -65,6 +72,7 @@ def main() -> int:
     parser.add_argument("--update", action="store_true",
                         help="memorise les metriques courantes comme baseline")
     args = parser.parse_args()
+    args.output = _resolve(args.output)
 
     config_path = etalons_file(args.config)
     if config_path.name.endswith(".example.json"):
@@ -120,9 +128,7 @@ def main() -> int:
             print(f"  REGRESSION (perdues depuis la baseline): {', '.join(regressed)}")
             problems += 1
     if args.update:
-        config_path.write_text(
-            json.dumps(entries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
+        write_json_atomic(config_path, entries)
         print(f"baseline mise a jour: {config_path}")
         return 0
     if problems:
