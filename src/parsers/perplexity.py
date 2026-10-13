@@ -951,63 +951,13 @@ class PerplexityParser(BaseParser):
 
     # -- rendu markdown (listes, tableaux, titres, code) -----------------------
 
+    _content_token_prefix = "AICV_PPL"
+
     @classmethod
-    def _content_text(cls, el: Optional[Tag]) -> str:
-        """Texte markdown d'un contenu Perplexity.
-
-        ``BaseParser.text_of`` aplatit les ``<ul>/<ol>``, ``<table>`` et
-        ``<h1..h6>``. On les convertit en markdown sur une copie avant
-        l'extraction, puis on reinjecte les remplacements apres nettoyage
-        (qui supprime l'indentation des lignes) afin de conserver listes
-        imbriquees et separateurs.
-        """
-        if el is None:
-            return ""
-        node = copy.copy(el)
+    def _content_preprocess(cls, node: Tag) -> None:
+        """Pre-traitements Perplexity avant les blocs markdown."""
         cls._inline_markdown(node)
-        replacements: Dict[str, str] = {}
         cls._code_languages(node)
-
-        # blockquotes : traiter les plus externes (recursion du contenu)
-        for index, quote in enumerate(node.find_all("blockquote")):
-            if quote.find_parent("blockquote") is not None:
-                continue
-            inner = cls._content_text(quote)
-            quoted = "\n".join(
-                f"> {line}" if line else ">" for line in inner.splitlines()
-            )
-            token = f"@@AICV_PPL_QUOTE_{index}@@"
-            replacements[token] = quoted
-            quote.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, table in enumerate(node.find_all("table")):
-            token = f"@@AICV_PPL_TABLE_{index}@@"
-            replacements[token] = cls._table_markdown(table)
-            table.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, lst in enumerate(node.find_all(["ul", "ol"])):
-            if lst.find_parent(["ul", "ol"]) is not None:
-                continue  # traitee avec sa liste parente
-            token = f"@@AICV_PPL_LIST_{index}@@"
-            replacements[token] = "\n".join(cls._render_list(lst))
-            lst.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, heading in enumerate(
-            node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
-        ):
-            level = int(heading.name[1])
-            title = re.sub(r"\s*\n\s*", " ", cls._inline_text(heading)).strip()
-            token = f"@@AICV_PPL_HEADING_{index}@@"
-            replacements[token] = f"{'#' * level} {title}".strip()
-            heading.replace_with(NavigableString(f"\n{token}\n"))
-
-        for hr in node.find_all("hr"):
-            hr.replace_with(NavigableString("\n@@AICV_PPL_HR@@\n"))
-
-        text = cls.text_of(node)
-        for token, markdown in replacements.items():
-            text = text.replace(token, markdown)
-        return text.replace("@@AICV_PPL_HR@@", "---")
 
     @staticmethod
     def _code_languages(node: Tag) -> None:

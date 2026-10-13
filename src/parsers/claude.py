@@ -40,7 +40,7 @@ import copy
 import re
 from typing import Any, Dict, List, Optional
 
-from bs4 import NavigableString, Tag
+from bs4 import Tag
 
 from ..schema import Conversation, Variant
 from .base import BaseParser, ParseError
@@ -66,9 +66,6 @@ ASSISTANT_CDS = "AssistantMessage"
 
 #: position absolue (0-based) d'une rangee du transcript virtualise
 ROW_INDEX_ATTR_RE = re.compile(r"data-index=['\"](\d+)['\"]")
-
-#: prefixe des jetons de remplacement markdown (post-nettoyage)
-_TOKEN = "@@AICV_CLAUDE_%s_%d@@"
 
 #: hotes/chemins des favicons et icones d'interface (jamais du contenu)
 _ICON_SRC_RE = re.compile(r"(gstatic\.com|google\.com/s2/favicons|/favicon)", re.IGNORECASE)
@@ -740,67 +737,15 @@ class ClaudeParser(BaseParser):
 
     # -- rendu markdown ------------------------------------------------------
 
+    _content_token_prefix = "AICV_CLAUDE"
+
     @classmethod
-    def _content_text(cls, el: Optional[Tag]) -> str:
-        """Texte markdown d'un contenu Claude (listes, tableaux, titres...).
-
-        ``BaseParser.text_of`` aplatit les ``<ul>/<ol>``, ``<table>``,
-        ``<h1..h6>``, ``<blockquote>``, ``<hr>`` et les mises en forme inline
-        (``strong``/``em``/``del``/``code``). On les convertit en markdown sur
-        une copie avant l'extraction, puis on reinjecte les remplacements apres
-        le nettoyage (qui supprime l'indentation des lignes) afin de conserver
-        listes imbriquees et separateurs.
-        """
-        if el is None:
-            return ""
-        node = copy.copy(el)
-        replacements: Dict[str, str] = {}
-
+    def _content_preprocess(cls, node: Tag) -> None:
+        """Pre-traitements Claude avant les blocs markdown."""
         cls._drop_ui_nodes(node)
         cls._preprocess_code_blocks(node)
         cls._normalize_images(node)
         cls._inline_markdown(node)
-
-        # blockquotes : traiter les plus externes (recursion du contenu)
-        for index, quote in enumerate(node.find_all("blockquote")):
-            if quote.find_parent("blockquote") is not None:
-                continue
-            inner = cls._content_text(quote)
-            quoted = "\n".join(
-                f"> {line}" if line else ">" for line in inner.splitlines()
-            )
-            token = _TOKEN % ("QUOTE", index)
-            replacements[token] = quoted
-            quote.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, table in enumerate(node.find_all("table")):
-            token = _TOKEN % ("TABLE", index)
-            replacements[token] = cls._table_markdown(table)
-            table.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, lst in enumerate(node.find_all(["ul", "ol"])):
-            if lst.find_parent(["ul", "ol"]) is not None:
-                continue  # traitee avec sa liste parente
-            token = _TOKEN % ("LIST", index)
-            replacements[token] = "\n".join(cls._render_list(lst))
-            lst.replace_with(NavigableString(f"\n{token}\n"))
-
-        for index, heading in enumerate(
-            node.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
-        ):
-            level = int(heading.name[1])
-            title = re.sub(r"\s*\n\s*", " ", cls._inline_text(heading)).strip()
-            token = _TOKEN % ("HEADING", index)
-            replacements[token] = f"{'#' * level} {title}".rstrip()
-            heading.replace_with(NavigableString(f"\n{token}\n"))
-
-        for hr in node.find_all("hr"):
-            hr.replace_with(NavigableString("\n@@AICV_CLAUDE_HR@@\n"))
-
-        text = super().text_of(node)
-        for token, markdown in replacements.items():
-            text = text.replace(token, markdown)
-        return text.replace("@@AICV_CLAUDE_HR@@", "---")
 
     @classmethod
     def _drop_ui_nodes(cls, node: Tag) -> None:
