@@ -472,8 +472,6 @@ class MistralService(BaseService):
         super().__init__(session, config)
         #: client HTTP de l'API (construit au premier appel en mode API)
         self._http: Optional[_MistralHttpClient] = None
-        #: payload brut de la derniere conversation exportee en mode API
-        self._raw_payload: Optional[Dict[str, Any]] = None
         #: alias de modele -> nom affiche (`settings.get`, cache du run)
         self._model_display_map: Optional[Dict[str, str]] = None
         if self.api_enabled:
@@ -637,11 +635,6 @@ class MistralService(BaseService):
             "canvases": canvases,
             "model_display_map": self._api_model_map(),
         }
-
-    def take_raw_payload(self) -> Optional[Dict[str, Any]]:
-        """Payload API de la derniere conversation exportee (consomme)."""
-        payload, self._raw_payload = self._raw_payload, None
-        return payload
 
     def export_conversation_with_html(self, ref: ConversationRef) -> tuple:
         """API (defaut) : payload JSON -> Conversation ; pas de HTML.

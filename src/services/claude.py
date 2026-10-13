@@ -392,8 +392,6 @@ class ClaudeService(BaseService):
         super().__init__(session, config)
         #: client HTTP de l'API (construit au premier appel en mode API)
         self._http: Optional[_ClaudeHttpClient] = None
-        #: payload brut de la derniere conversation exportee (API REST)
-        self._raw_payload: Optional[Dict[str, Any]] = None
         if self.api_enabled:
             # les assets du markdown (`/api/<org>/files/...`) passent par le
             # client HTTP authentifie, pas par le navigateur
@@ -602,11 +600,6 @@ class ClaudeService(BaseService):
             conv.url = self.conversation_url(ref)
         self._raw_payload = data
         return conv, None
-
-    def take_raw_payload(self) -> Optional[Dict[str, Any]]:
-        """Payload API de la derniere conversation exportee (consomme)."""
-        payload, self._raw_payload = self._raw_payload, None
-        return payload
 
     def capture_message_screenshots(self, conversation, out_dir) -> int:
         """Pas de screenshots en mode API (le DOM n'est pas rendu)."""

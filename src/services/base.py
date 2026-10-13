@@ -243,6 +243,8 @@ class BaseService(ABC):
     def __init__(self, session: BrowserSession, config: Optional[Dict[str, Any]] = None):
         self.session = session
         self.config = config or {}
+        #: payload API brut de la derniere conversation exportee (consomme)
+        self._raw_payload: Optional[Any] = None
         self.parser = self.build_parser()
 
     # -- monitoring de forme API -----------------------------------------------
@@ -592,7 +594,8 @@ class BaseService(ABC):
         du HTML brut. La methode consomme le payload : un export ulterieur ne
         le reecrit pas.
         """
-        return None
+        payload, self._raw_payload = self._raw_payload, None
+        return payload
 
     def capture_message_screenshots(
         self, conversation: Conversation, out_dir: Path

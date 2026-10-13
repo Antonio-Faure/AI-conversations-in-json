@@ -497,8 +497,6 @@ class PerplexityService(BaseService):
         self._thread_updated: Dict[str, str] = {}
         #: client HTTP de l'API (construit au premier appel en mode API)
         self._http: Optional[_PerplexityHttpClient] = None
-        #: payload brut de la derniere conversation exportee en mode API
-        self._raw_payload: Optional[Dict[str, Any]] = None
 
     def build_parser(self) -> PerplexityParser:
         return PerplexityParser()
@@ -725,11 +723,6 @@ class PerplexityService(BaseService):
             conv.url = self.conversation_url(ref)
         self._raw_payload = data
         return conv, None
-
-    def take_raw_payload(self) -> Optional[Dict[str, Any]]:
-        """Payload API de la derniere conversation exportee (consomme)."""
-        payload, self._raw_payload = self._raw_payload, None
-        return payload
 
     def capture_message_screenshots(self, conversation, out_dir) -> int:
         """Pas de screenshots en mode API (le DOM n'est pas rendu)."""

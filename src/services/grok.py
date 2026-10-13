@@ -91,8 +91,6 @@ class GrokService(BaseService):
         cookies_dir = Path((self.config or {}).get("cookies_dir") or "cookies")
         self.http = CookieClient("grok", cookies_dir, cookie_domains=COOKIE_HOSTS)
         self.session = _CookieFetchSession(self.http, session)
-        #: payload brut de la derniere conversation exportee (API REST)
-        self._raw_payload: Optional[Dict[str, Any]] = None
 
     def build_parser(self) -> GrokParser:
         return GrokParser()
@@ -163,8 +161,3 @@ class GrokService(BaseService):
         self._raw_payload = {"conversation": meta, "responses": responses}
         self.record_api_shape(self._raw_payload)
         return conv, None
-
-    def take_raw_payload(self) -> Optional[Dict[str, Any]]:
-        """Payload API de la derniere conversation exportee (consomme)."""
-        payload, self._raw_payload = self._raw_payload, None
-        return payload
