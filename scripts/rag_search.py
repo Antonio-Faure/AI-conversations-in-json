@@ -3,7 +3,6 @@
 
     .venv/bin/python scripts/rag_search.py "comment configurer un serveur minecraft"
     .venv/bin/python scripts/rag_search.py "kubernetes" -k 20 --platform gemini
-    .venv/bin/python scripts/rag_search.py --config config.eg2.yaml "recette crepes"
 """
 
 from __future__ import annotations

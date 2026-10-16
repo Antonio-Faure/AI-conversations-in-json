@@ -1,15 +1,14 @@
-"""Embeddings locaux (BGE-M3 par defaut, EmbeddingGemma 2 en option), offline.
+"""Embeddings locaux (EmbeddingGemma 2 par defaut), offline.
 
 Le modele n'est charge qu'a la premiere utilisation (lazy) : les scripts qui
 n'ont pas besoin d'embeddings n'importent pas torch.
 
-Deux profils de modeles sont reconnus :
-  - BAAI/bge-m3             : 1024 dims, aucun prompt de tache.
+Profils de modeles reconnus :
   - google/embeddinggemma-2 : 768 dims, prompts de tache obligatoires
     (requete : "task: search result | query: " ; document : "title: none | text: ").
+  - les autres modeles : encodes brut, dimension deduite du nom (1024 par defaut).
 
-La dimension est configurable (`rag_dim` dans la config) ; par defaut elle est
-deduite du nom du modele (1024 hors EmbeddingGemma).
+La dimension est configurable (`rag_dim` dans la config) ; 0 = deduite du nom.
 """
 
 from __future__ import annotations
@@ -20,8 +19,8 @@ from typing import List, Optional
 
 import numpy as np
 
-DEFAULT_MODEL = "BAAI/bge-m3"
-DIM = 1024  # dimension par defaut (bge-m3)
+DEFAULT_MODEL = "google/embeddinggemma-2"
+DIM = 1024  # dimension hors EmbeddingGemma (fallback)
 GEMMA_MODEL = "google/embeddinggemma-2"
 GEMMA_DIM = 768
 # noms des prompts declares dans config_sentence_transformers.json du modele :
@@ -71,7 +70,7 @@ class Embedder:
 
     `encode` traite des documents (indexation) et `encode_one` des requetes
     (recherche) : les modeles a prompts (EmbeddingGemma) recoivent le prefixe
-    de tache adapte, les autres modeles (bge-m3) sont encodes brut.
+    de tache adapte, les autres modeles sont encodes brut.
     """
 
     def __init__(
@@ -102,13 +101,13 @@ class Embedder:
                 # troncature au contexte d'embedding (8192 tokens) : le
                 # tokenizer d'EmbeddingGemma annonce ~1e30, ce qui laisse
                 # passer des messages de 50k+ tokens (activations d'attention
-                # hors de controle). bge-m3 est deja plafonne a 8192.
+                # hors de controle) ; les autres modeles sont deja plafonnes a 8192.
                 model.max_seq_length = min(model.max_seq_length, GEMMA_MAX_TOKENS)
             self._model = model
         return self._model
 
     def _prompt(self, kind: str) -> Optional[str]:
-        """Nom du prompt de tache (EmbeddingGemma) ou None (bge-m3)."""
+        """Nom du prompt de tache (EmbeddingGemma) ou None (sans prompts)."""
         if not is_embeddinggemma(self.model_name):
             return None
         return GEMMA_DOCUMENT_PROMPT if kind == "document" else GEMMA_QUERY_PROMPT
@@ -120,8 +119,8 @@ class Embedder:
         a une URL (http(s) sans espace, domaine YouTube, extension image/audio/
         video) comme un media a telecharger (crash yt_dlp ou requete reseau).
         On force donc le format texte explicite `{"text": ...}`, strictement
-        equivalent au str (meme texte encode, verifie empiriquement) ; bge-m3
-        n'a pas ce processor et garde des str.
+        equivalent au str (meme texte encode, verifie empiriquement) ; les
+        autres modeles n'ont pas ce processor et gardent des str.
         """
         if not is_embeddinggemma(self.model_name):
             return list(texts)

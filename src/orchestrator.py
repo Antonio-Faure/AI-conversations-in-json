@@ -96,9 +96,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "output_dir": "exports",
     "profile_dir": "profiles",
     "cookies_dir": "cookies",
-    "rag_db": "rag/messages.db",
-    "rag_model": "BAAI/bge-m3",
-    # dimension des embeddings : 0 = deduite du modele (1024 hors EmbeddingGemma)
+    "rag_db": "rag/messages-eg2.db",
+    "rag_model": "google/embeddinggemma-2",
+    # dimension des embeddings : 0 = deduite du modele (768 EmbeddingGemma)
     "rag_dim": 0,
     # pas de logs sur disque : console uniquement
     "screenshot_dir": "",

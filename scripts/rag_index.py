@@ -3,10 +3,9 @@
 
 Un vecteur par message. Incremental (une conversation non modifiee est ignoree)
 sauf --force. Aucune deduplication. Le modele/dimension viennent de la config
-(`rag_model`/`rag_dim`) ; utiliser --config pour un index dedie (ex. EmbeddingGemma).
+(`rag_model`/`rag_dim`) ; utiliser --config pour un index dedie.
 
     .venv/bin/python scripts/rag_index.py
-    .venv/bin/python scripts/rag_index.py --config config.eg2.yaml
     .venv/bin/python scripts/rag_index.py --platform grok --limit 5
     .venv/bin/python scripts/rag_index.py --force
 """

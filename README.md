@@ -62,10 +62,9 @@ python3 -m venv .venv
 .venv/bin/python -m playwright install chromium   # binaire navigateur
 ```
 
-Le modèle d'embeddings `BAAI/bge-m3` (~2,3 Go) est téléchargé automatiquement
-au premier usage du RAG. L'index alternatif **EmbeddingGemma 2**
-(`google/embeddinggemma-2`, ~1,5 Go, multimodal texte/images/audio/vidéo) est
-téléchargé au premier usage de `--config config.eg2.yaml`.
+Le modèle d'embeddings `google/embeddinggemma-2` (~1,5 Go, multimodal
+texte/images/audio/vidéo) est téléchargé automatiquement au premier usage du
+RAG.
 
 ## Première connexion (obligatoire, une fois par service)
 
@@ -323,11 +322,12 @@ vecteurs inchangés sont repris du cache).
 
 Indexation **un vecteur par message** et recherche par **similarité cosinus**.
 
-- **Embeddings locaux configurables** (`rag_model`/`rag_dim`) : `BAAI/bge-m3`
-  (1024 dim, défaut) ou `google/embeddinggemma-2` (768 dim, MRL 512/256/128,
-  prompts de tâche) — offline/gratuit, vecteurs normalisés.
-- **Stockage SQLite + sqlite-vec** : `rag/messages.db`
-  (`messages` = texte + métadonnées, `vec_messages` = vecteurs `distance_metric=cosine`).
+- **Embeddings locaux** : `google/embeddinggemma-2` (768 dim, MRL 512/256/128,
+  prompts de tâche, multimodal) — offline/gratuit, vecteurs normalisés ;
+  `rag_model`/`rag_dim` restent configurables (0 = dimension déduite du modèle).
+- **Stockage SQLite + sqlite-vec** : `rag/messages-eg2.db`
+  (`messages` = texte + métadonnées, `vec_messages` = vecteurs `distance_metric=cosine`,
+  `media`/`vec_media` = médias).
 - **Granularité message**, aucune déduplication, aucun résumé.
 - Indexation **incrémentale** : une conversation dont `exported_at` n'a pas changé
   est ignorée (sauf `--force`).
@@ -353,27 +353,26 @@ Indexation **un vecteur par message** et recherche par **similarité cosinus**.
 Chaque résultat affiche `cos=<similarité> [<platform>/<role>] <timestamp> conv=<id>`
 puis un extrait du message.
 
-### Index EmbeddingGemma 2 (parallèle) + médias
-
-`config.eg2.yaml` pointe vers un index dédié (`rag/messages-eg2.db`, 768 dims,
-EmbeddingGemma 2) **sans toucher** à `rag/messages.db` (bge-m3) :
-
-```bash
-# messages (reprise incrémentale : conversations déjà indexées sautées)
-.venv/bin/python scripts/rag_index.py --config config.eg2.yaml
-
-# médias (images budget vision 70, audio, vidéo) -> table vec_media
-.venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml
-
-# recherche texte -> messages ou médias (même espace vectoriel)
-.venv/bin/python scripts/rag_search.py --config config.eg2.yaml "requête"
-.venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml --search "requête" --kind image
-```
+### Médias (images, audio, vidéo) + recherche multimodale
 
 La passe médias encode **1 vecteur par fichier** (images `images/`, audio/vidéo
 `files/`) dans l'espace multimodal d'EmbeddingGemma 2, avec les métadonnées
 (chemin, type, plateforme, conversation/message d'origine, texte de référence) ;
 le budget vision par image est réglable (`--image-budget 70/140/280/560/1120`).
+Les médias sans conversation (fichiers non référencés) sont élagués par
+`scripts/prune_media.py` (relie les copies d'un média lié, supprime le reste).
+
+```bash
+# médias -> table vec_media (incrémental : empreinte par fichier)
+.venv/bin/python scripts/rag_index_media.py
+
+# recherche texte -> médias (même espace vectoriel que les messages)
+.venv/bin/python scripts/rag_index_media.py --search "un paysage" --kind image
+```
+
+La page web expose la recherche média dans `/api/search` : les médias
+pertinents sont **rattachés à leur conversation** (un média compte comme un
+hit, il participe au score du groupe) et affichés en vignettes/lecteurs.
 
 ## Serveur MCP (recherche depuis un agent)
 
@@ -416,7 +415,7 @@ Au démarrage, le serveur **ouvre le navigateur** (Chrome si installé, sinon le
 navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
 
 - **Double recherche combinée** : mots-clés exacts (LIKE + bonus phrase) **et**
-  similarité cosinus (BGE-M3 + sqlite-vec), exécutées ensemble puis fusionnées
+  similarité cosinus (EmbeddingGemma + sqlite-vec), exécutées ensemble puis fusionnées
   par score : `score = alpha*sémantique + (1-alpha)*mots_clés` (curseur `alpha`).
 - **Filtres** : par chatbot (chips), par modèle, par plage de dates.
 - **Résultats groupés par conversation** : les conversations ayant **plusieurs**
@@ -508,7 +507,7 @@ valeurs omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │   │   ├── gemini.py          # DOM + payload batchexecute (sources, fichiers)
 │   │   └── grok.py            # construit depuis les données de l'API
 │   ├── rag/                   # RAG : embeddings configurables + SQLite/sqlite-vec
-│   │   ├── embeddings.py      #   Embedder (BGE-M3 1024 / EmbeddingGemma 768)
+│   │   ├── embeddings.py      #   Embedder (EmbeddingGemma 768, prompts de tâche)
 │   │   ├── store.py           #   VectorStore (messages + vec_messages)
 │   │   ├── indexer.py         #   indexation incrémentale par lots
 │   │   ├── media.py           #   médias (images/audio/vidéo + vec_media)
@@ -521,7 +520,7 @@ valeurs omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │       └── file_utils.py      # exports atomiques, noms, conversation_list
 ├── web/                       # page de recherche (index.html, app.js, style.css)
 ├── cookies/                   # cookies d'auth (ignorés git)
-├── rag/                       # base vectorielle messages.db (ignorée git)
+├── rag/                       # base vectorielle messages-eg2.db (ignorée git)
 ├── profiles/                  # profils navigateurs (ignorés git)
 └── exports/                   # sorties (ignorées git)
 ```

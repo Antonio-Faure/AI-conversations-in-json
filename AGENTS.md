@@ -52,11 +52,11 @@ plus un RAG et une page web de recherche. Le détail complet est dans
 .venv/bin/python scripts/rag_search.py "requête" -k 10
 .venv/bin/python scripts/serve_web.py            # http://127.0.0.1:8765
 
-# RAG EmbeddingGemma 2 (index parallele, 768 dims) : texte puis medias
-.venv/bin/python scripts/rag_index.py --config config.eg2.yaml           # messages -> rag/messages-eg2.db
-.venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml     # images/audio/video -> vec_media
-.venv/bin/python scripts/rag_search.py --config config.eg2.yaml "requête"
-.venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml --search "un paysage" --kind image
+# Medias EmbeddingGemma (meme index) : texte puis medias
+.venv/bin/python scripts/rag_index_media.py      # images/audio/video -> vec_media
+.venv/bin/python scripts/rag_index_media.py --search "un paysage" --kind image
+.venv/bin/python scripts/prune_media.py          # elague les medias orphelins (dry-run)
+.venv/bin/python scripts/purge_conversations.py --from-file LIST.json   # purge locale (dry-run)
 
 # Serveur MCP stdio (recherche depuis un agent ; stdout = JSON-RPC, logs stderr)
 .venv/bin/python scripts/mcp_conversations.py [-c config.yaml]
@@ -107,10 +107,9 @@ indisponibles).
 - **Navigateurs** : `src/browser.py` (Playwright) et
   `src/browser_botasaurus.py` (anti-Cloudflare) — même façade ; les services ne
   doivent pas accéder à `session.page`.
-- **RAG** : `src/rag/` (embeddings locaux configurables — BGE-M3 1024 dims par
-  défaut, EmbeddingGemma 2 768 dims via `config.eg2.yaml` — + SQLite/sqlite-vec,
-  médias via `src/rag/media.py`), page web `web/`, serveur
-  `scripts/serve_web.py`.
+- **RAG** : `src/rag/` (EmbeddingGemma 2 768 dims — `rag_model`/`rag_dim`
+  configurables — + SQLite/sqlite-vec, médias via `src/rag/media.py`), page web
+  `web/`, serveur `scripts/serve_web.py`.
 - **Serveur MCP** : `scripts/mcp_conversations.py` (SDK `mcp` v2, transport
   stdio ; outils `search`, `grep`, `get_conversation`, `get_message`,
   `list_conversations`, `stats`), enregistré sous `mcp.servers.aicv` dans la

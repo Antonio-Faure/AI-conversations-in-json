@@ -2,7 +2,7 @@
 """Serveur MCP (stdio) : recherche dans les conversations IA archivees.
 
 Outils exposes (protocole MCP, transport stdio) :
-  - search             : recherche hybride (embeddings BGE-M3 + mots-cles)
+  - search             : recherche hybride (embeddings EmbeddingGemma 2 + mots-cles)
   - grep               : recherche litterale/regex dans les exports JSON
   - get_conversation   : JSON standardise complet (ou resume + N messages)
   - get_message        : un message precis (message_id ou index 1-based)
@@ -202,7 +202,7 @@ class ConversationTools:
     ):
         self.exports_dir = Path(config["output_dir"])
         self.db_path = Path(config["rag_db"])
-        self.model_name = config.get("rag_model") or "BAAI/bge-m3"
+        self.model_name = config.get("rag_model") or "google/embeddinggemma-2"
         self.model_dim = model_dim(self.model_name, config.get("rag_dim"))
         self._store = store
         self._embedder = embedder
@@ -225,7 +225,7 @@ class ConversationTools:
         return self._store
 
     def embedder(self):
-        """Embedder (bge-m3 ou EmbeddingGemma), charge au premier usage."""
+        """Embedder (modele d'embeddings configure), charge au premier usage."""
         if self._embedder is None:
             from src.rag.embeddings import Embedder
 
@@ -353,7 +353,7 @@ class ConversationTools:
         date_to: Optional[str] = None,
         model: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Recherche hybride (cosinus BGE-M3 + mots-cles) groupee par conversation."""
+        """Recherche hybride (cosinus d'embeddings + mots-cles) groupee par conversation."""
         query = (query or "").strip()
         if not query:
             raise ConversationToolError("query vide")
@@ -832,7 +832,7 @@ class ConversationTools:
 # -- couche MCP ----------------------------------------------------------------------
 
 SEARCH_DESCRIPTION = (
-    "Recherche hybride (embeddings BGE-M3 + mots-cles) dans les messages des "
+    "Recherche hybride (embeddings EmbeddingGemma 2 + mots-cles) dans les messages des "
     "conversations IA archivees (chatgpt, claude, gemini, perplexity, grok, "
     "mistral). Resultats groupes par conversation : titre, url, id et messages "
     "matches avec extraits et scores. A utiliser pour une question en langage "

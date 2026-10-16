@@ -3,8 +3,8 @@
 Tables :
   - messages        : metadonnees + texte de chaque message (rowid partage)
   - vec_messages    : vecteurs du modele d'embeddings (vec0 float[dim],
-                      distance_metric=cosine) ; dim configurable (1024 = bge-m3
-                      par defaut, 768 = EmbeddingGemma 2)
+                      distance_metric=cosine) ; dim configurable (768 =
+                      EmbeddingGemma 2, 1024 pour les autres modeles)
   - conversations   : etat d'indexation (increment) par conversation
 """
 

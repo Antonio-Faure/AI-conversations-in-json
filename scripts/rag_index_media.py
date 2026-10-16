@@ -6,10 +6,10 @@ audio/video). Les images utilisent un budget vision reduit (--image-budget,
 defaut 70 soft tokens) pour tenir les temps de calcul CPU ; les audio/video
 sont encodes tels quels (pas de prefixe de tache sur les medias).
 
-    .venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml
-    .venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml --platform gemini
-    .venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml --limit 5
-    .venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml --search "un paysage de montagne"
+    .venv/bin/python scripts/rag_index_media.py
+    .venv/bin/python scripts/rag_index_media.py --platform gemini
+    .venv/bin/python scripts/rag_index_media.py --limit 5
+    .venv/bin/python scripts/rag_index_media.py --search "un paysage de montagne"
 
 La table `media` + `vec_media` vit dans la meme base que l'index texte
 (rag_db de la config). L'indexation est incrementale (fingerprint modele +

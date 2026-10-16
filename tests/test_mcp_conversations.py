@@ -556,7 +556,7 @@ def test_handshake_stdio_et_appels_outils(env):
 
 AICV_ROOT = Path(os.environ["AICV_ROOT"]) if os.environ.get("AICV_ROOT") else None
 LIVE_READY = bool(
-    AICV_ROOT and (AICV_ROOT / "config.yaml").exists() and (AICV_ROOT / "rag" / "messages.db").exists()
+    AICV_ROOT and (AICV_ROOT / "config.yaml").exists() and (AICV_ROOT / "rag" / "messages-eg2.db").exists()
 )
 
 

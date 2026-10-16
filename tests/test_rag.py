@@ -301,8 +301,8 @@ def test_base_restreinte_au_proprietaire(tmp_path):
         store.close()
 
 
-def test_as_text_inputs_embeddinggemma_vs_bge():
-    """EmbeddingGemma recoit des dicts texte explicites, bge-m3 des str.
+def test_as_text_inputs_embeddinggemma_vs_autres():
+    """EmbeddingGemma recoit des dicts texte explicites, les autres modeles des str.
 
     Sans cela, le processor multimodal interprete toute URL nue comme un media
     a telecharger (crash yt_dlp sur les URL YouTube).
@@ -313,9 +313,8 @@ def test_as_text_inputs_embeddinggemma_vs_bge():
     assert gemma.dim == 768
     assert gemma._as_text_inputs(["a", "b"]) == [{"text": "a"}, {"text": "b"}]
 
-    bge = Embedder("BAAI/bge-m3")
-    assert bge.dim == 1024
-    assert bge._as_text_inputs(["a"]) == ["a"]
+    autre = Embedder("fake-model")
+    assert autre._as_text_inputs(["a"]) == ["a"]
 
 
 def test_encode_restaure_ordre_apres_tri(monkeypatch):
