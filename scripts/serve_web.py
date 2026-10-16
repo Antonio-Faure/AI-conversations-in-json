@@ -4,9 +4,13 @@
 Sert la page web (web/) et une petite API JSON :
   - GET /api/stats
   - GET /api/filters
+  - GET /api/activity
+  - GET /api/day?date=AAAA-MM-JJ
   - GET /api/search?q=&k=&alpha=&platforms=&model=&date_from=&date_to=
+    (q vide + au moins un critere = recherche par criteres seuls, sans score)
   - GET /api/conversations?platform=
   - GET /api/conversation?platform=&id=
+  - GET /api/random?n=
 
 La recherche combine similarite cosinus (BGE-M3 + sqlite-vec) et mots-cles.
 
@@ -21,6 +25,7 @@ import json
 import re
 import sys
 import threading
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -30,6 +35,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.orchestrator import load_config  # noqa: E402
+from src.rag.embeddings import model_dim  # noqa: E402
 from src.rag.search import combined_search  # noqa: E402
 from src.rag.store import VectorStore  # noqa: E402
 from src.utils.urls import conversation_url  # noqa: E402
@@ -58,6 +64,16 @@ MEDIA_RE = re.compile(r"^/media/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)$")
 PLATFORMS = ("chatgpt", "claude", "gemini", "perplexity", "grok", "mistral")
 #: identifiants de conversation acceptes (pas de separateur de chemin)
 CONVERSATION_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+#: fenetre de la heatmap d'activite (jours, jour courant inclus)
+ACTIVITY_DAYS = 365
+#: bornes du tirage aleatoire (/api/random)
+RANDOM_MAX = 8
+#: longueur de l'extrait de message dans la vue « journee » (/api/day)
+DAY_EXTRACT_LEN = 300
+#: nombre maxi de messages renvoyes par une recherche par criteres seuls
+FILTER_LIMIT = 200
+#: date AAAA-MM-JJ (validation stricte, verifiee ensuite par strptime)
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 class ApiError(Exception):
@@ -83,13 +99,37 @@ def check_conversation_id(conversation_id: str) -> str:
     return conversation_id
 
 
+def check_date(value: str) -> str:
+    """Valide une date calendaire reelle au format AAAA-MM-JJ."""
+    if not DATE_RE.match(value or ""):
+        raise ApiError("date invalide (format AAAA-MM-JJ attendu)")
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+    except ValueError as exc:
+        raise ApiError(f"date invalide: {value!r}") from exc
+    return value
+
+
+def message_extract(texte: str, limit: int = DAY_EXTRACT_LEN) -> str:
+    """Extrait d'une ligne (~300 caracteres), coupe au mot, ellipse en fin."""
+    flat = re.sub(r"\s+", " ", texte or "").strip()
+    if len(flat) <= limit:
+        return flat
+    cut = flat[:limit]
+    space = cut.rfind(" ")
+    if space > 0:
+        cut = cut[:space]
+    return cut + "…"
+
+
 class AppState:
     """Etat partage : store + embedder charges paresseusement (thread-safe)."""
 
-    def __init__(self, db_path: Path, exports_dir: Path, model_name: str):
+    def __init__(self, db_path: Path, exports_dir: Path, model_name: str, dim: int = 0):
         self.db_path = db_path
         self.exports_dir = exports_dir
         self.model_name = model_name
+        self.dim = model_dim(model_name, dim)
         self._store = None
         self._embedder = None
         self._lock = threading.Lock()
@@ -99,7 +139,7 @@ class AppState:
     def store(self) -> VectorStore:
         with self._lock:
             if self._store is None:
-                self._store = VectorStore(self.db_path)
+                self._store = VectorStore(self.db_path, dim=self.dim)
             return self._store
 
     def embedder(self):
@@ -108,7 +148,7 @@ class AppState:
                 from src.rag.embeddings import Embedder
 
                 print("[web] chargement du modele d'embeddings (1re recherche)...")
-                self._embedder = Embedder(self.model_name)
+                self._embedder = Embedder(self.model_name, dim=self.dim)
             return self._embedder
 
     def embed(self, text: str):
@@ -228,6 +268,10 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(self._stats())
             elif path == "/api/filters":
                 self._send_json(self._filters())
+            elif path == "/api/activity":
+                self._send_json(self._activity())
+            elif path == "/api/day":
+                self._send_json(self._day(params))
             elif path == "/api/search":
                 self._send_json(self._search(params))
             elif path == "/api/conversations":
@@ -238,7 +282,7 @@ class Handler(BaseHTTPRequestHandler):
                 cid = (params.get("id") or [""])[0]
                 self._send_json(self._conversation(platform, cid))
             elif path == "/api/random":
-                self._send_json(self._random())
+                self._send_json(self._random(params))
             else:
                 self._send_json({"error": "unknown endpoint"}, 404)
 
@@ -260,10 +304,102 @@ class Handler(BaseHTTPRequestHandler):
         }
         for platform, data in counts.items():
             data["conversations"] = convs.get(platform, 0)
+        model_counts = [
+            {"model": row["model"], "count": row["n"]}
+            for row in store.db.execute(
+                """
+                SELECT model, COUNT(*) AS n FROM messages
+                WHERE model IS NOT NULL AND model != ''
+                GROUP BY model ORDER BY n DESC, model LIMIT 8
+                """
+            ).fetchall()
+        ]
         return {
             "platforms": counts,
             "total_messages": sum(d["messages"] for d in counts.values()),
             "models": store.distinct_models(),
+            "model_counts": model_counts,
+        }
+
+    def _activity(self):
+        """Messages par jour sur les 365 derniers jours (heatmap d'activite).
+
+        Tous les jours de la fenetre sont presents (y compris a zero), ce qui
+        evite au front de completer les trous.
+        """
+        store = self.state.store()
+        end = datetime.now(timezone.utc).date()
+        start = end - timedelta(days=ACTIVITY_DAYS - 1)
+        rows = store.db.execute(
+            """
+            SELECT date(timestamp) AS day, COUNT(*) AS n FROM messages
+            WHERE timestamp != '' AND timestamp IS NOT NULL AND date(timestamp) >= ?
+            GROUP BY day
+            """,
+            (start.isoformat(),),
+        ).fetchall()
+        counts = {row["day"]: row["n"] for row in rows}
+        days = {}
+        day = start
+        while day <= end:
+            key = day.isoformat()
+            days[key] = counts.get(key, 0)
+            day += timedelta(days=1)
+        return {"days": days, "max": max(days.values(), default=0)}
+
+    def _day(self, params):
+        """Messages d'une journee, groupes par conversation (vue « journee »)."""
+        date = check_date((params.get("date") or [""])[0])
+        store = self.state.store()
+        rows = store.db.execute(
+            """
+            SELECT message_id, conversation_id, platform, role, model, timestamp, texte
+            FROM messages WHERE date(timestamp) = ?
+            ORDER BY timestamp, rowid
+            """,
+            (date,),
+        ).fetchall()
+        groups: dict = {}
+        order: list = []
+        for row in rows:
+            key = (row["platform"], row["conversation_id"])
+            group = groups.get(key)
+            if group is None:
+                group = {
+                    "platform": row["platform"],
+                    "conversation_id": row["conversation_id"],
+                    "title": "",
+                    "url": conversation_url(row["platform"], row["conversation_id"]),
+                    "message_count": 0,
+                    "messages": [],
+                }
+                groups[key] = group
+                order.append(key)
+            group["message_count"] += 1
+            group["messages"].append(
+                {
+                    # identifiant vide -> null (le front ouvre sans ancre)
+                    "message_id": row["message_id"] or None,
+                    "role": row["role"],
+                    "model": row["model"] or None,
+                    "timestamp": row["timestamp"],
+                    "texte": message_extract(row["texte"]),
+                }
+            )
+        # titres/URL depuis l'index (repli : titre vide, URL calculee)
+        meta = store.conversation_meta(order)
+        for key in order:
+            info = meta.get(key) or {}
+            group = groups[key]
+            group["title"] = info.get("title") or ""
+            if info.get("url"):
+                group["url"] = info["url"]
+        conversations = [groups[key] for key in order]
+        return {
+            "date": date,
+            "message_count": len(rows),
+            "conversation_count": len(conversations),
+            "conversations": conversations,
         }
 
     def _filters(self):
@@ -283,8 +419,6 @@ class Handler(BaseHTTPRequestHandler):
 
     def _search(self, params):
         query = (params.get("q") or [""])[0].strip()
-        if not query:
-            return {"query": query, "count": 0, "group_count": 0, "groups": []}
         try:
             k = int((params.get("k") or ["30"])[0])
         except ValueError as exc:
@@ -304,6 +438,11 @@ class Handler(BaseHTTPRequestHandler):
         model = (params.get("model") or [""])[0] or None
         date_from = (params.get("date_from") or [""])[0] or None
         date_to = (params.get("date_to") or [""])[0] or None
+        if not query:
+            # sans texte : criteres seuls ; sans critere non plus, reponse vide
+            if not (platforms or model or date_from or date_to):
+                return {"query": query, "count": 0, "group_count": 0, "groups": []}
+            return self._search_filter_only(platforms, model, date_from, date_to)
         vector = self.state.embed(query)
         results = combined_search(
             self.state.store(),
@@ -317,6 +456,83 @@ class Handler(BaseHTTPRequestHandler):
             date_to=date_to,
         )
         return self._group_results(query, results)
+
+    def _search_filter_only(self, platforms, model, date_from, date_to):
+        """Recherche par criteres seuls (q vide) : tri par date, sans score.
+
+        Meme forme de reponse que la recherche combinee (groupes par
+        conversation) mais `score`/`semantic_score`/`keyword_score` sont null
+        et `best_score` est null. Plage de dates inclusive (`date(timestamp)`),
+        limite FILTER_LIMIT messages.
+        """
+        store = self.state.store()
+        clauses: list = []
+        params: list = []
+        if platforms:
+            clauses.append("platform IN (" + ",".join("?" * len(platforms)) + ")")
+            params.extend(platforms)
+        if model:
+            clauses.append("model = ?")
+            params.append(model)
+        if date_from:
+            clauses.append("date(timestamp) >= ?")
+            params.append(date_from)
+        if date_to:
+            clauses.append("date(timestamp) <= ?")
+            params.append(date_to)
+        where = " AND ".join(clauses) if clauses else "1"
+        rows = store.db.execute(
+            f"""
+            SELECT message_id, conversation_id, platform, role, model, timestamp, texte
+            FROM messages WHERE {where}
+            ORDER BY timestamp DESC, rowid DESC LIMIT ?
+            """,
+            params + [FILTER_LIMIT],
+        ).fetchall()
+        groups: dict = {}
+        for row in rows:
+            key = (row["platform"], row["conversation_id"])
+            group = groups.get(key)
+            if group is None:
+                group = {
+                    "platform": row["platform"],
+                    "conversation_id": row["conversation_id"],
+                    "url": conversation_url(row["platform"], row["conversation_id"]),
+                    "title": "",
+                    "messages": [],
+                    "best_score": None,
+                }
+                groups[key] = group
+            group["messages"].append(
+                {
+                    "message_id": row["message_id"] or "",
+                    "role": row["role"],
+                    "model": row["model"] or None,
+                    "timestamp": row["timestamp"],
+                    "texte": row["texte"] or "",
+                    "score": None,
+                    "semantic_score": None,
+                    "keyword_score": None,
+                }
+            )
+        meta = store.conversation_meta(list(groups.keys()))
+        ordered = []
+        for key, group in groups.items():
+            info = meta.get(key) or {}
+            group["title"] = info.get("title") or ""
+            if info.get("url"):
+                group["url"] = info["url"]
+            group["hit_count"] = len(group["messages"])
+            ordered.append(group)
+        # conversations les plus recentes d'abord (messages deja tries desc)
+        ordered.sort(key=lambda g: g["messages"][0]["timestamp"] or "", reverse=True)
+        return {
+            "query": "",
+            "filtered": True,
+            "count": len(rows),
+            "group_count": len(ordered),
+            "groups": ordered,
+        }
 
     def _group_results(self, query: str, results):
         """Regroupe les messages par conversation (multi-hits d'abord)."""
@@ -357,13 +573,74 @@ class Handler(BaseHTTPRequestHandler):
             "groups": ordered,
         }
 
-    def _random(self):
-        row = self.state.store().random_conversation()
-        if not row:
-            return {"error": "aucune conversation"}
-        if not row.get("url"):
-            row["url"] = conversation_url(row["platform"], row["conversation_id"])
-        return row
+    def _random(self, params):
+        """Une (n=1, format historique) ou plusieurs conversations au hasard."""
+        raw = (params.get("n") or [""])[0]
+        n = 1
+        if raw:
+            try:
+                n = int(raw)
+            except ValueError as exc:
+                raise ApiError("parametre n invalide (entier attendu)") from exc
+        if not 1 <= n <= RANDOM_MAX:
+            raise ApiError(f"n doit etre entre 1 et {RANDOM_MAX}")
+        store = self.state.store()
+        picked: list = []
+        seen = set()
+        # tirage avec deduplication : bornage des tentatives (pool petit possible)
+        for _ in range(n * 12 + 12):
+            if len(picked) >= n:
+                break
+            row = store.random_conversation()
+            if not row:
+                break
+            key = (row.get("platform"), row.get("conversation_id"))
+            if key in seen:
+                continue
+            seen.add(key)
+            if not row.get("url"):
+                row["url"] = conversation_url(row["platform"], row["conversation_id"])
+            picked.append(row)
+        self._enrich_random(picked)
+        if n == 1:
+            # format historique (bouton « Aleatoire ») : objet simple
+            return picked[0] if picked else {"error": "aucune conversation"}
+        return {"conversations": picked}
+
+    def _enrich_random(self, rows) -> None:
+        """Ajoute message_count + date du dernier message aux conversations tirees."""
+        if not rows:
+            return
+        store = self.state.store()
+        pairs = [(row["platform"], row["conversation_id"]) for row in rows]
+        values = ",".join("(?,?)" for _ in pairs)
+        flat = [value for pair in pairs for value in pair]
+        counts = {
+            (row["platform"], row["conversation_id"]): row["message_count"]
+            for row in store.db.execute(
+                f"""
+                SELECT platform, conversation_id, message_count FROM conversations
+                WHERE (platform, conversation_id) IN (VALUES {values})
+                """,
+                flat,
+            ).fetchall()
+        }
+        lasts = {
+            (row["platform"], row["conversation_id"]): row["last_ts"]
+            for row in store.db.execute(
+                f"""
+                SELECT platform, conversation_id, MAX(timestamp) AS last_ts
+                FROM messages
+                WHERE (platform, conversation_id) IN (VALUES {values})
+                GROUP BY platform, conversation_id
+                """,
+                flat,
+            ).fetchall()
+        }
+        for row in rows:
+            key = (row["platform"], row["conversation_id"])
+            row["message_count"] = counts.get(key)
+            row["last_message_at"] = lasts.get(key) or None
 
     def _conversations(self, platform: str):
         if platform:
@@ -469,6 +746,7 @@ def main() -> int:
         resolve(args.db or config["rag_db"]),
         resolve(args.exports or config["output_dir"]),
         args.model or config.get("rag_model"),
+        config.get("rag_dim") or 0,
     )
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     display_host = "127.0.0.1" if args.host in ("0.0.0.0", "::") else args.host

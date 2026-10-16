@@ -53,22 +53,27 @@
         <span class="filter-label" id="platformsLabel">Chatbots</span>
         <div class="chip-list" id="platformChips" role="group" aria-labelledby="platformsLabel"></div>
       </div>
-      <div>
-        <label class="filter-label" for="alpha">Pondération sémantique : <span id="alphaVal">0.6</span></label>
-        <input type="range" id="alpha" min="0" max="1" step="0.05" value="0.6">
-        <div class="rc-meta range-legend"><span>mots-clés</span><span>sémantique</span></div>
+      <div class="params-ranges">
+        <div>
+          <label class="filter-label" for="alpha">Pondération sémantique : <span id="alphaVal">0.6</span></label>
+          <input type="range" id="alpha" min="0" max="1" step="0.05" value="0.6">
+          <div class="rc-meta range-legend"><span>mots-clés</span><span>sémantique</span></div>
+        </div>
+        <div>
+          <label class="filter-label" for="k">Nombre de résultats : <span id="kVal">30</span></label>
+          <input type="range" id="k" min="5" max="100" step="5" value="30">
+          <div class="rc-meta range-legend"><span>5</span><span>100</span></div>
+        </div>
       </div>
-      <div>
-        <label class="filter-label" for="modelFilter">Modèle</label>
-        <select id="modelFilter" class="search-input"><option value="">Tous les modèles</option></select>
-      </div>
-      <div>
-        <span class="filter-label">Plage de dates</span>
-        <div class="row-inputs"><input type="date" id="dateFrom" aria-label="Date de début"><span class="range-sep">→</span><input type="date" id="dateTo" aria-label="Date de fin"></div>
-      </div>
-      <div>
-        <label class="filter-label" for="k">Nombre de résultats : <span id="kVal">30</span></label>
-        <input type="range" id="k" min="5" max="100" step="5" value="30">
+      <div class="params-model-dates">
+        <div>
+          <label class="filter-label" for="modelFilter">Modèle</label>
+          <select id="modelFilter" class="search-input"><option value="">Tous les modèles</option></select>
+        </div>
+        <div>
+          <span class="filter-label">Plage de dates</span>
+          <div class="row-inputs"><input type="date" id="dateFrom" aria-label="Date de début"><span class="range-sep">→</span><input type="date" id="dateTo" aria-label="Date de fin"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -76,9 +81,9 @@
   <div class="stats" id="stats" role="status" aria-live="polite"></div>
 
   <div class="layout">
-    <aside class="sidebar" id="sidebar">
-      <h2>Navigation</h2>
-      <p class="side-empty">Lance une recherche pour voir les conversations.</p>
+    <aside class="sidebar" id="sidebar" aria-label="Plateformes et navigation">
+      <h2>Plateformes</h2>
+      <p class="side-empty">Chargement des plateformes…</p>
     </aside>
     <main class="main" id="main" tabindex="-1">
       <div class="state">

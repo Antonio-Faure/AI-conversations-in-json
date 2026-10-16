@@ -91,8 +91,9 @@ html{caret-color:var(--accent);scrollbar-color:var(--border-strong) transparent}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:24px}
 h1{font-family:var(--font-display);font-size:clamp(2rem,1.3rem + 2.4vw,3rem);font-weight:700;
   letter-spacing:-.02em;line-height:1.05;text-wrap:balance}
-.subtitle{margin-top:6px;font-size:1rem;color:var(--text-muted);max-width:var(--measure)}
+.subtitle{margin-top:6px;font-size:1rem;color:var(--text-muted)}
 .header-right{display:flex;align-items:center;gap:.75rem;flex-shrink:0;padding-top:.5rem}
+.header-left{flex:1;min-width:0}
 
 .theme-toggle{display:inline-flex;align-items:center;gap:.55rem;cursor:pointer;user-select:none;
   background:none;border:0;color:inherit;font:inherit}
@@ -109,7 +110,7 @@ h1{font-family:var(--font-display);font-size:clamp(2rem,1.3rem + 2.4vw,3rem);fon
   background:color-mix(in srgb,var(--primary) 82%,transparent);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;margin-bottom:18px;box-shadow:var(--shadow-sm)}
-.search-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.search-row{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
 .field{position:relative;flex:1;min-width:240px;display:flex;align-items:center}
 .field-icon{position:absolute;left:14px;width:18px;height:18px;color:var(--text-muted);pointer-events:none}
 .field .search-input{padding-left:42px}
@@ -132,15 +133,35 @@ select.search-input{cursor:pointer}
 
 .params-toggle{display:inline-flex;align-items:center;gap:8px;font-size:.74rem;color:var(--text-muted);font-weight:700;
   text-transform:uppercase;letter-spacing:.09em;padding:9px 14px;border-radius:var(--r-sm);background:transparent;
-  border:1px solid var(--border-strong);cursor:pointer;font-family:var(--font-body);
+  border:1px solid var(--border-strong);cursor:pointer;font-family:var(--font-body);min-height:2.75rem;
   transition:color var(--dur) var(--ease),border-color var(--dur) var(--ease)}
 .params-toggle svg{width:16px;height:16px}
 .params-toggle:hover{color:var(--text);border-color:var(--accent)}
 .params-toggle[aria-expanded="true"]{color:var(--accent);border-color:var(--accent)}
+/* les deux molettes glissent sur leur rail a l'ouverture des parametres */
+.params-toggle circle{transition:transform .35s var(--ease)}
+.params-toggle[aria-expanded="true"] circle:first-of-type{transform:translateX(-6px)}
+.params-toggle[aria-expanded="true"] circle:last-of-type{transform:translateX(6px)}
+
+/* le de roule : rotation complete + face changee au milieu du geste */
+@keyframes dice-roll{
+  0%{transform:rotate(0deg) scale(1)}
+  40%{transform:rotate(-170deg) scale(.85)}
+  75%{transform:rotate(-305deg) scale(1.08)}
+  100%{transform:rotate(-360deg) scale(1)}
+}
+#randomBtn svg{transform-box:fill-box;transform-origin:center}
+#randomBtn svg.rolling{animation:dice-roll .6s var(--ease) both}
 
 .search-params{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);
   display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
 .search-params.collapsed{display:none}
+.params-ranges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px;align-content:start}
+.params-ranges .range-legend{flex-wrap:nowrap;gap:4px;font-size:.68rem}
+.params-ranges .range-legend span{white-space:nowrap}
+.params-model-dates{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-content:start}
+.params-model-dates .row-inputs{gap:6px}
+.params-model-dates .row-inputs input[type="date"]{min-width:0;padding:9px 6px;font-size:.78rem}
 .filter-label{display:block;font-size:.72rem;font-weight:700;margin-bottom:9px;color:var(--text-muted);
   text-transform:uppercase;letter-spacing:.11em}
 
@@ -184,6 +205,9 @@ input[type="range"]{width:100%;accent-color:var(--accent)}
 .sidebar .anchor{padding:6px 9px;border-radius:8px;cursor:pointer;font-size:.78rem;color:var(--text-muted);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background var(--dur) var(--ease),color var(--dur) var(--ease)}
 .sidebar .anchor:hover{background:var(--bg-hover);color:var(--text)}
+/* ancres des messages du jour (conversation ouverte depuis une journée) */
+.sidebar .anchor.day{color:var(--text);box-shadow:inset 2px 0 0 var(--accent);
+  background-image:linear-gradient(color-mix(in srgb,var(--accent) 12%,transparent),color-mix(in srgb,var(--accent) 12%,transparent))}
 
 .main{min-height:300px}
 .section-title{font-family:var(--font-display);font-size:1.4rem;font-weight:600;margin:0 0 14px;letter-spacing:-.01em}
@@ -200,6 +224,25 @@ input[type="range"]{width:100%;accent-color:var(--accent)}
 .conv-link{color:var(--accent);font-size:.75rem;text-decoration:none;border:1px solid var(--border);
   border-radius:8px;padding:3px 9px;white-space:nowrap;transition:border-color var(--dur) var(--ease)}
 .conv-link:hover{border-color:var(--accent)}
+/* bouton scinde de la vue conversation : [Ouvrir] [Copier] */
+.conv-split{display:inline-flex;align-items:stretch}
+.conv-split .conv-link{border-radius:0}
+.conv-split > :first-child{border-radius:8px 0 0 8px}
+.conv-split > :last-child{border-radius:0 8px 8px 0;border-left:0}
+/* le bord partage appartient au premier bouton : l'allumer aussi au survol du second */
+.conv-split:has(> :last-child:hover) > :first-child{border-right-color:var(--accent)}
+.conv-copy{background:transparent;cursor:pointer;font-family:inherit}
+.conv-copy:hover{color:var(--text);border-color:var(--accent)}
+
+/* confirmation de copie : ✓ qui apparait en pop (largeur stabilisee cote JS) */
+@keyframes check-pop{
+  0%{transform:scale(.4) rotate(-14deg);opacity:0}
+  65%{transform:scale(1.18) rotate(0)}
+  100%{transform:scale(1);opacity:1}
+}
+.copy-check{display:inline-block;font-weight:700;color:var(--accent);
+  animation:check-pop .24s var(--ease) both}
+.copy-btn.copied,.conv-copy.copied{border-color:var(--accent);color:var(--accent)}
 
 /* -- resultats groupes -- */
 .results-grid{display:grid;grid-template-columns:1fr;gap:18px}
@@ -207,9 +250,8 @@ input[type="range"]{width:100%;accent-color:var(--accent)}
 .group-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);
   padding:16px 18px;box-shadow:var(--shadow-sm);animation:rise .4s var(--ease) both}
 .group-card.multi{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
-.group-hits{margin-top:12px;display:flex;flex-direction:column}
-.hit{padding:12px;border-radius:var(--r-sm);border-top:1px solid var(--border);cursor:pointer;transition:background var(--dur) var(--ease)}
-.hit:first-child{border-top:0}
+.group-hits{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.hit{padding:12px;border-radius:var(--r-sm);border:1px solid var(--border);cursor:pointer;transition:background var(--dur) var(--ease)}
 .hit:hover{background:var(--bg-hover)}
 .group-title{cursor:pointer}
 .group-title:hover{color:var(--accent)}
@@ -264,6 +306,15 @@ mark{background:var(--highlight);color:inherit;border-radius:3px;padding:0 2px}
 .msg.user{background:var(--role-user-bg);border-color:color-mix(in srgb,var(--role-user-fg) 28%,var(--border))}
 .msg.assistant{background:var(--bg-card)}
 .msg.matched{border-color:var(--accent);box-shadow:0 0 0 3px var(--focus-ring)}
+/* messages du jour (conversation ouverte depuis une journée) : surlignage doux,
+   le dégradé se superpose au fond de rôle (user/assistant) sans l'écraser */
+.msg.day{border-color:color-mix(in srgb,var(--accent) 38%,var(--border));
+  box-shadow:inset 3px 0 0 var(--accent);
+  background-image:linear-gradient(color-mix(in srgb,var(--accent) 8%,transparent),color-mix(in srgb,var(--accent) 8%,transparent))}
+/* message cliqué d'un jour : rendu strictement identique aux autres (le
+   `.matched` ne sert plus qu'au scroll d'ouverture dans ce contexte) */
+.msg.matched.day{border-color:color-mix(in srgb,var(--accent) 38%,var(--border));
+  box-shadow:inset 3px 0 0 var(--accent)}
 .msg-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:.72rem;color:var(--text-muted);
   text-transform:uppercase;letter-spacing:.05em;font-variant-numeric:tabular-nums}
 .msg-text{word-wrap:break-word;overflow-wrap:anywhere;font-size:.92rem;line-height:1.65}
@@ -320,3 +371,116 @@ mark{background:var(--highlight);color:inherit;border-radius:3px;padding:0 2px}
 .msg .variant-body :first-child{margin-top:0}
 .msg .variant-body :last-child{margin-bottom:0}
 .extra-list a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+
+/* -- accueil : reprise, tableau de bord, explorer, recentes -- */
+.resume-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding:11px 16px;
+  background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);
+  box-shadow:var(--shadow-sm);animation:rise .4s var(--ease) both}
+.resume-bar[hidden],.panel[hidden],.more-wrap[hidden]{display:none}
+.resume-label{font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.11em;font-weight:700;white-space:nowrap}
+.resume-title{font-family:var(--font-display);font-size:1.05rem;font-weight:600;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn.btn-sm{padding:.45rem .9rem;font-size:.85rem}
+
+.home-section{margin-bottom:26px}
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;
+  box-shadow:var(--shadow-sm);animation:rise .4s var(--ease) both}
+.panel+.panel{margin-top:14px}
+.panel-title{font-family:var(--font-display);font-size:1.05rem;font-weight:600;margin-bottom:12px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-head .panel-title{margin-bottom:0}
+.section-note{color:var(--text-muted);font-size:.85rem;padding:6px 2px}
+
+.dash-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.dash-grid>*{min-width:0}
+.dash-grid .panel+.panel{margin-top:0}
+.heatmap-panel{grid-column:1/-1}
+
+/* heatmap d'activite : 7 lignes (lun..dim), une colonne par semaine.
+   centrage sur : flex + margin auto (le debut reste atteignable au scroll) */
+.heatmap-scroll{display:flex;overflow-x:auto;padding-bottom:2px}
+.heatmap{flex:0 0 auto;margin:0 auto}
+.hm-months{display:grid;grid-template-columns:repeat(var(--weeks,52),10px);gap:3px;margin:0 0 5px 32px;
+  height:13px;font-size:.62rem;color:var(--text-muted);line-height:1}
+.hm-months span{white-space:nowrap}
+.hm-main{display:flex;gap:6px;align-items:flex-start}
+.hm-days{display:grid;grid-template-rows:repeat(7,10px);gap:3px;width:26px;text-align:right;
+  font-size:.6rem;color:var(--text-muted);line-height:10px}
+.hm-grid{display:grid;grid-template-rows:repeat(7,10px);grid-auto-flow:column;grid-auto-columns:10px;gap:3px}
+.hm-cell{display:block;width:10px;height:10px;border-radius:2px}
+.hm-void{background:transparent}
+.hm-cell[data-level="0"]{background:color-mix(in srgb,var(--text) 9%,transparent)}
+.hm-cell[data-level="1"]{background:color-mix(in srgb,var(--accent) 28%,transparent)}
+.hm-cell[data-level="2"]{background:color-mix(in srgb,var(--accent) 48%,transparent)}
+.hm-cell[data-level="3"]{background:color-mix(in srgb,var(--accent) 70%,transparent)}
+.hm-cell[data-level="4"]{background:var(--accent)}
+.hm-legend{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:10px;font-size:.7rem;color:var(--text-muted)}
+.hm-legend .hm-cell{display:inline-block}
+
+/* cases cliquables : un jour actif ouvre la vue « journée » */
+.hm-btn{padding:0;border:0;font:inherit;cursor:pointer;
+  transition:transform .12s var(--ease),box-shadow .12s var(--ease)}
+.hm-btn:hover{transform:scale(1.3);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 70%,transparent)}
+.hm-btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* barres horizontales (plateformes, modeles) : colonnes et epaisseur
+   identiques dans les deux panneaux, seule la proportion varie */
+.bar-row{display:grid;grid-template-columns:130px minmax(0,1fr) 120px;gap:10px;align-items:center;padding:5px 0}
+.bar-label{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{display:block;height:10px;background:var(--bg-hover);border-radius:999px;overflow:hidden}
+.bar-fill{display:block;height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-strong));transition:width .7s var(--ease)}
+.bar-fill.grown{width:var(--w)}
+.bar-counts{display:flex;gap:8px;font-size:.74rem;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar-counts .bar-num{color:var(--text)}
+.bar-row.model .bar-label{font-family:var(--font-mono);font-size:.74rem;font-weight:500}
+
+/* vue « journée » (clic sur une case de la heatmap) */
+.day-view .group-card{margin-bottom:14px;scroll-margin-top:110px}
+.day-view .group-card:last-child{margin-bottom:0}
+/* repère visuel : carte visée depuis la sidebar de la journée
+   (halo maintenu ~0,5 s puis fondu) */
+@keyframes day-flash{
+  0%,40%{border-color:var(--accent);box-shadow:0 0 0 3px var(--focus-ring)}
+  100%{border-color:var(--border);box-shadow:var(--shadow-sm)}
+}
+.day-view .group-card.flash{animation:day-flash 1.2s ease-in-out both}
+
+/* grilles de cartes (au hasard, anniversaire, recentes) :
+   auto-fill pour densifier quand la largeur augmente */
+.explore-grid,.conv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.explore-grid>*,.conv-grid>*{min-width:0}
+.conv-grid .conv-card,.explore-grid .conv-card{border:1px solid var(--border);border-radius:var(--r);
+  background:var(--bg-card);box-shadow:var(--shadow-sm);animation:rise .4s var(--ease) both}
+.conv-grid .conv-card:hover,.explore-grid .conv-card:hover{border-color:var(--border-strong)}
+.conv-grid .conv-title,.explore-grid .conv-title{font-size:1rem}
+.conv-grid .rc-meta,.explore-grid .rc-meta{margin-bottom:0}
+.more-wrap{display:flex;justify-content:center;margin-top:16px}
+
+/* accueil : tableau de bord + explorer en pleine largeur (sans aside) ;
+   le filtre Plateformes vit dans la section « Dernières conversations » */
+.layout.solo{grid-template-columns:minmax(0,1fr)}
+.last-layout{display:grid;grid-template-columns:180px minmax(0,1fr);gap:22px;align-items:start}
+.last-layout>*{min-width:0}
+.last-filter{padding:12px 14px}
+.last-filter .side-item{padding:8px 9px}
+
+/* vue conversation en large : le « ← Retour » du haut ferait doublon avec
+   celui de la sidebar (sticky) ; en <= 980px la sidebar passe dessous, on le garde */
+@media(min-width:981px){
+  .conv-view:not(.day-view) #backTop{display:none}
+}
+@media(max-width:980px){
+  /* le filtre repasse au-dessus de la liste qu'il filtre */
+  .last-layout{grid-template-columns:1fr}
+  .last-layout .sidebar{order:0}
+}
+@media(max-width:720px){
+  .dash-grid{grid-template-columns:1fr}
+  .resume-title{flex-basis:100%;white-space:normal}
+}
+@media(max-width:560px){
+  /* compteurs empiles : colonne fixe pour garder des pistes identiques */
+  .bar-row{grid-template-columns:96px minmax(0,1fr) 62px;gap:8px}
+  .bar-counts{flex-direction:column;gap:0;align-items:flex-end}
+}
