@@ -14,13 +14,20 @@ import json
 import time
 import urllib.error
 import urllib.request
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from ..http_client import DEFAULT_USER_AGENT
 from ..utils.logging import get_logger
 from .base import RateLimitedError, ServiceNotLoggedIn
 
 log = get_logger("services.api_client")
+
+#: Transport bas niveau : (url, en-tetes, corps, methode, timeout) -> (statut, corps, content-type).
+#: Permet de router les requetes via le reseau du navigateur (Cloudflare).
+Transport = Callable[
+    [str, Dict[str, str], Optional[bytes], Optional[str], int],
+    Tuple[int, bytes, Optional[str]],
+]
 
 
 def retry_after_s(headers: Any) -> Optional[float]:
@@ -61,11 +68,14 @@ class CookieHttpClient:
         user_agent: Optional[str] = None,
         accept_language: Optional[str] = None,
         timeout_s: int = 45,
+        transport: Optional[Transport] = None,
     ):
         self.cookie_header = cookie_header
         self.user_agent = user_agent or DEFAULT_USER_AGENT
         self.accept_language = accept_language or self.default_accept_language
         self.timeout_s = timeout_s
+        #: transport alternatif (reseau du navigateur) ; urllib par defaut
+        self._transport = transport
 
     def _headers(self, accept: str, *, url: Optional[str] = None) -> Dict[str, str]:
         """En-tetes par defaut d'une requete (surcharge par service)."""
@@ -109,6 +119,28 @@ class CookieHttpClient:
         """
         return exc.code, exc.read() or b""
 
+    def _raw_request(
+        self,
+        url: str,
+        headers: Dict[str, str],
+        *,
+        data: Optional[bytes] = None,
+        method: Optional[str] = None,
+    ) -> Tuple[int, bytes, Optional[str]]:
+        """Requete bas niveau : `(statut, corps, content-type)`.
+
+        Un `transport` fourni a la construction (ex. reseau du navigateur pour
+        contourner un challenge Cloudflare) prime sur urllib. Le transport
+        rend le statut sans lever ; urllib leve `HTTPError`, traite par
+        `_send`.
+        """
+        if self._transport is not None:
+            return self._transport(url, headers, data, method, self.timeout_s)
+        request = urllib.request.Request(url, data=data, method=method, headers=headers)
+        with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+            ctype = (response.headers.get("Content-Type") or "").split(";")[0]
+            return response.status, response.read(), (ctype.strip() or None)
+
     def _send(
         self,
         url: str,
@@ -123,15 +155,14 @@ class CookieHttpClient:
         `header_kwargs` est transmis a `_headers` (surcharges de service).
         """
         for attempt in range(self.retry_attempts):
-            request = urllib.request.Request(
-                url,
-                data=data,
-                method=method,
-                headers=self._headers(accept, url=url, **header_kwargs),
-            )
             try:
-                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
-                    return response.status, response.read()
+                status, body, _ = self._raw_request(
+                    url,
+                    self._headers(accept, url=url, **header_kwargs),
+                    data=data,
+                    method=method,
+                )
+                return status, body
             except urllib.error.HTTPError as exc:
                 if exc.code == 429 and self._wait_429(attempt, exc.headers, url):
                     continue

@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import types
 from pathlib import Path
 
 import pytest
@@ -791,3 +792,57 @@ def test_download_service_images_reecrit_le_markdown(tmp_path, multimodal_payloa
     assert all(
         "chatgpt.com" not in message.texte for message in conv.messages
     )
+
+
+class TestTransportNavigateur:
+    """Transport via le reseau du navigateur (Cloudflare challenge urllib).
+
+    Depuis le 14/10/2026, `/backend-api/*` rend `Cf-Mitigated: challenge` aux
+    clients HTTP bruts : les lectures passent par le contexte Chromium.
+    """
+
+    def test_client_avec_transport_route_les_requetes(self):
+        seen = {}
+
+        def transport(url, headers, data, method, timeout_s):
+            seen["url"] = url
+            seen["authorization"] = headers.get("Authorization")
+            seen["account"] = headers.get("chatgpt-account-id")
+            return 200, b'{"items": [], "total": 0}', "application/json"
+
+        client = _ChatGPTHttpClient(
+            "sid=1", access_token="tok", account_id="acc", transport=transport
+        )
+        assert client.get_json("https://chatgpt.com/backend-api/conversations") == {
+            "items": [],
+            "total": 0,
+        }
+        assert seen["authorization"] == "Bearer tok"
+        assert seen["account"] == "acc"
+
+    def test_session_transport_absent_sans_api_request(self):
+        stub = types.SimpleNamespace(session=object())
+        assert ChatGPTService._session_transport(stub) is None
+
+    def test_session_transport_convertit_le_timeout(self):
+        calls = {}
+
+        class FakeSession:
+            def api_request(
+                self, url, *, headers=None, data=None, method=None, timeout_ms=None
+            ):
+                calls.update(url=url, timeout_ms=timeout_ms, method=method)
+                return 200, b"{}", "application/json"
+
+        stub = types.SimpleNamespace(session=FakeSession())
+        transport = ChatGPTService._session_transport(stub)
+        assert callable(transport)
+        status, body, ctype = transport(
+            "https://chatgpt.com/x", {"A": "1"}, None, None, 45
+        )
+        assert (status, body, ctype) == (200, b"{}", "application/json")
+        assert calls == {
+            "url": "https://chatgpt.com/x",
+            "timeout_ms": 45000,
+            "method": None,
+        }

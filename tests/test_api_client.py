@@ -152,3 +152,49 @@ def test_send_erreur_reseau_leve_runtime_error(monkeypatch):
     monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
     with pytest.raises(RuntimeError, match="requete echouee"):
         CookieHttpClient("a=b").get("https://exemple/x")
+
+
+class TestTransportNavigateur:
+    """Transport alternatif (reseau du navigateur) : Cloudflare challenge urllib."""
+
+    def test_send_utilise_le_transport(self):
+        seen = {}
+
+        def transport(url, headers, data, method, timeout_s):
+            seen.update(
+                url=url, headers=headers, data=data, method=method, timeout_s=timeout_s
+            )
+            return 200, b'{"ok": 1}', "application/json"
+
+        client = CookieHttpClient("sid=1", user_agent="UA-test", transport=transport)
+        assert client.get_json("https://chatgpt.com/backend-api/conversations") == {
+            "ok": 1
+        }
+        assert seen["url"] == "https://chatgpt.com/backend-api/conversations"
+        assert seen["headers"]["Cookie"] == "sid=1"
+        assert seen["headers"]["User-Agent"] == "UA-test"
+        assert seen["data"] is None and seen["method"] is None
+        assert seen["timeout_s"] == 45
+
+    def test_transport_403_leve_service_not_logged_in(self):
+        client = CookieHttpClient(
+            "sid=1",
+            transport=lambda url, headers, data, method, timeout_s: (
+                403,
+                b"<html>challenge</html>",
+                "text/html",
+            ),
+        )
+        with pytest.raises(ServiceNotLoggedIn):
+            client.get_json("https://chatgpt.com/backend-api/conversations")
+
+    def test_transport_prime_sur_urllib(self, monkeypatch):
+        def boom(*args, **kwargs):
+            raise AssertionError("urllib ne doit pas etre appele avec un transport")
+
+        monkeypatch.setattr(urllib.request, "urlopen", boom)
+        client = CookieHttpClient(
+            "sid=1",
+            transport=lambda url, headers, data, method, timeout_s: (200, b"{}", None),
+        )
+        assert client.get_json("https://exemple/x") == {}

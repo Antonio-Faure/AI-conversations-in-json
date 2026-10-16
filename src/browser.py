@@ -293,6 +293,39 @@ class BrowserSession:
             return None
         return decode_fetch_result(result)
 
+    def api_request(
+        self,
+        url: str,
+        *,
+        headers: Optional[Dict[str, str]] = None,
+        data: Optional[bytes] = None,
+        method: Optional[str] = None,
+        timeout_ms: Optional[int] = None,
+    ) -> Tuple[int, bytes, Optional[str]]:
+        """Requete HTTP authentifiee via le reseau de Chromium.
+
+        Rend `(statut, corps, content-type)` ; le statut est rendu tel quel
+        (pas d'exception sur 4xx/5xx). Partage les cookies du contexte et
+        l'empreinte TLS du navigateur : indispensable quand Cloudflare
+        challenge les clients HTTP bruts (`Cf-Mitigated: challenge` sur
+        l'API ChatGPT, seul le navigateur passe).
+        """
+        self.start()
+        if self._context is None:
+            raise RuntimeError("browser: contexte indisponible (api_request)")
+        try:
+            response = self._context.request.fetch(
+                url,
+                method=method or ("POST" if data is not None else "GET"),
+                headers=headers or {},
+                data=data,
+                timeout=timeout_ms or self.timeout_ms,
+            )
+        except PlaywrightError as exc:
+            raise RuntimeError(f"browser: requete echouee ({url}): {exc}") from exc
+        ctype = (response.headers.get("content-type") or "").split(";")[0]
+        return response.status, response.body(), (ctype.strip() or None)
+
     def evaluate(self, script: str, arg: Any = None) -> Any:
         try:
             return self.page.evaluate(script, arg)

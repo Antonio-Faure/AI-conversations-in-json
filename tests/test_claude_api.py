@@ -645,6 +645,7 @@ def test_get_reessaie_sur_429(monkeypatch):
 
     class FakeResponse:
         status = 200
+        headers = {"Content-Type": "application/json"}
 
         def __enter__(self):
             return self

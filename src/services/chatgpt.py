@@ -32,7 +32,7 @@ from ..parsers.chatgpt import (
 )
 from ..schema import ConversationRef, normalize_timestamp
 from ..utils.logging import get_logger
-from .api_client import CookieHttpClient
+from .api_client import CookieHttpClient, Transport
 from .base import BaseService, ScrapedPage, ServiceNotLoggedIn
 
 log = get_logger("services.chatgpt")
@@ -88,12 +88,14 @@ class _ChatGPTHttpClient(CookieHttpClient):
         user_agent: Optional[str] = None,
         accept_language: Optional[str] = None,
         timeout_s: int = 45,
+        transport: Optional[Transport] = None,
     ):
         super().__init__(
             cookie_header,
             user_agent=user_agent,
             accept_language=accept_language,
             timeout_s=timeout_s,
+            transport=transport,
         )
         self.access_token = access_token
         self.account_id = account_id
@@ -538,6 +540,35 @@ class ChatGPTService(BaseService):
 
     # -- chemin API (opt-in) ---------------------------------------------------
 
+    def _session_transport(self) -> Optional[Transport]:
+        """Transport via le reseau du navigateur, si la session le permet.
+
+        Cloudflare challenge les clients HTTP bruts sur `/backend-api/*`
+        (`Cf-Mitigated: challenge`) : les lectures passent alors par le
+        contexte Chromium (cookies + empreinte TLS du navigateur). Repli
+        urllib quand la session ne l'expose pas (ex. moteur botasaurus).
+        """
+        api_request = getattr(self.session, "api_request", None)
+        if not callable(api_request):
+            return None
+
+        def transport(
+            url: str,
+            headers: Dict[str, str],
+            data: Optional[bytes],
+            method: Optional[str],
+            timeout_s: int,
+        ) -> Tuple[int, bytes, Optional[str]]:
+            return api_request(
+                url,
+                headers=headers,
+                data=data,
+                method=method,
+                timeout_ms=int(timeout_s * 1000),
+            )
+
+        return transport
+
     def _api_client(self) -> _ChatGPTHttpClient:
         """Client HTTP de l'API, token mint une fois via la session navigateur.
 
@@ -594,6 +625,7 @@ class ChatGPTService(BaseService):
             account_id=account_id,
             user_agent=user_agent,
             accept_language=accept_language,
+            transport=self._session_transport(),
         )
         log.debug(
             "chatgpt: client API pret (account=%s)", bool(account_id)
