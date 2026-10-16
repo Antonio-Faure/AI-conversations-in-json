@@ -5,9 +5,16 @@ beautifulsoup4>=4.12
 pytest>=8.0
 
 # RAG (embeddings locaux). Installer torch CPU pour eviter le wheel CUDA :
-#   pip install --index-url https://download.pytorch.org/whl/cpu torch
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision torchcodec
 torch>=2.2
-sentence-transformers>=3.0
+# EmbeddingGemma 2 (config.eg2.yaml) exige sentence-transformers>=6.1 et
+# transformers>=5.18 ; torchvision est importe meme en mode texte ; torchcodec
+# decode l'audio/video de la passe medias ; pillow vient avec torchvision.
+# bge-m3 (config.yaml) fonctionne avec ces versions egalement.
+sentence-transformers>=6.1.0
+transformers>=5.18
+torchvision
+torchcodec
 sqlite-vec>=0.1.6
 
 # Serveur MCP stdio (scripts/mcp_conversations.py, SDK officiel v2)

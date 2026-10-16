@@ -6,8 +6,9 @@
 output_dir: exports
 profile_dir: profiles
 cookies_dir: cookies
-rag_db: rag/messages.db
-rag_model: BAAI/bge-m3          # embeddings locaux (offline, FR/EN)
+rag_db: rag/messages-eg2.db
+rag_model: google/embeddinggemma-2   # embeddings locaux multimodaux (768 dims)
+rag_dim: 768                         # EmbeddingGemma 2 ; 0 = deduit du modele
 
 # Console uniquement : aucun log sur disque, aucun dossier par session.
 screenshot_dir: ""

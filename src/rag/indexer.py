@@ -71,26 +71,50 @@ def _flush(
     ]
     stats["vectors_reused"] += len(texts) - len(missing)
     if missing:
-        vectors = embedder.encode([text for _, text in missing])
-        for (index, _), vector in zip(missing, vectors):
+        missing_texts = [text for _, text in missing]
+        encoded: List[Optional[Any]] = []
+        try:
+            vectors = embedder.encode(missing_texts)
+            encoded = [vector for vector in vectors]
+        except Exception as exc:  # noqa: BLE001
+            # filet de securite : un texte pathologique ne doit pas tuer le run
+            # (repli texte par texte ; les fautifs sont sautes et logues).
+            log(f"  lot en echec ({exc!r}) : reprise texte par texte")
+            for text in missing_texts:
+                try:
+                    encoded.append(embedder.encode([text])[0])
+                except Exception as exc2:  # noqa: BLE001
+                    log(f"  ECHEC encodage ({len(text)} chars) : {exc2!r}")
+                    encoded.append(None)
+        for (index, _), vector in zip(missing, encoded):
+            if vector is None:
+                stats["vectors_failed"] += 1
+                continue
             cached[fingerprints[index]] = serialize_float32(vector)
-        stats["vectors_computed"] += len(missing)
+        stats["vectors_computed"] += sum(1 for v in encoded if v is not None)
 
     offset = 0
     for conv in chunk:
         count = len(conv["texts"])
         conv_fingerprints = fingerprints[offset:offset + count]
-        conv_vectors = [cached[fp] for fp in conv_fingerprints]
         offset += count
+        conv_messages: List[Dict[str, Any]] = []
+        conv_vectors: List[Any] = []
+        kept_fingerprints: List[str] = []
+        for message, fp in zip(conv["messages"], conv_fingerprints):
+            if fp in cached:
+                conv_messages.append(message)
+                conv_vectors.append(cached[fp])
+                kept_fingerprints.append(fp)
         written = store.replace_conversation(
             conv["platform"],
             conv["conversation_id"],
             conv["title"],
             conv["exported_at"],
-            conv["messages"],
+            conv_messages,
             conv_vectors,
             conversation_file=str(conv["file"]),
-            fingerprints=conv_fingerprints,
+            fingerprints=kept_fingerprints,
             url=conv.get("url"),
         )
         stats["conversations_indexed"] += 1
@@ -114,6 +138,7 @@ def index_exports(
         "messages": 0,
         "vectors_reused": 0,
         "vectors_computed": 0,
+        "vectors_failed": 0,
     }
     # renseigne les fingerprints des bases creees avant le cache de vecteurs
     store.ensure_fingerprints(embedder.model_name)

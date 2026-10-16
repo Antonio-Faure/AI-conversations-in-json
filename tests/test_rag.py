@@ -299,3 +299,63 @@ def test_base_restreinte_au_proprietaire(tmp_path):
                 assert stat.S_IMODE(path.stat().st_mode) == 0o600
     finally:
         store.close()
+
+
+def test_as_text_inputs_embeddinggemma_vs_bge():
+    """EmbeddingGemma recoit des dicts texte explicites, bge-m3 des str.
+
+    Sans cela, le processor multimodal interprete toute URL nue comme un media
+    a telecharger (crash yt_dlp sur les URL YouTube).
+    """
+    from src.rag.embeddings import Embedder
+
+    gemma = Embedder("google/embeddinggemma-2")
+    assert gemma.dim == 768
+    assert gemma._as_text_inputs(["a", "b"]) == [{"text": "a"}, {"text": "b"}]
+
+    bge = Embedder("BAAI/bge-m3")
+    assert bge.dim == 1024
+    assert bge._as_text_inputs(["a"]) == ["a"]
+
+
+def test_encode_restaure_ordre_apres_tri(monkeypatch):
+    """Le tri par longueur (anti-padding) ne change pas l'ordre des vecteurs."""
+    import numpy as np
+
+    from src.rag.embeddings import Embedder
+
+    embedder = Embedder("fake-model")
+
+    class FakeModel:
+        def encode(self, texts, **kwargs):
+            # vecteur identifiable : longueur du texte
+            return np.array([[float(len(t))] * 4 for t in texts], dtype="float32")
+
+    monkeypatch.setattr(embedder, "_load", lambda: FakeModel())
+    out = embedder.encode(["aaaa", "a", "aaa"])
+    assert [int(v[0]) for v in out] == [4, 1, 3]
+
+
+def test_texte_fautif_est_saute_sans_tuer_le_run(tmp_path):
+    """Un texte qui fait echouer l'encodeur est saute (log) ; le run continue."""
+    base = [
+        {"message_id": "m1", "role": "user", "texte": "bonjour", "code_blocks": []},
+        {"message_id": "m2", "role": "assistant", "texte": "POISON", "code_blocks": []},
+        {"message_id": "m3", "role": "user", "texte": "au revoir", "code_blocks": []},
+    ]
+    root = tmp_path / "exports"
+    _write_export(root, base)
+    store = VectorStore(tmp_path / "rag.db", dim=4)
+
+    class FlakyEmbedder(FakeEmbedder):
+        def encode(self, texts):
+            if any("POISON" in text for text in texts):
+                raise RuntimeError("texte empoisonne")
+            return super().encode(texts)
+
+    stats = index_exports(store, FlakyEmbedder(), root, force=True)
+    assert stats["vectors_failed"] == 1
+    assert stats["vectors_computed"] == 2
+    assert stats["messages"] == 2
+    assert store.stats()["messages"] == 2
+    store.close()

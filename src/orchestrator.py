@@ -98,6 +98,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "cookies_dir": "cookies",
     "rag_db": "rag/messages.db",
     "rag_model": "BAAI/bge-m3",
+    # dimension des embeddings : 0 = deduite du modele (1024 hors EmbeddingGemma)
+    "rag_dim": 0,
     # pas de logs sur disque : console uniquement
     "screenshot_dir": "",
     # capture un screenshot par message (tour centre) dans exports/.../screenshots/

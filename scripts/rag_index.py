@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Indexe les messages exportes dans le RAG (SQLite + sqlite-vec, BGE-M3).
+"""Indexe les messages exportes dans le RAG (SQLite + sqlite-vec).
 
 Un vecteur par message. Incremental (une conversation non modifiee est ignoree)
-sauf --force. Aucune deduplication.
+sauf --force. Aucune deduplication. Le modele/dimension viennent de la config
+(`rag_model`/`rag_dim`) ; utiliser --config pour un index dedie (ex. EmbeddingGemma).
 
     .venv/bin/python scripts/rag_index.py
+    .venv/bin/python scripts/rag_index.py --config config.eg2.yaml
     .venv/bin/python scripts/rag_index.py --platform grok --limit 5
     .venv/bin/python scripts/rag_index.py --force
 """
@@ -21,7 +23,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.orchestrator import load_config  # noqa: E402
-from src.rag.embeddings import Embedder  # noqa: E402
+from src.rag.embeddings import Embedder, model_dim  # noqa: E402
 from src.rag.indexer import index_exports  # noqa: E402
 from src.rag.store import VectorStore  # noqa: E402
 from src.utils.file_utils import resolve_cli_path  # noqa: E402
@@ -29,24 +31,28 @@ from src.utils.file_utils import resolve_cli_path  # noqa: E402
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--config", type=Path, default=ROOT / "config.yaml",
+                        help="fichier de configuration (defaut: config.yaml)")
     parser.add_argument("--db", type=Path, help="base SQLite (defaut: config rag_db)")
     parser.add_argument("--exports", type=Path, help="racine des exports")
     parser.add_argument("--model", help="modele d'embeddings (defaut: config)")
+    parser.add_argument("--dim", type=int, help="dimension des vecteurs (defaut: config rag_dim)")
     parser.add_argument("--platform", action="append", help="limiter a un service (repetable)")
     parser.add_argument("--force", action="store_true", help="reindexer meme si inchange")
     parser.add_argument("--limit", type=int, help="max de conversations (debug)")
     parser.add_argument("--batch-size", type=int, default=16)
     args = parser.parse_args()
 
-    config = load_config(ROOT / "config.yaml")
+    config = load_config(args.config)
     db_path = resolve_cli_path(args.db or config["rag_db"], ROOT)
     exports_dir = resolve_cli_path(args.exports or config["output_dir"], ROOT)
     model_name = args.model or config.get("rag_model")
+    dim = args.dim or config.get("rag_dim") or None
     print(f"indexation: exports={exports_dir}")
-    print(f"            db={db_path}  modele={model_name}")
+    print(f"            db={db_path}  modele={model_name}  dim={model_dim(model_name, dim)}")
 
-    store = VectorStore(db_path)
-    embedder = Embedder(model_name, batch_size=args.batch_size)
+    embedder = Embedder(model_name, dim=dim, batch_size=args.batch_size)
+    store = VectorStore(db_path, dim=embedder.dim)
     started = time.time()
     stats = index_exports(
         store,
@@ -57,6 +63,8 @@ def main() -> int:
         limit=args.limit,
     )
     elapsed = time.time() - started
+    failed = stats.get("vectors_failed", 0)
+    failed_txt = f", {failed} en echec" if failed else ""
     print(
         f"termine en {elapsed:.0f}s : {stats['conversations_indexed']} conversations "
         f"indexees, {stats['conversations_skipped']} ignorees, "
@@ -64,7 +72,7 @@ def main() -> int:
     )
     print(
         f"vecteurs : {stats['vectors_reused']} reutilises (cache), "
-        f"{stats['vectors_computed']} recalcules"
+        f"{stats['vectors_computed']} recalcules{failed_txt}"
     )
     print("store:", store.stats())
     store.close()

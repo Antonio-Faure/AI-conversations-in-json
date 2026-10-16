@@ -35,6 +35,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.orchestrator import PATH_KEYS, load_config  # noqa: E402
+from src.rag.embeddings import model_dim  # noqa: E402
 from src.rag.search import combined_search  # noqa: E402
 from src.schema import parse_iso, to_iso_z  # noqa: E402
 from src.utils.file_utils import (  # noqa: E402
@@ -202,6 +203,7 @@ class ConversationTools:
         self.exports_dir = Path(config["output_dir"])
         self.db_path = Path(config["rag_db"])
         self.model_name = config.get("rag_model") or "BAAI/bge-m3"
+        self.model_dim = model_dim(self.model_name, config.get("rag_dim"))
         self._store = store
         self._embedder = embedder
         # l'index sqlite et le modele ne supportent pas l'acces concurrent
@@ -219,15 +221,15 @@ class ConversationTools:
                 )
             from src.rag.store import VectorStore
 
-            self._store = VectorStore(self.db_path)
+            self._store = VectorStore(self.db_path, dim=self.model_dim)
         return self._store
 
     def embedder(self):
-        """Embedder BGE-M3, charge au premier usage (import torch differe)."""
+        """Embedder (bge-m3 ou EmbeddingGemma), charge au premier usage."""
         if self._embedder is None:
             from src.rag.embeddings import Embedder
 
-            self._embedder = Embedder(self.model_name)
+            self._embedder = Embedder(self.model_name, dim=self.model_dim)
         return self._embedder
 
     # -- inventaire -------------------------------------------------------------
@@ -784,6 +786,7 @@ class ConversationTools:
             "exports_dir": str(self.exports_dir),
             "rag_db": str(self.db_path),
             "rag_model": self.model_name,
+            "rag_dim": self.model_dim,
             "exports": {
                 "total_files": total_files,
                 "total_listed": sum(v["listed"] for v in exports.values()),

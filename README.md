@@ -63,7 +63,9 @@ python3 -m venv .venv
 ```
 
 Le modèle d'embeddings `BAAI/bge-m3` (~2,3 Go) est téléchargé automatiquement
-au premier usage du RAG.
+au premier usage du RAG. L'index alternatif **EmbeddingGemma 2**
+(`google/embeddinggemma-2`, ~1,5 Go, multimodal texte/images/audio/vidéo) est
+téléchargé au premier usage de `--config config.eg2.yaml`.
 
 ## Première connexion (obligatoire, une fois par service)
 
@@ -321,8 +323,9 @@ vecteurs inchangés sont repris du cache).
 
 Indexation **un vecteur par message** et recherche par **similarité cosinus**.
 
-- **Embeddings locaux BGE-M3** (`BAAI/bge-m3`, 1024 dim, FR/EN, offline/gratuit),
-  vecteurs normalisés.
+- **Embeddings locaux configurables** (`rag_model`/`rag_dim`) : `BAAI/bge-m3`
+  (1024 dim, défaut) ou `google/embeddinggemma-2` (768 dim, MRL 512/256/128,
+  prompts de tâche) — offline/gratuit, vecteurs normalisés.
 - **Stockage SQLite + sqlite-vec** : `rag/messages.db`
   (`messages` = texte + métadonnées, `vec_messages` = vecteurs `distance_metric=cosine`).
 - **Granularité message**, aucune déduplication, aucun résumé.
@@ -349,6 +352,28 @@ Indexation **un vecteur par message** et recherche par **similarité cosinus**.
 
 Chaque résultat affiche `cos=<similarité> [<platform>/<role>] <timestamp> conv=<id>`
 puis un extrait du message.
+
+### Index EmbeddingGemma 2 (parallèle) + médias
+
+`config.eg2.yaml` pointe vers un index dédié (`rag/messages-eg2.db`, 768 dims,
+EmbeddingGemma 2) **sans toucher** à `rag/messages.db` (bge-m3) :
+
+```bash
+# messages (reprise incrémentale : conversations déjà indexées sautées)
+.venv/bin/python scripts/rag_index.py --config config.eg2.yaml
+
+# médias (images budget vision 70, audio, vidéo) -> table vec_media
+.venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml
+
+# recherche texte -> messages ou médias (même espace vectoriel)
+.venv/bin/python scripts/rag_search.py --config config.eg2.yaml "requête"
+.venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml --search "requête" --kind image
+```
+
+La passe médias encode **1 vecteur par fichier** (images `images/`, audio/vidéo
+`files/`) dans l'espace multimodal d'EmbeddingGemma 2, avec les métadonnées
+(chemin, type, plateforme, conversation/message d'origine, texte de référence) ;
+le budget vision par image est réglable (`--image-budget 70/140/280/560/1120`).
 
 ## Serveur MCP (recherche depuis un agent)
 
@@ -451,7 +476,8 @@ valeurs omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │   ├── migrate_exports.py     # migration ancien format -> exports/<platform>/
 │   ├── check_cookies.py       # vérifie l'auth par cookies (Grok, Mistral)
 │   ├── capture_cookies.py     # capture les cookies (navigateur visible)
-│   ├── rag_index.py           # indexe les messages (BGE-M3 -> sqlite-vec)
+│   ├── rag_index.py           # indexe les messages (embeddings -> sqlite-vec)
+│   ├── rag_index_media.py     # indexe les médias (images/audio/vidéo -> vec_media)
 │   ├── rag_search.py          # recherche cosinus dans le RAG
 │   ├── mcp_conversations.py   # serveur MCP stdio (search/grep/get/list/stats)
 │   ├── reparse_exports.py     # régénère les JSON depuis les artefacts bruts (sans re-crawl)
@@ -481,10 +507,11 @@ valeurs omises reprennent `DEFAULT_CONFIG` (`src/orchestrator.py`).
 │   │   ├── perplexity.py      # DOM + payload /rest/thread (sources, étapes)
 │   │   ├── gemini.py          # DOM + payload batchexecute (sources, fichiers)
 │   │   └── grok.py            # construit depuis les données de l'API
-│   ├── rag/                   # RAG messages : BGE-M3 + SQLite/sqlite-vec
-│   │   ├── embeddings.py      #   Embedder BGE-M3 (lazy, normalisé)
+│   ├── rag/                   # RAG : embeddings configurables + SQLite/sqlite-vec
+│   │   ├── embeddings.py      #   Embedder (BGE-M3 1024 / EmbeddingGemma 768)
 │   │   ├── store.py           #   VectorStore (messages + vec_messages)
 │   │   ├── indexer.py         #   indexation incrémentale par lots
+│   │   ├── media.py           #   médias (images/audio/vidéo + vec_media)
 │   │   └── search.py          #   recherche combinée (cosinus + mots-clés)
 │   └── utils/
 │       ├── raw_payload.py     # payload API brut (exports/<platform>/raw/)

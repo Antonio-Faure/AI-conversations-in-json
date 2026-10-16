@@ -2,13 +2,16 @@
 
 Tables :
   - messages        : metadonnees + texte de chaque message (rowid partage)
-  - vec_messages    : vecteurs BGE-M3 (vec0, distance_metric=cosine)
+  - vec_messages    : vecteurs du modele d'embeddings (vec0 float[dim],
+                      distance_metric=cosine) ; dim configurable (1024 = bge-m3
+                      par defaut, 768 = EmbeddingGemma 2)
   - conversations   : etat d'indexation (increment) par conversation
 """
 
 from __future__ import annotations
 
 import os
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -24,7 +27,7 @@ class VectorStore:
     def __init__(self, db_path: Path | str, dim: int = DIM):
         self.db_path = Path(db_path)
         ensure_dir(self.db_path.parent)
-        self.dim = int(dim)
+        self.requested_dim = int(dim)
         # check_same_thread=False : le serveur web sert depuis plusieurs threads
         # (acces serialise par le verrou du serveur).
         self.db = sqlite3.connect(str(self.db_path), check_same_thread=False)
@@ -32,6 +35,11 @@ class VectorStore:
         self.db.enable_load_extension(True)
         sqlite_vec.load(self.db)
         self.db.enable_load_extension(False)
+        # la table vec_messages existante fait foi (on ne melange pas deux
+        # dimensions dans une meme base ; un vecteur de mauvaise dimension est
+        # rejete par sqlite-vec a l'insertion, avec un message explicite).
+        existing = self._existing_vec_dim()
+        self.dim = existing if existing is not None else self.requested_dim
         self._create_schema()
         self._restrict_permissions()
 
@@ -45,6 +53,16 @@ class VectorStore:
             path = Path(f"{self.db_path}{suffix}")
             if path.exists():
                 os.chmod(path, 0o600)
+
+    def _existing_vec_dim(self) -> Optional[int]:
+        """Dimension de la table vec_messages existante (None si absente)."""
+        row = self.db.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='vec_messages'"
+        ).fetchone()
+        if row is None or not row["sql"]:
+            return None
+        match = re.search(r"float\[(\d+)\]", row["sql"])
+        return int(match.group(1)) if match else None
 
     def _create_schema(self) -> None:
         self.db.executescript(

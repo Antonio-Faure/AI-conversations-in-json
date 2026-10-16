@@ -52,6 +52,12 @@ plus un RAG et une page web de recherche. Le détail complet est dans
 .venv/bin/python scripts/rag_search.py "requête" -k 10
 .venv/bin/python scripts/serve_web.py            # http://127.0.0.1:8765
 
+# RAG EmbeddingGemma 2 (index parallele, 768 dims) : texte puis medias
+.venv/bin/python scripts/rag_index.py --config config.eg2.yaml           # messages -> rag/messages-eg2.db
+.venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml     # images/audio/video -> vec_media
+.venv/bin/python scripts/rag_search.py --config config.eg2.yaml "requête"
+.venv/bin/python scripts/rag_index_media.py --config config.eg2.yaml --search "un paysage" --kind image
+
 # Serveur MCP stdio (recherche depuis un agent ; stdout = JSON-RPC, logs stderr)
 .venv/bin/python scripts/mcp_conversations.py [-c config.yaml]
 
@@ -101,7 +107,9 @@ indisponibles).
 - **Navigateurs** : `src/browser.py` (Playwright) et
   `src/browser_botasaurus.py` (anti-Cloudflare) — même façade ; les services ne
   doivent pas accéder à `session.page`.
-- **RAG** : `src/rag/` (BGE-M3 + SQLite/sqlite-vec), page web `web/`, serveur
+- **RAG** : `src/rag/` (embeddings locaux configurables — BGE-M3 1024 dims par
+  défaut, EmbeddingGemma 2 768 dims via `config.eg2.yaml` — + SQLite/sqlite-vec,
+  médias via `src/rag/media.py`), page web `web/`, serveur
   `scripts/serve_web.py`.
 - **Serveur MCP** : `scripts/mcp_conversations.py` (SDK `mcp` v2, transport
   stdio ; outils `search`, `grep`, `get_conversation`, `get_message`,
@@ -243,6 +251,11 @@ indisponibles).
   page (`artifacts` vide), modèle absent du DOM (`null`). Timestamps de
   conversation : script bootstrap `create_time`/`update_time` (retiré à
   l'hydratation → repli fetch SSR).
+- ChatGPT (API) : Cloudflare challenge les clients HTTP bruts sur
+  `/backend-api/*` (`Cf-Mitigated: challenge`, captcha géré) — urllib reçoit un
+  403 HTML même avec cookies + Client Hints. Les lectures passent par le réseau
+  du navigateur (`_ChatGPTHttpClient` → `session.api_request`, contexte
+  Chromium) ; repli urllib si le moteur ne l'expose pas (botasaurus).
 - Conversations **indisponibles** (supprimées/privées) : l'URL redirige vers
   l'accueil ; elles sont marquées `unavailable` dans `conversation_list.json` et
   plus retentées. `--retry-unavailable` lève le flag pour un nouvel essai.
