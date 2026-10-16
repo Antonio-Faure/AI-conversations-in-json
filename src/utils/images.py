@@ -400,3 +400,176 @@ def download_service_images(conv, service, images_dir: Path) -> Dict[str, int]:
         return http_loader(url)
 
     return download_conversation_images(conv, loader, images_dir)
+
+
+# -- URL de medias « seuls » (images / audio / video) -------------------------
+
+#: extensions d'images « seules » (URL directe vers un fichier image)
+IMAGE_EXTS = (
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".tiff",
+    ".avif", ".ico",
+)
+#: extensions audio « seules »
+AUDIO_EXTS = (".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus", ".flac", ".aac")
+#: extensions video « seules »
+VIDEO_EXTS = (".mp4", ".mov", ".webm", ".mkv", ".avi")
+
+#: URL http(s) dans un texte (le contexte markdown est classe a part)
+URL_RE = re.compile(r"https?://[^\s\)\]\"'<>]+")
+
+
+def media_url_kind(url: str) -> Optional[str]:
+    """Type du media d'apres l'extension de l'URL ('image'/'audio'/'video') ou None."""
+    path = url.split("?", 1)[0].split("#", 1)[0].lower()
+    for ext in IMAGE_EXTS:
+        if path.endswith(ext):
+            return "image"
+    for ext in AUDIO_EXTS:
+        if path.endswith(ext):
+            return "audio"
+    for ext in VIDEO_EXTS:
+        if path.endswith(ext):
+            return "video"
+    return None
+
+
+def extract_media_urls(text: str) -> List[Tuple[str, str]]:
+    """URL d'un texte : liste de (contexte, url), uniques, dans l'ordre.
+
+    Contexte : 'md-image' (`![alt](url)`), 'md-link' (`[nom](url)`) ou 'bare'
+    (URL nue dans la prose). Le filtrage par type de media se fait ensuite
+    (`media_url_kind` ; une image markdown est un media meme sans extension).
+    """
+    if not text:
+        return []
+    md_images = set(IMAGE_RE.findall(text))
+    md_links = {url for _, url in FILE_LINK_RE.findall(text)}
+    seen: Dict[str, None] = {}
+    out: List[Tuple[str, str]] = []
+    for url in URL_RE.findall(text):
+        if url in seen:
+            continue
+        seen[url] = None
+        if url in md_images:
+            context = "md-image"
+        elif url in md_links:
+            context = "md-link"
+        else:
+            context = "bare"
+        out.append((context, url))
+    return out
+
+
+def _media_name(url: str) -> str:
+    """Nom affichable d'une URL (dernier segment du chemin, sans query)."""
+    path = url.split("?", 1)[0].split("#", 1)[0].rstrip("/")
+    name = path.rsplit("/", 1)[-1]
+    return name or url
+
+
+def _rewrite_media_urls(text: str, mapping: Dict[str, str]) -> str:
+    """Reecrit les URL de medias vers leur chemin local.
+
+    Une URL nue vers une image devient un embed `![nom](images/...)`, vers un
+    audio/video un lien `[nom](files/...)` ; les URL deja en syntaxe markdown
+    (`![alt](url)`, `[nom](url)`) sont remplacees en place.
+    """
+    if not text or not mapping:
+        return text
+    md_images = set(IMAGE_RE.findall(text))
+    md_links = {url for _, url in FILE_LINK_RE.findall(text)}
+
+    def repl(match: "re.Match[str]") -> str:
+        url = match.group(0)
+        relpath = mapping.get(url)
+        if not relpath:
+            return url
+        if url in md_images or url in md_links:
+            return relpath
+        name = _media_name(url)
+        if relpath.startswith(IMAGES_SUBDIR + "/"):
+            return f"![{name}]({relpath})"
+        return f"[{name}]({relpath})"
+
+    return URL_RE.sub(repl, text)
+
+
+def download_conversation_media_links(
+    conv,
+    loader: ImageLoader,
+    images_dir: Path,
+    files_dir: Path,
+    dry_run: bool = False,
+) -> Dict[str, int]:
+    """Telecharge les medias « seuls » pointes par des URL des messages.
+
+    Candidats : images markdown (meme sans extension) et URL (nues ou liens)
+    dont l'extension annonce une image/audio/video. Best-effort : le contenu
+    est verifie avant ecriture (vraie image / document, pas une page HTML),
+    puis l'URL est remplacee dans le texte par le chemin local. `dry_run` :
+    telecharge pour verifier mais n'ecrit ni fichier ni texte.
+    """
+    candidates: Dict[str, str] = {}
+    for message in conv.messages:
+        for context, url in extract_media_urls(message.texte or ""):
+            if context == "md-image":
+                candidates.setdefault(url, "image")
+                continue
+            kind = media_url_kind(url)
+            if kind:
+                candidates.setdefault(url, kind)
+    if not candidates:
+        return {"downloaded": 0, "cached": 0, "failed": 0, "candidates": 0}
+
+    images_dir = Path(images_dir)
+    files_dir = Path(files_dir)
+    mapping: Dict[str, str] = {}
+    stats = {"downloaded": 0, "cached": 0, "failed": 0, "candidates": len(candidates)}
+    #: (kind, url, chemin local) des medias recuperes — pour le rapport du script
+    stats["files"] = []
+
+    for url, kind in candidates.items():
+        subdir = IMAGES_SUBDIR if kind == "image" else FILES_SUBDIR
+        target_dir = images_dir if kind == "image" else files_dir
+        existing = _cached_file(target_dir, url)
+        if existing is not None:
+            mapping[url] = f"{subdir}/{existing.name}"
+            stats["cached"] += 1
+            continue
+        result = loader(url)
+        if not result:
+            stats["failed"] += 1
+            continue
+        data, content_type = result
+        digest = hashlib.sha1(url.encode("utf-8")).hexdigest()[:20]
+        if kind == "image":
+            if not _is_image(data, content_type):
+                stats["failed"] += 1
+                continue
+            filename = digest + _extension(content_type, url)
+        else:
+            if not _is_document(data, content_type):
+                stats["failed"] += 1
+                continue
+            filename = digest + _file_extension(_media_name(url), content_type, url)
+        if not dry_run:
+            target_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                (target_dir / filename).write_bytes(data)
+            except OSError as exc:
+                log.debug("ecriture media %s: %s", filename, exc)
+                stats["failed"] += 1
+                continue
+        mapping[url] = f"{subdir}/{filename}"
+        stats["downloaded"] += 1
+        stats["files"].append((kind, url, f"{subdir}/{filename}"))
+
+    if not dry_run:
+        for message in conv.messages:
+            message.texte = _rewrite_media_urls(message.texte or "", mapping)
+
+    log_fields(
+        log, 20, "medias d'URL telecharges",
+        extra={"platform": getattr(conv, "platform", None), **stats},
+    )
+    return stats

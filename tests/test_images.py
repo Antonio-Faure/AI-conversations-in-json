@@ -122,3 +122,85 @@ def test_build_fetch_body_injecte_url():
     assert 'const url = "https://x/y.png?a=1&b=2";' in body
     assert "__URL__" not in body
     assert "credentials" in body
+
+
+# -- URL de medias « seuls » (images / audio / video) -------------------------
+
+
+def test_media_url_kind_par_extension():
+    from src.utils.images import media_url_kind
+
+    assert media_url_kind("https://x/photo.jpg") == "image"
+    assert media_url_kind("https://x/photo.JPG?token=1") == "image"
+    assert media_url_kind("https://x/clip.mp3") == "audio"
+    assert media_url_kind("https://x/clip.ogg#t=1") == "audio"
+    assert media_url_kind("https://x/movie.mp4") == "video"
+    assert media_url_kind("https://x/article.html") is None
+    assert media_url_kind("https://youtube.com/watch?v=abc") is None
+
+
+def test_extract_media_urls_contextes():
+    from src.utils.images import extract_media_urls
+
+    text = (
+        "![a](https://x/1.png) puis [doc](https://x/son.mp3) "
+        "et https://x/photo.jpg fin"
+    )
+    assert extract_media_urls(text) == [
+        ("md-image", "https://x/1.png"),
+        ("md-link", "https://x/son.mp3"),
+        ("bare", "https://x/photo.jpg"),
+    ]
+    assert extract_media_urls("") == []
+
+
+def test_media_links_telecharge_et_reecrit(tmp_path):
+    from src.utils.images import download_conversation_media_links
+
+    def loader(url):
+        if url.endswith(".mp3"):
+            return b"ID3fake-audio", "audio/mpeg"
+        return PNG, "image/png"
+
+    conv = _conv(
+        "![alt](https://x/sans-extension) puis https://x/photo.jpg "
+        "et [son](https://x/clip.mp3) et https://x/page.html"
+    )
+    stats = download_conversation_media_links(
+        conv, loader, tmp_path / "images", tmp_path / "files"
+    )
+    assert stats["candidates"] == 3
+    assert stats["downloaded"] == 3
+    texte = conv.messages[0].texte
+    assert "![alt](images/" in texte  # image markdown (meme sans extension)
+    assert "![photo.jpg](images/" in texte  # URL nue image -> embed
+    assert "[son](files/" in texte and ".mp3)" in texte  # lien audio -> local
+    assert "https://x/page.html" in texte  # lien web intact
+    assert len(list((tmp_path / "images").glob("*"))) == 2
+    assert len(list((tmp_path / "files").glob("*.mp3"))) == 1
+
+
+def test_media_links_rejette_html_et_dry_run(tmp_path):
+    from src.utils.images import download_conversation_media_links
+
+    conv = _conv("https://x/fake.jpg")
+    stats = download_conversation_media_links(
+        conv,
+        lambda url: (b"<html>login</html>", "text/html"),
+        tmp_path / "images",
+        tmp_path / "files",
+    )
+    assert stats["failed"] == 1
+    assert conv.messages[0].texte == "https://x/fake.jpg"
+
+    conv2 = _conv("![a](https://x/1.png)")
+    stats2 = download_conversation_media_links(
+        conv2,
+        lambda url: (PNG, "image/png"),
+        tmp_path / "images",
+        tmp_path / "files",
+        dry_run=True,
+    )
+    assert stats2["downloaded"] == 1
+    assert conv2.messages[0].texte == "![a](https://x/1.png)"  # rien ecrit
+    assert not (tmp_path / "images").exists()
