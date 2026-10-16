@@ -17,6 +17,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -318,6 +319,133 @@ class TestRechercheFiltresSeuls:
         status, body = _get_json(web, "/api/search?q=&platforms=claude")
         assert status == 200
         assert body["count"] == 0 and body["groups"] == []
+
+
+class TestRechercheMedias:
+    def _seed(self):
+        """3 medias indexes (2 images chatgpt, 1 audio gemini) + titres."""
+        state = serve_web.Handler.state
+        _seed_conversations(state.store(), [
+            {"platform": "chatgpt", "conversation_id": "c1", "title": "Conv image",
+             "url": "https://chatgpt.com/c/c1", "message_count": 1},
+        ])
+        rows = [
+            {"media_id": "chatgpt/images/aaa.jpg", "platform": "chatgpt",
+             "conversation_id": "c1", "message_id": "m1", "kind": "image",
+             "path": "chatgpt/images/aaa.jpg", "texte": "un chat"},
+            {"media_id": "chatgpt/images/bbb.png", "platform": "chatgpt",
+             "conversation_id": "", "message_id": "", "kind": "image",
+             "path": "chatgpt/images/bbb.png", "texte": "orpheline"},
+            {"media_id": "gemini/files/ccc.mp3", "platform": "gemini",
+             "conversation_id": "", "message_id": "", "kind": "audio",
+             "path": "gemini/files/ccc.mp3", "texte": "audio.mp3"},
+        ]
+        media_store = state.media_store()
+        media_store.replace(rows, [np.ones(state.dim, dtype="float32")] * len(rows))
+
+    def test_medias_renvoyes_avec_recherche(self, web, monkeypatch):
+        self._seed()
+        monkeypatch.setattr(
+            serve_web.AppState,
+            "embed",
+            lambda self, text: np.ones(self.dim, dtype="float32"),
+        )
+        status, body = _get_json(web, "/api/search?q=chat")
+        assert status == 200
+        # media rattaches a leur conversation : un media = un hit du groupe
+        groups = {g["conversation_id"]: g for g in body["groups"]}
+        assert "c1" in groups
+        attached = groups["c1"]["media"]
+        assert len(attached) == 1
+        item = attached[0]
+        assert item["kind"] == "image"
+        assert item["path"] == "chatgpt/images/aaa.jpg"
+        assert item["message_id"] == "m1"
+        assert item["title"] == "Conv image"  # titre joint depuis l'index
+        assert item["score"] is not None
+        assert item["url"] == "/media/chatgpt/aaa.jpg"
+        # orphelins (sans conversation) : cartes autonomes
+        media = body["media"]
+        assert len(media) == 2
+        assert {m["kind"] for m in media} == {"image", "audio"}
+        for item in media:
+            assert item["score"] is not None
+            assert item["url"] == f"/media/{item['platform']}/{item['path'].rsplit('/', 1)[-1]}"
+        orphan = next(m for m in media if m["path"] == "chatgpt/images/bbb.png")
+        assert orphan["conversation_id"] is None
+        assert orphan["title"] == ""
+
+    def test_media_rattache_au_groupe_existant(self, web, monkeypatch):
+        """Un media rejoint le groupe de sa conversation (hit texte deja present).
+
+        Regression : le groupe existant n'avait pas encore de cle `media`.
+        """
+        state = serve_web.Handler.state
+        _seed_conversations(state.store(), [
+            {"platform": "chatgpt", "conversation_id": "c9", "title": "Conv mixte",
+             "url": "https://chatgpt.com/c/c9", "message_count": 2},
+        ])
+        _seed_messages(state.store(), [
+            {"message_id": "m9", "conversation_id": "c9", "platform": "chatgpt",
+             "timestamp": "2026-01-01T00:00:00Z", "texte": "chat chat"},
+        ])
+        rows = [
+            {"media_id": "chatgpt/images/mix.png", "platform": "chatgpt",
+             "conversation_id": "c9", "message_id": "m9", "kind": "image",
+             "path": "chatgpt/images/mix.png", "texte": "chat"},
+        ]
+        state.media_store().replace(rows, [np.ones(state.dim, dtype="float32")])
+        monkeypatch.setattr(
+            serve_web.AppState,
+            "embed",
+            lambda self, text: np.ones(self.dim, dtype="float32"),
+        )
+        status, body = _get_json(web, "/api/search?q=chat")
+        assert status == 200
+        groups = {g["conversation_id"]: g for g in body["groups"]}
+        assert "c9" in groups
+        group = groups["c9"]
+        assert len(group["messages"]) >= 1  # hit texte (mots-cles)
+        assert len(group["media"]) == 1  # media rattache au groupe existant
+        assert group["hit_count"] == len(group["messages"]) + 1
+        assert body["media"] == []  # aucun orphelin
+
+    def test_filtre_plateforme(self, web, monkeypatch):
+        self._seed()
+        monkeypatch.setattr(
+            serve_web.AppState,
+            "embed",
+            lambda self, text: np.ones(self.dim, dtype="float32"),
+        )
+        status, body = _get_json(web, "/api/search?q=chat&platforms=gemini")
+        assert status == 200
+        assert [m["platform"] for m in body["media"]] == ["gemini"]
+
+    def test_media_k(self, web, monkeypatch):
+        self._seed()
+        monkeypatch.setattr(
+            serve_web.AppState,
+            "embed",
+            lambda self, text: np.ones(self.dim, dtype="float32"),
+        )
+        status, body = _get_json(web, "/api/search?q=chat&media_k=1")
+        assert status == 200
+        # le media peut etre rattache a un groupe ou rester orphelin
+        attached = sum(len(g.get("media") or []) for g in body["groups"])
+        assert attached + len(body["media"]) == 1
+        for value in ("0", "25", "abc"):
+            status, _ = _get_json(web, f"/api/search?q=chat&media_k={value}")
+            assert status == 400, value
+
+    def test_q_vide_aucun_media(self, web):
+        """Critères seuls ou requête vide : pas de vecteur -> media vide."""
+        self._seed()
+        status, body = _get_json(web, "/api/search?q=&platforms=grok")
+        assert status == 200
+        assert body["media"] == []
+        status, body = _get_json(web, "/api/search?q=")
+        assert status == 200
+        assert body["media"] == []
 
 
 class TestMedia:

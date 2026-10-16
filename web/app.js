@@ -15,6 +15,7 @@ const state = {
   stats: null,
   day: null,
   searchFiltered: false, // recherche par critères seuls (sans texte)
+  searchMedia: [],       // médias renvoyés par la recherche (même vecteur)
   view: "default",
 };
 
@@ -230,7 +231,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key !== "Enter" && e.key !== " ") return;
   const target = e.target;
   if (target.closest("input, textarea, select, [contenteditable='true']")) return;
-  const el = target.closest("button, a, [data-open], .conv-card, .side-item, .anchor");
+  const el = target.closest("button, a, [data-open], [data-media-open], .conv-card, .side-item, .anchor");
   if (!el || el.tagName === "BUTTON" || el.tagName === "A") return;
   e.preventDefault();
   el.click();
@@ -955,6 +956,7 @@ async function search() {
     const data = await (await fetch("/api/search?" + buildQuery().toString())).json();
     state.groups = data.groups || [];
     state.searchFiltered = !!data.filtered;
+    state.searchMedia = data.media || [];
     renderGroups();
     renderSidebar();
   } catch (err) {
@@ -964,7 +966,8 @@ async function search() {
 
 function renderGroups() {
   const main = $("main");
-  if (!state.groups.length) {
+  const media = state.searchMedia || [];
+  if (!state.groups.length && !media.length) {
     renderEmpty(
       "Aucun message trouvé",
       state.searchFiltered
@@ -973,30 +976,19 @@ function renderGroups() {
     );
     return;
   }
-  const hits = state.groups.reduce((a, g) => a + g.hit_count, 0);
+  const hits = state.groups.reduce((a, g) => a + (g.messages || []).length, 0);
+  const mediaTotal = state.groups.reduce((a, g) => a + (g.media || []).length, 0) + media.length;
   const suffix = state.searchFiltered ? " (filtre)" : "";
-  main.innerHTML = `<h2 class="section-title">${state.groups.length} conversation${state.groups.length > 1 ? "s" : ""} · ${hits} message${hits > 1 ? "s" : ""}${suffix}</h2>` +
-    `<div class="results-grid">` + state.groups.map((g, gi) => `
-    <div class="group-card ${g.hit_count > 1 ? "multi" : "single"}" data-g="${gi}">
-      <div class="rc-head">
-        <span class="badge platform">${escapeHtml(platformName(g.platform))}</span>
-        <span class="badge score">${g.hit_count > 1 ? g.hit_count + " extraits" : "1 extrait"}</span>
-        ${g.best_score != null ? `<span class="badge small">meilleur score ${scorePct(g.best_score)}</span>` : ""}
-        ${splitOpenCopy(g.url, "Ouvrir ↗")}
-      </div>
-      <div class="conv-title group-title" data-open="${gi}" role="button" tabindex="0">${escapeHtml(g.title || g.conversation_id)}</div>
-      <div class="group-hits">
-        ${g.messages.map((r, mi) => `
-          <div class="hit" data-open="${gi}" data-m="${mi}" role="button" tabindex="0">
-            <div class="rc-meta">
-              <span class="badge role-${r.role === "user" ? "user" : "assistant"}">${escapeHtml(roleLabel(r.role))}</span>
-              <span>${escapeHtml(formatTs(r.timestamp))}</span>
-              ${r.score != null ? `<span>score ${scorePct(r.score)} · sém ${scorePct(r.semantic_score)} · mots ${scorePct(r.keyword_score)}</span>` : ""}
-            </div>
-            <div class="rc-snippet"><div class="clip">${resolveLocalImages(renderMarkdown(stripFences(r.texte)), r.platform)}</div></div>
-          </div>`).join("")}
-      </div>
-    </div>`).join("") + `</div>`;
+  const mediaSuffix = mediaTotal ? ` · ${mediaTotal} média${mediaTotal > 1 ? "s" : ""}` : "";
+  // un média est un hit à part entière de sa conversation (rattaché par le
+  // serveur, il compte dans le score et les extraits du groupe) ; seuls les
+  // médias sans conversation restent des cartes autonomes en fin de flux
+  const cards = [
+    ...state.groups.map((g, gi) => groupCard(g, gi)),
+    ...media.map((m) => mediaCard(m)),
+  ];
+  main.innerHTML = `<h2 class="section-title">${state.groups.length} conversation${state.groups.length > 1 ? "s" : ""} · ${hits} message${hits > 1 ? "s" : ""}${mediaSuffix}${suffix}</h2>` +
+    `<div class="results-grid">` + cards.join("") + `</div>`;
   main.querySelectorAll("[data-open]").forEach((el) =>
     el.addEventListener("click", (e) => {
       if (e.target.closest("[data-stop]")) return;
@@ -1005,7 +997,97 @@ function renderGroups() {
       const hit = group.messages[index] || group.messages[0];
       openConversation(group.platform, group.conversation_id, hit && hit.message_id);
     }));
+  // médias : clic (hors lecteur et hors liens) -> conversation d'origine
+  main.querySelectorAll("[data-media-open]").forEach((card) =>
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("audio, video, a")) return;
+      openConversation(card.dataset.platform, card.dataset.id, card.dataset.mid || null);
+    }));
   enhance(main, state.terms);
+}
+
+/* -- carte de conversation (résultats de recherche) -- */
+function groupCard(g, gi) {
+  const messages = g.messages || [];
+  const media = g.media || [];
+  const count = messages.length + media.length;
+  return `<div class="group-card ${count > 1 ? "multi" : "single"}" data-g="${gi}">
+    <div class="rc-head">
+      <span class="badge platform">${escapeHtml(platformName(g.platform))}</span>
+      ${messages.length ? `<span class="badge score">${messages.length > 1 ? messages.length + " extraits" : "1 extrait"}</span>` : ""}
+      ${media.length ? `<span class="badge score">${media.length} média${media.length > 1 ? "s" : ""}</span>` : ""}
+      ${g.best_score != null ? `<span class="badge small">meilleur score ${scorePct(g.best_score)}</span>` : ""}
+      ${splitOpenCopy(g.url, "Ouvrir ↗")}
+    </div>
+    <div class="conv-title group-title" data-open="${gi}" role="button" tabindex="0">${escapeHtml(g.title || g.conversation_id)}</div>
+    <div class="group-hits">
+      ${messages.map((r, mi) => `
+        <div class="hit" data-open="${gi}" data-m="${mi}" role="button" tabindex="0">
+          <div class="rc-meta">
+            <span class="badge role-${r.role === "user" ? "user" : "assistant"}">${escapeHtml(roleLabel(r.role))}</span>
+            <span>${escapeHtml(formatTs(r.timestamp))}</span>
+            ${r.score != null ? `<span>score ${scorePct(r.score)} · sém ${scorePct(r.semantic_score)} · mots ${scorePct(r.keyword_score)}</span>` : ""}
+          </div>
+          <div class="rc-snippet"><div class="clip">${resolveLocalImages(renderMarkdown(stripFences(r.texte)), r.platform)}</div></div>
+        </div>`).join("")}
+      ${media.map((m) => mediaHit(m)).join("")}
+    </div>
+  </div>`;
+}
+
+/* -- média rattaché à une conversation (hit des résultats) -- */
+function mediaHit(m) {
+  const filename = String(m.path || "").split("/").pop();
+  const url = m.url || (m.platform && filename ? `/media/${m.platform}/${filename}` : "");
+  let body = "";
+  if (m.kind === "audio") {
+    body = `<audio controls preload="none" src="${escapeHtml(url)}"></audio>`;
+  } else if (m.kind === "video") {
+    body = `<video controls preload="metadata" src="${escapeHtml(url)}"></video>`;
+  } else if (url) {
+    body = `<img src="${escapeHtml(url)}" alt="${escapeHtml(m.texte || "")}" loading="lazy">`;
+  }
+  return `<div class="hit media-hit ${escapeHtml(m.kind || "file")}" data-media-open="1" role="button" tabindex="0"
+      data-platform="${escapeHtml(m.platform)}" data-id="${escapeHtml(m.conversation_id || "")}" data-mid="${escapeHtml(m.message_id || "")}">
+    <div class="rc-meta">
+      <span class="badge small">${escapeHtml(m.kind || "média")}</span>
+      ${m.score != null ? `<span>score ${scorePct(m.score)}</span>` : ""}
+    </div>
+    <div class="media-body">${body}</div>
+  </div>`;
+}
+
+/* -- carte média (résultats de recherche) -- */
+function mediaCard(m) {
+  const filename = String(m.path || "").split("/").pop();
+  const url = m.url || (m.platform && filename ? `/media/${m.platform}/${filename}` : "");
+  const label = m.title || m.texte || m.conversation_id || filename || "média";
+  const badge = `<span class="badge small">${escapeHtml(m.kind || "média")}</span>`;
+  const platform = m.platform
+    ? `<span class="badge platform">${escapeHtml(platformName(m.platform))}</span>` : "";
+  const score = m.score != null ? `<span class="badge small">${scorePct(m.score)}</span>` : "";
+  let body = "";
+  if (m.kind === "audio") {
+    body = `<audio controls preload="none" src="${escapeHtml(url)}"></audio>`;
+  } else if (m.kind === "video") {
+    body = `<video controls preload="metadata" src="${escapeHtml(url)}"></video>`;
+  } else if (url) {
+    body = `<img src="${escapeHtml(url)}" alt="${escapeHtml(m.texte || "")}" loading="lazy">`;
+  }
+  const openable = !!m.conversation_id;
+  const attrs = openable
+    ? ` data-media-open="1" role="button" tabindex="0" data-platform="${escapeHtml(m.platform)}" data-id="${escapeHtml(m.conversation_id)}" data-mid="${escapeHtml(m.message_id || "")}"`
+    : "";
+  const orphan = !openable && url
+    ? `<a class="conv-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">Ouvrir le fichier ↗</a>` : "";
+  return `<figure class="media-card ${escapeHtml(m.kind || "file")}"${attrs}>
+    <div class="media-body">${body}</div>
+    <figcaption>
+      <div class="rc-head">${badge}${platform}${score}</div>
+      <div class="media-caption">${escapeHtml(label)}</div>
+      ${orphan}
+    </figcaption>
+  </figure>`;
 }
 
 function renderSidebar() {

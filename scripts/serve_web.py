@@ -6,13 +6,14 @@ Sert la page web (web/) et une petite API JSON :
   - GET /api/filters
   - GET /api/activity
   - GET /api/day?date=AAAA-MM-JJ
-  - GET /api/search?q=&k=&alpha=&platforms=&model=&date_from=&date_to=
-    (q vide + au moins un critere = recherche par criteres seuls, sans score)
+  - GET /api/search?q=&k=&alpha=&platforms=&model=&date_from=&date_to=&media_k=
+    (q vide + au moins un critere = recherche par criteres seuls, sans score ;
+     `media` = medias proches de la requete, meme espace vectoriel que le texte)
   - GET /api/conversations?platform=
   - GET /api/conversation?platform=&id=
   - GET /api/random?n=
 
-La recherche combine similarite cosinus (BGE-M3 + sqlite-vec) et mots-cles.
+La recherche combine similarite cosinus (EmbeddingGemma + sqlite-vec) et mots-cles.
 
     .venv/bin/python scripts/serve_web.py
     .venv/bin/python scripts/serve_web.py --port 9000 --host 0.0.0.0
@@ -21,7 +22,9 @@ La recherche combine similarite cosinus (BGE-M3 + sqlite-vec) et mots-cles.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import re
 import sys
 import threading
@@ -36,6 +39,7 @@ if str(ROOT) not in sys.path:
 
 from src.orchestrator import load_config  # noqa: E402
 from src.rag.embeddings import model_dim  # noqa: E402
+from src.rag.media import MediaStore  # noqa: E402
 from src.rag.search import combined_search  # noqa: E402
 from src.rag.store import VectorStore  # noqa: E402
 from src.utils.urls import conversation_url  # noqa: E402
@@ -56,7 +60,43 @@ CONTENT_TYPES = {
     ".avif": "image/avif",
     ".bmp": "image/bmp",
     ".img": "application/octet-stream",
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".m4a": "audio/mp4",
+    ".ogg": "audio/ogg",
+    ".oga": "audio/ogg",
+    ".opus": "audio/ogg",
+    ".flac": "audio/flac",
+    ".aac": "audio/aac",
+    ".mp4": "video/mp4",
+    ".webm": "video/webm",
+    ".mov": "video/quicktime",
+    ".mkv": "video/x-matroska",
+    ".avi": "video/x-msvideo",
+    ".pdf": "application/pdf",
+    ".csv": "text/csv; charset=utf-8",
+    ".txt": "text/plain; charset=utf-8",
+    ".md": "text/markdown; charset=utf-8",
 }
+
+#: signatures des images dont l'extension ne dit rien (`.img` telecharge tel quel)
+IMAGE_SIGNATURES = (
+    (b"\xff\xd8\xff", "image/jpeg"),
+    (b"\x89PNG\r\n\x1a\n", "image/png"),
+    (b"GIF87a", "image/gif"),
+    (b"GIF89a", "image/gif"),
+    (b"BM", "image/bmp"),
+)
+
+
+def sniff_image_type(data: bytes) -> str | None:
+    """Type MIME d'une image d'apres ses premiers octets (sinon None)."""
+    for signature, mime in IMAGE_SIGNATURES:
+        if data.startswith(signature):
+            return mime
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
 
 MEDIA_RE = re.compile(r"^/media/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)$")
 
@@ -72,6 +112,34 @@ RANDOM_MAX = 8
 DAY_EXTRACT_LEN = 300
 #: nombre maxi de messages renvoyes par une recherche par criteres seuls
 FILTER_LIMIT = 200
+#: medias renvoyes par /api/search (defaut, borne haute)
+MEDIA_K_DEFAULT = 8
+MEDIA_K_MAX = 24
+#: taille lue (tete et queue) pour la cle de contenu des medias (dedoublonnage)
+MEDIA_HASH_BYTES = 256 * 1024
+
+
+def media_content_key(path: Path) -> tuple[int, str] | None:
+    """Cle de contenu d'un media (taille + md5 tete/queue) pour dedoublonner.
+
+    Le meme media re-uploade dans plusieurs conversations produit des fichiers
+    identiques (chemins differents) : la cle les regroupe. Un fichier illisible
+    rend None (l'item est conserve tel quel).
+    """
+    try:
+        size = path.stat().st_size
+    except OSError:
+        return None
+    digest = hashlib.md5()
+    try:
+        with path.open("rb") as handle:
+            digest.update(handle.read(MEDIA_HASH_BYTES))
+            if size > 2 * MEDIA_HASH_BYTES:
+                handle.seek(-MEDIA_HASH_BYTES, os.SEEK_END)
+                digest.update(handle.read(MEDIA_HASH_BYTES))
+    except OSError:
+        return None
+    return (size, digest.hexdigest())
 #: date AAAA-MM-JJ (validation stricte, verifiee ensuite par strptime)
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -131,7 +199,10 @@ class AppState:
         self.model_name = model_name
         self.dim = model_dim(model_name, dim)
         self._store = None
+        self._media_store = None
         self._embedder = None
+        #: cles de contenu des medias (dedoublonnage /api/search), par fichier
+        self._media_keys: dict = {}
         self._lock = threading.Lock()
         # serialise l'acces store/modele entre requetes concurrentes
         self.api_lock = threading.Lock()
@@ -141,6 +212,25 @@ class AppState:
             if self._store is None:
                 self._store = VectorStore(self.db_path, dim=self.dim)
             return self._store
+
+    def media_store(self) -> MediaStore:
+        """Index des medias (memes base et dimension que les messages)."""
+        with self._lock:
+            if self._media_store is None:
+                self._media_store = MediaStore(self.db_path, self.dim)
+            return self._media_store
+
+    def media_key(self, rel_path: str) -> tuple[int, str] | None:
+        """Cle de contenu d'un media indexe (cache par chemin+taille+mtime)."""
+        path = self.exports_dir / rel_path
+        try:
+            stat = path.stat()
+        except OSError:
+            return None
+        cache_key = (rel_path, stat.st_size, stat.st_mtime_ns)
+        if cache_key not in self._media_keys:
+            self._media_keys[cache_key] = media_content_key(path)
+        return self._media_keys[cache_key]
 
     def embedder(self):
         with self._lock:
@@ -199,11 +289,12 @@ class Handler(BaseHTTPRequestHandler):
         except OSError:
             self._send_json({"error": "not found"}, 404)
             return
+        content_type = CONTENT_TYPES.get(path.suffix, "application/octet-stream")
+        if content_type == "application/octet-stream":
+            # telechargements sans extension fiable (.img) : type devine
+            content_type = sniff_image_type(body) or content_type
         self.send_response(200)
-        self.send_header(
-            "Content-Type",
-            CONTENT_TYPES.get(path.suffix, "application/octet-stream"),
-        )
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -438,11 +529,20 @@ class Handler(BaseHTTPRequestHandler):
         model = (params.get("model") or [""])[0] or None
         date_from = (params.get("date_from") or [""])[0] or None
         date_to = (params.get("date_to") or [""])[0] or None
+        try:
+            media_k = int((params.get("media_k") or [str(MEDIA_K_DEFAULT)])[0])
+        except ValueError as exc:
+            raise ApiError("parametre media_k invalide (entier attendu)") from exc
+        if not 1 <= media_k <= MEDIA_K_MAX:
+            raise ApiError(f"media_k doit etre entre 1 et {MEDIA_K_MAX}")
         if not query:
             # sans texte : criteres seuls ; sans critere non plus, reponse vide
             if not (platforms or model or date_from or date_to):
-                return {"query": query, "count": 0, "group_count": 0, "groups": []}
-            return self._search_filter_only(platforms, model, date_from, date_to)
+                return {"query": query, "count": 0, "group_count": 0, "groups": [], "media": []}
+            payload = self._search_filter_only(platforms, model, date_from, date_to)
+            payload["media"] = []  # pas de vecteur requete : pas de medias
+            return payload
+        # un seul encodage : le meme vecteur sert au texte et aux medias
         vector = self.state.embed(query)
         results = combined_search(
             self.state.store(),
@@ -455,7 +555,118 @@ class Handler(BaseHTTPRequestHandler):
             date_from=date_from,
             date_to=date_to,
         )
-        return self._group_results(query, results)
+        payload = self._group_results(query, results)
+        media = self._search_media(vector, platforms, media_k)
+        # un media = un message a part entiere de sa conversation : il compte
+        # dans la pertinence du groupe (score, extraits) ; seuls les medias
+        # sans conversation restent des cartes autonomes
+        payload["media"] = self._attach_media(payload["groups"], media)
+        return payload
+
+    def _attach_media(self, groups, media):
+        """Rattache les medias a leur conversation (un media = un hit).
+
+        Le media compte dans la pertinence du groupe (`best_score`, nombre
+        d'extraits) : une conversation dont les messages *et* les medias sont
+        pertinents remonte ; une conversation sans hit texte mais avec un
+        media pertinent apparait. Rend les medias sans conversation
+        (orphelins), tries par score.
+        """
+        by_key = {(g["platform"], g["conversation_id"]): g for g in groups}
+        orphans = []
+        for item in media:
+            conversation_id = item.get("conversation_id") or None
+            key = (item["platform"], conversation_id) if conversation_id else None
+            group = by_key.get(key) if key else None
+            if key and group is None:
+                group = {
+                    "platform": item["platform"],
+                    "conversation_id": conversation_id,
+                    "url": conversation_url(item["platform"], conversation_id),
+                    "title": item.get("title") or "",
+                    "messages": [],
+                    "media": [],
+                    "best_score": 0.0,
+                }
+                by_key[key] = group
+                groups.append(group)
+            if group is None:
+                orphans.append(item)
+                continue
+            group.setdefault("media", [])
+            group["media"].append(item)
+            group["best_score"] = max(group["best_score"], item["score"] or 0.0)
+        for group in groups:
+            group.setdefault("media", [])
+            group["media"].sort(key=lambda m: m["score"] or 0.0, reverse=True)
+            group["media_count"] = len(group["media"])
+            group["hit_count"] = len(group["messages"]) + group["media_count"]
+            group["best_score"] = round(group["best_score"], 4)
+        # plusieurs extraits d'abord, puis isolees (meme regle que _group_results)
+        groups.sort(key=lambda g: (0 if g["hit_count"] >= 2 else 1, -g["best_score"]))
+        orphans.sort(key=lambda m: m["score"] or 0.0, reverse=True)
+        return orphans
+
+    def _dedup_media(self, rows):
+        """Retire les medias de contenu identique (le premier rencontre gagne)."""
+        seen: set = set()
+        unique = []
+        for row in rows:
+            key = self.state.media_key(row["path"] or "")
+            if key is not None:
+                if key in seen:
+                    continue
+                seen.add(key)
+            unique.append(row)
+        return unique
+
+    def _search_media(self, vector, platforms, k: int):
+        """Medias proches de la requete (meme espace vectoriel que le texte).
+
+        `platforms` filtre sur media.platform (sur-echantillonnage puis
+        troncature, MediaStore.search ne filtre que par type) ; `model` et les
+        dates ne s'appliquent pas (les medias n'ont pas de timestamp).
+        """
+        # sur-echantillonnage : le dedoublonnage par contenu puis la troncature
+        # a k doivent laisser assez de candidats distincts (memes medias
+        # re-uploades dans plusieurs conversations).
+        fetch = min(max(k * 6, 64), 192)
+        try:
+            rows = self.state.media_store().search(vector, k=fetch)
+        except Exception as exc:  # noqa: BLE001
+            # index medias absent/incompatible : la recherche texte reste servie
+            print(f"[web] recherche medias indisponible: {exc}")
+            return []
+        rows = [row for row in rows if row["platform"] in PLATFORMS]
+        if platforms:
+            rows = [row for row in rows if row["platform"] in platforms]
+        rows = self._dedup_media(rows)[:k]
+        pairs = [
+            (row["platform"], row["conversation_id"])
+            for row in rows
+            if row["conversation_id"]
+        ]
+        meta = self.state.store().conversation_meta(pairs) if pairs else {}
+        media = []
+        for row in rows:
+            path = row["path"] or ""
+            filename = path.rsplit("/", 1)[-1]
+            conversation_id = row["conversation_id"] or None
+            info = meta.get((row["platform"], conversation_id)) or {}
+            media.append(
+                {
+                    "kind": row["kind"],
+                    "url": f"/media/{row['platform']}/{filename}" if filename else "",
+                    "platform": row["platform"],
+                    "conversation_id": conversation_id,
+                    "message_id": row["message_id"] or None,
+                    "title": info.get("title") or "",
+                    "texte": row["texte"] or "",
+                    "score": round(row["score"], 4),
+                    "path": path,
+                }
+            )
+        return media
 
     def _search_filter_only(self, platforms, model, date_from, date_to):
         """Recherche par criteres seuls (q vide) : tri par date, sans score.
