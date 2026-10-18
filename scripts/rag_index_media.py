@@ -116,10 +116,16 @@ def main() -> int:
         print("attention: l'espace multimodal attendu est celui d'EmbeddingGemma 2")
 
     started = time.time()
-    model = load_multimodal_model(model_name)
+    # chargement paresseux du modele multimodal : s'il n'y a aucun media a
+    # encoder, il n'est jamais charge (cron : ~1 s au lieu de ~40 s de CPU).
+    holder: Dict[str, Any] = {}
 
     def encode_fn(payloads: List[Tuple[str, Path]]) -> np.ndarray:
         """Encode une liste ordonnee de (kind, chemin) -> vecteurs alignes."""
+        if "model" not in holder:
+            print("chargement du modele multimodal (premiers medias a encoder)…")
+            holder["model"] = load_multimodal_model(model_name)
+        model = holder["model"]
         chunks: List[np.ndarray] = []
         index = 0
         while index < len(payloads):
@@ -167,6 +173,8 @@ def main() -> int:
         f"termine en {elapsed:.0f}s : {stats['indexed']} medias indexes "
         f"({stats['per_kind']}), {stats['skipped']} ignores, {stats['failed']} en echec"
     )
+    if not holder:
+        print("aucun media a indexer : modele non charge")
     print("store:", store.stats())
     store.close()
     return 0

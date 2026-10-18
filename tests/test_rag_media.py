@@ -72,11 +72,13 @@ def test_media_kind():
 
 def test_iter_media_files_filtre_les_non_medias(tmp_path):
     _write_media(tmp_path)
+    # une image vectorielle (non decodable par l'encodeur) est ignoree
+    (tmp_path / "alpha" / "images" / "logo.svg").write_text("<svg/>", encoding="utf-8")
     found = [(p, k, f.name) for p, k, f in iter_media_files(tmp_path)]
     assert ("alpha", "image", "img1.jpg") in found
     assert ("alpha", "audio", "clip.mp3") in found
     assert ("alpha", "video", "clip.mp4") in found
-    assert all(f not in ("doc.pdf", "data.csv") for _, _, f in found)
+    assert all(f not in ("doc.pdf", "data.csv", "logo.svg") for _, _, f in found)
 
 
 def test_build_reference_index(tmp_path):

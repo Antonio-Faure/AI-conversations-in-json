@@ -26,13 +26,17 @@ from ..utils.file_utils import ensure_dir, now_iso_z
 
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus", ".flac", ".aac"}
 VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".mkv", ".avi"}
+#: images encodables par l'encodeur multimodal (torchvision `decode_image` :
+#: jpeg/png/webp/gif seulement) ; svg/avif/heic/bmp/tiff sont ignores (sinon
+#: ils echouent a chaque passage et forcent le chargement du modele).
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 
 #: references markdown ecrites par l'orchestrateur dans les messages
 IMAGE_RE = re.compile(r"!\[([^\]]*)\]\(images/([^)]+)\)")
 FILE_RE = re.compile(r"\[([^\]]*)\]\(files/([^)]+)\)")
 
 #: fichiers de metadonnees a la racine d'une plateforme (pas des conversations)
-RESERVED_JSON = {"conversation_list.json", "api_health.json"}
+RESERVED_JSON = {"conversation_list.json", "api_health.json", "recheck.json"}
 
 #: encodeur : liste de (kind, chemin) -> matrice de vecteurs (N x dim)
 EncodeFn = Callable[[List[Tuple[str, Path]]], Any]
@@ -60,7 +64,7 @@ def iter_media_files(
         images_dir = platform_dir / "images"
         if images_dir.is_dir():
             for path in sorted(images_dir.iterdir()):
-                if path.is_file():
+                if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS:
                     yield platform, "image", path
         files_dir = platform_dir / "files"
         if files_dir.is_dir():
