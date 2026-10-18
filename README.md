@@ -422,6 +422,12 @@ navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
   messages pertinents sont affichées en premier (regroupées), les messages
   isolés ensuite (probablement moins pertinents).
 - **Sans recherche** : la page présente les **dernières conversations**.
+- **Accueil (tableau de bord)** : heatmap d'activité (365 jours, clic sur un jour
+  → vue « journée »), conversations par plateforme, top modèles, « Au hasard »,
+  « Il y a un an aujourd'hui ». Les panneaux **Conversations par plateforme** et
+  **Top modèles** tournent chacun toutes les 5 minutes sur leur dimension : vue
+  d'ensemble, puis une série mensuelle par élément (flèches et pastilles pour
+  naviguer à la main).
 - **Lien cliquable** `Ouvrir ↗` vers la conversation d'origine (site d'origine),
   dans les résultats et dans la vue conversation.
 - **Rendu riche** : markdown (gras, listes, tableaux, liens `target=_blank`),
@@ -437,7 +443,8 @@ navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
   chaque message. Barre de recherche **sticky et repliable** (`⚙️ Paramètres`).
 
 L'API locale (même serveur) : `/api/search`, `/api/conversation`,
-`/api/conversations`, `/api/random`, `/api/filters`, `/api/stats`. Le modèle
+`/api/conversations`, `/api/random`, `/api/filters`, `/api/stats`,
+`/api/activity`, `/api/timeline`, `/api/day`. Le modèle
 d'embeddings se charge au premier appel (quelques secondes).
 
 ## Optimisations écriture & compute

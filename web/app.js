@@ -344,6 +344,7 @@ function loadHome() {
   renderHomeShell();
   loadHomeConversations();
   loadActivity();
+  loadTimeline();
   loadRandom(false);
   if (state.stats) renderDashboardStats();
 }
@@ -394,13 +395,27 @@ function renderHomeShell() {
           <h3 class="panel-title">Activité — 365 derniers jours</h3>
           <div id="heatmap"><p class="section-note">Chargement…</p></div>
         </div>
-        <div class="panel" aria-busy="true">
-          <h3 class="panel-title">Conversations par plateforme</h3>
-          <div id="platBars"><p class="section-note">Chargement…</p></div>
+        <div class="panel rotator-panel" aria-busy="true">
+          <div class="panel-head">
+            <h3 class="panel-title" id="rotPlatTitle">Conversations par plateforme</h3>
+            <div class="rot-nav" id="rotPlatNav" hidden>
+              <button class="rot-arrow" type="button" id="rotPlatPrev" aria-label="Partie précédente">‹</button>
+              <span class="rot-dots" id="rotPlatDots"></span>
+              <button class="rot-arrow" type="button" id="rotPlatNext" aria-label="Partie suivante">›</button>
+            </div>
+          </div>
+          <div class="rot-body" id="rotPlatBody"><p class="section-note">Chargement…</p></div>
         </div>
-        <div class="panel" aria-busy="true">
-          <h3 class="panel-title">Top modèles</h3>
-          <div id="modelBars"><p class="section-note">Chargement…</p></div>
+        <div class="panel rotator-panel" aria-busy="true">
+          <div class="panel-head">
+            <h3 class="panel-title" id="rotModelTitle">Top modèles</h3>
+            <div class="rot-nav" id="rotModelNav" hidden>
+              <button class="rot-arrow" type="button" id="rotModelPrev" aria-label="Partie précédente">‹</button>
+              <span class="rot-dots" id="rotModelDots"></span>
+              <button class="rot-arrow" type="button" id="rotModelNext" aria-label="Partie suivante">›</button>
+            </div>
+          </div>
+          <div class="rot-body" id="rotModelBody"><p class="section-note">Chargement…</p></div>
         </div>
       </div>
     </section>
@@ -433,6 +448,10 @@ function renderHomeShell() {
   setHomeSidebar(true);
   renderResumeBar();
   $("rerollBtn").addEventListener("click", () => loadRandom(true));
+  $("rotPlatPrev").addEventListener("click", () => stepSlide(platRotator, -1));
+  $("rotPlatNext").addEventListener("click", () => stepSlide(platRotator, 1));
+  $("rotModelPrev").addEventListener("click", () => stepSlide(modelRotator, -1));
+  $("rotModelNext").addEventListener("click", () => stepSlide(modelRotator, 1));
   $("seeMoreBtn").addEventListener("click", () => {
     home.visible += HOME_PAGE_SIZE;
     renderLastConversations();
@@ -717,45 +736,221 @@ function renderDaySidebar() {
     }));
 }
 
+/* -- tableau de bord : barres plateformes, top modèles, panneaux rotatifs -- */
+function platformBarsHtml(data) {
+  const entries = Object.entries(data.platforms || {})
+    .filter(([name]) => PLATFORM_LABEL[name])
+    .sort((a, b) => (b[1].messages || 0) - (a[1].messages || 0));
+  const max = Math.max(1, ...entries.map(([, info]) => info.messages || 0));
+  return entries.map(([name, info]) => {
+    const messages = info.messages || 0;
+    return `<div class="bar-row">
+      <span class="bar-label">${escapeHtml(platformName(name))}</span>
+      <span class="bar-track"><span class="bar-fill" style="--w:${Math.round((messages / max) * 100)}%"></span></span>
+      <span class="bar-counts"><span>${info.conversations || 0} conv.</span><span class="bar-num">${messages} msg</span></span>
+    </div>`;
+  }).join("");
+}
+
+function modelBarsHtml(data) {
+  const models = data.model_counts || [];
+  if (!models.length) return "";
+  const max = Math.max(1, ...models.map((m) => m.count || 0));
+  return models.map((m) => `
+    <div class="bar-row model">
+      <span class="bar-label" title="${escapeHtml(m.model)}">${escapeHtml(m.model)}</span>
+      <span class="bar-track"><span class="bar-fill" style="--w:${Math.round(((m.count || 0) / max) * 100)}%"></span></span>
+      <span class="bar-counts"><span class="bar-num">${m.count || 0}</span></span>
+    </div>`).join("");
+}
+
+/* -- panneaux rotatifs : une partie toutes les 5 minutes -------------------
+   Chaque panneau tourne sur sa dimension : vue d'ensemble (barres), puis une
+   partie par élément (conversations par mois). Flèches + pastilles pour
+   naviguer ; la rotation patiente si l'onglet est masqué et s'arrête quand le
+   panneau quitte la page. */
+const ROTATE_MS = 5 * 60 * 1000;
+const dash = {
+  timeline: null,  // séries mensuelles (/api/timeline)
+};
+
+function makeRotator(ids, build, empty) {
+  return { ids, build, empty, slides: [], index: 0, timer: null };
+}
+
+const platRotator = makeRotator(
+  { body: "rotPlatBody", title: "rotPlatTitle", nav: "rotPlatNav",
+    dots: "rotPlatDots", prev: "rotPlatPrev", next: "rotPlatNext" },
+  platformSlides, "Pas encore de statistiques.",
+);
+const modelRotator = makeRotator(
+  { body: "rotModelBody", title: "rotModelTitle", nav: "rotModelNav",
+    dots: "rotModelDots", prev: "rotModelPrev", next: "rotModelNext" },
+  modelSlides, "Aucun modèle renseigné.",
+);
+const rotators = [platRotator, modelRotator];
+
+function stopRotation(rot) {
+  if (rot.timer) { clearInterval(rot.timer); rot.timer = null; }
+}
+
+function startRotation(rot) {
+  stopRotation(rot);
+  if (rot.slides.length < 2) return;
+  rot.timer = setInterval(() => {
+    if (!$(rot.ids.body)) { stopRotation(rot); return; } // panneau quitté
+    if (document.hidden) return;                         // onglet masqué : on patiente
+    stepSlide(rot, 1);
+  }, ROTATE_MS);
+}
+
+function stepSlide(rot, delta) {
+  const count = rot.slides.length;
+  if (!count) return;
+  rot.index = (rot.index + delta + count) % count;
+  paintSlide(rot);
+  startRotation(rot); // une partie reste affichée 5 min (y compris après un clic)
+}
+
+function paintSlide(rot) {
+  const body = $(rot.ids.body);
+  if (!body || !rot.slides.length) return;
+  const slide = rot.slides[rot.index];
+  const title = $(rot.ids.title);
+  if (title) {
+    title.textContent = slide.title;
+    title.classList.toggle("mono", !!slide.mono);
+  }
+  body.innerHTML = slide.html;
+  requestAnimationFrame(() =>
+    body.querySelectorAll(".bar-fill").forEach((el) => el.classList.add("grown")));
+  const dots = $(rot.ids.dots);
+  if (dots) {
+    [...dots.children].forEach((dot, i) => {
+      dot.classList.toggle("active", i === rot.index);
+      if (i === rot.index) dot.setAttribute("aria-current", "true");
+      else dot.removeAttribute("aria-current");
+    });
+  }
+  setPanelBusy(body, false);
+}
+
+/* -- parties : plateformes (barres, puis une par plateforme) -- */
+function platformSlides() {
+  const slides = [];
+  if (state.stats) {
+    slides.push({ title: "Conversations par plateforme", html: platformBarsHtml(state.stats) });
+  }
+  const timeline = dash.timeline;
+  if (timeline) {
+    (timeline.platforms || []).forEach((p) => slides.push({
+      title: `${platformName(p.platform)} — conversations par mois`,
+      html: monthChartHtml(p, timeline.months),
+    }));
+  }
+  return slides;
+}
+
+/* -- parties : modèles (barres, puis une par modèle) -- */
+function modelSlides() {
+  const slides = [];
+  if (state.stats) {
+    const bars = modelBarsHtml(state.stats);
+    if (bars) slides.push({ title: "Top modèles", html: bars });
+  }
+  const timeline = dash.timeline;
+  if (timeline) {
+    (timeline.models || []).forEach((m) => slides.push({
+      title: `${m.model} — conversations par mois`,
+      mono: true,
+      html: monthChartHtml(m, timeline.months),
+    }));
+  }
+  return slides;
+}
+
+function monthLabel(key) { // « 2026-01 » -> « janvier 2026 »
+  const [y, m] = String(key || "").split("-").map(Number);
+  if (!m) return "";
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("fr-FR", {
+    month: "long", year: "numeric", timeZone: "UTC",
+  });
+}
+
+function monthAxisLabel(key) { // « 2026-01 » -> « janv. 26 »
+  const [y, m] = String(key || "").split("-").map(Number);
+  return m ? `${MONTHS_FR[m - 1]} ${String(y).slice(2)}` : "";
+}
+
+function monthChartHtml(entry, months) {
+  const values = entry.series || [];
+  const max = Math.max(1, ...values);
+  const total = entry.total || 0;
+  const peak = Math.max(0, values.indexOf(max));
+  const bars = values.map((value, i) => {
+    const height = Math.round((value / max) * 100);
+    const label = `${monthLabel(months[i])} · ${value} conversation${value > 1 ? "s" : ""}`;
+    return `<span class="mc-bar${value ? "" : " zero"}" title="${escapeHtml(label)}">
+      <span class="mc-fill" style="--h:${height}%"></span></span>`;
+  }).join("");
+  // repères : premier mois, chaque janvier, dernier mois
+  const axis = months.map((month, i) => {
+    const show = i === 0 || i === months.length - 1 || month.slice(5) === "01";
+    return `<span>${show ? escapeHtml(monthAxisLabel(month)) : ""}</span>`;
+  }).join("");
+  return `
+    <div class="mc-head">
+      <span class="mc-total">${total}<small>conversation${total > 1 ? "s" : ""}</small></span>
+      <span class="mc-peak">pic ${escapeHtml(monthAxisLabel(months[peak]))} · ${max}</span>
+    </div>
+    <div class="mc-chart" role="img"
+      aria-label="${escapeHtml(`${total} conversations ; maximum ${max} en ${monthLabel(months[peak])}`)}">${bars}</div>
+    <div class="mc-axis" aria-hidden="true">${axis}</div>`;
+}
+
+function renderDots(rot) {
+  const dots = $(rot.ids.dots);
+  const nav = $(rot.ids.nav);
+  if (!dots || !nav) return;
+  nav.hidden = rot.slides.length < 2;
+  dots.innerHTML = rot.slides.map((slide, i) =>
+    `<button class="rot-dot" type="button" data-slide="${i}" aria-label="${escapeHtml(`Afficher : ${slide.title}`)}" title="${escapeHtml(slide.title)}"></button>`
+  ).join("");
+  dots.querySelectorAll(".rot-dot").forEach((dot) =>
+    dot.addEventListener("click", () => {
+      rot.index = Number(dot.dataset.slide);
+      paintSlide(rot);
+      startRotation(rot);
+    }));
+}
+
+function renderRotator(rot) {
+  const body = $(rot.ids.body);
+  if (!body) return;
+  rot.slides = rot.build();
+  if (!rot.slides.length) {
+    sectionNote(body, rot.empty);
+    setPanelBusy(body, false);
+    return;
+  }
+  rot.index = Math.min(rot.index, rot.slides.length - 1);
+  renderDots(rot);
+  paintSlide(rot);
+  startRotation(rot);
+}
+
 function renderDashboardStats() {
-  const data = state.stats;
-  if (!data) return;
-  const platBox = $("platBars");
-  if (platBox) {
-    const entries = Object.entries(data.platforms || {})
-      .filter(([name]) => PLATFORM_LABEL[name])
-      .sort((a, b) => (b[1].messages || 0) - (a[1].messages || 0));
-    const max = Math.max(1, ...entries.map(([, info]) => info.messages || 0));
-    platBox.innerHTML = entries.map(([name, info]) => {
-      const messages = info.messages || 0;
-      return `<div class="bar-row">
-        <span class="bar-label">${escapeHtml(platformName(name))}</span>
-        <span class="bar-track"><span class="bar-fill" style="--w:${Math.round((messages / max) * 100)}%"></span></span>
-        <span class="bar-counts"><span>${info.conversations || 0} conv.</span><span class="bar-num">${messages} msg</span></span>
-      </div>`;
-    }).join("");
-    setPanelBusy(platBox, false);
-    requestAnimationFrame(() =>
-      platBox.querySelectorAll(".bar-fill").forEach((el) => el.classList.add("grown")));
+  rotators.forEach(renderRotator);
+}
+
+/* -- séries mensuelles (conversations par plateforme et par modèle) -- */
+async function loadTimeline() {
+  try {
+    dash.timeline = await (await fetch("/api/timeline")).json();
+  } catch (err) {
+    console.error(err);
   }
-  const modelBox = $("modelBars");
-  if (modelBox) {
-    const models = data.model_counts || [];
-    if (!models.length) {
-      sectionNote(modelBox, "Aucun modèle renseigné.");
-    } else {
-      const max = Math.max(1, ...models.map((m) => m.count || 0));
-      modelBox.innerHTML = models.map((m) => `
-        <div class="bar-row model">
-          <span class="bar-label" title="${escapeHtml(m.model)}">${escapeHtml(m.model)}</span>
-          <span class="bar-track"><span class="bar-fill" style="--w:${Math.round(((m.count || 0) / max) * 100)}%"></span></span>
-          <span class="bar-counts"><span class="bar-num">${m.count || 0}</span></span>
-        </div>`).join("");
-      requestAnimationFrame(() =>
-        modelBox.querySelectorAll(".bar-fill").forEach((el) => el.classList.add("grown")));
-    }
-    setPanelBusy(modelBox, false);
-  }
+  renderDashboardStats();
 }
 
 /* -- explorer : au hasard + il y a un an aujourd'hui -- */
@@ -920,10 +1115,14 @@ async function loadStats() {
     if (state.view === "default" && !state.conversation && $("lastFilter")) renderHomeFilter();
   } catch (err) {
     console.error(err);
-    sectionNote($("platBars"), "Impossible de charger les statistiques.");
-    setPanelBusy($("platBars"), false);
-    sectionNote($("modelBars"), "Impossible de charger les statistiques.");
-    setPanelBusy($("modelBars"), false);
+    renderDashboardStats();
+    rotators.forEach((rot) => {
+      const box = $(rot.ids.body);
+      if (box && !box.querySelector(".bar-row, .mc-chart")) {
+        sectionNote(box, "Impossible de charger les statistiques.");
+        setPanelBusy(box, false);
+      }
+    });
   }
 }
 

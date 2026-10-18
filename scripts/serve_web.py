@@ -5,6 +5,8 @@ Sert la page web (web/) et une petite API JSON :
   - GET /api/stats
   - GET /api/filters
   - GET /api/activity
+  - GET /api/timeline
+    (conversations par mois — 24 derniers mois — par plateforme et par modele)
   - GET /api/day?date=AAAA-MM-JJ
   - GET /api/search?q=&k=&alpha=&platforms=&model=&date_from=&date_to=&media_k=
     (q vide + au moins un critere = recherche par criteres seuls, sans score ;
@@ -106,6 +108,10 @@ PLATFORMS = ("chatgpt", "claude", "gemini", "perplexity", "grok", "mistral")
 CONVERSATION_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 #: fenetre de la heatmap d'activite (jours, jour courant inclus)
 ACTIVITY_DAYS = 365
+#: fenetre des series temporelles (/api/timeline : mois, mois courant inclus)
+TIMELINE_MONTHS = 24
+#: nombre de modeles des series temporelles (/api/timeline)
+TIMELINE_MODELS = 8
 #: bornes du tirage aleatoire (/api/random)
 RANDOM_MAX = 8
 #: longueur de l'extrait de message dans la vue « journee » (/api/day)
@@ -188,6 +194,20 @@ def message_extract(texte: str, limit: int = DAY_EXTRACT_LEN) -> str:
     if space > 0:
         cut = cut[:space]
     return cut + "…"
+
+
+def month_window(today, count: int) -> list:
+    """`count` mois « AAAA-MM » consecutifs, mois de `today` inclus."""
+    year, month = today.year, today.month
+    months = []
+    for _ in range(count):
+        months.append(f"{year:04d}-{month:02d}")
+        month -= 1
+        if month == 0:
+            month = 12
+            year -= 1
+    months.reverse()
+    return months
 
 
 class AppState:
@@ -361,6 +381,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(self._filters())
             elif path == "/api/activity":
                 self._send_json(self._activity())
+            elif path == "/api/timeline":
+                self._send_json(self._timeline())
             elif path == "/api/day":
                 self._send_json(self._day(params))
             elif path == "/api/search":
@@ -437,6 +459,67 @@ class Handler(BaseHTTPRequestHandler):
             days[key] = counts.get(key, 0)
             day += timedelta(days=1)
         return {"days": days, "max": max(days.values(), default=0)}
+
+    def _timeline(self):
+        """Conversations par mois (par plateforme et par modele).
+
+        Une conversation est datee par le mois de son premier message
+        horodate ; pour un modele, par le mois de sa premiere utilisation dans
+        la conversation. Fenetre : les `TIMELINE_MONTHS` derniers mois (mois
+        courant inclus) ; chaque serie est alignee sur `months` (zeros compris).
+        """
+        store = self.state.store()
+        months = month_window(datetime.now(timezone.utc).date(), TIMELINE_MONTHS)
+        first = months[0]
+        platform_rows = store.db.execute(
+            """
+            SELECT platform, substr(start, 1, 7) AS mois, COUNT(*) AS n FROM (
+                SELECT platform, conversation_id, MIN(timestamp) AS start
+                FROM messages
+                WHERE timestamp != '' AND timestamp IS NOT NULL
+                GROUP BY platform, conversation_id
+            ) WHERE mois >= ? GROUP BY platform, mois
+            """,
+            (first,),
+        ).fetchall()
+        model_rows = store.db.execute(
+            """
+            SELECT model, substr(mois, 1, 7) AS m, COUNT(*) AS n FROM (
+                SELECT model, platform, conversation_id, MIN(timestamp) AS mois
+                FROM messages
+                WHERE model IS NOT NULL AND model != ''
+                  AND timestamp != '' AND timestamp IS NOT NULL
+                GROUP BY model, platform, conversation_id
+            ) WHERE m >= ? GROUP BY model, m
+            """,
+            (first,),
+        ).fetchall()
+
+        platforms: dict = {}
+        for row in platform_rows:
+            platforms.setdefault(row["platform"], {})[row["mois"]] = row["n"]
+        models: dict = {}
+        for row in model_rows:
+            models.setdefault(row["model"], {})[row["m"]] = row["n"]
+
+        def series(counts: dict) -> list:
+            return [counts.get(month, 0) for month in months]
+
+        platform_series = [
+            {"platform": name, "series": series(counts), "total": sum(counts.values())}
+            for name, counts in platforms.items()
+        ]
+        platform_series.sort(key=lambda item: (-item["total"], item["platform"]))
+        model_series = [
+            {"model": name, "series": series(counts), "total": sum(counts.values())}
+            for name, counts in models.items()
+        ]
+        model_series.sort(key=lambda item: (-item["total"], item["model"]))
+        return {
+            "months": months,
+            "platforms": platform_series,
+            "models": model_series[:TIMELINE_MODELS],
+        }
 
     def _day(self, params):
         """Messages d'une journee, groupes par conversation (vue « journee »)."""

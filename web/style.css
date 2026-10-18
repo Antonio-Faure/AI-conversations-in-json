@@ -461,6 +461,43 @@ mark{background:var(--highlight);color:inherit;border-radius:3px;padding:0 2px}
 .bar-counts .bar-num{color:var(--text)}
 .bar-row.model .bar-label{font-family:var(--font-mono);font-size:.74rem;font-weight:500}
 
+/* panneau rotatif du tableau de bord : une partie toutes les 5 minutes.
+   Titre sur sa propre ligne, pastilles dessous : la hauteur du panneau ne
+   change pas d'une partie a l'autre (sinon la page saute toutes les 5 min). */
+.rotator-panel .panel-head{flex-direction:column;align-items:stretch;gap:8px;margin-bottom:10px}
+.rotator-panel .panel-title{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rot-nav{display:flex;align-items:center;gap:9px}
+.rot-arrow{width:26px;height:26px;display:grid;place-items:center;border:1px solid var(--border);
+  border-radius:999px;background:var(--bg-card);color:var(--text-muted);font:inherit;font-size:1.05rem;
+  line-height:1;cursor:pointer;transition:color .15s var(--ease),border-color .15s var(--ease),background .15s var(--ease)}
+.rot-arrow:hover{color:var(--text);border-color:var(--border-strong);background:var(--bg-hover)}
+.rot-arrow:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.rot-dots{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap}
+.rot-dot{width:7px;height:7px;padding:0;border:0;border-radius:999px;background:var(--bg-hover);cursor:pointer;
+  transition:background .2s var(--ease),transform .2s var(--ease)}
+.rot-dot:hover{background:var(--border-strong)}
+.rot-dot.active{background:var(--accent);transform:scale(1.3)}
+.rot-dot:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rot-body{display:flex;flex-direction:column;justify-content:center;min-height:214px}
+.panel-title.mono{font-family:var(--font-mono);font-size:.92rem;font-weight:500}
+
+/* serie mensuelle (une partie par plateforme / par modele) */
+.mc-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px}
+.mc-total{font-family:var(--font-display);font-size:1.4rem;font-weight:600;font-variant-numeric:tabular-nums}
+.mc-total small{font-family:var(--font-body);font-size:.72rem;font-weight:500;color:var(--text-muted);margin-left:6px}
+.mc-peak{font-size:.72rem;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.mc-chart{display:flex;align-items:flex-end;gap:2px;height:140px}
+.mc-bar{flex:1 1 0;min-width:0;height:100%;display:flex;align-items:flex-end}
+.mc-fill{display:block;width:100%;height:var(--h);min-height:2px;border-radius:3px 3px 0 0;
+  background:linear-gradient(180deg,var(--accent),var(--accent-strong));
+  animation:mc-grow .55s var(--ease) both;transition:filter .15s var(--ease)}
+.mc-bar:hover .mc-fill{filter:brightness(1.18)}
+.mc-bar.zero .mc-fill{background:color-mix(in srgb,var(--text) 16%,transparent)}
+@keyframes mc-grow{from{height:0}to{height:var(--h)}}
+.mc-axis{display:flex;gap:2px;margin-top:7px}
+.mc-axis span{flex:1 1 0;min-width:0;text-align:center;font-size:.6rem;color:var(--text-muted);
+  white-space:nowrap;overflow:hidden}
+
 /* vue « journée » (clic sur une case de la heatmap) */
 .day-view .group-card{margin-bottom:14px;scroll-margin-top:110px}
 .day-view .group-card:last-child{margin-bottom:0}

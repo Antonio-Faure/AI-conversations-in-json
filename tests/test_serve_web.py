@@ -639,3 +639,70 @@ class TestModelCounts:
         assert counts[0] == {"model": "modele-0", "count": 10}
         assert [c["model"] for c in counts] == [f"modele-{i}" for i in range(8)]
         assert "models" in body  # champ historique conserve
+
+
+class TestTimeline:
+    def test_month_window_consecutif(self):
+        """Fenetre glissante : mois consecutifs, mois courant en dernier."""
+        assert serve_web.month_window(datetime(2026, 1, 15), 3) == [
+            "2025-11", "2025-12", "2026-01",
+        ]
+        assert serve_web.month_window(datetime(2026, 10, 1), 1) == ["2026-10"]
+        assert len(serve_web.month_window(datetime(2026, 10, 1), 24)) == 24
+
+    def test_series_par_plateforme_et_modele(self, web):
+        """Conversations datees au mois de leur 1er message (1 fois par conv.)."""
+        store = serve_web.Handler.state.store()
+        now = datetime.now(timezone.utc)
+        this_month = now.strftime("%Y-%m")
+        prev_month = (now.replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+        _seed_messages(store, [
+            # conversation « a » : 2 messages le meme mois -> comptee 1 fois
+            {"platform": "grok", "conversation_id": "a", "model": "grok-3",
+             "timestamp": f"{prev_month}-02T10:00:00Z"},
+            {"platform": "grok", "conversation_id": "a", "model": "grok-3",
+             "timestamp": f"{prev_month}-09T10:00:00Z"},
+            {"platform": "grok", "conversation_id": "b", "model": "grok-4",
+             "timestamp": f"{prev_month}-20T10:00:00Z"},
+            {"platform": "grok", "conversation_id": "c", "model": "grok-3",
+             "timestamp": f"{this_month}-01T10:00:00Z"},
+            {"platform": "claude", "conversation_id": "d", "model": "",
+             "timestamp": f"{this_month}-02T10:00:00Z"},
+        ])
+        status, body = _get_json(web, "/api/timeline")
+        assert status == 200
+        months = body["months"]
+        assert len(months) == serve_web.TIMELINE_MONTHS
+        assert months == sorted(months)
+        assert months[-1] == this_month
+        # plateformes : triees par total decroissant, series alignees sur months
+        assert body["platforms"] == [
+            {"platform": "grok",
+             "series": [0] * (len(months) - 2) + [2, 1], "total": 3},
+            {"platform": "claude",
+             "series": [0] * (len(months) - 1) + [1], "total": 1},
+        ]
+        # modeles : modele vide exclu, serie datee au 1er message du modele
+        assert [m["model"] for m in body["models"]] == ["grok-3", "grok-4"]
+        assert body["models"][0]["series"][-2:] == [1, 1]
+        assert body["models"][0]["total"] == 2
+        assert body["models"][1]["series"][-2:] == [1, 0]
+
+    def test_plafond_modeles(self, web):
+        """Les series de modeles sont bornees a TIMELINE_MODELS (top par total)."""
+        store = serve_web.Handler.state.store()
+        month = datetime.now(timezone.utc).strftime("%Y-%m")
+        rows = []
+        for i in range(serve_web.TIMELINE_MODELS + 3):
+            for c in range(serve_web.TIMELINE_MODELS + 3 - i):
+                rows.append({
+                    "platform": "grok", "conversation_id": f"m{i}-{c}",
+                    "model": f"modele-{i}", "timestamp": f"{month}-01T00:00:00Z",
+                })
+        _seed_messages(store, rows)
+        status, body = _get_json(web, "/api/timeline")
+        assert status == 200
+        assert len(body["models"]) == serve_web.TIMELINE_MODELS
+        assert [m["model"] for m in body["models"]] == [
+            f"modele-{i}" for i in range(serve_web.TIMELINE_MODELS)
+        ]
