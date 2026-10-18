@@ -25,6 +25,7 @@ import json
 import re
 import sys
 import threading
+import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -206,6 +207,9 @@ class ConversationTools:
         self.model_dim = model_dim(self.model_name, config.get("rag_dim"))
         self._store = store
         self._embedder = embedder
+        #: config complete (le controle des parseurs relance un scrape)
+        self.config = config
+        self._recheck_job = None
         # l'index sqlite et le modele ne supportent pas l'acces concurrent
         self._lock = threading.Lock()
 
@@ -253,6 +257,78 @@ class ConversationTools:
                 f"(disponibles: {', '.join(available) or 'aucune'})"
             )
         return platform
+
+    # -- controle des parseurs (re-scrape aleatoire vs archive) -----------------
+
+    def _recheck(self):
+        """Job de controle des parseurs (un seul a la fois, en tache de fond)."""
+        if self._recheck_job is None:
+            from src.utils.recheck import RecheckJob
+
+            self._recheck_job = RecheckJob()
+        return self._recheck_job
+
+    def _recheck_platforms(self, platforms: Optional[List[str]]) -> List[str]:
+        names = [self._check_platform(name) for name in (platforms or []) if name]
+        names = [name for name in names if name]
+        return names or self.platforms()
+
+    def recheck_start(
+        self,
+        platforms: Optional[List[str]] = None,
+        per_platform: int = 1,
+        min_messages: int = 8,
+    ) -> Dict[str, Any]:
+        """Lance un controle de parseur en tache de fond."""
+        names = self._recheck_platforms(platforms)
+        if not names:
+            raise ConversationToolError("aucune plateforme disponible")
+        try:
+            per_platform = max(1, min(int(per_platform or 1), 20))
+            min_messages = max(1, min(int(min_messages or 8), 200))
+        except (TypeError, ValueError) as exc:
+            raise ConversationToolError(
+                "per_platform et min_messages doivent etre des entiers"
+            ) from exc
+        try:
+            state = self._recheck().start(
+                self.config, names, per_platform, min_messages, 0
+            )
+        except RuntimeError as exc:
+            raise ConversationToolError(str(exc)) from exc
+        return {"started": True, **state}
+
+    def recheck_wait(
+        self,
+        platforms: Optional[List[str]] = None,
+        per_platform: int = 1,
+        min_messages: int = 8,
+        timeout: int = 300,
+    ) -> Dict[str, Any]:
+        """Lance un controle et attend la fin (borne par `timeout` secondes)."""
+        self.recheck_start(platforms, per_platform, min_messages)
+        job = self._recheck()
+        try:
+            deadline = time.monotonic() + max(10, min(int(timeout or 300), 1800))
+        except (TypeError, ValueError):
+            deadline = time.monotonic() + 300
+        while job.snapshot()["running"] and time.monotonic() < deadline:
+            time.sleep(1.0)
+        state = self.recheck_state()
+        state["timed_out"] = bool(job.snapshot()["running"])
+        return state
+
+    def recheck_state(self) -> Dict[str, Any]:
+        """Etat du controle en cours + derniers rapports par plateforme."""
+        from src.utils.recheck import read_report
+
+        state = self._recheck().snapshot()
+        reports = []
+        for platform in self.platforms():
+            report = read_report(self.exports_dir, platform)
+            if report:
+                reports.append(report)
+        return {**state, "reports": reports}
 
     def _list_index(self, platform: str) -> Dict[str, Dict[str, Any]]:
         return load_conversation_list(
@@ -876,13 +952,33 @@ STATS_DESCRIPTION = (
     "conclure qu'une recherche ne donne rien."
 )
 
+RECHECK_DESCRIPTION = (
+    "Controle de sante des parseurs : re-scrape un echantillon aleatoire de "
+    "conversations (taille moyenne ou grande) et compare leur contenu a "
+    "l'archive (messages, alternance des roles, images, tableaux, listes, "
+    "langages de code, LaTeX). Rien n'est ecrit dans l'archive. Parametres : "
+    "`platforms` (defaut : toutes), `per_platform` (conversations par "
+    "plateforme, defaut 1), `min_messages` (taille minimale, defaut 8). Le test "
+    "tourne en tache de fond : avec `wait=true` l'appel attend la fin (borne "
+    "par `timeout` secondes, defaut 300) et rend le rapport ; sinon suivre avec "
+    "`recheck_status`. A utiliser pour verifier qu'un parseur n'a pas regresse "
+    "apres un changement de DOM ou d'API."
+)
+
+RECHECK_STATUS_DESCRIPTION = (
+    "Etat du controle de parseur lance par `recheck_parsers` : en cours ou "
+    "termine, journal des dernieres lignes, et rapports par plateforme "
+    "(verdict ok/attention/critique, taux de messages retrouves, liste des "
+    "defaillances)."
+)
+
 
 def _dump(payload: Any) -> str:
     return json.dumps(payload, ensure_ascii=False, indent=1, default=str)
 
 
 def build_server(tools: ConversationTools):
-    """Serveur MCP (SDK officiel `mcp`) : 6 outils au-dessus de ConversationTools."""
+    """Serveur MCP (SDK officiel `mcp`) : 8 outils au-dessus de ConversationTools."""
     try:
         from mcp.server.mcpserver import MCPServer
         from mcp.server.mcpserver.exceptions import ToolError
@@ -972,6 +1068,33 @@ def build_server(tools: ConversationTools):
     @server.tool(description=STATS_DESCRIPTION)
     def stats() -> str:
         return call(tools.stats)
+
+    @server.tool(description=RECHECK_DESCRIPTION)
+    def recheck_parsers(
+        platforms: Optional[List[str]] = None,
+        per_platform: int = 1,
+        min_messages: int = 8,
+        wait: bool = False,
+        timeout: int = 300,
+    ) -> str:
+        if wait:
+            return call(
+                tools.recheck_wait,
+                platforms=platforms,
+                per_platform=per_platform,
+                min_messages=min_messages,
+                timeout=timeout,
+            )
+        return call(
+            tools.recheck_start,
+            platforms=platforms,
+            per_platform=per_platform,
+            min_messages=min_messages,
+        )
+
+    @server.tool(description=RECHECK_STATUS_DESCRIPTION)
+    def recheck_status() -> str:
+        return call(tools.recheck_state)
 
     return server
 

@@ -1,6 +1,6 @@
 ---
 name: conversations-search
-description: Recherche dans les conversations IA archivees (chatgpt, claude, gemini, perplexity, grok, mistral) via le serveur MCP `aicv` (search/grep/get_conversation/get_message/list_conversations/stats) ou en repli les scripts RAG. Use when looking up what was said in past AI conversations, searching the local conversation archive, finding a conversation/message by text or URL, or checking RAG index freshness.
+description: Recherche dans les conversations IA archivees (chatgpt, claude, gemini, perplexity, grok, mistral) via le serveur MCP `aicv` (search/grep/get_conversation/get_message/list_conversations/stats/recheck_parsers/recheck_status) ou en repli les scripts RAG. Use when looking up what was said in past AI conversations, searching the local conversation archive, finding a conversation/message by text or URL, checking RAG index freshness, or running a parser health check (re-scrape a random sample and compare with the archive).
 ---
 
 # Recherche dans les conversations archivees
@@ -9,8 +9,9 @@ Deux couches de donnees, deux outils :
 
 | Donnee | Contenu | Outil |
 | --- | --- | --- |
-| **Index RAG** (`rag/messages.db`) | un vecteur BGE-M3 par message (texte + raisonnement + sources + outils) | `aicv.search` |
+| **Index RAG** (`rag/messages-eg2.db`) | un vecteur EmbeddingGemma 2 par message (texte + raisonnement + sources + outils) | `aicv.search` |
 | **Exports JSON** (`exports/<platform>/*.json`) | JSON standardise complet + `conversation_list.json` | `aicv.grep`, `aicv.get_conversation`, `aicv.get_message`, `aicv.list_conversations` |
+| **Rapports de controle** (`exports/<platform>/recheck.json`) | verdict de parseur par plateforme | `aicv.recheck_status` |
 
 Plateformes : `chatgpt`, `claude`, `gemini`, `perplexity`, `grok`, `mistral`.
 
@@ -46,6 +47,17 @@ En Code Mode opencode : `tools.aicv.search(...)`, `tools.aicv.grep(...)`, etc.
 - **`stats()`** : compteurs par plateforme (messages/conversations indexes,
   date d'indexation, conversations listees/scrapees/indisponibles). **A
   regarder avant de conclure qu'une recherche ne donne rien.**
+- **`recheck_parsers(platforms=None, per_platform=1, min_messages=8, wait=False, timeout=300)`** :
+  **controle de sante des parseurs** — re-scrape un echantillon aleatoire de
+  conversations (taille moyenne ou grande) et compare leur contenu a l'archive
+  (messages, alternance des roles, images, tableaux, listes, langages de code,
+  LaTeX). Rien n'est ecrit dans l'archive. Le test tourne en tache de fond :
+  avec `wait=True` l'appel attend la fin (borne par `timeout`) et rend le
+  rapport ; sinon suivre avec `recheck_status`. A lancer apres un changement de
+  DOM/API ou quand des conversations semblent tronquees.
+- **`recheck_status()`** : etat du controle (en cours ou termine, journal) et
+  derniers rapports par plateforme (verdict `ok`/`attention`/`critique`, taux de
+  messages retrouves, liste des defaillances avec la raison).
 
 ## Methode
 
@@ -55,6 +67,8 @@ En Code Mode opencode : `tools.aicv.search(...)`, `tools.aicv.grep(...)`, etc.
 3. Identifier une conversation/message précis → `get_conversation` /
    `get_message` (utiliser `index` ou `message_id` remontes par `search`/`grep`).
 4. Pour explorer un theme sans requete precise → `list_conversations`.
+5. Doute sur la **qualite du scrape** (messages manquants, images perdues,
+   parser casse) → `recheck_parsers(wait=True)` puis lire les `issues`.
 
 ## Limites / pieges
 
@@ -65,8 +79,8 @@ En Code Mode opencode : `tools.aicv.search(...)`, `tools.aicv.grep(...)`, etc.
   `reparse_exports.py` ou un `download_images.py`, relancer
   `.venv/bin/python scripts/rag_index.py` (incremental ; `--force` si besoin)
   avant de conclure a une absence. `stats()` donne `indexed_at`.
-- `search` charge le modele BGE-M3 au **premier appel** (quelques secondes) :
-  c'est normal ; les appels suivants sont rapides.
+- `search` charge le modele EmbeddingGemma 2 au **premier appel** (quelques
+  secondes) : c'est normal ; les appels suivants sont rapides.
 - Les snippets sont tronques (`snippet`) : le texte complet est dans
   `get_message` / `get_conversation`.
 - Un `search` vide sur un sujet recent peut signifier « conversation pas encore
@@ -78,6 +92,7 @@ En Code Mode opencode : `tools.aicv.search(...)`, `tools.aicv.grep(...)`, etc.
 .venv/bin/python scripts/rag_search.py "requete" -k 10 --platform grok --role assistant
 .venv/bin/python scripts/rag_index.py [--platform grok] [--force]   # mise a jour de l'index
 .venv/bin/python scripts/rag_index.py --force                        # reindexation complete
+.venv/bin/python scripts/recheck.py --per-platform 3 --report        # controle des parseurs
 ```
 
 - `rag_search.py` = cosinus pur (pas de fusion mots-cles ni de regroupement par

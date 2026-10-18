@@ -242,20 +242,154 @@ function roleLabel(r) { return r === "user" ? "Utilisateur" : (r === "assistant"
 function formatTs(ts) { return ts ? String(ts).replace("T", " ").replace("Z", "").slice(0, 16) : "—"; }
 function scorePct(v) { return Math.round((v || 0) * 100); }
 
+/* ---------- état dans l'URL (permaliens de recherche) ---------- */
+const URL_DEFAULTS = { k: "30", alpha: "0.6" };
+
+function urlSearchParams() {
+  const params = new URLSearchParams();
+  const query = $("q").value.trim();
+  if (query) params.set("q", query);
+  if ($("k").value !== URL_DEFAULTS.k) params.set("k", $("k").value);
+  if ($("alpha").value !== URL_DEFAULTS.alpha) params.set("alpha", $("alpha").value);
+  if (state.platforms.size) params.set("platforms", [...state.platforms].sort().join(","));
+  if ($("modelFilter").value) params.set("model", $("modelFilter").value);
+  if ($("dateFrom").value) params.set("date_from", $("dateFrom").value);
+  if ($("dateTo").value) params.set("date_to", $("dateTo").value);
+  return params;
+}
+
+function syncUrl(push) {
+  const query = urlSearchParams().toString();
+  const url = location.pathname + (query ? "?" + query : "");
+  if (url === location.pathname + location.search) return;
+  const entry = { search: query };
+  if (push) history.pushState(entry, "", url);
+  else history.replaceState(entry, "", url);
+}
+
+function hasUrlSearch(params) {
+  return ["q", "platforms", "model", "date_from", "date_to"]
+    .some((key) => params.get(key));
+}
+
+/* Applique l'URL courante : relance la recherche (ou revient à l'accueil).
+   Rend true quand une recherche a été relancée. */
+function applyUrlState() {
+  const params = new URLSearchParams(location.search);
+  if (!hasUrlSearch(params)) {
+    if (state.view === "groups" || state.view === "similar") {
+      $("q").value = "";
+      loadHome();
+    }
+    return false;
+  }
+  $("q").value = params.get("q") || "";
+  $("k").value = params.get("k") || URL_DEFAULTS.k;
+  $("alpha").value = params.get("alpha") || URL_DEFAULTS.alpha;
+  $("alphaVal").textContent = $("alpha").value;
+  $("kVal").textContent = $("k").value;
+  state.platforms = new Set((params.get("platforms") || "").split(",").filter(Boolean));
+  document.querySelectorAll("#platformChips .chip").forEach((chip) =>
+    chip.classList.toggle("active", state.platforms.has(chip.dataset.platform)));
+  $("modelFilter").value = params.get("model") || "";
+  $("dateFrom").value = params.get("date_from") || "";
+  $("dateTo").value = params.get("date_to") || "";
+  search();
+  return true;
+}
+
+/* ---------- bulles d'en-tête (raccourcis, index) ---------- */
+function togglePop(id, force) {
+  const pop = $(id);
+  if (!pop) return;
+  const open = force !== undefined ? force : pop.hidden;
+  const ids = [["shortcutsPop", "shortcutsBtn"], ["infoPop", "infoBtn"]];
+  for (const [otherId, otherBtn] of ids) {
+    if (otherId === id) continue;
+    const node = $(otherId);
+    if (node) node.hidden = true;
+    const button = $(otherBtn);
+    if (button) button.setAttribute("aria-expanded", "false");
+  }
+  pop.hidden = !open;
+  const button = $(ids.find(([popId]) => popId === id)[1]);
+  if (button) button.setAttribute("aria-expanded", open ? "true" : "false");
+  // l'index n'est chargé qu'à la première ouverture
+  if (open && id === "infoPop" && !dash.status) loadStatus();
+}
+
+function closePops() {
+  togglePop("shortcutsPop", false);
+  togglePop("infoPop", false);
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".header-pop, .header-actions")) return;
+  closePops();
+});
+
+/* ---------- raccourcis clavier ---------- */
+function isTyping(target) {
+  if (!target || typeof target.closest !== "function") return false;
+  return !!target.closest("input, textarea, select, [contenteditable='true']");
+}
+
+function moveResult(delta) {
+  const cards = [...document.querySelectorAll("#main .group-card, #main .media-card")];
+  if (!cards.length) return;
+  const current = cards.findIndex((card) => card.classList.contains("current"));
+  const next = current < 0
+    ? (delta > 0 ? 0 : cards.length - 1)
+    : Math.max(0, Math.min(cards.length - 1, current + delta));
+  cards.forEach((card, i) => card.classList.toggle("current", i === next));
+  cards[next].scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "Escape") {
+    if (!$("shortcutsPop").hidden || !$("infoPop").hidden) { closePops(); return; }
+    if (isTyping(e.target)) { e.target.blur(); return; }
+    if (!$("searchParams").classList.contains("collapsed")) {
+      $("searchParams").classList.add("collapsed");
+      $("paramsToggle").setAttribute("aria-expanded", "false");
+    }
+    return;
+  }
+  if (isTyping(e.target)) return;
+  if (e.key === "/") { e.preventDefault(); $("q").focus(); $("q").select(); return; }
+  if (e.key === "?") { e.preventDefault(); togglePop("shortcutsPop", true); return; }
+  if (e.key === "j") { moveResult(1); return; }
+  if (e.key === "k") { moveResult(-1); return; }
+  if (e.key === "r") { rollDice(); openRandomConversation(); return; }
+  if (e.key === "h" && (location.search || state.view !== "default")) {
+    if (location.search) history.pushState({}, "", location.pathname);
+    loadHome();
+  }
+});
+
 /* ---------- init ---------- */
 window.addEventListener("DOMContentLoaded", () => {
   $("paramsToggle").addEventListener("click", () => {
     const collapsed = $("searchParams").classList.toggle("collapsed");
     $("paramsToggle").setAttribute("aria-expanded", collapsed ? "false" : "true");
   });
-  $("searchBtn").addEventListener("click", search);
-  $("q").addEventListener("keydown", (e) => { if (e.key === "Enter") search(); });
+  $("searchBtn").addEventListener("click", () => search({ push: true }));
+  $("q").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") search({ push: true });
+  });
   $("randomBtn").addEventListener("click", () => { rollDice(); openRandomConversation(); });
+  $("shortcutsBtn").addEventListener("click", () => togglePop("shortcutsPop"));
+  $("infoBtn").addEventListener("click", () => togglePop("infoPop"));
   $("alpha").addEventListener("input", () => $("alphaVal").textContent = $("alpha").value);
   $("k").addEventListener("input", () => $("kVal").textContent = $("k").value);
-  loadFilters();
+  // une URL partagee (?q=…&platforms=…) relance la recherche au chargement
+  loadFilters().finally(() => {
+    if (!applyUrlState()) loadHome();
+  });
   loadStats();
-  loadHome();
+  loadStatus();
+  window.addEventListener("popstate", applyUrlState);
 });
 
 /* -- de : lancer anime et face toujours differente de la precedente -- */
@@ -345,6 +479,7 @@ function loadHome() {
   loadHomeConversations();
   loadActivity();
   loadTimeline();
+  loadStatus();
   loadRandom(false);
   if (state.stats) renderDashboardStats();
 }
@@ -388,12 +523,20 @@ function renderResumeBar() {
 function renderHomeShell() {
   $("main").innerHTML = `
     <div class="resume-bar" id="resumeBar" hidden></div>
+    <div class="alert-banner" id="parseAlert" hidden role="alert"></div>
     <section class="home-section" aria-labelledby="dashTitle">
       <h2 class="section-title" id="dashTitle">Tableau de bord</h2>
       <div class="dash-grid">
-        <div class="panel heatmap-panel" aria-busy="true">
-          <h3 class="panel-title">Activité — 365 derniers jours</h3>
-          <div id="heatmap"><p class="section-note">Chargement…</p></div>
+        <div class="panel rotator-panel heatmap-panel" aria-busy="true">
+          <div class="panel-head">
+            <h3 class="panel-title" id="rotHeatTitle">Activité — 365 derniers jours</h3>
+            <div class="rot-nav" id="rotHeatNav" hidden>
+              <button class="rot-arrow" type="button" id="rotHeatPrev" aria-label="Partie précédente">‹</button>
+              <span class="rot-dots" id="rotHeatDots"></span>
+              <button class="rot-arrow" type="button" id="rotHeatNext" aria-label="Partie suivante">›</button>
+            </div>
+          </div>
+          <div class="rot-body heat-body" id="rotHeatBody"><p class="section-note">Chargement…</p></div>
         </div>
         <div class="panel rotator-panel" aria-busy="true">
           <div class="panel-head">
@@ -424,7 +567,10 @@ function renderHomeShell() {
       <div class="panel">
         <div class="panel-head">
           <h3 class="panel-title">Au hasard</h3>
-          <button class="btn ghost btn-sm" type="button" id="rerollBtn">Relancer</button>
+          <div class="panel-actions">
+            <button class="btn ghost btn-sm" type="button" id="galleryBtn">Galerie des médias</button>
+            <button class="btn ghost btn-sm" type="button" id="rerollBtn">Relancer</button>
+          </div>
         </div>
         <div class="explore-grid" id="randomCards"><p class="section-note">Chargement…</p></div>
       </div>
@@ -448,6 +594,9 @@ function renderHomeShell() {
   setHomeSidebar(true);
   renderResumeBar();
   $("rerollBtn").addEventListener("click", () => loadRandom(true));
+  $("galleryBtn").addEventListener("click", () => openGallery());
+  $("rotHeatPrev").addEventListener("click", () => stepSlide(heatRotator, -1));
+  $("rotHeatNext").addEventListener("click", () => stepSlide(heatRotator, 1));
   $("rotPlatPrev").addEventListener("click", () => stepSlide(platRotator, -1));
   $("rotPlatNext").addEventListener("click", () => stepSlide(platRotator, 1));
   $("rotModelPrev").addEventListener("click", () => stepSlide(modelRotator, -1));
@@ -489,28 +638,25 @@ function bindOpenCards(root) {
     }));
 }
 
-/* -- tableau de bord : heatmap, barres plateformes, top modèles -- */
+/* -- tableau de bord : activité (heatmap) et santé, en rotation -- */
 async function loadActivity() {
-  const box = $("heatmap");
-  if (!box) return;
   try {
-    const data = await (await fetch("/api/activity")).json();
-    renderHeatmap(data);
+    dash.activity = await (await fetch("/api/activity")).json();
   } catch (err) {
-    sectionNote(box, "Impossible de charger l'activité.");
-    setPanelBusy(box, false);
+    dash.activity = { error: true };
   }
+  renderRotator(heatRotator);
 }
 
-function renderHeatmap(data) {
-  const box = $("heatmap");
-  if (!box) return;
+/* HTML de la heatmap (partie « Activité » du panneau rotatif). */
+function heatmapHtml(data) {
+  if (data && data.error) {
+    return `<p class="section-note">Impossible de charger l'activité.</p>`;
+  }
   const days = (data && data.days) || {};
   const keys = Object.keys(days).sort();
   if (!keys.length) {
-    sectionNote(box, "Pas encore d'activité.");
-    setPanelBusy(box, false);
-    return;
+    return `<p class="section-note">Pas encore d'activité.</p>`;
   }
   // seuils = quartiles des jours actifs : 5 niveaux bien repartis malgre
   // les pics (sinon, avec un maximum de plusieurs centaines, tout est niveau 1)
@@ -566,7 +712,7 @@ function renderHeatmap(data) {
     }
   }
   const total = Object.values(days).reduce((sum, n) => sum + n, 0);
-  box.innerHTML = `
+  return `
     <div class="heatmap-scroll">
       <div class="heatmap">
         <div class="hm-months" style="--weeks:${weeks}" aria-hidden="true">${months.map((m) => `<span>${m}</span>`).join("")}</div>
@@ -581,9 +727,12 @@ function renderHeatmap(data) {
       ${[0, 1, 2, 3, 4].map((l) => `<span class="hm-cell" data-level="${l}"></span>`).join("")}
       <span>plus</span>
     </div>`;
-  box.querySelectorAll(".hm-btn").forEach((btn) =>
+}
+
+/* les cases actives ouvrent la vue « journée » */
+function bindHeatmap(root) {
+  root.querySelectorAll(".hm-btn").forEach((btn) =>
     btn.addEventListener("click", () => openDay(btn.dataset.date)));
-  setPanelBusy(box, false);
 }
 
 /* -- vue « journée » : messages d'une date (clic sur une case de la heatmap) -- */
@@ -772,6 +921,8 @@ function modelBarsHtml(data) {
 const ROTATE_MS = 5 * 60 * 1000;
 const dash = {
   timeline: null,  // séries mensuelles (/api/timeline)
+  activity: null,  // heatmap d'activité (/api/activity)
+  status: null,    // index, scrape, santé, sauvegardes (/api/status)
 };
 
 function makeRotator(ids, build, empty) {
@@ -788,7 +939,13 @@ const modelRotator = makeRotator(
     dots: "rotModelDots", prev: "rotModelPrev", next: "rotModelNext" },
   modelSlides, "Aucun modèle renseigné.",
 );
-const rotators = [platRotator, modelRotator];
+// panneau « Activité » : la heatmap alterne avec la santé des scrapers
+const heatRotator = makeRotator(
+  { body: "rotHeatBody", title: "rotHeatTitle", nav: "rotHeatNav",
+    dots: "rotHeatDots", prev: "rotHeatPrev", next: "rotHeatNext" },
+  heatSlides, "Pas encore d'activité.",
+);
+const rotators = [heatRotator, platRotator, modelRotator];
 
 function stopRotation(rot) {
   if (rot.timer) { clearInterval(rot.timer); rot.timer = null; }
@@ -822,6 +979,7 @@ function paintSlide(rot) {
     title.classList.toggle("mono", !!slide.mono);
   }
   body.innerHTML = slide.html;
+  if (typeof slide.after === "function") slide.after(body);
   requestAnimationFrame(() =>
     body.querySelectorAll(".bar-fill").forEach((el) => el.classList.add("grown")));
   const dots = $(rot.ids.dots);
@@ -835,7 +993,70 @@ function paintSlide(rot) {
   setPanelBusy(body, false);
 }
 
-/* -- parties : plateformes (barres, puis une par plateforme) -- */
+/* -- parties : activité (heatmap) et santé des scrapers -- */
+function heatSlides() {
+  const slides = [{
+    title: "Activité — 365 derniers jours",
+    html: heatmapHtml(dash.activity),
+    after: bindHeatmap,
+  }];
+  if (dash.status) {
+    slides.push({
+      title: "Santé des scrapers",
+      html: healthHtml(dash.status),
+      after: bindHealth,
+    });
+  }
+  return slides;
+}
+
+/* Santé des scrapers : forme des payloads API, contrôle des parseurs,
+   fraîcheur du scrape — et le bouton de test. */
+function healthHtml(data) {
+  const rows = (data.scrape || []).map((item) => {
+    const health = item.health;
+    const known = health && health.rate != null;
+    const ok = known && health.rate >= (health.threshold || 95) && !health.breaks;
+    const cls = !known ? "unknown" : ok ? "ok" : "warn";
+    const title = known
+      ? `forme des payloads API : ${health.matches}/${health.n} conformes, ${health.drifts} dérive(s), ${health.breaks} rupture(s)`
+      : "aucun relevé de forme API";
+    const report = item.recheck;
+    const compared = report ? (report.compared ?? report.checked) : 0;
+    const anomalies = report ? (report.issues || []).length : 0;
+    const parseTitle = report
+      ? `contrôle des parseurs : ${compared} comparée(s), rétention ${pctText(report.retention)}`
+        + (anomalies ? `, ${anomalies} anomalie(s)` : "")
+        + `, vérifié ${relativeAge(report.checked_at)}`
+      : "aucun contrôle de parseur enregistré";
+    const parseBadge = `<span class="status-badge parse ${report ? escapeHtml(report.verdict) : "unknown"}"
+      title="${escapeHtml(parseTitle)}">${report ? escapeHtml(VERDICT_LABEL[report.verdict] || report.verdict) : "—"}</span>`;
+    return `<div class="status-row">
+      <span class="status-platform">${escapeHtml(platformName(item.platform))}</span>
+      <span class="status-badge ${cls}" title="${escapeHtml(title)}">${known ? `${health.rate} %` : "—"}</span>
+      ${parseBadge}
+      <span class="status-meta">${item.conversations} conv.</span>
+      <span class="status-meta">scrapé ${escapeHtml(relativeAge(item.scraped_at))}</span>
+      <span class="status-meta">dernier message ${escapeHtml(relativeAge(item.last_message_at))}</span>
+    </div>`;
+  }).join("");
+  return `<div class="health-head">
+      <span class="status-meta">Forme des payloads API · contrôle des parseurs · fraîcheur</span>
+      <button class="btn ghost btn-sm" type="button" id="parseTestBtn">Lancer un test</button>
+    </div>
+    <div class="status-list">${rows}</div>
+    <p class="section-note">Forme des payloads API (<code>api_health.json</code>) : vert = conforme,
+    orange = dérive ou rupture. Contrôle des parseurs : re-scrape aléatoire comparé à l'archive
+    (messages, rôles, images, tableaux, listes, code, LaTeX) — <code>scripts/recheck.py</code>.</p>`;
+}
+
+/* le bouton « Lancer un test » de la partie santé ouvre la page de test */
+function bindHealth(root) {
+  const button = root.querySelector("#parseTestBtn");
+  if (button) button.addEventListener("click", openParseTest);
+}
+
+/* -- parties : plateformes (barres, toutes plateformes, puis une par plateforme) -- */
 function platformSlides() {
   const slides = [];
   if (state.stats) {
@@ -843,6 +1064,12 @@ function platformSlides() {
   }
   const timeline = dash.timeline;
   if (timeline) {
+    if (timeline.total) {
+      slides.push({
+        title: "Toutes plateformes — conversations par mois",
+        html: monthChartHtml(timeline.total, timeline.months),
+      });
+    }
     (timeline.platforms || []).forEach((p) => slides.push({
       title: `${platformName(p.platform)} — conversations par mois`,
       html: monthChartHtml(p, timeline.months),
@@ -887,6 +1114,12 @@ function monthChartHtml(entry, months) {
   const max = Math.max(1, ...values);
   const total = entry.total || 0;
   const peak = Math.max(0, values.indexOf(max));
+  const trend = entry.trend;
+  const trendHtml = trend
+    ? `<span class="mc-trend ${trend.pct >= 0 ? "up" : "down"}"
+        title="${escapeHtml(`Dernier mois complet (${trend.from} → ${trend.to})`)}"
+        >${trend.pct >= 0 ? "↗" : "↘"} ${trend.pct > 0 ? "+" : ""}${trend.pct} %</span>`
+    : "";
   const bars = values.map((value, i) => {
     const height = Math.round((value / max) * 100);
     const label = `${monthLabel(months[i])} · ${value} conversation${value > 1 ? "s" : ""}`;
@@ -901,7 +1134,10 @@ function monthChartHtml(entry, months) {
   return `
     <div class="mc-head">
       <span class="mc-total">${total}<small>conversation${total > 1 ? "s" : ""}</small></span>
-      <span class="mc-peak">pic ${escapeHtml(monthAxisLabel(months[peak]))} · ${max}</span>
+      <span class="mc-side">
+        ${trendHtml}
+        <span class="mc-peak">pic ${escapeHtml(monthAxisLabel(months[peak]))} · ${max}</span>
+      </span>
     </div>
     <div class="mc-chart" role="img"
       aria-label="${escapeHtml(`${total} conversations ; maximum ${max} en ${monthLabel(months[peak])}`)}">${bars}</div>
@@ -1143,13 +1379,14 @@ function hasSearchFilters() {
     || !!$("dateFrom").value || !!$("dateTo").value;
 }
 
-async function search() {
+async function search(options) {
   const query = $("q").value.trim();
   // sans texte : il faut au moins un critere actif (chatbots, modèle, dates)
   if (!query && !hasSearchFilters()) return;
   state.terms = query ? tokenize(query) : [];
   state.conversation = null;
   state.view = "groups";
+  syncUrl(options && options.push);
   $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Recherche…</p></div>`;
   try {
     const data = await (await fetch("/api/search?" + buildQuery().toString())).json();
@@ -1186,8 +1423,20 @@ function renderGroups() {
     ...state.groups.map((g, gi) => groupCard(g, gi)),
     ...media.map((m) => mediaCard(m)),
   ];
-  main.innerHTML = `<h2 class="section-title">${state.groups.length} conversation${state.groups.length > 1 ? "s" : ""} · ${hits} message${hits > 1 ? "s" : ""}${mediaSuffix}${suffix}</h2>` +
+  const similar = state.view === "similar" && state.similar;
+  const header = similar
+    ? `<div class="similar-head">
+        <div>
+          <h2 class="section-title">Messages similaires</h2>
+          <p class="section-note">Voisins sémantiques de : « ${escapeHtml(mdPlain(similar.message.texte).slice(0, 120))} »</p>
+        </div>
+        <button class="btn ghost btn-sm" type="button" id="backToConv">← Retour à la conversation</button>
+      </div>`
+    : `<h2 class="section-title">${state.groups.length} conversation${state.groups.length > 1 ? "s" : ""} · ${hits} message${hits > 1 ? "s" : ""}${mediaSuffix}${suffix}</h2>`;
+  main.innerHTML = header +
     `<div class="results-grid">` + cards.join("") + `</div>`;
+  const backConv = $("backToConv");
+  if (backConv) backConv.addEventListener("click", backToConversation);
   main.querySelectorAll("[data-open]").forEach((el) =>
     el.addEventListener("click", (e) => {
       if (e.target.closest("[data-stop]")) return;
@@ -1298,11 +1547,18 @@ function renderSidebar() {
     sidebar.innerHTML = `<h2>${escapeHtml(conv.title || conv.conversation_id)}</h2>
       <div class="side-item" id="backToResults" role="button" tabindex="0">← Retour</div>
       <div class="side-sep"></div>
-      <h2>Messages</h2>` + (conv.messages || []).map((m, i) =>
+      <input type="search" id="convSearch" class="conv-search" autocomplete="off"
+        placeholder="Chercher dans la conversation…" aria-label="Chercher dans la conversation">
+      <div class="side-count" id="convCount" hidden></div>
+      <h2>Sommaire</h2>` + (conv.messages || []).map((m, i) =>
         `<div class="anchor${dayIds && m.message_id && dayIds.has(m.message_id) ? " day" : ""}" data-mid="${escapeHtml(m.message_id || "")}" data-i="${i}" role="button" tabindex="0">
           ${escapeHtml(roleLabel(m.role))} · ${escapeHtml(mdPlain(m.texte).slice(0, 48))}
         </div>`).join("");
     $("backToResults").addEventListener("click", backToResults);
+    $("convSearch").addEventListener("input", (e) => filterConversation(e.target.value));
+    $("convSearch").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); jumpToFirstMatch(); }
+    });
     sidebar.querySelectorAll(".anchor").forEach((a) =>
       a.addEventListener("click", () => scrollToMessage(a.dataset.mid, Number(a.dataset.i))));
     return;
@@ -1321,6 +1577,7 @@ function renderSidebar() {
 }
 
 function backToResults() {
+  if (state.view === "similar" && state.similar) { backToConversation(); return; }
   state.conversation = null;
   state.matchedMid = null;
   if (state.view === "groups" && state.groups.length) {
@@ -1372,11 +1629,19 @@ function renderConversation() {
           ${splitOpenCopy(state.conversationUrl, `Ouvrir sur ${platformName(conv.platform)} ↗`)}
         </div>
       </div>
-      <button class="btn ghost" id="backTop">← Retour</button>
+      <div class="conv-actions">
+        <button class="btn ghost btn-sm" type="button" id="copyConv"
+          title="Copier la conversation en markdown">Copier</button>
+        <button class="btn ghost btn-sm" type="button" id="downloadConv"
+          title="Télécharger la conversation en markdown (.md)">Markdown</button>
+        <button class="btn ghost" id="backTop">← Retour</button>
+      </div>
     </div>
     ${messages.map((m, i) => renderMessage(m, i, dayIds)).join("")}
   </div>`;
   $("backTop").addEventListener("click", backToResults);
+  $("copyConv").addEventListener("click", (e) => copyConversation(e.currentTarget));
+  $("downloadConv").addEventListener("click", downloadConversation);
   enhance($("main"), state.terms);
 }
 
@@ -1412,7 +1677,7 @@ function renderExtras(m, platform) {
   return blocks.join("");
 }
 
-function renderVariants(m, platform) {
+function renderVariants(m, platform, index) {
   const variants = (m.variants || []).filter((v) => v && String(v.texte || "").trim());
   if (variants.length < 2) return "";
   const rows = variants.map((v, vi) => {
@@ -1429,7 +1694,12 @@ function renderVariants(m, platform) {
   }).join("");
   return `<details class="extra variants">
     <summary>Versions alternatives <span class="count">${variants.length}</span></summary>
-    <div class="variants-body">${rows}</div>
+    <div class="variants-body">
+      <div class="variants-bar">
+        <button class="btn ghost btn-sm" type="button" data-compare="${index}">Comparer côte à côte</button>
+      </div>
+      ${rows}
+    </div>
   </details>`;
 }
 
@@ -1452,10 +1722,14 @@ function renderMessage(m, i, dayIds) {
       <span>${escapeHtml(formatTs(m.timestamp))}</span>
       ${m.model ? `<span>${escapeHtml(m.model)}</span>` : ""}
       ${variantCount > 1 ? `<span class="badge small">${variantCount} versions</span>` : ""}
+      <span class="msg-actions">
+        <button class="msg-action" type="button" data-copy-msg="${i}" title="Copier le markdown du message">copier</button>
+        <button class="msg-action" type="button" data-similar="${i}" title="Messages similaires (voisins sémantiques)">similaires</button>
+      </span>
     </div>
     <div class="msg-text">${body}</div>
     ${code}
-    ${renderVariants(m, platform)}
+    ${renderVariants(m, platform, i)}
     ${renderExtras(m, platform)}
   </div>`;
 }
@@ -1465,6 +1739,510 @@ function scrollToMessage(mid, index) {
   if (!target) target = document.getElementById("msg-" + index);
   if (target) target.scrollIntoView({ block: "center", behavior: "smooth" });
 }
+
+/* ---------- voisins sémantiques d'un message ---------- */
+const SIMILAR_K = 12;
+
+async function showSimilar(conv, message, index) {
+  state.similar = { conversation: conv, message, index, from: state.view };
+  state.view = "similar";
+  state.conversation = null;
+  state.matchedMid = null;
+  state.terms = [];
+  state.searchMedia = [];
+  state.searchFiltered = false;
+  $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Recherche des messages similaires…</p></div>`;
+  const params = new URLSearchParams({
+    platform: conv.platform, id: conv.conversation_id, k: String(SIMILAR_K),
+  });
+  if (message.message_id) params.set("mid", message.message_id);
+  else params.set("i", String(index));
+  try {
+    const data = await (await fetch("/api/similar?" + params.toString())).json();
+    if (data.error) throw new Error(data.error);
+    state.groups = data.groups || [];
+    renderGroups();
+    renderSidebar();
+  } catch (err) {
+    renderError(err.message, () => showSimilar(conv, message, index));
+  }
+}
+
+function backToConversation() {
+  const similar = state.similar;
+  if (!similar) { loadHome(); return; }
+  state.conversation = similar.conversation;
+  state.matchedMid = similar.message.message_id || null;
+  state.view = similar.from || "default";
+  renderConversation();
+  renderSidebar();
+  setTimeout(() => {
+    const target = document.querySelector(".msg.matched") || document.querySelector(".msg");
+    if (target) target.scrollIntoView({ block: "center" });
+  }, 60);
+}
+
+/* ---------- export markdown d'une conversation ---------- */
+function conversationMarkdown(conv) {
+  const lines = [`# ${conv.title || conv.conversation_id}`, ""];
+  lines.push(`- Plateforme : ${platformName(conv.platform)}`);
+  if (conv.url) lines.push(`- URL : ${conv.url}`);
+  if (conv.model) lines.push(`- Modèle : ${conv.model}`);
+  if (conv.started_at || conv.last_message_at) {
+    lines.push(`- Dates : ${formatTs(conv.started_at)} → ${formatTs(conv.last_message_at)}`);
+  }
+  lines.push(`- Messages : ${(conv.messages || []).length}`, "");
+  for (const message of conv.messages || []) {
+    const when = message.timestamp ? ` — ${formatTs(message.timestamp)}` : "";
+    const model = message.model ? ` (${message.model})` : "";
+    lines.push(`## ${roleLabel(message.role)}${model}${when}`, "", message.texte || "", "");
+  }
+  return lines.join("\n");
+}
+
+function copyFeedback(btn, text) {
+  if (!navigator.clipboard) return;
+  navigator.clipboard.writeText(text).then(() => {
+    if (!btn.dataset.copyLabel) btn.dataset.copyLabel = btn.textContent;
+    btn.classList.add("copied");
+    btn.textContent = "✓ copié";
+    setTimeout(() => {
+      btn.textContent = btn.dataset.copyLabel;
+      btn.classList.remove("copied");
+      delete btn.dataset.copyLabel;
+    }, 1300);
+  });
+}
+
+function downloadConversation() {
+  const conv = state.conversation;
+  if (!conv) return;
+  const slug = String(conv.title || conv.conversation_id)
+    .toLowerCase().replace(/[^\w]+/g, "-").replace(/^-|-$/g, "").slice(0, 60)
+    || "conversation";
+  const blob = new Blob([conversationMarkdown(conv)], {
+    type: "text/markdown;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${conv.platform}-${slug}.md`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- recherche dans la conversation (sommaire) ---------- */
+function conversationMatches(query) {
+  const conv = state.conversation;
+  const terms = tokenize(query || "");
+  return ((conv && conv.messages) || []).map((message) => {
+    const text = mdPlain(message.texte || "").toLowerCase();
+    return terms.length > 0 && terms.every((term) => text.includes(term));
+  });
+}
+
+function filterConversation(query) {
+  if (!state.conversation) return;
+  const matches = conversationMatches(query);
+  const total = matches.filter(Boolean).length;
+  document.querySelectorAll("#sidebar .anchor").forEach((anchor) => {
+    anchor.hidden = query ? !matches[Number(anchor.dataset.i)] : false;
+  });
+  document.querySelectorAll("#main .msg").forEach((el) => {
+    el.classList.toggle("search-hit", !!query && !!matches[Number(el.dataset.i)]);
+  });
+  const count = $("convCount");
+  if (count) {
+    count.hidden = !query;
+    count.textContent = `${total} message${total > 1 ? "s" : ""} trouvé${total > 1 ? "s" : ""}`;
+  }
+}
+
+function jumpToFirstMatch() {
+  const hit = document.querySelector("#main .msg.search-hit");
+  if (hit) hit.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
+/* ---------- galerie des médias ---------- */
+const GALLERY_PAGE = 60;
+const gallery = { platform: null, kind: null, offset: 0, total: 0, items: [] };
+
+async function openGallery(reset = true) {
+  state.view = "gallery";
+  state.conversation = null;
+  state.groups = [];
+  setHomeSidebar(true);
+  if (reset) { gallery.offset = 0; gallery.items = []; }
+  $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Chargement de la galerie…</p></div>`;
+  const params = new URLSearchParams({
+    limit: String(GALLERY_PAGE), offset: String(gallery.offset),
+  });
+  if (gallery.platform) params.set("platform", gallery.platform);
+  if (gallery.kind) params.set("kind", gallery.kind);
+  try {
+    const data = await (await fetch("/api/media?" + params.toString())).json();
+    if (data.error) throw new Error(data.error);
+    gallery.total = data.total || 0;
+    gallery.items = gallery.items.concat(data.items || []);
+    gallery.offset = gallery.items.length;
+    renderGallery();
+  } catch (err) {
+    renderError(err.message, () => openGallery(reset));
+  }
+}
+
+function renderGallery() {
+  const platformChips = Object.keys(PLATFORM_LABEL).map((platform) => `
+    <button class="chip${gallery.platform === platform ? " active" : ""}" type="button"
+      data-gallery-platform="${platform}">${escapeHtml(platformName(platform))}</button>`).join("");
+  const kindChips = [["", "Tous"], ["image", "Images"], ["audio", "Audio"], ["video", "Vidéos"]]
+    .map(([value, label]) => `
+      <button class="chip${(gallery.kind || "") === value ? " active" : ""}" type="button"
+        data-gallery-kind="${value}">${label}</button>`).join("");
+  const more = gallery.items.length < gallery.total
+    ? `<div class="more-wrap"><button class="btn ghost" type="button" id="galleryMore">Charger plus (${gallery.total - gallery.items.length} restants)</button></div>`
+    : "";
+  const body = gallery.items.length
+    ? `<div class="results-grid media-grid">${gallery.items.map((m) => mediaCard(m)).join("")}</div>${more}`
+    : `<p class="section-note">Aucun média pour ces filtres.</p>`;
+  $("main").innerHTML = `<div class="gallery-view">
+    <div class="conv-head">
+      <div>
+        <h2>Galerie des médias</h2>
+        <p class="section-note">${gallery.total} média${gallery.total > 1 ? "s" : ""} indexé${gallery.total > 1 ? "s" : ""}</p>
+      </div>
+      <button class="btn ghost" type="button" id="galleryBack">← Retour</button>
+    </div>
+    <div class="gallery-filters">
+      <div class="chip-list"><button class="chip${gallery.platform ? "" : " active"}" type="button"
+        data-gallery-platform="">Toutes</button>${platformChips}</div>
+      <div class="chip-list">${kindChips}</div>
+    </div>
+    ${body}
+  </div>`;
+  $("galleryBack").addEventListener("click", () => loadHome());
+  const moreBtn = $("galleryMore");
+  if (moreBtn) moreBtn.addEventListener("click", () => openGallery(false));
+  $("main").querySelectorAll("[data-gallery-platform]").forEach((chip) =>
+    chip.addEventListener("click", () => {
+      gallery.platform = chip.dataset.galleryPlatform || null;
+      openGallery(true);
+    }));
+  $("main").querySelectorAll("[data-gallery-kind]").forEach((chip) =>
+    chip.addEventListener("click", () => {
+      gallery.kind = chip.dataset.galleryKind || null;
+      openGallery(true);
+    }));
+  $("main").querySelectorAll("[data-media-open]").forEach((card) =>
+    card.addEventListener("click", (e) => {
+      if (e.target.closest("audio, video, a")) return;
+      openConversation(card.dataset.platform, card.dataset.id, card.dataset.mid || null);
+    }));
+}
+
+/* ---------- page « Test des parseurs » (re-scrape + rapport) ---------- */
+const parseTest = {
+  platforms: new Set(),
+  perPlatform: 3,
+  running: false,
+  poll: null,
+};
+
+function openParseTest() {
+  state.view = "parse-test";
+  state.conversation = null;
+  state.groups = [];
+  setHomeSidebar(true);
+  if (!parseTest.platforms.size) {
+    parseTest.platforms = new Set(Object.keys(PLATFORM_LABEL));
+  }
+  renderParseTest();
+  loadParseTestState();
+}
+
+function stopParsePolling() {
+  if (parseTest.poll) { clearInterval(parseTest.poll); parseTest.poll = null; }
+}
+
+function startParsePolling() {
+  stopParsePolling();
+  parseTest.poll = setInterval(async () => {
+    if (!$("testState")) { stopParsePolling(); return; } // page quittée
+    await loadParseTestState();
+    if (!parseTest.running) stopParsePolling();
+  }, 2500);
+}
+
+function renderParseTest() {
+  const chips = Object.keys(PLATFORM_LABEL).map((platform) => `
+    <button class="chip${parseTest.platforms.has(platform) ? " active" : ""}" type="button"
+      data-test-platform="${platform}">${escapeHtml(platformName(platform))}</button>`).join("");
+  $("main").innerHTML = `<div class="parse-test">
+    <div class="conv-head">
+      <div>
+        <h2>Test des parseurs</h2>
+        <p class="section-note">Re-scrape un échantillon aléatoire de conversations
+        (taille moyenne ou grande) et compare à l'archive : messages, alternance des rôles,
+        images, tableaux, listes, langages de code, LaTeX. Rien n'est écrit dans l'archive.</p>
+      </div>
+      <button class="btn ghost" type="button" id="parseBack">← Retour</button>
+    </div>
+    <div class="panel">
+      <div class="test-form">
+        <div class="test-platforms">
+          <span class="filter-label">Parseurs à tester</span>
+          <div class="chip-list">${chips}</div>
+        </div>
+        <div class="test-count">
+          <label class="filter-label" for="testCount">Conversations par parseur</label>
+          <input type="number" id="testCount" class="test-input" min="1" max="20"
+            value="${parseTest.perPlatform}" aria-label="Conversations par parseur">
+        </div>
+        <button class="btn" type="button" id="testStart">Lancer le test</button>
+      </div>
+      <div id="testState" class="test-state"></div>
+    </div>
+    <div id="testReport"></div>
+  </div>`;
+  $("parseBack").addEventListener("click", () => { stopParsePolling(); loadHome(); });
+  $("testCount").addEventListener("change", (e) => {
+    parseTest.perPlatform = Math.max(1, Math.min(20, Number(e.target.value) || 3));
+    e.target.value = parseTest.perPlatform;
+  });
+  $("testStart").addEventListener("click", startParseTest);
+  $("main").querySelectorAll("[data-test-platform]").forEach((chip) =>
+    chip.addEventListener("click", () => {
+      const platform = chip.dataset.testPlatform;
+      if (parseTest.platforms.has(platform)) parseTest.platforms.delete(platform);
+      else parseTest.platforms.add(platform);
+      chip.classList.toggle("active", parseTest.platforms.has(platform));
+    }));
+}
+
+async function startParseTest() {
+  const box = $("testState");
+  if (!parseTest.platforms.size) {
+    if (box) sectionNote(box, "Choisis au moins un parseur.");
+    return;
+  }
+  const button = $("testStart");
+  if (button) button.disabled = true;
+  try {
+    const response = await fetch("/api/recheck", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        platforms: [...parseTest.platforms],
+        per_platform: parseTest.perPlatform,
+      }),
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    parseTest.running = true;
+    renderParseTestState(data);
+    startParsePolling();
+  } catch (err) {
+    renderParseTestState({ error: err.message });
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+async function loadParseTestState() {
+  try {
+    const data = await (await fetch("/api/recheck")).json();
+    parseTest.running = !!data.running;
+    renderParseTestState(data);
+    renderParseTestReport(data.reports || []);
+    if (parseTest.running) startParsePolling();
+    else stopParsePolling();
+  } catch (err) { /* silencieux : la page reste utilisable */ }
+}
+
+function renderParseTestState(data) {
+  const box = $("testState");
+  if (!box) return;
+  if (data.error) {
+    box.innerHTML = `<p class="section-note">${escapeHtml(data.error)}</p>`;
+    return;
+  }
+  if (!data.started_at) {
+    box.innerHTML = `<p class="section-note">Aucun test lancé pour l'instant.</p>`;
+    return;
+  }
+  const steps = (data.platforms || []).map((platform) => {
+    const done = (data.done || []).find((item) => item.platform === platform);
+    const cls = done ? done.verdict : (data.running ? "running" : "unknown");
+    const label = done
+      ? (VERDICT_LABEL[done.verdict] || done.verdict)
+      : (data.running ? "en cours…" : "—");
+    return `<span class="test-step ${escapeHtml(cls)}">${escapeHtml(platformName(platform))} · ${escapeHtml(label)}</span>`;
+  }).join("");
+  const log = (data.log || []).slice(-14)
+    .map((line) => `<div class="test-log-line">${escapeHtml(line)}</div>`).join("");
+  const status = data.running
+    ? `Test en cours depuis ${escapeHtml(relativeAge(data.started_at))}…`
+    : `Terminé ${escapeHtml(relativeAge(data.finished_at))}.`;
+  box.innerHTML = `<div class="test-steps">${steps}</div>
+    <p class="section-note">${status}</p>
+    <details class="test-log"${data.running ? " open" : ""}>
+      <summary>Journal</summary><div class="test-log-body">${log || "<em>—</em>"}</div>
+    </details>`;
+}
+
+function renderParseTestReport(reports) {
+  const box = $("testReport");
+  if (!box) return;
+  if (!reports.length) { box.innerHTML = ""; return; }
+  box.innerHTML = `<h2 class="section-title">Rapport des défaillances</h2>` +
+    reports.map((report) => {
+      const issues = (report.issues || []).map((issue) => {
+        const reason = issue.reason ? ` — ${escapeHtml(issue.reason)}` : "";
+        const counts = issue.old_messages != null
+          ? ` (${issue.new_messages ?? "?"}/${issue.old_messages} messages)` : "";
+        return `<li><strong>${escapeHtml(issue.title || issue.conversation_id || "?")}</strong>${reason}${counts}</li>`;
+      }).join("");
+      const compared = report.compared ?? report.checked;
+      return `<div class="panel test-report-panel ${escapeHtml(report.verdict)}">
+        <div class="panel-head">
+          <h3 class="panel-title">${escapeHtml(platformName(report.platform))}</h3>
+          <span class="parse-badge ${escapeHtml(report.verdict)}">${escapeHtml(VERDICT_LABEL[report.verdict] || report.verdict)}</span>
+        </div>
+        <p class="section-note">${compared} comparée${compared > 1 ? "s" : ""} ·
+          rétention ${pctText(report.retention)} · ${report.failed || 0} échec(s)${report.ignored ? ` · ${report.ignored} ignorée(s) (limite)` : ""} ·
+          ${escapeHtml(relativeAge(report.checked_at))}</p>
+        ${issues
+          ? `<ul class="test-issues">${issues}</ul>`
+          : `<p class="section-note">Aucune défaillance détectée.</p>`}
+      </div>`;
+    }).join("");
+}
+
+/* ---------- statut : santé des scrapers, index, sauvegardes ---------- */
+async function loadStatus() {
+  try {
+    const data = await (await fetch("/api/status")).json();
+    renderStatus(data);
+  } catch (err) {
+    ["indexBox"].forEach((id) => {
+      const box = $(id);
+      if (box) {
+        sectionNote(box, "Impossible de charger le statut.");
+        setPanelBusy(box, false);
+      }
+    });
+  }
+}
+
+const VERDICT_LABEL = {
+  ok: "OK", attention: "à surveiller", critique: "CRITIQUE", inconnu: "non vérifié",
+};
+
+function pctText(value) {
+  return value == null ? "?" : `${Math.round(value * 100)} %`;
+}
+
+/* Contrôle des parseurs : bandeau d'alerte en haut de l'accueil quand une
+   plateforme est critique (le détail vit dans la partie « Santé des scrapers »). */
+function renderParseAlert(data) {
+  const banner = $("parseAlert");
+  if (!banner) return;
+  const rows = (data.scrape || []).filter((item) => item.recheck);
+  const critical = rows.filter((item) => item.recheck.verdict === "critique");
+  const worried = rows.filter((item) => item.recheck.verdict === "attention");
+  const names = (items) => items.map((item) =>
+    `${platformName(item.platform)} (${pctText(item.recheck.retention)})`).join(", ");
+  if (critical.length) {
+    banner.hidden = false;
+    banner.className = "alert-banner critical";
+    banner.innerHTML = `<span class="alert-icon" aria-hidden="true">⚠</span>
+      <span><strong>Contrôle des parseurs : ${critical.length} plateforme${critical.length > 1 ? "s" : ""} en échec</strong>
+      — ${escapeHtml(names(critical))}. Un re-scrape aléatoire ne retrouve plus ce que
+      l'archive contient : voir la partie « Santé des scrapers ».</span>`;
+  } else if (worried.length) {
+    banner.hidden = false;
+    banner.className = "alert-banner warn";
+    banner.innerHTML = `<span class="alert-icon" aria-hidden="true">!</span>
+      <span><strong>Contrôle des parseurs : à surveiller</strong>
+      — ${escapeHtml(names(worried))}.</span>`;
+  } else {
+    banner.hidden = true;
+    banner.innerHTML = "";
+  }
+}
+
+function formatBytes(bytes) {
+  const value = Number(bytes) || 0;
+  if (value >= 1e9) return `${(value / 1e9).toFixed(1)} Go`;
+  if (value >= 1e6) return `${(value / 1e6).toFixed(1)} Mo`;
+  if (value >= 1e3) return `${(value / 1e3).toFixed(0)} ko`;
+  return `${value} o`;
+}
+
+function relativeAge(iso) {
+  if (!iso) return "—";
+  const then = Date.parse(iso);
+  if (Number.isNaN(then)) return "—";
+  const hours = (Date.now() - then) / 3600000;
+  if (hours < 1) return "il y a moins d'une heure";
+  if (hours < 24) return `il y a ${Math.round(hours)} h`;
+  const days = Math.round(hours / 24);
+  return `il y a ${days} jour${days > 1 ? "s" : ""}`;
+}
+
+function renderStatus(data) {
+  dash.status = data;
+  renderParseAlert(data);
+  // la santé des scrapers est une partie du panneau « Activité » (rotation)
+  renderRotator(heatRotator);
+  const indexBox = $("indexBox");
+  if (indexBox) {
+    const idx = data.index || {};
+    const media = idx.media || {};
+    const backups = data.backups || [];
+    const backupsText = backups.length
+      ? `${backups.length} conservée${backups.length > 1 ? "s" : ""}, dernière ${escapeHtml(relativeAge(backups[0].created_at))}`
+      : "aucune";
+    indexBox.innerHTML = `
+      <div class="stats status-stats">
+        <div><span class="stat-value">${idx.messages || 0}</span><span class="stat-label">messages</span></div>
+        <div><span class="stat-value">${idx.conversations || 0}</span><span class="stat-label">conversations</span></div>
+        <div><span class="stat-value">${media.total || 0}</span><span class="stat-label">médias</span></div>
+        <div><span class="stat-value">${formatBytes(idx.db_bytes)}</span><span class="stat-label">base</span></div>
+      </div>
+      <p class="section-note">Indexé ${escapeHtml(relativeAge(idx.indexed_at))} · sauvegardes : ${backupsText}</p>`;
+    setPanelBusy(indexBox, false);
+  }
+}
+
+/* Copier le markdown d'un message / ouvrir ses voisins sémantiques /
+   comparer les versions alternatives. */
+document.addEventListener("click", (e) => {
+  const copy = e.target.closest("[data-copy-msg]");
+  if (copy) {
+    const messages = (state.conversation && state.conversation.messages) || [];
+    const message = messages[Number(copy.dataset.copyMsg)];
+    if (message) copyFeedback(copy, message.texte || "");
+    return;
+  }
+  const similar = e.target.closest("[data-similar]");
+  if (similar && state.conversation) {
+    const index = Number(similar.dataset.similar);
+    const message = (state.conversation.messages || [])[index];
+    if (message) showSimilar(state.conversation, message, index);
+    return;
+  }
+  const compare = e.target.closest("[data-compare]");
+  if (compare) {
+    const body = compare.closest(".variants-body");
+    if (body) {
+      const on = body.classList.toggle("compare");
+      compare.textContent = on ? "Vue empilée" : "Comparer côte à côte";
+    }
+  }
+});
 
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".copy-btn, [data-copy-text]");

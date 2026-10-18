@@ -15,11 +15,15 @@ from typing import Any, Dict, Optional
 CONVERSATION_LIST_NAME = "conversation_list.json"
 #: nom du rapport de forme API (non-conversation, meme dossier d'exports)
 API_HEALTH_NAME = "api_health.json"
+#: nom du rapport de controle de parseur (re-scrape aleatoire vs archive)
+RECHECK_NAME = "recheck.json"
 #: noms des JSON non-conversation d'un dossier d'exports
-RESERVED_JSON_NAMES = frozenset({CONVERSATION_LIST_NAME, API_HEALTH_NAME})
+RESERVED_JSON_NAMES = frozenset(
+    {CONVERSATION_LIST_NAME, API_HEALTH_NAME, RECHECK_NAME}
+)
 #: stems reserves : une conversation ne doit jamais produire ces noms, sous
-#: peine d'ecraser l'inventaire (`conversation_list.json`) ou le rapport de
-#: forme API (`api_health.json`)
+#: peine d'ecraser l'inventaire (`conversation_list.json`), le rapport de
+#: forme API (`api_health.json`) ou le controle de parseur (`recheck.json`)
 RESERVED_STEMS = frozenset(Path(name).stem for name in RESERVED_JSON_NAMES)
 
 

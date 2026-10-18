@@ -374,6 +374,23 @@ La page web expose la recherche média dans `/api/search` : les médias
 pertinents sont **rattachés à leur conversation** (un média compte comme un
 hit, il participe au score du groupe) et affichés en vignettes/lecteurs.
 
+### Sauvegarde de la base
+
+`scripts/backup_rag.py` copie la base (API `backup` de sqlite3 : copie cohérente
+même en mode WAL) dans `<dossier de la base>/backups/`, puis élague au-delà de
+`--keep` (défaut 7). Le cron l'exécute **avant** chaque reindex.
+
+```bash
+.venv/bin/python scripts/backup_rag.py            # sauvegarde + élagage
+.venv/bin/python scripts/backup_rag.py --keep 14  # rétention
+.venv/bin/python scripts/backup_rag.py --list     # lister les sauvegardes
+```
+
+Les deux passes (texte et médias) ne chargent le modèle que s'il y a vraiment
+quelque chose à encoder : sans nouveauté elles sortent en **moins d'une seconde**
+(le cron ne met plus le CPU à fond pour rien). Les images non décodables par
+l'encodeur (svg, avif, heic) sont ignorées à l'indexation.
+
 ## Serveur MCP (recherche depuis un agent)
 
 `scripts/mcp_conversations.py` expose le RAG et les exports en **serveur MCP
@@ -387,6 +404,8 @@ stdio** (SDK officiel `mcp` v2), enregistré dans la config globale opencode sou
 | `get_conversation` / `get_message` | JSON standardisé complet / message précis |
 | `list_conversations` | inventaire `conversation_list.json` |
 | `stats` | compteurs par plateforme + fraîcheur de l'index |
+| `recheck_parsers` | **contrôle de santé des parseurs** : re-scrape un échantillon aléatoire (`platforms`, `per_platform`, `min_messages`) et compare à l'archive ; `wait=true` attend la fin et rend le rapport |
+| `recheck_status` | état du contrôle en cours + derniers rapports par plateforme (verdict, rétention, défaillances) |
 
 ```bash
 # lancer le serveur à la main (stdio : stdout = JSON-RPC, logs sur stderr)
@@ -422,12 +441,35 @@ navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
   messages pertinents sont affichées en premier (regroupées), les messages
   isolés ensuite (probablement moins pertinents).
 - **Sans recherche** : la page présente les **dernières conversations**.
-- **Accueil (tableau de bord)** : heatmap d'activité (365 jours, clic sur un jour
-  → vue « journée »), conversations par plateforme, top modèles, « Au hasard »,
-  « Il y a un an aujourd'hui ». Les panneaux **Conversations par plateforme** et
-  **Top modèles** tournent chacun toutes les 5 minutes sur leur dimension : vue
-  d'ensemble, puis une série mensuelle par élément (flèches et pastilles pour
-  naviguer à la main).
+- **Permaliens** : l'état de recherche (requête, `alpha`, `k`, chatbots, modèle,
+  dates) est écrit dans l'URL (`?q=…&platforms=…`) — partageable, restauré au
+  chargement, et « Précédent » revient à la recherche précédente.
+- **Raccourcis clavier** : `/` chercher, `j`/`k` résultat suivant/précédent,
+  `r` conversation au hasard, `h` accueil, `?` l'aide, `Échap` fermer/revenir.
+  Le rappel vit dans le bouton **⚡** de l'en-tête (pas dans la page).
+- **Messages similaires** : sur un message d'une conversation, `similaires` liste
+  ses voisins sémantiques (même espace vectoriel que la recherche).
+- **Export markdown** : `Copier` / `Markdown` dans l'en-tête d'une conversation
+  (téléchargement `.md`) et `copier` sur chaque message.
+- **Recherche dans la conversation** : le sommaire (sidebar) filtre les messages
+  et surligne les correspondances ; `Entrée` saute au premier résultat.
+- **Comparateur de versions** : `Comparer côte à côte` affiche les versions
+  alternatives en colonnes.
+- **Galerie des médias** : vignettes/lecteurs de tous les médias indexés
+  (filtres par chatbot et par type, pagination).
+- **Statut** : la **santé des scrapers** (forme des payloads API, verdict du
+  contrôle des parseurs, fraîcheur du dernier scrape) alterne avec la heatmap
+  dans le panneau « Activité », avec le bouton **« Lancer un test »** ; l'**index
+  et les sauvegardes** (compteurs, taille de la base, dernière sauvegarde) sont
+  dans le bouton **ⓘ** de l'en-tête.
+- **Accueil (tableau de bord)** : trois panneaux rotatifs (une partie toutes les
+  5 minutes, flèches et pastilles) — **Activité** (heatmap 365 jours, clic sur un
+  jour → vue « journée », qui alterne avec la **santé des scrapers**),
+  **Conversations par plateforme** (vue d'ensemble, toutes plateformes, puis une
+  série mensuelle par plateforme) et **Top modèles** (idem par modèle) — plus
+  « Au hasard », « Il y a un an aujourd'hui », la **galerie des médias** et le
+  **contrôle des parseurs**. Les séries mensuelles portent le total et la
+  **tendance** du dernier mois complet.
 - **Lien cliquable** `Ouvrir ↗` vers la conversation d'origine (site d'origine),
   dans les résultats et dans la vue conversation.
 - **Rendu riche** : markdown (gras, listes, tableaux, liens `target=_blank`),
@@ -444,7 +486,8 @@ navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
 
 L'API locale (même serveur) : `/api/search`, `/api/conversation`,
 `/api/conversations`, `/api/random`, `/api/filters`, `/api/stats`,
-`/api/activity`, `/api/timeline`, `/api/day`. Le modèle
+`/api/activity`, `/api/timeline`, `/api/similar`, `/api/media`, `/api/status`,
+`/api/day`, `GET`/`POST /api/recheck` (contrôle de parseur). Le modèle
 d'embeddings se charge au premier appel (quelques secondes).
 
 ## Optimisations écriture & compute
@@ -600,6 +643,41 @@ Les ids des conversations d'étalonnage ne sont pas versionnés : copier
 `scripts/etalons.json` et y renseigner ses propres ids. Les fixtures de
 `tests/fixtures/etalons/` sont **anonymisées** ; `scripts/sanitize.py`
 (`--check` / `--apply`) garantit qu'aucune trace personnelle n'est publiée.
+
+### Contrôle des parseurs (re-scrape aléatoire)
+
+Sans conversation d'étalonnage dédiée : `scripts/recheck.py` tire un
+**échantillon aléatoire** de conversations moyennes ou grandes par plateforme,
+les **re-scrape** (rien n'est écrit dans l'archive) et compare leurs métriques à
+celles du JSON déjà exporté (messages, alternance des rôles, images, tableaux,
+listes, langages de code, LaTeX). Le bilan est écrit dans
+`exports/<platform>/recheck.json`, affiché dans le tableau de bord
+(« Contrôle des parseurs ») et déclenche un **bandeau d'alerte rouge** dès
+qu'une plateforme est critique.
+
+```bash
+.venv/bin/python scripts/recheck.py                       # 3 conversations / plateforme
+.venv/bin/python scripts/recheck.py --per-platform 5 --min-messages 12
+.venv/bin/python scripts/recheck.py --platform gemini --seed 42   # tirage reproductible
+.venv/bin/python scripts/recheck.py --report              # bilan du dernier contrôle
+```
+
+Verdicts : `OK` (tout retrouvé), `à surveiller` (une métrique a chuté),
+`CRITIQUE` (échec de scrape ou moins de la moitié des messages retrouvés).
+Code de sortie : `0` ok, `1` à surveiller, `2` critique (utilisable en cron).
+
+Trois façons de le lancer, même moteur (`src/utils/recheck.py`) :
+
+| Voie | Comment |
+| --- | --- |
+| **Page web** | bouton **« Lancer un test »** du panneau « Contrôle des parseurs » → page *Test des parseurs* : choix des parseurs (cases), nombre de conversations par parseur, suivi en direct et **rapport des défaillances** |
+| **Ligne de commande** | `scripts/recheck.py [--platform X --per-platform N --min-messages M]` |
+| **Agent (MCP)** | `recheck_parsers(platforms?, per_platform?, min_messages?, wait?)` puis `recheck_status()` |
+
+Le test tourne en tâche de fond côté serveur (`POST /api/recheck`, suivi par
+`GET /api/recheck`) et prend le **même verrou que le cron** : impossible de
+lancer un test pendant un scrape (et inversement), pour ne pas partager les
+profils navigateur.
 
 ## Licence et usage
 

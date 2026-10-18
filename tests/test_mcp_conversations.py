@@ -524,11 +524,17 @@ def test_handshake_stdio_et_appels_outils(env):
                     "get_message",
                     "grep",
                     "list_conversations",
+                    "recheck_parsers",
+                    "recheck_status",
                     "search",
                     "stats",
                 ]
                 search_tool = next(t for t in listed.tools if t.name == "search")
                 assert "query" in search_tool.input_schema["properties"]
+                recheck_tool = next(
+                    t for t in listed.tools if t.name == "recheck_parsers"
+                )
+                assert "per_platform" in recheck_tool.input_schema["properties"]
 
                 grep = await session.call_tool("grep", {"pattern": "minecraft"})
                 assert grep.is_error is False
@@ -570,3 +576,93 @@ def test_search_live_retrait_gonflement_argile():
     result = tools.search("retrait gonflement argile", k=20)
     ids = {g["conversation_id"] for g in result["groups"]}
     assert any(cid.startswith("34e0c27b") for cid in ids), sorted(ids)
+
+
+# -- controle des parseurs (job injecte : aucun scrape pendant les tests) -----
+
+def _install_fake_job(env, runner):
+    from src.utils.recheck import RecheckJob
+
+    env.tools._recheck_job = RecheckJob(
+        runner=runner,
+        lock_path=str(env.tmp_path / "run.lock"),
+        orchestrator_factory=lambda config: object(),
+    )
+    return env.tools._recheck_job
+
+
+def _ok_report(platform):
+    return {
+        "platform": platform, "verdict": "ok", "retention": 1.0,
+        "checked": 1, "compared": 1, "ignored": 0, "ok": 1,
+        "degraded": 0, "failed": 0, "checked_at": "2026-01-01T00:00:00Z",
+        "conversations": [],
+    }
+
+
+def test_recheck_start_et_etat(env):
+    seen = []
+
+    def runner(config, platform, per_platform, min_messages, seed,
+               orchestrator=None, log=print):
+        seen.append((platform, per_platform, min_messages))
+        return _ok_report(platform)
+
+    job = _install_fake_job(env, runner)
+    state = env.tools.recheck_start(["alpha"], per_platform=2, min_messages=1)
+    assert state["started"] is True
+    assert state["platforms"] == ["alpha"]
+    job._thread.join(timeout=10)
+    snapshot = env.tools.recheck_state()
+    assert snapshot["running"] is False
+    assert [item["platform"] for item in snapshot["done"]] == ["alpha"]
+    assert seen == [("alpha", 2, 1)]
+
+
+def test_recheck_toutes_plateformes_par_defaut(env):
+    seen = []
+    job = _install_fake_job(
+        env,
+        lambda config, platform, *a, **k: (seen.append(platform), _ok_report(platform))[1],
+    )
+    state = env.tools.recheck_start()
+    assert state["platforms"] == ["alpha", "beta"]
+    job._thread.join(timeout=10)
+    assert seen == ["alpha", "beta"]
+
+
+def test_recheck_plateforme_inconnue(env):
+    with pytest.raises(mcp_conversations.ConversationToolError):
+        env.tools.recheck_start(["inconnue"])
+
+
+def test_recheck_wait_attend_la_fin(env):
+    _install_fake_job(env, lambda *a, **k: None)
+    state = env.tools.recheck_wait(["alpha"], per_platform=1, min_messages=1, timeout=10)
+    assert state["running"] is False
+    assert state["timed_out"] is False
+
+
+def test_recheck_etat_lit_les_rapports(env):
+    (env.exports / "alpha" / "recheck.json").write_text(
+        json.dumps({
+            "platform": "alpha", "verdict": "attention", "checked": 2,
+            "compared": 2, "ok": 1, "degraded": 1, "failed": 0,
+            "retention": 0.8, "checked_at": "2026-01-01T00:00:00Z",
+            "conversations": [
+                {"conversation_id": "c1", "title": "T", "status": "degrade",
+                 "lost": ["images: 3 -> 1"], "retention": 0.8,
+                 "old_messages": 5, "new_messages": 4},
+                {"conversation_id": "c2", "title": "U", "status": "ok"},
+            ],
+        }),
+        encoding="utf-8",
+    )
+    snapshot = env.tools.recheck_state()
+    assert snapshot["running"] is False
+    report = next(r for r in snapshot["reports"] if r["platform"] == "alpha")
+    assert report["verdict"] == "attention"
+    assert report["compared"] == 2
+    assert len(report["issues"]) == 1
+    assert report["issues"][0]["reason"] == "images: 3 -> 1"
+    assert report["issues"][0]["old_messages"] == 5

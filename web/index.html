@@ -26,10 +26,37 @@
       <h1>Conversations IA</h1>
       <p class="subtitle">Recherche textuelle et sémantique dans les messages de ChatGPT, Claude, Gemini, Perplexity, Grok et Mistral</p>
     </div>
-    <button class="theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="true" aria-label="Thème de l'interface">
-      <span class="theme-toggle-label" id="themeLabel">Nuit</span>
-      <span class="toggle-track" id="toggleTrack" aria-hidden="true"><span class="toggle-thumb"></span></span>
-    </button>
+    <div class="header-right">
+      <div class="header-actions">
+        <button class="icon-btn" id="shortcutsBtn" type="button" aria-expanded="false"
+          aria-controls="shortcutsPop" title="Raccourcis clavier" aria-label="Raccourcis clavier">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12z"/></svg>
+        </button>
+        <button class="icon-btn" id="infoBtn" type="button" aria-expanded="false"
+          aria-controls="infoPop" title="Index et sauvegardes" aria-label="Index et sauvegardes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.6" r="1.15" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button class="theme-toggle" id="themeToggle" type="button" role="switch" aria-checked="true" aria-label="Thème de l'interface">
+          <span class="theme-toggle-label" id="themeLabel">Nuit</span>
+          <span class="toggle-track" id="toggleTrack" aria-hidden="true"><span class="toggle-thumb"></span></span>
+        </button>
+      </div>
+      <div class="header-pop" id="shortcutsPop" hidden role="dialog" aria-label="Raccourcis clavier">
+        <h2>Raccourcis clavier</h2>
+        <ul class="kbd-list">
+          <li><kbd>/</kbd><span>chercher</span></li>
+          <li><kbd>j</kbd><kbd>k</kbd><span>résultat suivant / précédent</span></li>
+          <li><kbd>r</kbd><span>conversation au hasard</span></li>
+          <li><kbd>h</kbd><span>accueil</span></li>
+          <li><kbd>?</kbd><span>cette aide</span></li>
+          <li><kbd>Échap</kbd><span>fermer / revenir</span></li>
+        </ul>
+      </div>
+      <div class="header-pop" id="infoPop" hidden role="dialog" aria-label="Index et sauvegardes">
+        <h2>Index &amp; sauvegardes</h2>
+        <div id="indexBox"><p class="section-note">Chargement…</p></div>
+      </div>
+    </div>
   </header>
 
   <section class="search-panel" aria-label="Recherche">

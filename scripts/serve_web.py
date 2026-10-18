@@ -6,7 +6,18 @@ Sert la page web (web/) et une petite API JSON :
   - GET /api/filters
   - GET /api/activity
   - GET /api/timeline
-    (conversations par mois — 24 derniers mois — par plateforme et par modele)
+    (conversations par mois — 24 derniers mois — par plateforme, par modele et
+     toutes plateformes ; `trend` = dernier mois complet vs le precedent)
+  - GET /api/similar?platform=&id=&mid=&i=&k=
+    (messages les plus proches d'un message, meme espace vectoriel)
+  - GET /api/media?platform=&kind=&offset=&limit=
+    (galerie des medias indexes : pagination et filtres)
+  - GET /api/status
+    (index RAG, fraicheur du scrape par plateforme, sante des API, sauvegardes)
+  - GET /api/recheck
+    (etat du controle de parseur en cours + derniers rapports `recheck.json`)
+  - POST /api/recheck {"platforms": [...], "per_platform": 3, "min_messages": 8}
+    (lance un controle de parseur en tache de fond — page « Test des parseurs »)
   - GET /api/day?date=AAAA-MM-JJ
   - GET /api/search?q=&k=&alpha=&platforms=&model=&date_from=&date_to=&media_k=
     (q vide + au moins un critere = recherche par criteres seuls, sans score ;
@@ -44,6 +55,13 @@ from src.rag.embeddings import model_dim  # noqa: E402
 from src.rag.media import MediaStore  # noqa: E402
 from src.rag.search import combined_search  # noqa: E402
 from src.rag.store import VectorStore  # noqa: E402
+from src.utils.backup import BACKUP_DIR  # noqa: E402
+from src.utils.recheck import (  # noqa: E402
+    MIN_MESSAGES,
+    PER_PLATFORM,
+    RecheckJob,
+    read_report,
+)
 from src.utils.urls import conversation_url  # noqa: E402
 
 WEB_DIR = ROOT / "web"
@@ -112,6 +130,12 @@ ACTIVITY_DAYS = 365
 TIMELINE_MONTHS = 24
 #: nombre de modeles des series temporelles (/api/timeline)
 TIMELINE_MODELS = 8
+#: voisins renvoyes par /api/similar (defaut, borne haute)
+SIMILAR_K_DEFAULT = 12
+SIMILAR_K_MAX = 50
+#: pagination de la galerie de medias (/api/media)
+MEDIA_PAGE = 60
+MEDIA_PAGE_MAX = 200
 #: bornes du tirage aleatoire (/api/random)
 RANDOM_MAX = 8
 #: longueur de l'extrait de message dans la vue « journee » (/api/day)
@@ -210,13 +234,34 @@ def month_window(today, count: int) -> list:
     return months
 
 
+def month_trend(series: list, months: list):
+    """Variation du dernier mois complet vs le precedent (None si incalculable).
+
+    Le mois courant est incomplet : il est ignore, sinon la tendance serait
+    faussement negative en debut de mois.
+    """
+    if len(series) < 3 or len(months) < 3:
+        return None
+    previous, last = series[-3], series[-2]
+    if previous <= 0:
+        return None
+    return {
+        "from": months[-3],
+        "to": months[-2],
+        "pct": round((last - previous) / previous * 100, 1),
+    }
+
+
 class AppState:
     """Etat partage : store + embedder charges paresseusement (thread-safe)."""
 
-    def __init__(self, db_path: Path, exports_dir: Path, model_name: str, dim: int = 0):
+    def __init__(self, db_path: Path, exports_dir: Path, model_name: str, dim: int = 0,
+                 config: dict | None = None):
         self.db_path = db_path
         self.exports_dir = exports_dir
         self.model_name = model_name
+        #: config complete (le controle de parseur relance un scrape)
+        self.config = config or {}
         self.dim = model_dim(model_name, dim)
         self._store = None
         self._media_store = None
@@ -226,6 +271,8 @@ class AppState:
         self._lock = threading.Lock()
         # serialise l'acces store/modele entre requetes concurrentes
         self.api_lock = threading.Lock()
+        #: controle de parseur lance depuis la page de test (un seul a la fois)
+        self.recheck_job = RecheckJob()
 
     def store(self) -> VectorStore:
         with self._lock:
@@ -343,6 +390,42 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             self._send_json({"error": str(exc)}, 500)
 
+    def do_POST(self) -> None:  # noqa: N802
+        """Endpoints d'action (lancement du controle de parseur)."""
+        path = urlparse(self.path).path
+        try:
+            if not path.startswith("/api/"):
+                self._send_json({"error": "not found"}, 404)
+                return
+            body = self._read_json_body()
+            if path == "/api/recheck":
+                self._send_json(self._start_recheck(body))
+            else:
+                self._send_json({"error": "unknown endpoint"}, 404)
+        except BrokenPipeError:
+            pass
+        except ApiError as exc:
+            self._send_json({"error": exc.message}, exc.status)
+        except Exception as exc:  # noqa: BLE001
+            self._send_json({"error": str(exc)}, 500)
+
+    def _read_json_body(self) -> dict:
+        """Corps JSON de la requete (objet vide si absent)."""
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            length = 0
+        if length <= 0:
+            return {}
+        raw = self.rfile.read(min(length, 64 * 1024))
+        try:
+            payload = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ApiError("corps JSON invalide") from exc
+        if not isinstance(payload, dict):
+            raise ApiError("objet JSON attendu")
+        return payload
+
     def _serve_media(self, path: str) -> None:
         """Sert une image telechargee : exports/<platform>/images/<fichier>."""
         match = MEDIA_RE.match(path)
@@ -383,6 +466,14 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(self._activity())
             elif path == "/api/timeline":
                 self._send_json(self._timeline())
+            elif path == "/api/similar":
+                self._send_json(self._similar(params))
+            elif path == "/api/media":
+                self._send_json(self._media(params))
+            elif path == "/api/status":
+                self._send_json(self._status())
+            elif path == "/api/recheck":
+                self._send_json(self._recheck_status())
             elif path == "/api/day":
                 self._send_json(self._day(params))
             elif path == "/api/search":
@@ -505,21 +596,297 @@ class Handler(BaseHTTPRequestHandler):
         def series(counts: dict) -> list:
             return [counts.get(month, 0) for month in months]
 
-        platform_series = [
-            {"platform": name, "series": series(counts), "total": sum(counts.values())}
-            for name, counts in platforms.items()
-        ]
+        def entry(name_key: str, name: str, counts: dict) -> dict:
+            values = series(counts)
+            return {
+                name_key: name,
+                "series": values,
+                "total": sum(values),
+                "trend": month_trend(values, months),
+            }
+
+        platform_series = [entry("platform", name, counts)
+                           for name, counts in platforms.items()]
         platform_series.sort(key=lambda item: (-item["total"], item["platform"]))
-        model_series = [
-            {"model": name, "series": series(counts), "total": sum(counts.values())}
-            for name, counts in models.items()
-        ]
+        model_series = [entry("model", name, counts)
+                        for name, counts in models.items()]
         model_series.sort(key=lambda item: (-item["total"], item["model"]))
+        all_counts: dict = {}
+        for counts in platforms.values():
+            for month, n in counts.items():
+                all_counts[month] = all_counts.get(month, 0) + n
+        totals = series(all_counts)
         return {
             "months": months,
             "platforms": platform_series,
             "models": model_series[:TIMELINE_MODELS],
+            "total": {
+                "series": totals,
+                "total": sum(totals),
+                "trend": month_trend(totals, months),
+            },
         }
+
+    def _similar(self, params):
+        """Messages les plus proches d'un message donne (meme espace vectoriel).
+
+        Le message est designe par `platform` + `id` (conversation) et `mid`
+        (message_id) ou, a defaut, `i` (position dans la conversation). `k`
+        borne le nombre de voisins ; le message d'origine est exclu.
+        """
+        platform = check_platform((params.get("platform") or [""])[0])
+        conversation_id = check_conversation_id((params.get("id") or [""])[0])
+        mid = (params.get("mid") or [""])[0]
+        try:
+            k = int((params.get("k") or [str(SIMILAR_K_DEFAULT)])[0])
+        except ValueError as exc:
+            raise ApiError("parametre k invalide (entier attendu)") from exc
+        if not 1 <= k <= SIMILAR_K_MAX:
+            raise ApiError(f"k doit etre entre 1 et {SIMILAR_K_MAX}")
+        store = self.state.store()
+        if mid:
+            row = store.db.execute(
+                """
+                SELECT rowid FROM messages
+                WHERE platform = ? AND conversation_id = ? AND message_id = ?
+                ORDER BY rowid LIMIT 1
+                """,
+                (platform, conversation_id, mid),
+            ).fetchone()
+        else:
+            try:
+                offset = int((params.get("i") or ["0"])[0])
+            except ValueError as exc:
+                raise ApiError("parametre i invalide (entier attendu)") from exc
+            row = store.db.execute(
+                """
+                SELECT rowid FROM messages
+                WHERE platform = ? AND conversation_id = ?
+                ORDER BY rowid LIMIT 1 OFFSET ?
+                """,
+                (platform, conversation_id, max(0, offset)),
+            ).fetchone()
+        if row is None:
+            raise ApiError("message introuvable dans l'index")
+        rowid = row["rowid"]
+        vector = store.vectors_by_rowid([rowid]).get(rowid)
+        if vector is None:
+            raise ApiError("message sans vecteur dans l'index")
+        # k + 1 puis exclusion du message d'origine : sqlite-vec applique `k`
+        # avant le filtre `rowid`
+        rows = store.db.execute(
+            """
+            SELECT m.message_id, m.conversation_id, m.platform, m.role, m.model,
+                   m.timestamp, m.texte, v.distance AS distance
+            FROM vec_messages v
+            JOIN messages m ON m.rowid = v.rowid
+            WHERE v.embedding MATCH ? AND k = ? AND v.rowid != ?
+            ORDER BY v.distance LIMIT ?
+            """,
+            (vector, k + 1, rowid, k + 1),
+        ).fetchall()
+        results = []
+        for item in rows:
+            entry = dict(item)
+            entry["score"] = 1.0 - float(entry.pop("distance"))
+            results.append(entry)
+        payload = self._group_results("", results[:k])
+        payload["similar_to"] = {
+            "platform": platform,
+            "conversation_id": conversation_id,
+            "message_id": mid or None,
+        }
+        return payload
+
+    def _media(self, params):
+        """Galerie des medias indexes (pagination + filtres)."""
+        platform = (params.get("platform") or [""])[0]
+        if platform:
+            check_platform(platform)
+        kind = (params.get("kind") or [""])[0]
+        if kind and kind not in ("image", "audio", "video"):
+            raise ApiError("kind doit etre image, audio ou video")
+        try:
+            offset = int((params.get("offset") or ["0"])[0])
+            limit = int((params.get("limit") or [str(MEDIA_PAGE)])[0])
+        except ValueError as exc:
+            raise ApiError("offset/limit invalides (entiers attendus)") from exc
+        if offset < 0:
+            raise ApiError("offset doit etre positif")
+        if not 1 <= limit <= MEDIA_PAGE_MAX:
+            raise ApiError(f"limit doit etre entre 1 et {MEDIA_PAGE_MAX}")
+        store = self.state.media_store()
+        clauses, args = [], []
+        if platform:
+            clauses.append("platform = ?")
+            args.append(platform)
+        if kind:
+            clauses.append("kind = ?")
+            args.append(kind)
+        where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+        total = store.db.execute(
+            f"SELECT COUNT(*) AS n FROM media{where}", args
+        ).fetchone()["n"]
+        rows = store.db.execute(
+            f"""
+            SELECT media_id, platform, conversation_id, message_id, kind, path,
+                   texte, indexed_at
+            FROM media{where}
+            ORDER BY indexed_at DESC, rowid DESC
+            LIMIT ? OFFSET ?
+            """,
+            args + [limit, offset],
+        ).fetchall()
+        items = []
+        for row in rows:
+            item = dict(row)
+            filename = Path(item["path"]).name
+            item["filename"] = filename
+            item["url"] = f"/media/{item['platform']}/{filename}"
+            items.append(item)
+        return {"total": total, "offset": offset, "limit": limit, "items": items}
+
+    def _status(self):
+        """Etat du chantier : index RAG, scrape par plateforme, sante, backups."""
+        store = self.state.store()
+        index = dict(store.stats())
+        index["media"] = self.state.media_store().stats()
+        row = store.db.execute(
+            "SELECT MAX(indexed_at) AS last FROM conversations"
+        ).fetchone()
+        index["indexed_at"] = (row["last"] if row else None) or None
+        db_path = Path(self.state.db_path)
+        index["db_bytes"] = db_path.stat().st_size if db_path.is_file() else 0
+        scrape = []
+        for name in sorted(
+            d.name for d in self.state.exports_dir.iterdir()
+            if d.is_dir() and (d / "conversation_list.json").exists()
+        ):
+            path = self.state.exports_dir / name / "conversation_list.json"
+            entry = {
+                "platform": name,
+                "conversations": 0,
+                "last_message_at": None,
+                "scraped_at": None,
+                "health": self._api_health(name),
+                "recheck": self._recheck(name),
+            }
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                entries = data.get("conversations") or []
+                entry["conversations"] = len(entries)
+                stamps = [
+                    item.get("last_message_at") for item in entries
+                    if item.get("last_message_at")
+                ]
+                entry["last_message_at"] = max(stamps) if stamps else None
+                entry["scraped_at"] = datetime.fromtimestamp(
+                    path.stat().st_mtime, timezone.utc
+                ).strftime("%Y-%m-%dT%H:%M:%SZ")
+            except (OSError, json.JSONDecodeError):
+                pass
+            scrape.append(entry)
+        # verdict de controle de parseur le plus grave, pour le marquage du
+        # tableau de bord (une plateforme critique suffit a alerter)
+        order = {"critique": 3, "attention": 2, "ok": 1, "inconnu": 0}
+        reports = [e["recheck"] for e in scrape if e.get("recheck")]
+        return {
+            "index": index,
+            "scrape": scrape,
+            "backups": self._backups(db_path),
+            "recheck_verdict": (
+                max((r["verdict"] for r in reports), key=lambda v: order.get(v, 0))
+                if reports else None
+            ),
+            "recheck_at": max((r["checked_at"] or "" for r in reports), default=None) or None,
+        }
+
+    def _recheck(self, platform: str):
+        """Dernier controle de parseur d'une plateforme (`recheck.json`)."""
+        return read_report(self.state.exports_dir, platform)
+
+    def _api_health(self, platform: str):
+        """Sante de la forme des payloads API (`api_health.json`)."""
+        path = self.state.exports_dir / platform / "api_health.json"
+        if not path.is_file():
+            return None
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        n = data.get("n") or 0
+        matches = data.get("matches") or 0
+        return {
+            "n": n,
+            "matches": matches,
+            "rate": round(matches / n * 100, 1) if n else None,
+            "breaks": data.get("breaks") or 0,
+            "drifts": data.get("drifts") or 0,
+            "mean_score": data.get("mean_score"),
+            "threshold": data.get("threshold"),
+            "updated_at": data.get("updated_at"),
+        }
+
+    def _recheck_status(self):
+        """Etat du controle de parseur en cours + derniers rapports connus."""
+        state = self.state.recheck_job.snapshot()
+        reports = []
+        for platform in PLATFORMS:
+            report = self._recheck(platform)
+            if report:
+                reports.append(report)
+        return {**state, "reports": reports}
+
+    def _start_recheck(self, body):
+        """Lance un controle de parseur en tache de fond (page de test)."""
+        raw = body.get("platforms")
+        if raw is None:
+            platforms = list(PLATFORMS)
+        elif isinstance(raw, list):
+            platforms = [check_platform(str(name)) for name in raw]
+        else:
+            raise ApiError("platforms doit etre une liste")
+        if not platforms:
+            raise ApiError("choisir au moins une plateforme")
+        try:
+            per_platform = int(body.get("per_platform", PER_PLATFORM))
+            min_messages = int(body.get("min_messages", MIN_MESSAGES))
+            seed = int(body.get("seed", 0))
+        except (TypeError, ValueError) as exc:
+            raise ApiError(
+                "per_platform/min_messages/seed doivent etre des entiers"
+            ) from exc
+        if not 1 <= per_platform <= 20:
+            raise ApiError("per_platform doit etre entre 1 et 20")
+        if not 1 <= min_messages <= 200:
+            raise ApiError("min_messages doit etre entre 1 et 200")
+        try:
+            state = self.state.recheck_job.start(
+                self.state.config, platforms, per_platform, min_messages, seed,
+            )
+        except RuntimeError as exc:
+            raise ApiError(str(exc), 409) from exc
+        return {"started": True, **state}
+
+    def _backups(self, db_path: Path):
+        """Sauvegardes locales de la base (les plus recentes d'abord)."""
+        backup_dir = db_path.parent / BACKUP_DIR
+        if not backup_dir.is_dir():
+            return []
+        items = []
+        for path in sorted(backup_dir.glob(f"{db_path.stem}-*.db"), reverse=True):
+            try:
+                stat = path.stat()
+            except OSError:
+                continue
+            items.append({
+                "name": path.name,
+                "bytes": stat.st_size,
+                "created_at": datetime.fromtimestamp(
+                    stat.st_mtime, timezone.utc
+                ).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            })
+        return items
 
     def _day(self, params):
         """Messages d'une journee, groupes par conversation (vue « journee »)."""
@@ -1041,6 +1408,7 @@ def main() -> int:
         resolve(args.exports or config["output_dir"]),
         args.model or config.get("rag_model"),
         config.get("rag_dim") or 0,
+        config=config,
     )
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     display_host = "127.0.0.1" if args.host in ("0.0.0.0", "::") else args.host

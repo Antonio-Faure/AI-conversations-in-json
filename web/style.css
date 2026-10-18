@@ -92,7 +92,25 @@ header{display:flex;justify-content:space-between;align-items:flex-start;gap:20p
 h1{font-family:var(--font-display);font-size:clamp(2rem,1.3rem + 2.4vw,3rem);font-weight:700;
   letter-spacing:-.02em;line-height:1.05;text-wrap:balance}
 .subtitle{margin-top:6px;font-size:1rem;color:var(--text-muted)}
-.header-right{display:flex;align-items:center;gap:.75rem;flex-shrink:0;padding-top:.5rem}
+.header-right{position:relative;display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;padding-top:.5rem}
+.header-actions{display:flex;align-items:center;gap:.6rem}
+.icon-btn{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--border);border-radius:999px;
+  background:var(--bg-card);color:var(--text-muted);cursor:pointer;
+  transition:color var(--dur) var(--ease),border-color var(--dur) var(--ease),background var(--dur) var(--ease)}
+.icon-btn svg{width:17px;height:17px}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent);background:var(--bg-hover)}
+.icon-btn[aria-expanded="true"]{color:var(--accent-ink);background:var(--accent-strong);border-color:var(--accent-strong)}
+.icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.header-pop{position:absolute;top:calc(100% + 10px);right:0;z-index:30;width:min(360px,86vw);
+  padding:16px 18px;background:var(--bg-card);border:1px solid var(--border-strong);border-radius:var(--r);
+  box-shadow:var(--shadow-md);animation:rise .25s var(--ease) both}
+.header-pop[hidden]{display:none}
+.header-pop h2{font-family:var(--font-display);font-size:1rem;font-weight:600;margin-bottom:10px}
+.kbd-list{list-style:none;display:flex;flex-direction:column;gap:7px;font-size:.84rem}
+.kbd-list li{display:flex;align-items:center;gap:8px}
+.kbd-list span{color:var(--text-muted)}
+kbd{font-family:var(--font-mono);font-size:.72rem;padding:2px 7px;border:1px solid var(--border-strong);
+  border-radius:6px;background:var(--bg-hover);color:var(--text)}
 .header-left{flex:1;min-width:0}
 
 .theme-toggle{display:inline-flex;align-items:center;gap:.55rem;cursor:pointer;user-select:none;
@@ -527,6 +545,130 @@ mark{background:var(--highlight);color:inherit;border-radius:3px;padding:0 2px}
 .last-layout>*{min-width:0}
 .last-filter{padding:12px 14px}
 .last-filter .side-item{padding:8px 9px}
+
+/* -- navigation clavier : résultat courant -- */
+.group-card.current,.media-card.current{border-color:var(--accent);box-shadow:0 0 0 3px var(--focus-ring)}
+.rot-body.heat-body{min-height:300px}
+
+/* -- voisins sémantiques (en-tête de résultats) -- */
+.similar-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.similar-head .section-title{margin-bottom:4px}
+
+/* -- actions d'en-tête (conversation, panneaux) -- */
+.conv-actions,.panel-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* hauteur unique : les boutons `btn-sm` et le bouton plein s'alignent */
+.conv-actions .btn{height:38px;padding-top:0;padding-bottom:0}
+.btn.copied{color:var(--accent);border-color:var(--accent)}
+
+/* -- actions par message (copier, similaires) -- */
+.msg-actions{margin-left:auto;display:flex;gap:6px;opacity:0;transition:opacity var(--dur) var(--ease)}
+.msg:hover .msg-actions,.msg:focus-within .msg-actions{opacity:1}
+.msg-action{padding:2px 8px;border:1px solid var(--border);border-radius:999px;background:transparent;
+  color:var(--text-muted);font:inherit;font-size:.7rem;text-transform:none;letter-spacing:0;cursor:pointer}
+.msg-action:hover,.msg-action.copied{color:var(--accent);border-color:var(--accent)}
+.msg.search-hit{border-color:var(--accent);box-shadow:0 0 0 3px var(--focus-ring)}
+
+/* -- recherche dans la conversation (sidebar) -- */
+.conv-search{width:100%;margin:2px 0 8px;padding:8px 11px;font-size:.82rem;background:var(--bg-hover);
+  color:var(--text);border:1px solid var(--border);border-radius:var(--r-sm)}
+.conv-search:focus{outline:none;border-color:var(--accent);background:var(--bg-card);box-shadow:0 0 0 3px var(--focus-ring)}
+.conv-search::placeholder{color:var(--text-muted)}
+.side-count{font-size:.74rem;color:var(--text-muted);padding:0 2px 8px}
+
+/* -- comparateur de versions alternatives -- */
+.variants-bar{display:flex;justify-content:flex-end;padding:0 0 10px}
+.variants-body.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;align-items:start}
+.variants-body.compare .variants-bar{grid-column:1/-1}
+
+/* -- galerie des médias -- */
+.gallery-filters{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.media-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+
+/* -- santé des scrapers (partie du panneau « Activité ») + alerte -- */
+.alert-banner{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;padding:14px 18px;
+  border-radius:var(--r);border:1px solid var(--border);border-left-width:6px;background:var(--bg-card);
+  box-shadow:var(--shadow-md);font-size:.9rem;line-height:1.5;animation:rise .4s var(--ease) both}
+.alert-banner[hidden]{display:none}
+.alert-banner .alert-icon{font-size:1.6rem;line-height:1;flex:none}
+.alert-banner.warn{border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg-card))}
+.alert-banner.critical{border-left-color:#e0483f;background:color-mix(in srgb,#e0483f 16%,var(--bg-card));
+  animation:rise .4s var(--ease) both,alert-pulse 2.4s ease-in-out 3}
+.alert-banner.critical .alert-icon{color:#e0483f}
+@keyframes alert-pulse{
+  0%,100%{box-shadow:var(--shadow-md)}
+  50%{box-shadow:0 0 0 6px color-mix(in srgb,#e0483f 30%,transparent)}
+}
+.health-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.status-list{display:flex;flex-direction:column}
+.status-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0;
+  border-bottom:1px solid var(--border);font-size:.8rem}
+.status-row:last-child{border-bottom:0}
+.status-platform{font-weight:600;min-width:88px}
+.status-badge{display:inline-flex;justify-content:center;min-width:52px;padding:3px 8px;border-radius:7px;
+  font-size:.72rem;font-weight:700;font-variant-numeric:tabular-nums;background:var(--bg-hover);color:var(--text-muted)}
+.status-badge.ok{background:var(--role-assistant-bg);color:var(--role-assistant-fg)}
+.status-badge.warn{background:var(--highlight);color:var(--text)}
+.status-badge.parse{min-width:104px;text-transform:uppercase;letter-spacing:.03em}
+.status-badge.parse.ok{background:var(--role-assistant-bg);color:var(--role-assistant-fg)}
+.status-badge.parse.attention{background:var(--highlight);color:var(--text)}
+.status-badge.parse.critique{background:#e0483f;color:#fff}
+.status-meta{color:var(--text-muted);font-size:.75rem;white-space:nowrap}
+.status-row .status-meta:last-child{margin-left:auto;text-align:right}
+.status-stats{margin:0 0 12px}
+
+/* -- tendance des séries mensuelles -- */
+.mc-side{display:flex;align-items:baseline;gap:10px}
+.mc-trend{font-size:.72rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text-muted)}
+.mc-trend.up{color:var(--role-assistant-fg)}
+.mc-trend.down{color:var(--accent)}
+
+/* -- controle des parseurs : bandeau d'alerte + lignes par plateforme -- */
+.alert-banner{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;padding:14px 18px;
+  border-radius:var(--r);border:1px solid var(--border);border-left-width:6px;background:var(--bg-card);
+  box-shadow:var(--shadow-md);font-size:.9rem;line-height:1.5;animation:rise .4s var(--ease) both}
+.alert-banner[hidden]{display:none}
+.alert-banner .alert-icon{font-size:1.6rem;line-height:1;flex:none}
+.alert-banner.warn{border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg-card))}
+.alert-banner.critical{border-left-color:#e0483f;background:color-mix(in srgb,#e0483f 16%,var(--bg-card));
+  animation:rise .4s var(--ease) both,alert-pulse 2.4s ease-in-out 3}
+.alert-banner.critical .alert-icon{color:#e0483f}
+@keyframes alert-pulse{
+  0%,100%{box-shadow:var(--shadow-md)}
+  50%{box-shadow:0 0 0 6px color-mix(in srgb,#e0483f 30%,transparent)}
+}
+.parse-badge{display:inline-flex;justify-content:center;min-width:104px;padding:3px 10px;border-radius:7px;
+  font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  background:var(--bg-hover);color:var(--text-muted)}
+.parse-badge.ok{background:var(--role-assistant-bg);color:var(--role-assistant-fg)}
+.parse-badge.attention{background:var(--highlight);color:var(--text)}
+.parse-badge.critique{background:#e0483f;color:#fff}
+
+/* -- page « Test des parseurs » -- */
+.test-form{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.test-platforms{flex:1;min-width:240px}
+.test-count{display:flex;flex-direction:column;gap:6px}
+.test-input{width:88px;padding:9px 11px;background:var(--bg-hover);color:var(--text);
+  border:1px solid var(--border);border-radius:var(--r-sm);font:inherit;font-size:.9rem}
+.test-input:focus{outline:none;border-color:var(--accent);background:var(--bg-card);box-shadow:0 0 0 3px var(--focus-ring)}
+.test-state{margin-top:14px}
+.test-steps{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.test-step{padding:4px 11px;border-radius:999px;font-size:.76rem;font-weight:600;
+  background:var(--bg-hover);color:var(--text-muted)}
+.test-step.running{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--text)}
+.test-step.ok{background:var(--role-assistant-bg);color:var(--role-assistant-fg)}
+.test-step.attention{background:var(--highlight);color:var(--text)}
+.test-step.critique{background:#e0483f;color:#fff}
+.test-log{margin-top:6px;font-size:.78rem;color:var(--text-muted)}
+.test-log summary{cursor:pointer;color:var(--accent)}
+.test-log-body{margin-top:8px;max-height:240px;overflow:auto;padding:10px 12px;border:1px solid var(--border);
+  border-radius:var(--r-sm);background:var(--code-bg);font-family:var(--font-mono);font-size:.72rem;line-height:1.5}
+.test-log-line{white-space:pre-wrap;word-break:break-word}
+.test-report{margin-top:16px}
+.test-report-panel{margin-bottom:12px}
+.test-report-panel.critique{border-left:5px solid #e0483f}
+.test-report-panel.attention{border-left:5px solid var(--accent)}
+.test-issues{margin:8px 0 0;padding-left:1.2em;font-size:.82rem}
+.test-issues li{margin:.25em 0}
 
 /* vue conversation en large : le « ← Retour » du haut ferait doublon avec
    celui de la sidebar (sticky) ; en <= 980px la sidebar passe dessous, on le garde */

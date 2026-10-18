@@ -51,6 +51,7 @@ plus un RAG et une page web de recherche. Le détail complet est dans
 .venv/bin/python scripts/rag_index.py [--platform grok] [--force]
 .venv/bin/python scripts/rag_search.py "requête" -k 10
 .venv/bin/python scripts/serve_web.py            # http://127.0.0.1:8765
+.venv/bin/python scripts/backup_rag.py [--keep 7] [--list]   # copie la base avant reindex
 
 # Medias EmbeddingGemma (meme index) : texte puis medias
 .venv/bin/python scripts/rag_index_media.py      # images/audio/video -> vec_media
@@ -70,6 +71,7 @@ plus un RAG et une page web de recherche. Le détail complet est dans
 # Contrôle de régression des conversations d'étalonnage (canaris des parseurs)
 .venv/bin/python scripts/check_etalons.py            # compare à la baseline
 .venv/bin/python scripts/check_etalons.py --update   # mémorise la baseline
+.venv/bin/python scripts/recheck.py [--per-platform 3] [--report]   # re-scrape aléatoire vs archive (recheck.json)
 ```
 
 Options récentes utiles : `--match TEXTE` (ne scraper que les titres/id
@@ -112,8 +114,9 @@ indisponibles).
   `web/`, serveur `scripts/serve_web.py`.
 - **Serveur MCP** : `scripts/mcp_conversations.py` (SDK `mcp` v2, transport
   stdio ; outils `search`, `grep`, `get_conversation`, `get_message`,
-  `list_conversations`, `stats`), enregistré sous `mcp.servers.aicv` dans la
-  config globale opencode ; skill `.opencode/skills/conversations-search/`.
+  `list_conversations`, `stats`, `recheck_parsers`, `recheck_status`),
+  enregistré sous `mcp.servers.aicv` dans la config globale opencode ; skill
+  `.opencode/skills/conversations-search/`.
 
 ## Invariants à ne pas casser
 

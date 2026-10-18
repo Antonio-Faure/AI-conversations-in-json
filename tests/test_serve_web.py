@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 import threading
 import urllib.error
@@ -19,6 +20,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import sqlite_vec
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location(
@@ -61,6 +63,21 @@ def _get(base: str, path: str):
 def _get_json(base: str, path: str):
     status, body = _get(base, path)
     return status, json.loads(body.decode("utf-8"))
+
+
+def _post_json(base: str, path: str, payload):
+    """POST JSON -> (statut, corps JSON)."""
+    request = urllib.request.Request(
+        base + path,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            return response.status, json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        return exc.code, json.loads(exc.read().decode("utf-8"))
 
 
 def _seed_messages(store, rows):
@@ -676,12 +693,16 @@ class TestTimeline:
         assert months == sorted(months)
         assert months[-1] == this_month
         # plateformes : triees par total decroissant, series alignees sur months
-        assert body["platforms"] == [
-            {"platform": "grok",
-             "series": [0] * (len(months) - 2) + [2, 1], "total": 3},
-            {"platform": "claude",
-             "series": [0] * (len(months) - 1) + [1], "total": 1},
-        ]
+        assert body["platforms"][0]["platform"] == "grok"
+        assert body["platforms"][0]["series"] == [0] * (len(months) - 2) + [2, 1]
+        assert body["platforms"][0]["total"] == 3
+        assert body["platforms"][0]["trend"] is None  # mois precedent a zero
+        assert body["platforms"][1]["platform"] == "claude"
+        assert body["platforms"][1]["series"] == [0] * (len(months) - 1) + [1]
+        assert body["platforms"][1]["total"] == 1
+        # total toutes plateformes (somme des series)
+        assert body["total"]["total"] == 4
+        assert body["total"]["series"][-2:] == [2, 2]
         # modeles : modele vide exclu, serie datee au 1er message du modele
         assert [m["model"] for m in body["models"]] == ["grok-3", "grok-4"]
         assert body["models"][0]["series"][-2:] == [1, 1]
@@ -706,3 +727,280 @@ class TestTimeline:
         assert [m["model"] for m in body["models"]] == [
             f"modele-{i}" for i in range(serve_web.TIMELINE_MODELS)
         ]
+
+    def test_tendance_dernier_mois_complet(self, web):
+        """La tendance compare le dernier mois complet au precedent."""
+        store = serve_web.Handler.state.store()
+        now = datetime.now(timezone.utc)
+        this_month = now.strftime("%Y-%m")
+        prev = now.replace(day=1) - timedelta(days=1)
+        prev_month = prev.strftime("%Y-%m")
+        before = (prev.replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
+        rows = [{"platform": "grok", "conversation_id": f"b{i}",
+                 "timestamp": f"{before}-05T10:00:00Z"} for i in range(4)]
+        rows += [{"platform": "grok", "conversation_id": f"p{i}",
+                  "timestamp": f"{prev_month}-05T10:00:00Z"} for i in range(6)]
+        rows.append({"platform": "grok", "conversation_id": "t0",
+                     "timestamp": f"{this_month}-05T10:00:00Z"})
+        _seed_messages(store, rows)
+        status, body = _get_json(web, "/api/timeline")
+        assert status == 200
+        trend = body["platforms"][0]["trend"]
+        assert trend == {"from": before, "to": prev_month, "pct": 50.0}  # 4 -> 6
+        assert body["total"]["total"] == 11
+        assert body["total"]["trend"] == trend
+        # le mois courant (incomplet) ne sert pas a la tendance
+        assert body["total"]["series"][-1] == 1
+
+
+def test_month_trend_incalculable():
+    """Tendance : None si fenetre trop courte ou mois precedent nul."""
+    assert serve_web.month_trend([0, 0, 0], ["a", "b", "c"]) is None
+    assert serve_web.month_trend([1, 2], ["a", "b"]) is None
+    assert serve_web.month_trend([4, 6, 1], ["a", "b", "c"]) == {
+        "from": "a", "to": "b", "pct": 50.0,
+    }
+
+
+class TestSimilar:
+    def _seed(self):
+        """Messages + vecteurs : m1 (reference), m2 proche, m3 loin."""
+        store = serve_web.Handler.state.store()
+        _seed_messages(store, [
+            {"platform": "grok", "conversation_id": "s1", "message_id": "m1",
+             "timestamp": "2026-01-01T10:00:00Z", "texte": "un chat noir"},
+            {"platform": "grok", "conversation_id": "s1", "message_id": "m2",
+             "timestamp": "2026-01-01T10:01:00Z", "texte": "un chien blanc"},
+            {"platform": "claude", "conversation_id": "s2", "message_id": "m3",
+             "timestamp": "2026-01-02T10:00:00Z", "texte": "un chat gris"},
+        ])
+        dim = store.dim
+        near = np.zeros(dim, dtype="float32")
+        near[0], near[1] = 0.98, 0.2
+        base = np.zeros(dim, dtype="float32")
+        base[0] = 1.0
+        far = np.zeros(dim, dtype="float32")
+        far[5] = 1.0
+        rows = store.db.execute("SELECT rowid FROM messages ORDER BY rowid").fetchall()
+        for row, vector in zip(rows, (base, near, far)):
+            store.db.execute(
+                "INSERT INTO vec_messages(rowid, embedding) VALUES (?, ?)",
+                (row["rowid"], sqlite_vec.serialize_float32(vector)),
+            )
+        store.db.commit()
+
+    def test_voisins_excluent_le_message(self, web):
+        self._seed()
+        status, body = _get_json(web, "/api/similar?platform=grok&id=s1&mid=m1&k=3")
+        assert status == 200
+        assert body["similar_to"] == {
+            "platform": "grok", "conversation_id": "s1", "message_id": "m1",
+        }
+        found = [g["messages"][0]["message_id"] for g in body["groups"]]
+        assert "m1" not in found          # message d'origine exclu
+        assert found == ["m2", "m3"]      # le plus proche d'abord
+
+    def test_position_quand_message_id_absent(self, web):
+        self._seed()
+        status, body = _get_json(web, "/api/similar?platform=grok&id=s1&i=1&k=1")
+        assert status == 200
+        assert body["similar_to"]["message_id"] is None
+        assert body["count"] == 1
+        assert body["groups"][0]["messages"][0]["message_id"] == "m1"
+
+    def test_message_absent_400(self, web):
+        self._seed()
+        status, _ = _get_json(web, "/api/similar?platform=grok&id=inconnu&i=0")
+        assert status == 400
+
+    def test_k_invalide_400(self, web):
+        for k in ("0", "abc", str(serve_web.SIMILAR_K_MAX + 1)):
+            status, _ = _get_json(web, f"/api/similar?platform=grok&id=s1&k={k}")
+            assert status == 400, k
+
+
+class TestGalerieMedia:
+    def _seed(self):
+        store = serve_web.Handler.state.media_store()
+        rows = [
+            ("grok/images/a.png", "grok", "image", "c1", "m1", "un chat",
+             "2026-01-01T00:00:00Z"),
+            ("grok/images/b.jpg", "grok", "image", "c1", "m2", "un chien",
+             "2026-01-02T00:00:00Z"),
+            ("claude/files/son.mp3", "claude", "audio", "c2", "m3", "un son",
+             "2026-01-03T00:00:00Z"),
+        ]
+        for path, platform, kind, conversation, message, texte, indexed in rows:
+            store.db.execute(
+                """
+                INSERT INTO media
+                    (media_id, platform, conversation_id, message_id, kind, path,
+                     texte, fingerprint, indexed_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)
+                """,
+                (path, platform, conversation, message, kind, path, texte, indexed),
+            )
+        store.db.commit()
+
+    def test_pagination_et_filtres(self, web):
+        self._seed()
+        status, body = _get_json(web, "/api/media?limit=2")
+        assert status == 200
+        assert body["total"] == 3
+        assert len(body["items"]) == 2
+        # les plus recents d'abord (indexed_at decroissant)
+        assert [i["filename"] for i in body["items"]] == ["son.mp3", "b.jpg"]
+        assert body["items"][0]["url"] == "/media/claude/son.mp3"
+        status, body = _get_json(web, "/api/media?kind=audio")
+        assert body["total"] == 1
+        assert body["items"][0]["kind"] == "audio"
+        status, body = _get_json(web, "/api/media?platform=grok&kind=image")
+        assert body["total"] == 2
+        status, body = _get_json(web, "/api/media?offset=2&limit=10")
+        assert len(body["items"]) == 1
+
+    def test_parametres_invalides_400(self, web):
+        for query in ("kind=bogus", "limit=0", "limit=9999", "offset=-1", "limit=abc"):
+            status, _ = _get_json(web, f"/api/media?{query}")
+            assert status == 400, query
+        status, _ = _get_json(web, "/api/media?platform=inconnu")
+        assert status == 400
+
+
+class TestStatus:
+    def test_index_scrape_et_sauvegardes(self, web):
+        store = serve_web.Handler.state.store()
+        _seed_messages(store, [
+            {"platform": "grok", "conversation_id": "g1",
+             "timestamp": "2026-01-01T10:00:00Z"},
+        ])
+        _seed_conversations(store, [
+            {"platform": "grok", "conversation_id": "g1",
+             "indexed_at": "2026-01-02T00:00:00Z"},
+        ])
+        status, body = _get_json(web, "/api/status")
+        assert status == 200
+        assert body["index"]["messages"] == 1
+        assert body["index"]["conversations"] == 1
+        assert body["index"]["indexed_at"] == "2026-01-02T00:00:00Z"
+        assert body["index"]["db_bytes"] > 0
+        assert body["backups"] == []
+        grok = next(s for s in body["scrape"] if s["platform"] == "grok")
+        assert grok["conversations"] == 1
+        assert grok["last_message_at"] == "2026-05-01T09:01:00Z"  # fixture
+        assert grok["scraped_at"]
+        assert grok["health"] is None  # pas de api_health.json
+
+    def test_sante_api_lue(self, web):
+        exports = serve_web.Handler.state.exports_dir
+        (exports / "grok" / "api_health.json").write_text(
+            json.dumps({
+                "platform": "grok", "n": 20, "matches": 19, "breaks": 1,
+                "drifts": 1, "mean_score": 98.2, "threshold": 95.0,
+                "updated_at": "2026-01-01T00:00:00Z",
+            }),
+            encoding="utf-8",
+        )
+        status, body = _get_json(web, "/api/status")
+        assert status == 200
+        health = next(s for s in body["scrape"] if s["platform"] == "grok")["health"]
+        assert health["rate"] == 95.0
+        assert health["breaks"] == 1
+        assert health["drifts"] == 1
+        assert health["updated_at"] == "2026-01-01T00:00:00Z"
+
+
+def _fake_recheck_runner(seen):
+    """Runner factice : aucun scrape pendant les tests."""
+    def runner(config, platform, per_platform, min_messages, seed,
+               orchestrator=None, log=print):
+        seen.append(platform)
+        return {
+            "platform": platform, "verdict": "ok", "retention": 1.0,
+            "checked": 1, "compared": 1, "ignored": 0, "ok": 1,
+            "degraded": 0, "failed": 0, "checked_at": "2026-01-01T00:00:00Z",
+            "conversations": [],
+        }
+    return runner
+
+
+def _install_fake_job(runner, suffix: str):
+    serve_web.Handler.state.recheck_job = serve_web.RecheckJob(
+        runner=runner,
+        lock_path=f"/tmp/aicv-test-{os.getpid()}-{suffix}.lock",
+        orchestrator_factory=lambda config: object(),
+    )
+    return serve_web.Handler.state.recheck_job
+
+
+class TestRecheckJobWeb:
+    def test_get_etat_initial(self, web):
+        status, body = _get_json(web, "/api/recheck")
+        assert status == 200
+        assert body["running"] is False
+        assert body["reports"] == []
+        assert body["log"] == []
+
+    def test_post_lance_le_test(self, web):
+        seen = []
+        job = _install_fake_job(_fake_recheck_runner(seen), "start")
+        status, body = _post_json(
+            web, "/api/recheck", {"platforms": ["grok"], "per_platform": 2}
+        )
+        assert status == 200
+        assert body["started"] is True
+        assert body["platforms"] == ["grok"]
+        job._thread.join(timeout=10)
+        status, body = _get_json(web, "/api/recheck")
+        assert body["running"] is False
+        assert [item["platform"] for item in body["done"]] == ["grok"]
+        assert seen == ["grok"]
+
+    def test_post_plateforme_inconnue_400(self, web):
+        status, body = _post_json(web, "/api/recheck", {"platforms": ["bogus"]})
+        assert status == 400
+        assert "plateforme" in body["error"]
+
+    def test_post_platforms_invalide_400(self, web):
+        status, _ = _post_json(web, "/api/recheck", {"platforms": "grok"})
+        assert status == 400
+        status, _ = _post_json(web, "/api/recheck", {"platforms": []})
+        assert status == 400
+
+    def test_post_parametres_invalides_400(self, web):
+        for payload in ({"per_platform": 0}, {"per_platform": 99},
+                        {"min_messages": 0}, {"min_messages": "beaucoup"}):
+            status, _ = _post_json(web, "/api/recheck", payload)
+            assert status == 400, payload
+
+    def test_post_deja_en_cours_409(self, web):
+        release = threading.Event()
+
+        def blocking(*args, **kwargs):
+            release.wait(timeout=5)
+            return None
+
+        job = _install_fake_job(blocking, "busy")
+        status, _ = _post_json(web, "/api/recheck", {"platforms": ["grok"]})
+        assert status == 200
+        status, body = _post_json(web, "/api/recheck", {"platforms": ["grok"]})
+        assert status == 409
+        assert "deja en cours" in body["error"]
+        release.set()
+        job._thread.join(timeout=5)
+
+    def test_corps_json_invalide_400(self, web):
+        request = urllib.request.Request(
+            web + "/api/recheck", data=b"{oups",
+            headers={"Content-Type": "application/json"}, method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                status = response.status
+        except urllib.error.HTTPError as exc:
+            status = exc.code
+        assert status == 400
+
+    def test_post_endpoint_inconnu_404(self, web):
+        status, _ = _post_json(web, "/api/inexistant", {})
+        assert status == 404
