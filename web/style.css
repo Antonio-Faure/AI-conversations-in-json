@@ -599,6 +599,7 @@ mark{background:var(--highlight);color:inherit;border-radius:3px;padding:0 2px}
   50%{box-shadow:0 0 0 6px color-mix(in srgb,#e0483f 30%,transparent)}
 }
 .health-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.heat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
 .status-list{display:flex;flex-direction:column}
 .status-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0;
   border-bottom:1px solid var(--border);font-size:.8rem}

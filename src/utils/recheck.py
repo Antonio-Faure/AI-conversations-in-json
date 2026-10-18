@@ -12,10 +12,10 @@ from __future__ import annotations
 
 import json
 import random
-import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
+from .background_job import BackgroundJob
 from .etalon import conversation_metrics, regressions
 from .file_utils import (
     CONVERSATION_LIST_NAME,
@@ -31,8 +31,6 @@ MIN_MESSAGES = 8
 PER_PLATFORM = 3
 #: sous ce taux de messages retrouves, la plateforme est declaree critique
 CRITICAL_RETENTION = 0.5
-#: verrou partage avec le cron (evite deux scrapes sur les memes profils)
-RUN_LOCK_PATH = "/tmp/aicv-run.lock"
 
 #: taille minimale (messages) pour qu'une conversation soit un bon canari
 MIN_MESSAGES = 8
@@ -331,79 +329,16 @@ def run_platform_recheck(
 
 # -- execution en tache de fond (page web, serveur MCP) -----------------------
 
-def _make_orchestrator(config: Dict[str, Any]):
-    from ..orchestrator import Orchestrator
-
-    return Orchestrator(config)
-
-
-def _acquire_run_lock(path: str):
-    """Verrou partage avec le cron (None si un scrape tourne deja)."""
-    try:
-        import fcntl
-
-        handle = open(path, "w")
-        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except OSError:
-        try:
-            handle.close()
-        except (NameError, OSError):
-            pass
-        return None
-    return handle
-
-
-def _release_run_lock(handle) -> None:
-    if handle is None:
-        return
-    try:
-        import fcntl
-
-        fcntl.flock(handle, fcntl.LOCK_UN)
-    except OSError:
-        pass
-    handle.close()
-
-
-class RecheckJob:
+class RecheckJob(BackgroundJob):
     """Controle de parseur en tache de fond (un seul job a la fois).
 
-    Le verrou `lock_path` est celui du cron (`/tmp/aicv-run.lock`) : un test
-    refuse de demarrer pendant un scrape, et inversement, pour ne pas partager
-    les profils navigateur.
+    Le verrou est celui du cron (`/tmp/aicv-run.lock`) : un test refuse de
+    demarrer pendant un scrape, et inversement.
     """
 
-    def __init__(
-        self,
-        runner: Optional[Callable[..., Any]] = None,
-        lock_path: str = RUN_LOCK_PATH,
-        orchestrator_factory: Optional[Callable[[Dict[str, Any]], Any]] = None,
-    ):
-        self._runner = runner or run_platform_recheck
-        self._lock_path = lock_path
-        self._make_orchestrator = orchestrator_factory or _make_orchestrator
-        self._lock = threading.Lock()
-        self._thread: Optional[threading.Thread] = None
-        self._state: Dict[str, Any] = {
-            "running": False,
-            "started_at": None,
-            "finished_at": None,
-            "platforms": [],
-            "done": [],
-            "per_platform": PER_PLATFORM,
-            "min_messages": MIN_MESSAGES,
-            "seed": 0,
-            "error": None,
-            "log": [],
-        }
-
-    def snapshot(self) -> Dict[str, Any]:
-        """Etat courant (les 40 dernieres lignes de journal)."""
-        with self._lock:
-            state = dict(self._state)
-            state["log"] = list(self._state["log"])[-40:]
-            state["done"] = list(self._state["done"])
-            return state
+    label = "controle de parseur"
+    options = {"per_platform": PER_PLATFORM, "min_messages": MIN_MESSAGES, "seed": 0}
+    default_runner = staticmethod(run_platform_recheck)
 
     def start(
         self,
@@ -413,84 +348,36 @@ class RecheckJob:
         min_messages: int = MIN_MESSAGES,
         seed: int = 0,
     ) -> Dict[str, Any]:
-        """Lance le test ; leve RuntimeError si un test tourne deja."""
-        with self._lock:
-            if self._state["running"]:
-                raise RuntimeError("un controle de parseur est deja en cours")
-            self._state.update({
-                "running": True,
-                "started_at": now_iso_z(),
-                "finished_at": None,
-                "platforms": list(platforms),
-                "done": [],
-                "error": None,
-                "log": [],
-                "per_platform": per_platform,
-                "min_messages": min_messages,
-                "seed": seed,
-            })
-        self._thread = threading.Thread(
-            target=self._run,
-            args=(config, list(platforms), per_platform, min_messages, seed),
-            daemon=True,
+        return super().start(
+            config, platforms,
+            per_platform=per_platform, min_messages=min_messages, seed=seed,
         )
-        self._thread.start()
-        return self.snapshot()
 
-    def _log(self, message: Any) -> None:
-        with self._lock:
-            self._state["log"].append(str(message))
-
-    def _run(self, config, platforms, per_platform, min_messages, seed) -> None:
-        lock = _acquire_run_lock(self._lock_path)
-        try:
-            if lock is None:
-                self._log("un scrape est en cours (verrou occupe) : test annule")
-                with self._lock:
-                    self._state["error"] = "scrape en cours"
-                return
-            orchestrator = self._make_orchestrator(config)
-            for platform in platforms:
-                self._log(f"{platform}:")
-                report = self._runner(
-                    config, platform, per_platform, min_messages, seed,
-                    orchestrator=orchestrator, log=self._log,
-                )
-                if report:
-                    with self._lock:
-                        self._state["done"].append({
-                            "platform": platform,
-                            "verdict": report.get("verdict"),
-                            "retention": report.get("retention"),
-                            "checked": report.get("checked"),
-                            "compared": report.get("compared"),
-                            "ignored": report.get("ignored"),
-                            "ok": report.get("ok"),
-                            "degraded": report.get("degraded"),
-                            "failed": report.get("failed"),
-                            "checked_at": report.get("checked_at"),
-                            "issues": [
-                                {
-                                    "title": item.get("title")
-                                    or item.get("conversation_id"),
-                                    "status": item.get("status"),
-                                    "reason": item.get("error")
-                                    or ", ".join(item.get("lost") or [])
-                                    or None,
-                                    "retention": item.get("retention"),
-                                    "old_messages": item.get("old_messages"),
-                                    "new_messages": item.get("new_messages"),
-                                }
-                                for item in (report.get("conversations") or [])
-                                if item.get("status") != "ok"
-                            ],
-                        })
-        except Exception as exc:  # noqa: BLE001
-            self._log(f"erreur: {type(exc).__name__}: {exc}")
-            with self._lock:
-                self._state["error"] = f"{type(exc).__name__}: {exc}"[:200]
-        finally:
-            _release_run_lock(lock)
-            with self._lock:
-                self._state["running"] = False
-                self._state["finished_at"] = now_iso_z()
+    def format_done(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+        """Resultat compact d'une plateforme (verdict + defaillances)."""
+        return {
+            "platform": entry.get("platform"),
+            "verdict": entry.get("verdict"),
+            "retention": entry.get("retention"),
+            "checked": entry.get("checked"),
+            "compared": entry.get("compared"),
+            "ignored": entry.get("ignored"),
+            "ok": entry.get("ok"),
+            "degraded": entry.get("degraded"),
+            "failed": entry.get("failed"),
+            "checked_at": entry.get("checked_at"),
+            "issues": [
+                {
+                    "title": item.get("title") or item.get("conversation_id"),
+                    "status": item.get("status"),
+                    "reason": item.get("error")
+                    or ", ".join(item.get("lost") or [])
+                    or None,
+                    "retention": item.get("retention"),
+                    "old_messages": item.get("old_messages"),
+                    "new_messages": item.get("new_messages"),
+                }
+                for item in (entry.get("conversations") or [])
+                if item.get("status") != "ok"
+            ],
+        }

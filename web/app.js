@@ -713,6 +713,10 @@ function heatmapHtml(data) {
   }
   const total = Object.values(days).reduce((sum, n) => sum + n, 0);
   return `
+    <div class="heat-head">
+      <span class="status-meta">${total} messages sur 365 jours</span>
+      <button class="btn ghost btn-sm" type="button" id="dailyBtn">Lancer un daily</button>
+    </div>
     <div class="heatmap-scroll">
       <div class="heatmap">
         <div class="hm-months" style="--weeks:${weeks}" aria-hidden="true">${months.map((m) => `<span>${m}</span>`).join("")}</div>
@@ -729,10 +733,12 @@ function heatmapHtml(data) {
     </div>`;
 }
 
-/* les cases actives ouvrent la vue « journée » */
+/* les cases actives ouvrent la vue « journée » ; le bouton lance un daily */
 function bindHeatmap(root) {
   root.querySelectorAll(".hm-btn").forEach((btn) =>
     btn.addEventListener("click", () => openDay(btn.dataset.date)));
+  const button = root.querySelector("#dailyBtn");
+  if (button) button.addEventListener("click", openDailyPage);
 }
 
 /* -- vue « journée » : messages d'une date (clic sur une case de la heatmap) -- */
@@ -1940,6 +1946,168 @@ function renderGallery() {
       if (e.target.closest("audio, video, a")) return;
       openConversation(card.dataset.platform, card.dataset.id, card.dataset.mid || null);
     }));
+}
+
+/* ---------- page « Scrape quotidien » (comme run.py --daily) ---------- */
+const dailyRun = {
+  platforms: new Set(),
+  running: false,
+  poll: null,
+};
+
+function openDailyPage() {
+  state.view = "daily";
+  state.conversation = null;
+  state.groups = [];
+  setHomeSidebar(true);
+  if (!dailyRun.platforms.size) {
+    dailyRun.platforms = new Set(Object.keys(PLATFORM_LABEL));
+  }
+  renderDailyPage();
+  loadDailyState();
+}
+
+function stopDailyPolling() {
+  if (dailyRun.poll) { clearInterval(dailyRun.poll); dailyRun.poll = null; }
+}
+
+function startDailyPolling() {
+  stopDailyPolling();
+  dailyRun.poll = setInterval(async () => {
+    if (!$("dailyState")) { stopDailyPolling(); return; } // page quittée
+    await loadDailyState();
+    if (!dailyRun.running) stopDailyPolling();
+  }, 2500);
+}
+
+function renderDailyPage() {
+  const chips = Object.keys(PLATFORM_LABEL).map((platform) => `
+    <button class="chip${dailyRun.platforms.has(platform) ? " active" : ""}" type="button"
+      data-daily-platform="${platform}">${escapeHtml(platformName(platform))}</button>`).join("");
+  $("main").innerHTML = `<div class="parse-test">
+    <div class="conv-head">
+      <div>
+        <h2>Scrape quotidien</h2>
+        <p class="section-note">Même routine que <code>run.py --daily</code> : conversations
+        inconnues + les 20 plus récentes de chaque chatbot. Les conversations déjà à jour
+        ne sont pas réécrites.</p>
+      </div>
+      <button class="btn ghost" type="button" id="dailyBack">← Retour</button>
+    </div>
+    <div class="panel">
+      <div class="test-form">
+        <div class="test-platforms">
+          <span class="filter-label">Chatbots à scraper</span>
+          <div class="chip-list">${chips}</div>
+        </div>
+        <button class="btn" type="button" id="dailyStart">Lancer le daily</button>
+      </div>
+      <div id="dailyState" class="test-state"></div>
+    </div>
+  </div>`;
+  $("dailyBack").addEventListener("click", () => { stopDailyPolling(); loadHome(); });
+  $("dailyStart").addEventListener("click", startDaily);
+  $("main").querySelectorAll("[data-daily-platform]").forEach((chip) =>
+    chip.addEventListener("click", () => {
+      const platform = chip.dataset.dailyPlatform;
+      if (dailyRun.platforms.has(platform)) dailyRun.platforms.delete(platform);
+      else dailyRun.platforms.add(platform);
+      chip.classList.toggle("active", dailyRun.platforms.has(platform));
+    }));
+}
+
+async function startDaily() {
+  const box = $("dailyState");
+  if (!dailyRun.platforms.size) {
+    if (box) sectionNote(box, "Choisis au moins un chatbot.");
+    return;
+  }
+  const button = $("dailyStart");
+  if (button) button.disabled = true;
+  try {
+    const response = await fetch("/api/scrape", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ platforms: [...dailyRun.platforms], mode: "daily" }),
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    dailyRun.running = true;
+    renderDailyState(data);
+    startDailyPolling();
+  } catch (err) {
+    renderDailyState({ error: err.message });
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+async function loadDailyState() {
+  try {
+    const data = await (await fetch("/api/scrape")).json();
+    dailyRun.running = !!data.running;
+    renderDailyState(data);
+    if (dailyRun.running) startDailyPolling();
+    else stopDailyPolling();
+  } catch (err) { /* silencieux : la page reste utilisable */ }
+}
+
+/* Badges par chatbot : « en cours… » tant que le scrape tourne, puis
+   OK / partiel / ignoré selon le bilan du run. */
+function renderDailyState(data) {
+  const box = $("dailyState");
+  if (!box) return;
+  if (data.error) {
+    box.innerHTML = `<p class="section-note">${escapeHtml(data.error)}</p>`;
+    return;
+  }
+  if (!data.started_at) {
+    box.innerHTML = `<p class="section-note">Aucun scrape lancé pour l'instant.</p>`;
+    return;
+  }
+  const steps = (data.platforms || []).map((platform) => {
+    const done = (data.done || []).find((item) => item.platform === platform);
+    let cls = "unknown";
+    let label = "—";
+    if (done) {
+      if (done.skipped) {
+        cls = "warn";
+        label = `ignoré (${done.skipped})`;
+      } else if (done.failed) {
+        cls = "warn";
+        label = `${done.exported} écrite(s) · ${done.failed} échec(s)`;
+      } else {
+        cls = "ok";
+        label = `OK · ${done.exported} écrite(s)`;
+      }
+    } else if (data.running) {
+      cls = "running";
+      label = "en cours…";
+    }
+    return `<span class="test-step ${cls}">${escapeHtml(platformName(platform))} · ${escapeHtml(label)}</span>`;
+  }).join("");
+  const rows = (data.done || []).map((item) => {
+    const badge = item.skipped ? "ignoré" : (item.failed ? "partiel" : "OK");
+    const cls = item.skipped || item.failed ? "warn" : "ok";
+    return `<div class="status-row">
+      <span class="status-platform">${escapeHtml(platformName(item.platform))}</span>
+      <span class="status-badge ${cls}">${badge}</span>
+      <span class="status-meta">${item.discovered} découvertes · ${item.targets} cible${item.targets > 1 ? "s" : ""}</span>
+      <span class="status-meta">${item.exported} écrite${item.exported > 1 ? "s" : ""}${item.patched ? ` (dont ${item.patched} patchée${item.patched > 1 ? "s" : ""})` : ""}</span>
+      <span class="status-meta">${item.failed} échec${item.failed > 1 ? "s" : ""}</span>
+    </div>`;
+  }).join("");
+  const log = (data.log || []).slice(-16)
+    .map((line) => `<div class="test-log-line">${escapeHtml(line)}</div>`).join("");
+  const status = data.running
+    ? `Scrape en cours depuis ${escapeHtml(relativeAge(data.started_at))}…`
+    : `Terminé ${escapeHtml(relativeAge(data.finished_at))}.`;
+  box.innerHTML = `<div class="test-steps">${steps}</div>
+    <p class="section-note">${status}</p>
+    ${rows ? `<div class="status-list">${rows}</div>` : ""}
+    <details class="test-log"${data.running ? " open" : ""}>
+      <summary>Journal</summary><div class="test-log-body">${log || "<em>—</em>"}</div>
+    </details>`;
 }
 
 /* ---------- page « Test des parseurs » (re-scrape + rapport) ---------- */

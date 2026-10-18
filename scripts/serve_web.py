@@ -18,6 +18,10 @@ Sert la page web (web/) et une petite API JSON :
     (etat du controle de parseur en cours + derniers rapports `recheck.json`)
   - POST /api/recheck {"platforms": [...], "per_platform": 3, "min_messages": 8}
     (lance un controle de parseur en tache de fond — page « Test des parseurs »)
+  - GET /api/scrape
+    (etat du scrape a la demande : en cours, journal, bilan par plateforme)
+  - POST /api/scrape {"platforms": [...], "mode": "daily", "limit": null}
+    (lance un scrape en tache de fond — page « Scrape quotidien »)
   - GET /api/day?date=AAAA-MM-JJ
   - GET /api/search?q=&k=&alpha=&platforms=&model=&date_from=&date_to=&media_k=
     (q vide + au moins un critere = recherche par criteres seuls, sans score ;
@@ -62,6 +66,7 @@ from src.utils.recheck import (  # noqa: E402
     RecheckJob,
     read_report,
 )
+from src.utils.scrape_job import DEFAULT_MODE, ScrapeJob  # noqa: E402
 from src.utils.urls import conversation_url  # noqa: E402
 
 WEB_DIR = ROOT / "web"
@@ -273,6 +278,8 @@ class AppState:
         self.api_lock = threading.Lock()
         #: controle de parseur lance depuis la page de test (un seul a la fois)
         self.recheck_job = RecheckJob()
+        #: scrape a la demande lance depuis la page (un seul a la fois)
+        self.scrape_job = ScrapeJob()
 
     def store(self) -> VectorStore:
         with self._lock:
@@ -400,6 +407,8 @@ class Handler(BaseHTTPRequestHandler):
             body = self._read_json_body()
             if path == "/api/recheck":
                 self._send_json(self._start_recheck(body))
+            elif path == "/api/scrape":
+                self._send_json(self._start_scrape(body))
             else:
                 self._send_json({"error": "unknown endpoint"}, 404)
         except BrokenPipeError:
@@ -474,6 +483,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(self._status())
             elif path == "/api/recheck":
                 self._send_json(self._recheck_status())
+            elif path == "/api/scrape":
+                self._send_json(self._scrape_status())
             elif path == "/api/day":
                 self._send_json(self._day(params))
             elif path == "/api/search":
@@ -863,6 +874,40 @@ class Handler(BaseHTTPRequestHandler):
         try:
             state = self.state.recheck_job.start(
                 self.state.config, platforms, per_platform, min_messages, seed,
+            )
+        except RuntimeError as exc:
+            raise ApiError(str(exc), 409) from exc
+        return {"started": True, **state}
+
+    def _scrape_status(self):
+        """Etat du scrape a la demande (page « Scrape quotidien »)."""
+        return self.state.scrape_job.snapshot()
+
+    def _start_scrape(self, body):
+        """Lance un scrape (daily/monthly) en tache de fond."""
+        raw = body.get("platforms")
+        if raw is None:
+            platforms = list(PLATFORMS)
+        elif isinstance(raw, list):
+            platforms = [check_platform(str(name)) for name in raw]
+        else:
+            raise ApiError("platforms doit etre une liste")
+        if not platforms:
+            raise ApiError("choisir au moins une plateforme")
+        mode = str(body.get("mode") or DEFAULT_MODE)
+        if mode not in ("daily", "monthly"):
+            raise ApiError("mode doit etre daily ou monthly")
+        limit = body.get("limit")
+        if limit is not None:
+            try:
+                limit = int(limit)
+            except (TypeError, ValueError) as exc:
+                raise ApiError("limit doit etre un entier") from exc
+            if not 1 <= limit <= 2000:
+                raise ApiError("limit doit etre entre 1 et 2000")
+        try:
+            state = self.state.scrape_job.start(
+                self.state.config, platforms, mode=mode, limit=limit,
             )
         except RuntimeError as exc:
             raise ApiError(str(exc), 409) from exc

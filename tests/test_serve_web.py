@@ -1004,3 +1004,82 @@ class TestRecheckJobWeb:
     def test_post_endpoint_inconnu_404(self, web):
         status, _ = _post_json(web, "/api/inexistant", {})
         assert status == 404
+
+
+def _fake_scrape_runner(seen):
+    """Runner de scrape factice : aucun scrape pendant les tests."""
+    def runner(config, platform, mode="daily", limit=None,
+               orchestrator=None, log=print):
+        seen.append((platform, mode, limit))
+        return {
+            "platform": platform, "mode": mode, "discovered": 5, "targets": 2,
+            "exported": 1, "patched": 0, "failed": 0, "skipped": None, "ok": True,
+        }
+    return runner
+
+
+def _install_fake_scrape_job(runner, suffix: str):
+    serve_web.Handler.state.scrape_job = serve_web.ScrapeJob(
+        runner=runner,
+        lock_path=f"/tmp/aicv-test-{os.getpid()}-{suffix}.lock",
+        orchestrator_factory=lambda config: object(),
+    )
+    return serve_web.Handler.state.scrape_job
+
+
+class TestScrapeJobWeb:
+    def test_get_etat_initial(self, web):
+        status, body = _get_json(web, "/api/scrape")
+        assert status == 200
+        assert body["running"] is False
+        assert body["mode"] == "daily"
+        assert body["done"] == []
+        assert body["log"] == []
+
+    def test_post_lance_le_daily(self, web):
+        seen = []
+        job = _install_fake_scrape_job(_fake_scrape_runner(seen), "daily")
+        status, body = _post_json(
+            web, "/api/scrape", {"platforms": ["grok", "claude"], "mode": "daily"}
+        )
+        assert status == 200
+        assert body["started"] is True
+        assert body["platforms"] == ["grok", "claude"]
+        job._thread.join(timeout=10)
+        status, body = _get_json(web, "/api/scrape")
+        assert body["running"] is False
+        assert [item["platform"] for item in body["done"]] == ["grok", "claude"]
+        assert body["done"][0]["exported"] == 1
+        assert seen == [("grok", "daily", None), ("claude", "daily", None)]
+
+    def test_post_plateforme_inconnue_400(self, web):
+        status, body = _post_json(web, "/api/scrape", {"platforms": ["bogus"]})
+        assert status == 400
+        assert "plateforme" in body["error"]
+
+    def test_post_parametres_invalides_400(self, web):
+        for payload in (
+            {"platforms": "grok"},
+            {"platforms": []},
+            {"mode": "hebdo"},
+            {"limit": 0},
+            {"limit": "beaucoup"},
+        ):
+            status, _ = _post_json(web, "/api/scrape", payload)
+            assert status == 400, payload
+
+    def test_post_deja_en_cours_409(self, web):
+        release = threading.Event()
+
+        def blocking(*args, **kwargs):
+            release.wait(timeout=5)
+            return None
+
+        job = _install_fake_scrape_job(blocking, "busy")
+        status, _ = _post_json(web, "/api/scrape", {"platforms": ["grok"]})
+        assert status == 200
+        status, body = _post_json(web, "/api/scrape", {"platforms": ["grok"]})
+        assert status == 409
+        assert "deja en cours" in body["error"]
+        release.set()
+        job._thread.join(timeout=5)
