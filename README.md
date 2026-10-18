@@ -406,6 +406,8 @@ stdio** (SDK officiel `mcp` v2), enregistré dans la config globale opencode sou
 | `stats` | compteurs par plateforme + fraîcheur de l'index |
 | `recheck_parsers` | **contrôle de santé des parseurs** : re-scrape un échantillon aléatoire (`platforms`, `per_platform`, `min_messages`) et compare à l'archive ; `wait=true` attend la fin et rend le rapport |
 | `recheck_status` | état du contrôle en cours + derniers rapports par plateforme (verdict, rétention, défaillances) |
+| `scrape_conversations` | **scrape à la demande** : `mode` `daily`/`monthly`, `platforms`, `limit` ; `wait=true` attend la fin et rend le bilan |
+| `scrape_status` | état du scrape en cours (journal) + bilan par plateforme (écrites, échecs) |
 
 ```bash
 # lancer le serveur à la main (stdio : stdout = JSON-RPC, logs sur stderr)
@@ -462,6 +464,10 @@ navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
   dans le panneau « Activité », avec le bouton **« Lancer un test »** ; l'**index
   et les sauvegardes** (compteurs, taille de la base, dernière sauvegarde) sont
   dans le bouton **ⓘ** de l'en-tête.
+- **Scrape à la demande** : le bouton **« Lancer un daily »** de la partie
+  « Activité » ouvre la page *Scrape quotidien* — choix des chatbots, badges
+  **en cours…** / **OK · N écrite(s)** par plateforme, journal en direct et bilan
+  du run (mêmes règles que `run.py --daily`, même verrou que le cron).
 - **Accueil (tableau de bord)** : trois panneaux rotatifs (une partie toutes les
   5 minutes, flèches et pastilles) — **Activité** (heatmap 365 jours, clic sur un
   jour → vue « journée », qui alterne avec la **santé des scrapers**),
@@ -487,8 +493,9 @@ navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
 L'API locale (même serveur) : `/api/search`, `/api/conversation`,
 `/api/conversations`, `/api/random`, `/api/filters`, `/api/stats`,
 `/api/activity`, `/api/timeline`, `/api/similar`, `/api/media`, `/api/status`,
-`/api/day`, `GET`/`POST /api/recheck` (contrôle de parseur). Le modèle
-d'embeddings se charge au premier appel (quelques secondes).
+`/api/day`, plus `GET`/`POST /api/recheck` (contrôle de parseur) et
+`GET`/`POST /api/scrape` (scrape à la demande). Le modèle d'embeddings se charge
+au premier appel (quelques secondes).
 
 ## Optimisations écriture & compute
 

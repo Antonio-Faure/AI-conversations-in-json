@@ -207,9 +207,10 @@ class ConversationTools:
         self.model_dim = model_dim(self.model_name, config.get("rag_dim"))
         self._store = store
         self._embedder = embedder
-        #: config complete (le controle des parseurs relance un scrape)
+        #: config complete (les jobs relancent un scrape)
         self.config = config
         self._recheck_job = None
+        self._scrape_job_instance = None
         # l'index sqlite et le modele ne supportent pas l'acces concurrent
         self._lock = threading.Lock()
 
@@ -258,7 +259,13 @@ class ConversationTools:
             )
         return platform
 
-    # -- controle des parseurs (re-scrape aleatoire vs archive) -----------------
+    # -- jobs (scrape a la demande, controle des parseurs) ---------------------
+
+    def _job_platforms(self, platforms: Optional[List[str]]) -> List[str]:
+        """Plateformes demandees (validees), sinon toutes celles disponibles."""
+        names = [self._check_platform(name) for name in (platforms or []) if name]
+        names = [name for name in names if name]
+        return names or self.platforms()
 
     def _recheck(self):
         """Job de controle des parseurs (un seul a la fois, en tache de fond)."""
@@ -268,11 +275,6 @@ class ConversationTools:
             self._recheck_job = RecheckJob()
         return self._recheck_job
 
-    def _recheck_platforms(self, platforms: Optional[List[str]]) -> List[str]:
-        names = [self._check_platform(name) for name in (platforms or []) if name]
-        names = [name for name in names if name]
-        return names or self.platforms()
-
     def recheck_start(
         self,
         platforms: Optional[List[str]] = None,
@@ -280,7 +282,7 @@ class ConversationTools:
         min_messages: int = 8,
     ) -> Dict[str, Any]:
         """Lance un controle de parseur en tache de fond."""
-        names = self._recheck_platforms(platforms)
+        names = self._job_platforms(platforms)
         if not names:
             raise ConversationToolError("aucune plateforme disponible")
         try:
@@ -329,6 +331,65 @@ class ConversationTools:
             if report:
                 reports.append(report)
         return {**state, "reports": reports}
+
+    # -- scrape a la demande (page web / agent) --------------------------------
+
+    def _scrape(self):
+        """Job de scrape a la demande (un seul a la fois, en tache de fond)."""
+        if self._scrape_job_instance is None:
+            from src.utils.scrape_job import ScrapeJob
+
+            self._scrape_job_instance = ScrapeJob()
+        return self._scrape_job_instance
+
+    def scrape_start(
+        self,
+        platforms: Optional[List[str]] = None,
+        mode: str = "daily",
+        limit: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Lance un scrape (`daily`/`monthly`) en tache de fond."""
+        names = self._job_platforms(platforms)
+        if not names:
+            raise ConversationToolError("aucune plateforme disponible")
+        mode = str(mode or "daily")
+        if mode not in ("daily", "monthly"):
+            raise ConversationToolError("mode doit etre daily ou monthly")
+        try:
+            limit = None if limit is None else max(1, min(int(limit), 2000))
+        except (TypeError, ValueError) as exc:
+            raise ConversationToolError("limit doit etre un entier") from exc
+        try:
+            state = self._scrape().start(
+                self.config, names, mode=mode, limit=limit
+            )
+        except RuntimeError as exc:
+            raise ConversationToolError(str(exc)) from exc
+        return {"started": True, **state}
+
+    def scrape_wait(
+        self,
+        platforms: Optional[List[str]] = None,
+        mode: str = "daily",
+        limit: Optional[int] = None,
+        timeout: int = 600,
+    ) -> Dict[str, Any]:
+        """Lance un scrape et attend la fin (borne par `timeout` secondes)."""
+        self.scrape_start(platforms, mode, limit)
+        job = self._scrape()
+        try:
+            deadline = time.monotonic() + max(10, min(int(timeout or 600), 3600))
+        except (TypeError, ValueError):
+            deadline = time.monotonic() + 600
+        while job.snapshot()["running"] and time.monotonic() < deadline:
+            time.sleep(1.0)
+        state = self.scrape_state()
+        state["timed_out"] = bool(job.snapshot()["running"])
+        return state
+
+    def scrape_state(self) -> Dict[str, Any]:
+        """Etat du scrape a la demande (journal + bilan par plateforme)."""
+        return self._scrape().snapshot()
 
     def _list_index(self, platform: str) -> Dict[str, Dict[str, Any]]:
         return load_conversation_list(
@@ -972,13 +1033,30 @@ RECHECK_STATUS_DESCRIPTION = (
     "defaillances)."
 )
 
+SCRAPE_DESCRIPTION = (
+    "Lance un scrape a la demande (meme routine que `run.py`) : mode `daily` "
+    "(conversations inconnues + les 20 plus recentes) ou `monthly` (toutes). "
+    "Parametres : `platforms` (defaut : toutes), `limit` (maxi de conversations "
+    "par plateforme). Le scrape ecrit dans l'archive et tourne en tache de "
+    "fond ; avec `wait=true` l'appel attend la fin (borne par `timeout` "
+    "secondes, defaut 600) et rend le bilan. Sinon suivre avec `scrape_status`. "
+    "Un seul scrape a la fois (verrou partage avec le cron) : si un run est en "
+    "cours, l'appel echoue avec un message clair."
+)
+
+SCRAPE_STATUS_DESCRIPTION = (
+    "Etat du scrape a la demande lance par `scrape_conversations` : en cours ou "
+    "termine, journal, et bilan par plateforme (conversations decouvertes, "
+    "cibles, ecrites, patchees, echecs)."
+)
+
 
 def _dump(payload: Any) -> str:
     return json.dumps(payload, ensure_ascii=False, indent=1, default=str)
 
 
 def build_server(tools: ConversationTools):
-    """Serveur MCP (SDK officiel `mcp`) : 8 outils au-dessus de ConversationTools."""
+    """Serveur MCP (SDK officiel `mcp`) : 10 outils au-dessus de ConversationTools."""
     try:
         from mcp.server.mcpserver import MCPServer
         from mcp.server.mcpserver.exceptions import ToolError
@@ -1095,6 +1173,27 @@ def build_server(tools: ConversationTools):
     @server.tool(description=RECHECK_STATUS_DESCRIPTION)
     def recheck_status() -> str:
         return call(tools.recheck_state)
+
+    @server.tool(description=SCRAPE_DESCRIPTION)
+    def scrape_conversations(
+        platforms: Optional[List[str]] = None,
+        mode: str = "daily",
+        limit: Optional[int] = None,
+        wait: bool = False,
+        timeout: int = 600,
+    ) -> str:
+        if wait:
+            return call(
+                tools.scrape_wait,
+                platforms=platforms, mode=mode, limit=limit, timeout=timeout,
+            )
+        return call(
+            tools.scrape_start, platforms=platforms, mode=mode, limit=limit
+        )
+
+    @server.tool(description=SCRAPE_STATUS_DESCRIPTION)
+    def scrape_status() -> str:
+        return call(tools.scrape_state)
 
     return server
 

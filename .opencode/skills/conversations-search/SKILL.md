@@ -1,6 +1,6 @@
 ---
 name: conversations-search
-description: Recherche dans les conversations IA archivees (chatgpt, claude, gemini, perplexity, grok, mistral) via le serveur MCP `aicv` (search/grep/get_conversation/get_message/list_conversations/stats/recheck_parsers/recheck_status) ou en repli les scripts RAG. Use when looking up what was said in past AI conversations, searching the local conversation archive, finding a conversation/message by text or URL, checking RAG index freshness, or running a parser health check (re-scrape a random sample and compare with the archive).
+description: Recherche dans les conversations IA archivees (chatgpt, claude, gemini, perplexity, grok, mistral) via le serveur MCP `aicv` (search/grep/get_conversation/get_message/list_conversations/stats/recheck_parsers/recheck_status/scrape_conversations/scrape_status) ou en repli les scripts RAG. Use when looking up what was said in past AI conversations, searching the local conversation archive, finding a conversation/message by text or URL, checking RAG index freshness, running a parser health check (re-scrape a random sample and compare with the archive), or launching an on-demand scrape (daily/monthly).
 ---
 
 # Recherche dans les conversations archivees
@@ -58,6 +58,14 @@ En Code Mode opencode : `tools.aicv.search(...)`, `tools.aicv.grep(...)`, etc.
 - **`recheck_status()`** : etat du controle (en cours ou termine, journal) et
   derniers rapports par plateforme (verdict `ok`/`attention`/`critique`, taux de
   messages retrouves, liste des defaillances avec la raison).
+- **`scrape_conversations(platforms=None, mode="daily", limit=None, wait=False, timeout=600)`** :
+  **scrape a la demande** (meme routine que `run.py`) — `daily` (inconnues + les
+  20 plus recentes) ou `monthly` (toutes). Le scrape **ecrit dans l'archive** et
+  tourne en tache de fond ; avec `wait=True` l'appel attend la fin et rend le
+  bilan. Un seul scrape a la fois (verrou du cron) : si un run est en cours,
+  l'appel echoue.
+- **`scrape_status()`** : etat du scrape (en cours ou termine, journal) et bilan
+  par plateforme (decouvertes, cibles, ecrites, patchees, echecs).
 
 ## Methode
 
@@ -93,6 +101,7 @@ En Code Mode opencode : `tools.aicv.search(...)`, `tools.aicv.grep(...)`, etc.
 .venv/bin/python scripts/rag_index.py [--platform grok] [--force]   # mise a jour de l'index
 .venv/bin/python scripts/rag_index.py --force                        # reindexation complete
 .venv/bin/python scripts/recheck.py --per-platform 3 --report        # controle des parseurs
+.venv/bin/python run.py --daily [--service grok]                     # scrape a la demande
 ```
 
 - `rag_search.py` = cosinus pur (pas de fusion mots-cles ni de regroupement par

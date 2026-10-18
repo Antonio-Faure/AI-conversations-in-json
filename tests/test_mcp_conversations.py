@@ -526,6 +526,8 @@ def test_handshake_stdio_et_appels_outils(env):
                     "list_conversations",
                     "recheck_parsers",
                     "recheck_status",
+                    "scrape_conversations",
+                    "scrape_status",
                     "search",
                     "stats",
                 ]
@@ -666,3 +668,56 @@ def test_recheck_etat_lit_les_rapports(env):
     assert len(report["issues"]) == 1
     assert report["issues"][0]["reason"] == "images: 3 -> 1"
     assert report["issues"][0]["old_messages"] == 5
+
+
+# -- scrape a la demande (job injecte : aucun scrape pendant les tests) -------
+
+def _install_fake_scrape_job(env, runner):
+    from src.utils.scrape_job import ScrapeJob
+
+    env.tools._scrape_job_instance = ScrapeJob(
+        runner=runner,
+        lock_path=str(env.tmp_path / "run.lock"),
+        orchestrator_factory=lambda config: object(),
+    )
+    return env.tools._scrape_job_instance
+
+
+def test_scrape_start_et_etat(env):
+    seen = []
+
+    def runner(config, platform, mode="daily", limit=None,
+               orchestrator=None, log=print):
+        seen.append((platform, mode, limit))
+        return {
+            "platform": platform, "mode": mode, "discovered": 5, "targets": 2,
+            "exported": 1, "patched": 0, "failed": 0, "skipped": None, "ok": True,
+        }
+
+    job = _install_fake_scrape_job(env, runner)
+    state = env.tools.scrape_start(["alpha"], mode="daily")
+    assert state["started"] is True
+    assert state["platforms"] == ["alpha"]
+    job._thread.join(timeout=10)
+    snapshot = env.tools.scrape_state()
+    assert snapshot["running"] is False
+    assert [item["platform"] for item in snapshot["done"]] == ["alpha"]
+    assert snapshot["done"][0]["exported"] == 1
+    assert seen == [("alpha", "daily", None)]
+
+
+def test_scrape_mode_invalide(env):
+    with pytest.raises(mcp_conversations.ConversationToolError):
+        env.tools.scrape_start(["alpha"], mode="hebdo")
+
+
+def test_scrape_plateforme_inconnue(env):
+    with pytest.raises(mcp_conversations.ConversationToolError):
+        env.tools.scrape_start(["inconnue"])
+
+
+def test_scrape_wait_attend_la_fin(env):
+    _install_fake_scrape_job(env, lambda *a, **k: None)
+    state = env.tools.scrape_wait(["alpha"], timeout=10)
+    assert state["running"] is False
+    assert state["timed_out"] is False

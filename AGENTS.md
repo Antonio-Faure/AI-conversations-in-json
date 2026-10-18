@@ -112,9 +112,16 @@ indisponibles).
 - **RAG** : `src/rag/` (EmbeddingGemma 2 768 dims — `rag_model`/`rag_dim`
   configurables — + SQLite/sqlite-vec, médias via `src/rag/media.py`), page web
   `web/`, serveur `scripts/serve_web.py`.
+- **Jobs à la demande** : `src/utils/background_job.py` (job en tâche de fond,
+  verrou partagé `src/utils/runlock.py`), `src/utils/scrape_job.py` (scrape
+  `daily`/`monthly` par plateforme) et `src/utils/recheck.py` (contrôle de
+  parseur). Exposés par `GET`/`POST /api/scrape` et `/api/recheck` (pages web
+  « Scrape quotidien » et « Test des parseurs ») et par les outils MCP
+  `recheck_parsers` / `recheck_status`.
 - **Serveur MCP** : `scripts/mcp_conversations.py` (SDK `mcp` v2, transport
   stdio ; outils `search`, `grep`, `get_conversation`, `get_message`,
-  `list_conversations`, `stats`, `recheck_parsers`, `recheck_status`),
+  `list_conversations`, `stats`, `recheck_parsers`, `recheck_status`,
+  `scrape_conversations`, `scrape_status`),
   enregistré sous `mcp.servers.aicv` dans la config globale opencode ; skill
   `.opencode/skills/conversations-search/`.
 
