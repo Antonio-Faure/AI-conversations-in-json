@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -28,13 +29,11 @@ class VectorStore:
         self.db_path = Path(db_path)
         ensure_dir(self.db_path.parent)
         self.requested_dim = int(dim)
-        # check_same_thread=False : le serveur web sert depuis plusieurs threads
-        # (acces serialise par le verrou du serveur).
-        self.db = sqlite3.connect(str(self.db_path), check_same_thread=False)
-        self.db.row_factory = sqlite3.Row
-        self.db.enable_load_extension(True)
-        sqlite_vec.load(self.db)
-        self.db.enable_load_extension(False)
+        # une connexion SQLite par thread : le serveur web sert plusieurs
+        # requetes en parallele et une connexion partagee n'est pas sure
+        # (curseurs/transactions Python non serialises, malgre SQLite en mode
+        # serialise). WAL permet les lecteurs concurrents.
+        self._local = threading.local()
         # la table vec_messages existante fait foi (on ne melange pas deux
         # dimensions dans une meme base ; un vecteur de mauvaise dimension est
         # rejete par sqlite-vec a l'insertion, avec un message explicite).
@@ -42,6 +41,31 @@ class VectorStore:
         self.dim = existing if existing is not None else self.requested_dim
         self._create_schema()
         self._restrict_permissions()
+
+    @property
+    def db(self) -> sqlite3.Connection:
+        """Connexion du thread courant (creee a la demande)."""
+        conn = getattr(self._local, "db", None)
+        if conn is None:
+            conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            conn.enable_load_extension(True)
+            sqlite_vec.load(conn)
+            conn.enable_load_extension(False)
+            # un scrape peut ecrire pendant qu'une recherche lit (WAL)
+            conn.execute("PRAGMA busy_timeout=5000")
+            self._local.db = conn
+        return conn
+
+    def close_thread_db(self) -> None:
+        """Ferme la connexion du thread courant (fin de connexion HTTP)."""
+        conn = getattr(self._local, "db", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except sqlite3.Error:
+                pass
+            self._local.db = None
 
     def _restrict_permissions(self) -> None:
         """Base + WAL/SHM en 0600 (sqlite cree en 0644 selon l'umask).

@@ -16,7 +16,11 @@ CONVERSATION_LIST_NAME = "conversation_list.json"
 #: nom du rapport de forme API (non-conversation, meme dossier d'exports)
 API_HEALTH_NAME = "api_health.json"
 #: nom du rapport de controle de parseur (re-scrape aleatoire vs archive)
+#: taille maximale d'un JSON d'archive lu en memoire
+MAX_JSON_BYTES = 64 * 1024 * 1024
 RECHECK_NAME = "recheck.json"
+#: verdicts acceptes d'un rapport de controle (toute autre valeur -> "inconnu")
+VERDICTS = ("ok", "attention", "critique", "inconnu")
 #: noms des JSON non-conversation d'un dossier d'exports
 RESERVED_JSON_NAMES = frozenset(
     {CONVERSATION_LIST_NAME, API_HEALTH_NAME, RECHECK_NAME}
@@ -214,9 +218,28 @@ def read_json(path: Path, default: Any = None, *, strict: bool = False) -> Any:
     path = Path(path)
     if not path.exists():
         return default
+    # un lien (ou un FIFO) peut pointer hors archive ou bloquer la lecture :
+    # seuls les fichiers reguliers sans lien dur sont lus
+    try:
+        stat = path.stat()
+    except OSError as exc:
+        if strict:
+            raise
+        print(f"avertissement: JSON illisible {path} ({exc})", file=sys.stderr)
+        return default
+    if path.is_symlink() or not path.is_file() or stat.st_nlink != 1:
+        if strict:
+            raise ValueError(f"fichier non regulier: {path}")
+        print(f"avertissement: fichier non regulier ignore {path}", file=sys.stderr)
+        return default
+    if stat.st_size > MAX_JSON_BYTES:
+        if strict:
+            raise ValueError(f"fichier trop volumineux: {path}")
+        print(f"avertissement: JSON trop volumineux {path}", file=sys.stderr)
+        return default
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, RecursionError) as exc:
         if strict:
             raise
         print(f"avertissement: JSON illisible {path} ({exc})", file=sys.stderr)

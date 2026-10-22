@@ -1,0 +1,129 @@
+[Unit]
+Description=AI conversations — interface web (recherche, RAG, scrape)
+Documentation=file://%h/Documents/code/AI-conversations-in-json/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Documents/code/AI-conversations-in-json
+Environment=PYTHONUNBUFFERED=1
+ExecStart=%h/Documents/code/AI-conversations-in-json/.venv/bin/python scripts/serve_web.py --port 8766 --no-open --secure-cookies always
+# jamais expose directement : Tailscale publie l'acces en HTTPS
+Restart=on-failure
+RestartSec=5
+# le modele d'embeddings charge en memoire : laisser le temps a l'arret
+TimeoutStopSec=20
+
+# --- durcissement (defense en profondeur) -----------------------------------
+# Le service tourne deja sans privileges root ; ces reglages limitent ce qu'un
+# parseur, une dependance ou une faille pourraient atteindre s'ils etaient
+# compromis : ecriture confinee aux dossiers de travail, systeme et secrets en
+# lecture seule, secrets personnels inaccessible, pas de nouveaux privileges,
+# pas de peripheriques, plafonds memoire et taches.
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/Documents/code/AI-conversations-in-json/exports
+ReadWritePaths=%h/Documents/code/AI-conversations-in-json/rag
+ReadWritePaths=%h/Documents/code/AI-conversations-in-json/cookies
+ReadWritePaths=%h/Documents/code/AI-conversations-in-json/profiles
+ReadWritePaths=-%h/Documents/code/AI-conversations-in-json/.state
+ReadWritePaths=-%h/.cache/huggingface
+ReadWritePaths=-%h/.cache/torch
+# secrets/ n'est PAS monté en écriture : hash et secret de session sont créés
+# à l'installation (scripts/web_password.py) puis lus seulement par le service.
+# `ProtectHome=read-only` ne cache pas le contenu : on masque explicitement les
+# secrets personnels (une RCE ne doit pas lire les clés SSH ni le navigateur).
+InaccessiblePaths=-%h/.ssh
+InaccessiblePaths=-%h/.gnupg
+InaccessiblePaths=-%h/.config/google-chrome
+InaccessiblePaths=-%h/.config/chromium
+InaccessiblePaths=-%h/.config/BraveSoftware
+InaccessiblePaths=-%h/.mozilla
+InaccessiblePaths=-%h/.local/share/keyrings
+InaccessiblePaths=-%h/.password-store
+# secrets personnels hors perimetre du service (X11, docker, tokens d'agents)
+InaccessiblePaths=-%h/.Xauthority
+InaccessiblePaths=-%h/.docker
+InaccessiblePaths=-%h/.config/gh
+InaccessiblePaths=-%h/.local/share/opencode
+InaccessiblePaths=-%h/.config/Code
+InaccessiblePaths=-%h/.bash_history
+InaccessiblePaths=-%h/.cache/mozilla
+InaccessiblePaths=-/run/docker.sock
+InaccessiblePaths=-/run/user/1000/bus
+InaccessiblePaths=-/run/user/1000/openssh_agent
+# sockets vivants des agents de l'utilisateur (gnupg, keyring, pulse, at-spi,
+# systemd prive) : masquer les fichiers ne suffit pas, le socket reste joignable
+InaccessiblePaths=-/run/user/1000/gnupg
+InaccessiblePaths=-/run/user/1000/keyring
+InaccessiblePaths=-/run/user/1000/gcr
+InaccessiblePaths=-/run/user/1000/pulse
+InaccessiblePaths=-/run/user/1000/pipewire-0
+InaccessiblePaths=-/run/user/1000/at-spi
+InaccessiblePaths=-/run/user/1000/systemd/private
+InaccessiblePaths=-/run/user/1000/systemd/notify
+InaccessiblePaths=-/run/user/1000/dconf/user
+# sockets systeme joignables sans privilege (lecture tailnet, bus systeme...)
+InaccessiblePaths=-/run/tailscale/tailscaled.sock
+InaccessiblePaths=-/run/dbus/system_bus_socket
+InaccessiblePaths=-/run/avahi-daemon
+InaccessiblePaths=-/run/cups
+InaccessiblePaths=-/run/ssh-unix-local
+InaccessiblePaths=-/run/user/1000/speech-dispatcher
+InaccessiblePaths=-/run/user/1000/ICEauthority
+InaccessiblePaths=-/run/xrdp
+# configuration d'agents/outils contenant des identifiants
+InaccessiblePaths=-%h/.config/opencode
+InaccessiblePaths=-%h/.config/gh
+InaccessiblePaths=-%h/.config/himalaya
+InaccessiblePaths=-%h/.aws
+InaccessiblePaths=-%h/.kube
+InaccessiblePaths=-%h/.netrc
+InaccessiblePaths=-%h/Documents/code/calendar-synchronisation
+# copies de sauvegarde et coffres d'identifiants (le masquage par nom est
+# fragile : toute nouvelle copie doit etre ajoutee ici)
+InaccessiblePaths=-%h/.config/opencode.backup-v1
+InaccessiblePaths=-%h/.local/share/opencode.backup-v1
+InaccessiblePaths=-%h/.hermes
+InaccessiblePaths=-%h/.git-credentials
+InaccessiblePaths=-%h/.config/browseruse
+InaccessiblePaths=-/run/user/1000
+# projets voisins porteurs de secrets (.env, jetons OAuth) et sauvegardes de
+# l'archive : masques par nom, a completer si un nouveau projet en contient
+InaccessiblePaths=-%h/Documents/code/Kvasir
+InaccessiblePaths=-%h/Documents/code/mnemosyne
+InaccessiblePaths=-%h/Documents/code/vocabulary-learning
+InaccessiblePaths=-%h/Documents/code/youtube-shorts-pipeline
+InaccessiblePaths=-%h/Documents/code/automatismes-arena
+InaccessiblePaths=-%h/Documents/code/go-dashboard
+InaccessiblePaths=-%h/Documents/code/aicv-backup-20260928T082353Z
+InaccessiblePaths=-%h/Documents/code/client_secret_216388324186-o52r3trgj80m3981bd4anfbmf3n7cic4.apps.googleusercontent.com.json
+# /dev/shm partage avec l'hote : tmpfs prive pour le service
+TemporaryFileSystem=/dev/shm:rw,nosuid,nodev,mode=1777
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# l'utilisateur n'a de toute facon aucune capability ; on la rend explicite
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+KeyringMode=private
+UMask=0077
+# plafonds : le serveur borne ses threads (32) ; Chromium en lance davantage
+TasksMax=1024
+MemoryMax=8G
+MemorySwapMax=2G
+
+[Install]
+WantedBy=default.target

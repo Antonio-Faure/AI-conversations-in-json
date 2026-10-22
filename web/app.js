@@ -1,5 +1,21 @@
 "use strict";
 
+/* ---------- session ---------- */
+/* Toute reponse 401 (session expiree ou revoquee) ramene a la connexion. */
+(function guardSession() {
+  if (typeof window.fetch !== "function") return; // DOM minimal (tests)
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = function (...args) {
+    return nativeFetch(...args).then((response) => {
+      if (response.status === 401 && !window.location.pathname.startsWith("/login")) {
+        const next = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.replace(`/login?next=${next}`);
+      }
+      return response;
+    });
+  };
+})();
+
 const PLATFORM_LABEL = {
   chatgpt: "ChatGPT", claude: "Claude", gemini: "Gemini",
   perplexity: "Perplexity", grok: "Grok", mistral: "Mistral",
@@ -143,11 +159,15 @@ function renderMarkdown(text) {
 
 function resolveLocalImages(html, platform) {
   if (!html || !platform) return html;
-  // images et pieces jointes archivees -> route /media (exports/<plateforme>/)
-  const media = `"/media/${platform}/`;
-  return html
-    .replace(/(<img\b[^>]*?\bsrc=)["'](?:images|files)\//g, `$1${media}`)
-    .replace(/(<a\b[^>]*?\bhref=)["'](?:images|files)\//g, `$1${media}`);
+  // fail-closed : sans DOMPurify on ne reecrit rien (le texte est deja echappe)
+  if (typeof DOMPurify === "undefined") return html;
+  const media = `/media/${encodeURIComponent(platform)}/`;
+  const replaced = html
+    .replace(/(<img\b[^>]*?\bsrc=)["'](?:images|files)\//g, `$1"${media}`)
+    .replace(/(<a\b[^>]*?\bhref=)["'](?:images|files)\//g, `$1"${media}`);
+  // la chaine est modifiee APRES la sanitisation initiale : on la revalide
+  // (une plateforme hostile ne doit pas pouvoir injecter du HTML ici)
+  return DOMPurify.sanitize(replaced, { ADD_ATTR: ["target", "rel"] });
 }
 
 function highlightDom(root, terms) {
@@ -381,6 +401,15 @@ window.addEventListener("DOMContentLoaded", () => {
   $("randomBtn").addEventListener("click", () => { rollDice(); openRandomConversation(); });
   $("shortcutsBtn").addEventListener("click", () => togglePop("shortcutsPop"));
   $("infoBtn").addEventListener("click", () => togglePop("infoPop"));
+  const logoutBtn = $("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      logoutBtn.disabled = true;
+      fetch("/api/logout", { method: "POST" })
+        .catch(() => {})
+        .then(() => window.location.replace("/login"));
+    });
+  }
   $("alpha").addEventListener("input", () => $("alphaVal").textContent = $("alpha").value);
   $("k").addEventListener("input", () => $("kVal").textContent = $("k").value);
   // une URL partagee (?q=…&platforms=…) relance la recherche au chargement
@@ -619,7 +648,7 @@ function homeCard(c) {
   return `<div class="conv-card" role="button" tabindex="0" data-platform="${escapeHtml(c.platform)}" data-id="${escapeHtml(c.conversation_id)}">
     <div class="rc-head">
       <span class="badge platform">${escapeHtml(platformName(c.platform))}</span>
-      <span class="badge small">${c.message_count ?? "?"} messages</span>
+      <span class="badge small">${escapeHtml(c.message_count ?? "?")} messages</span>
       ${c.has_code ? '<span class="badge small">code</span>' : ""}
     </div>
     <div class="conv-title">${escapeHtml(c.title || c.conversation_id)}</div>
@@ -2269,17 +2298,17 @@ function renderParseTestReport(reports) {
       const issues = (report.issues || []).map((issue) => {
         const reason = issue.reason ? ` — ${escapeHtml(issue.reason)}` : "";
         const counts = issue.old_messages != null
-          ? ` (${issue.new_messages ?? "?"}/${issue.old_messages} messages)` : "";
+          ? ` (${escapeHtml(issue.new_messages ?? "?")}/${escapeHtml(issue.old_messages)} messages)` : "";
         return `<li><strong>${escapeHtml(issue.title || issue.conversation_id || "?")}</strong>${reason}${counts}</li>`;
       }).join("");
-      const compared = report.compared ?? report.checked;
+      const compared = escapeHtml(report.compared ?? report.checked ?? 0);
       return `<div class="panel test-report-panel ${escapeHtml(report.verdict)}">
         <div class="panel-head">
           <h3 class="panel-title">${escapeHtml(platformName(report.platform))}</h3>
           <span class="parse-badge ${escapeHtml(report.verdict)}">${escapeHtml(VERDICT_LABEL[report.verdict] || report.verdict)}</span>
         </div>
         <p class="section-note">${compared} comparée${compared > 1 ? "s" : ""} ·
-          rétention ${pctText(report.retention)} · ${report.failed || 0} échec(s)${report.ignored ? ` · ${report.ignored} ignorée(s) (limite)` : ""} ·
+          rétention ${pctText(report.retention)} · ${escapeHtml(report.failed || 0)} échec(s)${report.ignored ? ` · ${escapeHtml(report.ignored)} ignorée(s) (limite)` : ""} ·
           ${escapeHtml(relativeAge(report.checked_at))}</p>
         ${issues
           ? `<ul class="test-issues">${issues}</ul>`

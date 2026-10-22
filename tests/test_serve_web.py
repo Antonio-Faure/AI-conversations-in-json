@@ -10,8 +10,10 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import socket
 import sys
 import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -21,6 +23,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 import sqlite_vec
+
+from src.utils import webauth
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location(
@@ -178,6 +182,7 @@ def web(tmp_path):
         exports_dir=exports,
         model_name="dummy",
     )
+    serve_web.Handler.auth = None  # pas d'authentification (tests historiques)
     server = serve_web.ThreadingHTTPServer(("127.0.0.1", 0), serve_web.Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -1083,3 +1088,679 @@ class TestScrapeJobWeb:
         assert "deja en cours" in body["error"]
         release.set()
         job._thread.join(timeout=5)
+
+
+# -- authentification (page de connexion + session signee) --------------------
+
+PASSWORD = "mot-de-passe-de-test-42"
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Ne suit pas les redirections (on veut observer le 302)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+_NO_REDIRECT = urllib.request.build_opener(_NoRedirect)
+
+
+def _request(base, path, *, method="GET", payload=None, cookie=None, origin=None,
+             headers=None):
+    """Requete brute -> (statut, en-tetes, corps)."""
+    data = None if payload is None else json.dumps(payload).encode("utf-8")
+    sent = dict(headers or {})
+    if payload is not None:
+        sent["Content-Type"] = "application/json"
+    if cookie is not None:
+        sent["Cookie"] = f"aicv_session={cookie}"
+    if origin is not None:
+        sent["Origin"] = origin
+    request = urllib.request.Request(
+        base + path, data=data, headers=sent, method=method
+    )
+    try:
+        with _NO_REDIRECT.open(request, timeout=10) as response:
+            return response.status, dict(response.headers), response.read()
+    except urllib.error.HTTPError as exc:
+        return exc.code, dict(exc.headers), exc.read()
+
+
+def _login(base, password=PASSWORD):
+    """Connexion -> (statut, jeton de session ou None)."""
+    status, headers, _ = _request(
+        base, "/api/login", method="POST", payload={"password": password}
+    )
+    cookie = headers.get("Set-Cookie") or ""
+    token = (
+        cookie.split(";")[0].split("=", 1)[1]
+        if cookie.startswith(f"{webauth.SESSION_COOKIE}=")
+        else None
+    )
+    return status, token
+
+
+@pytest.fixture()
+def web_auth(tmp_path):
+    """Serveur avec authentification active (mot de passe connu)."""
+    secret = b"s" * 32
+    serve_web.Handler.state = serve_web.AppState(
+        db_path=tmp_path / "rag.db",
+        exports_dir=tmp_path / "exports",
+        model_name="dummy",
+    )
+    serve_web.Handler.auth = serve_web.AuthConfig(
+        password_hash=webauth.hash_password(PASSWORD),
+        secret=secret,
+        ttl_seconds=3600,
+        cookie_secure="always",
+        throttle=webauth.LoginThrottle(max_failures=3, window=60, lockout=60),
+    )
+    server = serve_web.ThreadingHTTPServer(("127.0.0.1", 0), serve_web.Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield {
+            "base": f"http://127.0.0.1:{server.server_address[1]}",
+            "secret": secret,
+            "key": serve_web.Handler.auth.key,
+        }
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+        serve_web.Handler.auth = None
+
+
+class TestAuthentification:
+    def test_accueil_redirige_vers_la_connexion(self, web_auth):
+        status, headers, _ = _request(web_auth["base"], "/")
+        assert status == 302
+        assert headers["Location"] == "/login?next=/"
+
+    def test_page_login_servie_sans_session(self, web_auth):
+        status, _, body = _request(web_auth["base"], "/login")
+        assert status == 200
+        assert b'id="password"' in body
+        assert b"login.js" in body
+
+    def test_scripts_de_connexion_servis_sans_session(self, web_auth):
+        for path in ("/login.js", "/theme-boot.js"):
+            status, _, body = _request(web_auth["base"], path)
+            assert status == 200, path
+            assert body
+
+    def test_api_refusee_sans_session(self, web_auth):
+        status, _, body = _request(web_auth["base"], "/api/stats")
+        assert status == 401
+        assert json.loads(body)["login"] == "/login"
+
+    def test_media_refuse_sans_session(self, web_auth):
+        status, _, _ = _request(web_auth["base"], "/media/grok/img1.png")
+        assert status == 401
+
+    def test_mauvais_mot_de_passe(self, web_auth):
+        status, token = _login(web_auth["base"], "mauvais")
+        assert status == 401
+        assert token is None
+
+    def test_connexion_pose_un_cookie_strict(self, web_auth):
+        status, headers, _ = _request(
+            web_auth["base"], "/api/login", method="POST",
+            payload={"password": PASSWORD},
+        )
+        assert status == 200
+        cookie = headers["Set-Cookie"]
+        assert cookie.startswith(f"{webauth.SESSION_COOKIE}=")
+        assert "HttpOnly" in cookie
+        assert "SameSite=Strict" in cookie
+        assert "Secure" in cookie
+        assert "Max-Age=3600" in cookie
+
+    def test_acces_avec_session(self, web_auth):
+        status, token = _login(web_auth["base"])
+        assert status == 200 and token
+        status, _, body = _request(web_auth["base"], "/api/stats", cookie=token)
+        assert status == 200
+        assert "total_messages" in json.loads(body)
+        status, _, _ = _request(web_auth["base"], "/", cookie=token)
+        assert status == 200
+
+    def test_login_redirige_si_deja_connecte(self, web_auth):
+        _, token = _login(web_auth["base"])
+        status, headers, _ = _request(web_auth["base"], "/login", cookie=token)
+        assert status == 302
+        assert headers["Location"] == "/"
+
+    def test_deconnexion_efface_le_cookie(self, web_auth):
+        _, token = _login(web_auth["base"])
+        status, headers, _ = _request(
+            web_auth["base"], "/api/logout", method="POST", payload={}, cookie=token
+        )
+        assert status == 200
+        assert "Max-Age=0" in headers["Set-Cookie"]
+
+    def test_post_refuse_sans_session(self, web_auth):
+        status, _, body = _request(
+            web_auth["base"], "/api/scrape", method="POST",
+            payload={"platforms": ["grok"]},
+        )
+        assert status == 401
+        assert json.loads(body)["error"] == "authentification requise"
+
+    def test_csrf_origine_etrangere(self, web_auth):
+        _, token = _login(web_auth["base"])
+        status, _, body = _request(
+            web_auth["base"], "/api/scrape", method="POST",
+            payload={"platforms": ["grok"]}, cookie=token,
+            origin="https://attaque.example",
+        )
+        assert status == 403
+        assert "origine" in json.loads(body)["error"]
+
+    def test_origine_identique_acceptee(self, web_auth):
+        """Meme hote : la requete passe (404 = endpoint inconnu, pas 403)."""
+        _, token = _login(web_auth["base"])
+        status, _, _ = _request(
+            web_auth["base"], "/api/inconnu", method="POST", payload={},
+            cookie=token, origin=web_auth["base"],
+        )
+        assert status == 404
+
+    def test_limitation_apres_trois_echecs(self, web_auth):
+        for _ in range(3):
+            status, _ = _login(web_auth["base"], "mauvais")
+            assert status == 401
+        status, token = _login(web_auth["base"])
+        assert status == 429
+        assert token is None
+
+    def test_jeton_expire_refuse(self, web_auth):
+        expired = webauth.make_token(
+            web_auth["key"], 60, now=time.time() - 120
+        )
+        status, _, _ = _request(web_auth["base"], "/api/stats", cookie=expired)
+        assert status == 401
+
+    def test_jeton_d_un_autre_secret_refuse(self, web_auth):
+        forged = webauth.make_token(b"z" * 32, 3600)
+        status, _, _ = _request(web_auth["base"], "/api/stats", cookie=forged)
+        assert status == 401
+
+    def test_entetes_de_durcissement(self, web_auth):
+        _, headers, _ = _request(web_auth["base"], "/login")
+        assert headers["X-Content-Type-Options"] == "nosniff"
+        assert headers["X-Frame-Options"] == "DENY"
+        assert headers["Referrer-Policy"] == "no-referrer"
+
+    def test_head_sans_corps(self, web_auth):
+        status, headers, body = _request(web_auth["base"], "/login", method="HEAD")
+        assert status == 200
+        assert body == b""
+        assert int(headers["Content-Length"]) > 0
+
+    def test_csp_stricte(self, web_auth):
+        _, headers, _ = _request(web_auth["base"], "/login")
+        csp = headers["Content-Security-Policy"]
+        assert "default-src 'self'" in csp
+        # bibliotheques vendorisees : aucun script tiers autorise
+        assert "script-src 'self';" in csp
+        assert "cdn.jsdelivr" not in csp
+        assert "frame-ancestors 'none'" in csp
+        assert headers["Permissions-Policy"]
+        # HTTP local : pas de HSTS
+        assert "Strict-Transport-Security" not in headers
+
+    def test_hsts_derriere_le_proxy_https(self, web_auth):
+        _, headers, _ = _request(
+            web_auth["base"], "/login", headers={"X-Forwarded-Proto": "https"}
+        )
+        assert "Strict-Transport-Security" in headers
+
+    def test_pages_sans_script_inline(self):
+        """CSP sans 'unsafe-inline' : aucun script inline dans les pages."""
+        for name in ("index.html", "login.html"):
+            text = (ROOT / "web" / name).read_text(encoding="utf-8")
+            assert "<script>" not in text, name
+            assert "theme-boot.js" in text, name
+
+    def test_revocation_apres_deconnexion(self, web_auth):
+        _, token = _login(web_auth["base"])
+        status, _, _ = _request(
+            web_auth["base"], "/api/logout", method="POST", payload={}, cookie=token
+        )
+        assert status == 200
+        # le jeton est revoque, pas seulement efface du navigateur
+        status, _, _ = _request(web_auth["base"], "/api/stats", cookie=token)
+        assert status == 401
+
+    def test_meme_client_bloque_meme_avec_xff(self, web_auth):
+        """La cle est le saut du proxy : 3 echecs du meme client => 429."""
+        headers = {"X-Forwarded-For": "203.0.113.7"}
+        for _ in range(3):
+            status, _, _ = _request(
+                web_auth["base"], "/api/login", method="POST",
+                payload={"password": "mauvais"}, headers=headers,
+            )
+            assert status == 401
+        status, _, _ = _request(
+            web_auth["base"], "/api/login", method="POST",
+            payload={"password": "mauvais"}, headers=headers,
+        )
+        assert status == 429
+
+    def test_media_sandbox(self, web_auth):
+        """Un SVG ouvert directement ne peut rien executer (CSP sandbox)."""
+        _, token = _login(web_auth["base"])
+        exports = serve_web.Handler.state.exports_dir
+        images = exports / "grok" / "images"
+        images.mkdir(parents=True, exist_ok=True)
+        (images / "x.svg").write_text(
+            "<svg xmlns='http://www.w3.org/2000/svg'/>", encoding="utf-8"
+        )
+        status, headers, _ = _request(
+            web_auth["base"], "/media/grok/x.svg", cookie=token
+        )
+        assert status == 200
+        assert headers["Content-Type"] == "image/svg+xml"
+        assert "sandbox" in headers["Content-Security-Policy"]
+
+
+def test_safe_next():
+    assert serve_web.safe_next("/") == "/"
+    assert serve_web.safe_next("/?q=python") == "/?q=python"
+    assert serve_web.safe_next("//evil.example") == "/"
+    assert serve_web.safe_next("/\t/evil.example") == "/"
+    assert serve_web.safe_next("https://evil.example") == "/"
+    assert serve_web.safe_next("/\\evil") == "/"
+    assert serve_web.safe_next("") == "/"
+
+
+def test_conversation_file_hors_exports_refuse(web):
+    """Une entree de base pointant hors de exports/ n'est jamais lue."""
+    state = serve_web.Handler.state
+    store = state.store()
+    store.db.execute(
+        """
+        INSERT INTO messages
+            (message_id, conversation_id, platform, role, model, timestamp,
+             texte, has_code, conversation_file)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        ("m-poison", "g1", "grok", "user", "", "", "x", 0,
+         "/etc/passwd"),
+    )
+    store.db.commit()
+    path = state.conversation_file("grok", "g1")
+    assert path is not None
+    assert state.exports_dir.resolve() in path.parents
+    assert path.name != "passwd"
+
+
+# -- robustesse de la couche HTTP (anti-desynchronisation, methodes) ----------
+
+def _raw(base, request: bytes, timeout: float = 1.5) -> bytes:
+    """Envoie une requete brute et rend tout ce qui est recu avant la fermeture."""
+    host, port = base.replace("http://", "").split(":")
+    chunks = []
+    with socket.create_connection((host, int(port)), timeout=timeout) as sock:
+        sock.sendall(request)
+        sock.settimeout(timeout)
+        while True:
+            try:
+                data = sock.recv(65536)
+            except (socket.timeout, ConnectionResetError):
+                break
+            if not data:
+                break
+            chunks.append(data)
+    return b"".join(chunks)
+
+
+def _post_with_body(base, path, body: bytes, extra: bytes = b"") -> bytes:
+    return _raw(
+        base,
+        b"POST " + path.encode() + b" HTTP/1.1\r\nHost: 127.0.0.1\r\n"
+        + b"Content-Type: application/json\r\n"
+        + b"Content-Length: " + str(len(body)).encode() + b"\r\n"
+        + extra + b"\r\n" + body,
+    )
+
+
+def test_corps_trop_gros_refuse_et_connexion_fermee(web_auth):
+    """Un corps > 64 Kio => 413 + fermeture, jamais de relecture."""
+    raw = _post_with_body(web_auth["base"], "/api/login", b"A" * (65 * 1024))
+    assert b"413" in raw.split(b"\r\n", 1)[0]
+    assert raw.count(b"HTTP/1.1") == 1
+
+
+def test_corps_non_reinterprete_apres_refus(web_auth):
+    """Le corps d'un POST refuse (403) est consomme, pas rejoue en requete."""
+    smuggled = b"GET /api/stats HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"
+    raw = _post_with_body(
+        web_auth["base"], "/api/login", smuggled,
+        extra=b"Origin: https://evil.example\r\n",
+    )
+    assert b"403" in raw.split(b"\r\n", 1)[0]
+    assert raw.count(b"HTTP/1.1") == 1
+
+
+def test_get_avec_corps_ne_desynchronise_pas(web_auth):
+    """Un corps sur un GET est consomme : une seule reponse, pas de 400 fantome."""
+    raw = _raw(
+        web_auth["base"],
+        b"GET /login HTTP/1.1\r\nHost: 127.0.0.1\r\n"
+        b"Content-Length: 10\r\n\r\n0123456789",
+    )
+    assert b"200" in raw.split(b"\r\n", 1)[0]
+    assert raw.count(b"HTTP/1.1") == 1
+
+
+def test_head_sur_api_refuse(web_auth):
+    status, _, _ = _request(web_auth["base"], "/api/stats", method="HEAD")
+    assert status == 405
+
+
+def test_methodes_non_servies_405_avec_entetes(web_auth):
+    for method in ("OPTIONS", "PUT", "DELETE", "PATCH", "TRACE"):
+        status, headers, _ = _request(
+            web_auth["base"], "/login", method=method, payload={}
+        )
+        assert status == 405, method
+        assert headers["X-Frame-Options"] == "DENY", method
+
+
+def test_requete_malformee_repond(web_auth):
+    """Version HTTP invalide : une reponse, pas d'exception dans le journal."""
+    raw = _raw(web_auth["base"], b"GET /login HTTP/9.9\r\nHost: x\r\n\r\n")
+    assert raw.startswith(b"HTTP/")
+
+
+def test_corps_relu_a_chaque_requete_keep_alive(web_auth):
+    """Deux POST sur la MEME connexion : chaque corps doit etre lu.
+
+    Regression : le corps etait memorise sur l'instance de handler, reutilisee
+    par toutes les requetes d'une connexion persistante (login casse + corps
+    laisses dans le socket).
+    """
+    good = json.dumps({"password": PASSWORD}).encode()
+    bad = json.dumps({"password": "mauvais"}).encode()
+    req = (
+        b"POST /api/login HTTP/1.1\r\nHost: 127.0.0.1\r\n"
+        b"Content-Type: application/json\r\n"
+        b"Content-Length: " + str(len(good)).encode() + b"\r\n\r\n" + good
+        + b"POST /api/login HTTP/1.1\r\nHost: 127.0.0.1\r\n"
+        b"Content-Type: application/json\r\n"
+        b"Content-Length: " + str(len(bad)).encode() + b"\r\n\r\n" + bad
+    )
+    raw = _raw(web_auth["base"], req)
+    assert raw.count(b"HTTP/1.1") == 2, raw[:200]
+    assert b"200 OK" in raw          # bon mot de passe
+    assert b"401 Unauthorized" in raw  # mauvais mot de passe (corps bien relu)
+
+
+def test_corps_consomme_avant_refus_puis_requete_suivante(web_auth):
+    """Un POST refuse (403) laisse la connexion utilisable pour la suite."""
+    smuggled = b"GET /login HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"
+    req = (
+        b"POST /api/login HTTP/1.1\r\nHost: 127.0.0.1\r\n"
+        b"Origin: https://evil.example\r\n"
+        b"Content-Length: " + str(len(smuggled)).encode() + b"\r\n\r\n" + smuggled
+    )
+    raw = _raw(web_auth["base"], req)
+    assert b"403" in raw.split(b"\r\n", 1)[0]
+    # le corps n'a pas ete rejoue : une seule reponse
+    assert raw.count(b"HTTP/1.1") == 1
+
+
+def test_quota_par_client_ne_fuit_pas(web_auth):
+    """Le quota de connexions est relache : 30 requetes sequentielles passent."""
+    for _ in range(30):
+        status, _, _ = _request(web_auth["base"], "/api/stats")
+        assert status == 401  # non authentifie, mais servi (pas 503)
+
+
+# -- robustesse des donnees (round 4) -----------------------------------------
+
+def test_json_profond_refuse_sans_500(web_auth):
+    """JSON imbrique a l'exces : 400, jamais 500 (RecursionError)."""
+    body = b"[" * 20000 + b"]" * 20000
+    raw = _post_with_body(web_auth["base"], "/api/login", body)
+    status = raw.split(b"\r\n", 1)[0]
+    assert b"400" in status or b"413" in status, status
+    assert b"500" not in status
+
+
+def test_head_erreur_sans_corps(web_auth):
+    """Une reponse HEAD ne porte jamais de corps, meme en erreur."""
+    raw = _raw(
+        web_auth["base"],
+        b"HEAD /login HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: -5\r\n\r\n",
+    )
+    head, _, body = raw.partition(b"\r\n\r\n")
+    assert b"400" in head.split(b"\r\n", 1)[0]
+    assert body == b""
+
+
+def test_chemin_absurde_sans_500(web_auth):
+    """NUL et composant trop long : 404, pas 500 (test AUTHENTIFIE).
+
+    Sans session, la garde d'auth repond avant : le test ne couvrait rien.
+    """
+    status, token = _login(web_auth["base"])
+    assert status == 200 and token
+    exports = serve_web.Handler.state.exports_dir
+    (exports / "grok" / "images").mkdir(parents=True, exist_ok=True)
+    for path in ("/%00", "/" + "a" * 300, "/media/grok/" + "b" * 300):
+        raw = _raw(
+            web_auth["base"],
+            b"GET " + path.encode() + b" HTTP/1.1\r\nHost: 127.0.0.1\r\n"
+            b"Cookie: aicv_session=" + token.encode() + b"\r\n\r\n",
+        )
+        status = raw.split(b"\r\n", 1)[0]
+        assert b"500" not in status, (path, status)
+
+
+def test_fichier_archive_non_utf8_ne_casse_pas(web):
+    """Un JSON d'archive non UTF-8 ne doit pas produire de 500."""
+    exports = serve_web.Handler.state.exports_dir
+    (exports / "grok" / "corrompu.json").write_bytes(b"\xff\xfe{")
+    for path in ("/api/conversation?platform=grok&id=inconnu", "/api/status",
+                 "/api/conversations?platform=grok"):
+        status, _ = _get(web, path)
+        assert status == 200, path
+
+
+def test_lien_symbolique_hors_exports_ignore(web, tmp_path):
+    """Un symlink dans exports/ n'est jamais suivi (repli conversation_file)."""
+    exports = serve_web.Handler.state.exports_dir
+    secret = tmp_path / "hors-exports.json"
+    secret.write_text(json.dumps({"conversation_id": "conv-piege",
+                                  "title": "SECRET"}), encoding="utf-8")
+    link = exports / "grok" / "piege.json"
+    link.symlink_to(secret)
+    status, body = _get_json(web, "/api/conversation?platform=grok&id=conv-piege")
+    assert status == 200
+    assert "SECRET" not in json.dumps(body)
+
+
+def test_platforms_dedoublonnees(web):
+    """Une liste de plateformes repetee n'amplifie pas le job."""
+    seen = []
+    _install_fake_scrape_job(_fake_scrape_runner(seen), "daily")
+    status, body = _post_json(
+        web, "/api/scrape", {"platforms": ["grok"] * 500, "mode": "daily"}
+    )
+    assert status == 200
+    assert body["platforms"] == ["grok"]
+
+
+def test_entier_json_geant_sans_500(web_auth):
+    """Un entier de 5000 chiffres : 400, pas 500 (limite CPython)."""
+    body = b'{"password":' + b"9" * 5000 + b"}"
+    raw = _post_with_body(web_auth["base"], "/api/login", body)
+    status = raw.split(b"\r\n", 1)[0]
+    assert b"400" in status, status
+    assert b"500" not in status
+
+
+def test_origin_ipv6_malformee_sans_500(web_auth):
+    """`Origin: http://[` : 403, pas 500."""
+    status, _, body = _request(
+        web_auth["base"], "/api/login", method="POST",
+        payload={"password": "x"}, origin="http://[",
+    )
+    assert status == 403
+    assert b"erreur interne" not in body
+
+
+def test_head_version_invalide_sans_corps(web_auth):
+    """HEAD avec version invalide : reponse sans corps."""
+    raw = _raw(
+        web_auth["base"],
+        b"HEAD /login HTTP/9.9\r\nHost: 127.0.0.1\r\n\r\n",
+    )
+    head, _, body = raw.partition(b"\r\n\r\n")
+    assert b"505" in head.split(b"\r\n", 1)[0]
+    assert body == b""
+
+
+def test_content_length_duplique_refuse(web_auth):
+    """Deux Content-Length : 400 + fermeture (anti-desynchronisation)."""
+    raw = _raw(
+        web_auth["base"],
+        b"POST /api/login HTTP/1.1\r\nHost: 127.0.0.1\r\n"
+        b"Content-Length: 0\r\nContent-Length: 30\r\n\r\n",
+    )
+    status = raw.split(b"\r\n", 1)[0]
+    assert b"400" in status, status
+
+
+def test_rapports_pieges_sans_500(web):
+    """conversation_list.json / recheck.json / api_health.json pieges : 200."""
+    exports = serve_web.Handler.state.exports_dir
+    (exports / "grok" / "conversation_list.json").write_text(
+        json.dumps({"conversations": ["pas-un-dict", 42, {"conversation_id": "x"}]}),
+        encoding="utf-8",
+    )
+    (exports / "grok" / "recheck.json").write_text(
+        json.dumps({"verdict": {"a": 1}, "checked": "abc",
+                    "conversations": [{"status": "degrade", "lost": 5}]}),
+        encoding="utf-8",
+    )
+    (exports / "grok" / "api_health.json").write_text(
+        json.dumps({"n": "abc", "matches": {"a": 1}}), encoding="utf-8"
+    )
+    for path in ("/api/status", "/api/conversations?platform=grok", "/api/recheck"):
+        status, _ = _get(web, path)
+        assert status == 200, path
+
+
+def test_lien_dur_hors_archive_refuse(web, tmp_path):
+    """Un lien dur vers un fichier hors archive n'est jamais lu."""
+    exports = serve_web.Handler.state.exports_dir
+    secret = tmp_path / "hors.json"
+    secret.write_text(json.dumps({"conversation_id": "conv-hard",
+                                  "title": "SECRET-HARD"}), encoding="utf-8")
+    link = exports / "grok" / "dur.json"
+    link.hardlink_to(secret)
+    status, body = _get_json(web, "/api/conversation?platform=grok&id=conv-hard")
+    assert "SECRET-HARD" not in json.dumps(body)
+
+
+def test_dossier_plateforme_symbolique_ignore(web, tmp_path):
+    """Un dossier de plateforme symlinke n'est pas servi."""
+    exports = serve_web.Handler.state.exports_dir
+    outside = tmp_path / "dehors"
+    outside.mkdir()
+    (outside / "conversation_list.json").write_text(
+        json.dumps({"conversations": [{"conversation_id": "x", "title": "SECRET-LINK"}]}),
+        encoding="utf-8",
+    )
+    (exports / "claude").symlink_to(outside)
+    status, body = _get_json(web, "/api/conversations?platform=claude")
+    assert "SECRET-LINK" not in json.dumps(body)
+
+
+def test_random_url_canonique(web):
+    """Une URL `javascript:` de la base est remplacee par le lien canonique."""
+    state = serve_web.Handler.state
+    store = state.store()
+    store.db.execute(
+        "UPDATE conversations SET url=? WHERE platform='grok'",
+        ("javascript:alert(1)",),
+    )
+    store.db.commit()
+    status, body = _get_json(web, "/api/random?n=3")
+    assert status == 200
+    for conv in body.get("conversations", []):
+        assert not str(conv.get("url", "")).lower().startswith("javascript:")
+
+
+def test_sous_dossier_media_symbolique_refuse(web_auth):
+    """`images/` symlinké ne doit pas donner accès hors de l'archive."""
+    exports = serve_web.Handler.state.exports_dir
+    base = exports / "grok"
+    base.mkdir(parents=True, exist_ok=True)
+    outside = exports / "dehors"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("SECRET-MEDIA", encoding="utf-8")
+    (base / "images").symlink_to(outside)
+    status, token = _login(web_auth["base"])
+    assert status == 200
+    status, _, body = _request(
+        web_auth["base"], "/media/grok/secret.txt", cookie=token
+    )
+    assert status == 404
+    assert b"SECRET-MEDIA" not in body
+
+
+def test_conversation_list_symbolique_ignore(web, tmp_path):
+    """Un conversation_list.json symlinké n'est jamais lu."""
+    exports = serve_web.Handler.state.exports_dir
+    outside = tmp_path / "liste-externe.json"
+    outside.write_text(
+        json.dumps({"conversations": [{"conversation_id": "x",
+                                       "title": "SECRET-LISTE"}]}),
+        encoding="utf-8",
+    )
+    path = exports / "grok" / "conversation_list.json"
+    path.unlink()
+    path.symlink_to(outside)
+    for url in ("/api/conversations?platform=grok", "/api/status"):
+        status, body = _get_json(web, url)
+        assert status == 200, url
+        assert "SECRET-LISTE" not in json.dumps(body), url
+
+
+def test_surrogate_isole_ne_casse_pas_la_reponse(web):
+    """Un surrogate isole dans l'archive est echappe, pas une erreur 400."""
+    exports = serve_web.Handler.state.exports_dir
+    (exports / "grok" / "conversation_list.json").write_text(
+        json.dumps({"conversations": [{"conversation_id": "s1",
+                                       "title": "titre \ud800"}]}),
+        encoding="utf-8",
+    )
+    for url in ("/api/conversations?platform=grok", "/api/status"):
+        status, body = _get(web, url)
+        assert status == 200, url
+        assert b"\xed\xa0\x80" not in body  # jamais d'UTF-8 invalide
+
+
+def test_message_champs_mal_types_normalises(web):
+    """`code_blocks`/`variants` non-listes : normalises, la vue ne casse pas."""
+    exports = serve_web.Handler.state.exports_dir
+    (exports / "grok" / "conv1.json").write_text(
+        json.dumps({
+            "conversation_id": "g1", "platform": "grok", "title": "T",
+            "url": "https://grok.com/chat/g1",
+            "messages": [{"message_id": "m1", "role": "user", "texte": "bonjour",
+                          "code_blocks": "pas une liste", "variants": {"a": 1}}],
+        }),
+        encoding="utf-8",
+    )
+    status, body = _get_json(web, "/api/conversation?platform=grok&id=g1")
+    assert status == 200
+    message = body["conversation"]["messages"][0]
+    assert message["code_blocks"] == []
+    assert message["variants"] == []

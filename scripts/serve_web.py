@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-"""Serveur local pour la page de recherche dans les conversations.
+"""Serveur de la page de recherche dans les conversations.
 
 Sert la page web (web/) et une petite API JSON :
+  - GET /login
+    (page de connexion — seule page servie sans session)
+  - POST /api/login {"password": "..."}
+    (connexion : pose le cookie de session signe)
+  - POST /api/logout
+    (deconnexion : efface le cookie)
   - GET /api/stats
   - GET /api/filters
   - GET /api/activity
@@ -32,8 +38,17 @@ Sert la page web (web/) et une petite API JSON :
 
 La recherche combine similarite cosinus (EmbeddingGemma + sqlite-vec) et mots-cles.
 
+Authentification : par defaut le serveur exige une session (cookie signe HMAC,
+pose apres saisie du mot de passe). Le hash scrypt du mot de passe est lu dans
+`secrets/web_password.txt` (cree par `scripts/web_password.py --generate`) et le
+secret de signature dans `secrets/web_session_secret` ; les deux fichiers sont
+locaux et non versionnes. `--no-auth` desactive la verification (local seulement).
+
     .venv/bin/python scripts/serve_web.py
     .venv/bin/python scripts/serve_web.py --port 9000 --host 0.0.0.0
+
+En production, le serveur reste sur 127.0.0.1 et Tailscale publie l'acces :
+voir `deploy/aicv-web.service` et la section « Mise en production » du README.
 """
 
 from __future__ import annotations
@@ -43,12 +58,16 @@ import hashlib
 import json
 import os
 import re
+import ssl
 import sys
 import threading
+import time
+import traceback
 from datetime import datetime, timedelta, timezone
+from email.utils import formatdate, parsedate_to_datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -68,8 +87,22 @@ from src.utils.recheck import (  # noqa: E402
 )
 from src.utils.scrape_job import DEFAULT_MODE, ScrapeJob  # noqa: E402
 from src.utils.urls import conversation_url  # noqa: E402
+from src.utils.webauth import (  # noqa: E402
+    SESSION_COOKIE,
+    SESSION_TTL_SECONDS,
+    LoginThrottle,
+    load_or_create_secret,
+    make_token,
+    read_password_file,
+    session_key,
+    token_parts,
+    verify_password,
+    verify_token,
+)
 
 WEB_DIR = ROOT / "web"
+#: secrets locaux non versionnes (hash du mot de passe, cle de session)
+SECRETS_DIR = ROOT / "secrets"
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".css": "text/css; charset=utf-8",
@@ -138,6 +171,10 @@ TIMELINE_MODELS = 8
 #: voisins renvoyes par /api/similar (defaut, borne haute)
 SIMILAR_K_DEFAULT = 12
 SIMILAR_K_MAX = 50
+#: resultats d'une recherche (defaut cote client : 30, borne haute)
+K_MAX = 100
+#: longueur maximale de la requete de recherche avant encodage (cout CPU)
+MAX_QUERY_CHARS = 512
 #: pagination de la galerie de medias (/api/media)
 MEDIA_PAGE = 60
 MEDIA_PAGE_MAX = 200
@@ -152,6 +189,52 @@ MEDIA_K_DEFAULT = 8
 MEDIA_K_MAX = 24
 #: taille lue (tete et queue) pour la cle de contenu des medias (dedoublonnage)
 MEDIA_HASH_BYTES = 256 * 1024
+#: pieces jointes affichables dans le navigateur (les autres sont telechargees)
+INLINE_FILE_EXT = {
+    ".pdf", ".txt", ".md", ".csv", ".json", ".xml",
+    ".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".avif", ".svg",
+    ".mp3", ".wav", ".m4a", ".ogg", ".oga", ".opus", ".flac", ".aac",
+    ".mp4", ".webm", ".mov",
+}
+#: extensions executables/rendues : jamais servies avec leur type d'origine
+FORCE_TEXT_EXT = {
+    ".js", ".mjs", ".cjs", ".css", ".html", ".htm", ".xhtml",
+    ".xsl", ".xslt",
+}
+#: proxys de confiance pour X-Forwarded-For/Proto (boucle locale : Tailscale)
+TRUSTED_PROXIES = ("127.0.0.1", "::1")
+#: requetes simultanees servies au maximum (au-dela : connexion fermee)
+MAX_WORKERS = 32
+#: connexions simultanees par client (un pair ne peut pas monopoliser le pool)
+MAX_PER_CLIENT = 8
+#: corps de requete accepte (les endpoints d'action envoient < 1 Kio)
+MAX_BODY = 64 * 1024
+#: duree totale maximale pour recevoir le corps d'une requete
+BODY_DEADLINE = 10.0
+#: ressources servies sans session : la page de connexion et ses scripts
+OPEN_PATHS = ("/login", "/login.js", "/theme-boot.js")
+#: chemin interne accepte comme destination apres connexion (pas de controle)
+NEXT_PATH_RE = re.compile(r"^/[A-Za-z0-9._~:/%?&=+@!$,;'()*\-]*$")
+#: politique de securite du contenu de l'application (CDN autorises par SRI)
+CONTENT_SECURITY_POLICY = (
+    "default-src 'self'; "
+    # bibliotheques servies localement (web/vendor) : aucun script tiers
+    "script-src 'self'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "img-src 'self' data:; "
+    "media-src 'self'; "
+    "connect-src 'self'; "
+    "frame-ancestors 'none'; base-uri 'none'; "
+    "form-action 'none'; object-src 'none'"
+)
+#: medias (SVG, PDF...) : document isole, sans script ni origine
+MEDIA_SECURITY_POLICY = "default-src 'none'; sandbox"
+#: en-tetes de fonctionnalites navigateur
+PERMISSIONS_POLICY = (
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), "
+    "interest-cohort=()"
+)
 
 
 def media_content_key(path: Path) -> tuple[int, str] | None:
@@ -161,6 +244,8 @@ def media_content_key(path: Path) -> tuple[int, str] | None:
     identiques (chemins differents) : la cle les regroupe. Un fichier illisible
     rend None (l'item est conserve tel quel).
     """
+    if path.is_symlink() or not _regular_file(path):
+        return None
     try:
         size = path.stat().st_size
     except OSError:
@@ -193,6 +278,86 @@ def check_platform(platform: str) -> str:
     if platform not in PLATFORMS:
         raise ApiError(f"plateforme inconnue: {platform!r}")
     return platform
+
+
+def safe_next(path: str) -> str:
+    """Destination interne apres connexion (jamais une URL externe)."""
+    if not path or path.startswith("//") or not NEXT_PATH_RE.match(path):
+        return "/"
+    return path
+
+
+def _as_int(value, default: int = 0) -> int:
+    """Entier force (les rapports relus d'un fichier ne sont pas fiables)."""
+    try:
+        return int(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
+def _as_float(value, default=None):
+    """Flottant fini force (None si la valeur n'est pas un nombre)."""
+    import math
+    try:
+        result = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+    return result if math.isfinite(result) else default
+
+
+def read_archive_json(path: Path, max_bytes: int = 64 * 1024 * 1024):
+    """JSON de l'archive, jamais un lien/FIFO/peripherique et borne en taille.
+
+    Un `conversation_list.json` symlinke (ou un FIFO) peut faire lire hors
+    archive ou bloquer indefiniment un worker : on n'accepte qu'un fichier
+    regulier, sans lien dur, de taille raisonnable.
+    """
+    try:
+        if path.is_symlink() or not path.is_file():
+            return None
+        stat = path.stat()
+        if stat.st_nlink != 1 or stat.st_size > max_bytes:
+            return None
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, RecursionError):
+        return None
+
+
+def _normalize_message(message: dict) -> dict:
+    """Tour de conversation : types attendus par le front (listes/chaines)."""
+    out = dict(message)
+    for key in ("code_blocks", "variants", "artifacts", "sources", "tools"):
+        if not isinstance(out.get(key), list):
+            out[key] = []
+    for key in ("role", "texte", "model", "timestamp", "message_id"):
+        if key in out and not isinstance(out[key], str):
+            out[key] = _text(out[key])
+    return out
+
+
+def _text(value) -> str:
+    """Texte sur (une base piegee peut contenir un BLOB a la place)."""
+    return value if isinstance(value, str) else ""
+
+
+def _regular_file(path: Path) -> bool:
+    """Fichier regulier, sans lien dur (qui pourrait sortir de l'archive)."""
+    try:
+        stat = path.stat()
+    except OSError:
+        return False
+    return stat.st_nlink == 1 and path.is_file()
+
+
+def safe_url(url, platform: str, conversation_id: str) -> str:
+    """URL d'origine : http(s) uniquement, sinon le lien canonique.
+
+    Une archive piegee peut contenir `javascript:` ou `//evil` : ces valeurs
+    ne doivent jamais finir dans un `href`.
+    """
+    if isinstance(url, str) and url.lower().startswith(("http://", "https://")):
+        return url
+    return conversation_url(platform, conversation_id)
 
 
 def check_conversation_id(conversation_id: str) -> str:
@@ -257,6 +422,72 @@ def month_trend(series: list, months: list):
     }
 
 
+class AuthConfig:
+    """Authentification de l'interface : mot de passe + sessions signees."""
+
+    def __init__(
+        self,
+        password_hash: str,
+        secret: bytes,
+        ttl_seconds: int = SESSION_TTL_SECONDS,
+        cookie_secure: str = "auto",
+        throttle: LoginThrottle | None = None,
+    ):
+        self.password_hash = password_hash
+        self.ttl_seconds = max(60, int(ttl_seconds))
+        #: `auto` (Secure si la requete arrive en HTTPS), `always`, `never`
+        self.cookie_secure = cookie_secure
+        self.throttle = throttle if throttle is not None else LoginThrottle()
+        #: cle derivee du secret **et** du hash : changer le mot de passe
+        #: invalide toutes les sessions, sans etat stocke
+        self.key = session_key(secret, password_hash)
+        #: nonces deconnectes -> expiration (revoque un jeton avant son echeance)
+        self.revoked: dict[str, float] = {}
+        self._revoked_lock = threading.Lock()
+
+    def check_password(self, password: str) -> bool:
+        """Mot de passe correct ?"""
+        return verify_password(password, self.password_hash)
+
+    def token(self) -> str:
+        """Jeton de session signe, valable `ttl_seconds`."""
+        return make_token(self.key, self.ttl_seconds)
+
+    def valid(self, token: str | None) -> bool:
+        """Jeton de session encore valide (et non deconnecte) ?"""
+        if not verify_token(token, self.key):
+            return False
+        parts = token_parts(token)
+        if parts is None:
+            return False
+        nonce, _ = parts
+        with self._revoked_lock:
+            self._purge_revoked()
+            return nonce not in self.revoked
+
+    def revoke(self, token: str | None) -> None:
+        """Invalide un jeton avant son expiration (deconnexion)."""
+        parts = token_parts(token)
+        if parts is None:
+            return
+        nonce, expires = parts
+        with self._revoked_lock:
+            self._purge_revoked()
+            if len(self.revoked) >= 4096:
+                # evince les jetons qui expirent le plus tot (les moins utiles)
+                for nonce, _ in sorted(
+                    self.revoked.items(), key=lambda item: item[1]
+                )[:512]:
+                    self.revoked.pop(nonce, None)
+            self.revoked[nonce] = float(expires)
+
+    def _purge_revoked(self) -> None:
+        """Oublie les nonces deja expires."""
+        now = time.time()
+        for nonce in [n for n, exp in self.revoked.items() if exp <= now]:
+            self.revoked.pop(nonce, None)
+
+
 class AppState:
     """Etat partage : store + embedder charges paresseusement (thread-safe)."""
 
@@ -274,8 +505,8 @@ class AppState:
         #: cles de contenu des medias (dedoublonnage /api/search), par fichier
         self._media_keys: dict = {}
         self._lock = threading.Lock()
-        # serialise l'acces store/modele entre requetes concurrentes
-        self.api_lock = threading.Lock()
+        # serialise l'inference du modele (le store sqlite est deja serialise)
+        self.embed_lock = threading.Lock()
         #: controle de parseur lance depuis la page de test (un seul a la fois)
         self.recheck_job = RecheckJob()
         #: scrape a la demande lance depuis la page (un seul a la fois)
@@ -286,6 +517,22 @@ class AppState:
             if self._store is None:
                 self._store = VectorStore(self.db_path, dim=self.dim)
             return self._store
+
+    def platform_dir(self, platform: str) -> Path | None:
+        """Dossier d'une plateforme, jamais un lien symbolique hors archive."""
+        if platform not in PLATFORMS:
+            return None
+        root = self.exports_dir.resolve()
+        base = self.exports_dir / platform
+        if base.is_symlink():
+            return None
+        try:
+            resolved = base.resolve()
+        except (OSError, ValueError):
+            return None
+        if resolved.parent != root or not resolved.is_dir():
+            return None
+        return resolved
 
     def media_store(self) -> MediaStore:
         """Index des medias (memes base et dimension que les messages)."""
@@ -316,72 +563,459 @@ class AppState:
             return self._embedder
 
     def embed(self, text: str):
-        return self.embedder().encode_one(text)
+        with self.embed_lock:
+            return self.embedder().encode_one(text)
+
+    def close_thread_dbs(self) -> None:
+        """Ferme les connexions SQLite du thread courant (fin de requete).
+
+        Sans cela, chaque connexion HTTP laisse une connexion SQLite ouverte
+        jusqu'au passage du ramasse-miettes (les descripteurs s'accumulent).
+        """
+        for store in (self._store, self._media_store):
+            closer = getattr(store, "close_thread_db", None)
+            if closer is not None:
+                closer()
 
     def conversation_file(self, platform: str, conversation_id: str):
         # defense en profondeur : jamais de chemin hors de exports/<plateforme>
         if platform not in PLATFORMS:
             return None
-        base = (self.exports_dir / platform).resolve()
-        root = self.exports_dir.resolve()
-        if root not in base.parents:
+        base = self.platform_dir(platform)
+        if base is None:
             return None
         store = self.store()
         path = store.conversation_file(platform, conversation_id)
-        if path and Path(path).exists():
-            return Path(path)
+        if path:
+            # le chemin vient de la base : on verifie son confinement avant lecture
+            candidate = Path(path).resolve()
+            if base in candidate.parents and _regular_file(candidate):
+                return candidate
         for candidate in base.glob("*.json"):
             if candidate.name == "conversation_list.json":
                 continue
+            # un lien symbolique peut pointer hors de l'archive : on resout et
+            # on exige le confinement, comme pour le chemin venu de la base
+            if candidate.is_symlink():
+                continue
             try:
-                data = json.loads(candidate.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
+                resolved = candidate.resolve()
+            except (OSError, ValueError, RecursionError):
+                continue
+            if base not in resolved.parents or not _regular_file(resolved):
+                continue
+            data = read_archive_json(resolved)
+            if not isinstance(data, dict):
                 continue
             if str(data.get("conversation_id")) == str(conversation_id):
-                return candidate
+                return resolved
         return None
 
 
+class WebServer(ThreadingHTTPServer):
+    """Serveur multi-thread borne : au plus `max_workers` requetes en cours.
+
+    Sans borne, quelques centaines de connexions lentes (slowloris) suffisent a
+    epuiser les threads ; ici la connexion en trop est fermee immediatement.
+    Le quota **par client** est tenu par le handler, une fois les en-tetes lus :
+    derriere un proxy, tous les clients partagent la meme adresse de pair, donc
+    seule la cle issue de `X-Forwarded-For` distingue les clients reels.
+    """
+
+    daemon_threads = True
+    request_queue_size = 32
+
+    def __init__(self, address, handler, max_workers: int = MAX_WORKERS,
+                 max_per_client: int = MAX_PER_CLIENT):
+        super().__init__(address, handler)
+        self._slots = threading.BoundedSemaphore(max_workers)
+        self.max_per_client = max_per_client
+        self._per_client: dict[str, int] = {}
+        self._client_lock = threading.Lock()
+
+    def claim_client(self, key: str) -> bool:
+        """Reserve une place pour ce client reel (False si quota atteint)."""
+        with self._client_lock:
+            count = self._per_client.get(key, 0)
+            if count >= self.max_per_client:
+                return False
+            self._per_client[key] = count + 1
+            return True
+
+    def release_client(self, key: str) -> None:
+        with self._client_lock:
+            count = self._per_client.get(key, 0) - 1
+            if count > 0:
+                self._per_client[key] = count
+            else:
+                self._per_client.pop(key, None)
+
+    def process_request(self, request, client_address):
+        # quota global de threads : la connexion en trop est fermee. Le quota
+        # par client reel est tenu par le handler (apres les en-tetes) ; la
+        # phase pre-headers n'est atteignable que depuis la machine elle-meme
+        # (le proxy Tailscale lit les en-tetes avant de relayer).
+        if not self._slots.acquire(blocking=False):
+            try:
+                request.close()
+            except OSError:
+                pass
+            return
+        try:
+            super().process_request(request, client_address)
+        except Exception:
+            self._slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._slots.release()
+
+
 class Handler(BaseHTTPRequestHandler):
-    server_version = "AICV/1.0"
+    server_version = "AICV"
+    sys_version = ""
+    #: HTTP/1.1 : connexions persistantes (Content-Length toujours envoye)
+    protocol_version = "HTTP/1.1"
+    #: ferme les connexions muettes (slowloris)
+    timeout = 15
     state: AppState = None  # injecte au demarrage
+    auth: AuthConfig | None = None  # None = pas d'authentification
+    _head_only = False
+    _error_response = False
 
     # -- helpers ---------------------------------------------------------------
 
+    def _is_https(self) -> bool:
+        """Requete arrivee en HTTPS (TLS direct ou proxy Tailscale) ?"""
+        if (self.headers.get("X-Forwarded-Proto") or "").lower() == "https":
+            return True
+        return isinstance(self.connection, ssl.SSLSocket)
+
+    def _security_headers(self, sandbox: bool = False) -> None:
+        """En-tetes de durcissement communs a toutes les reponses."""
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Permissions-Policy", PERMISSIONS_POLICY)
+        self.send_header(
+            "Content-Security-Policy",
+            MEDIA_SECURITY_POLICY if sandbox else CONTENT_SECURITY_POLICY,
+        )
+        if self._is_https():
+            self.send_header("Strict-Transport-Security", "max-age=31536000")
+
     def _send_json(self, payload, status: int = 200) -> None:
-        body = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
+        # ensure_ascii : un surrogate isole (archive piegee) ne doit pas
+        # faire echouer l'encodage de la reponse
+        body = json.dumps(payload, ensure_ascii=True, default=str).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        self._security_headers()
         self.end_headers()
-        self.wfile.write(body)
+        if not self._head_only:
+            self.wfile.write(body)
 
-    def _send_file(self, path: Path) -> None:
+    def _send_file(self, path: Path, cache: str = "no-cache",
+                   sandbox: bool = False, attachment: bool = False,
+                   content_type: str | None = None) -> None:
         try:
-            body = path.read_bytes()
+            handle = path.open("rb")
+            stat = os.fstat(handle.fileno())
+            if not stat.st_size and not path.is_file():
+                raise OSError("fichier non regulier")
         except OSError:
             self._send_json({"error": "not found"}, 404)
             return
-        content_type = CONTENT_TYPES.get(path.suffix, "application/octet-stream")
-        if content_type == "application/octet-stream":
-            # telechargements sans extension fiable (.img) : type devine
-            content_type = sniff_image_type(body) or content_type
-        self.send_response(200)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(body)))
+        with handle:
+            last_modified = formatdate(stat.st_mtime, usegmt=True)
+            if self._not_modified(stat.st_mtime):
+                self.send_response(304)
+                self.send_header("Last-Modified", last_modified)
+                self.send_header("Cache-Control", cache)
+                self._security_headers(sandbox)
+                self.end_headers()
+                return
+            content_type = content_type or CONTENT_TYPES.get(
+                path.suffix, "application/octet-stream"
+            )
+            if content_type == "application/octet-stream":
+                # telechargements sans extension fiable (.img) : type devine
+                content_type = sniff_image_type(handle.read(512)) or content_type
+                handle.seek(0)
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(stat.st_size))
+            self.send_header("Last-Modified", last_modified)
+            self.send_header("Cache-Control", cache)
+            if attachment:
+                # jamais execute/rendu same-origin (.js, .html, .css...)
+                self.send_header("Content-Disposition", "attachment")
+            self._security_headers(sandbox)
+            self.end_headers()
+            if self._head_only:
+                return
+            # envoi par blocs, **borne a la taille annoncee** : un fichier dont
+            # la taille change (procfs, fichier en cours d'ecriture) ne doit pas
+            # deborder sur la reponse suivante d'une connexion keep-alive
+            remaining = stat.st_size
+            while remaining > 0:
+                chunk = handle.read(min(64 * 1024, remaining))
+                if not chunk:
+                    # fichier tronque en cours d'envoi : la reponse est plus
+                    # courte que Content-Length, on ferme la connexion
+                    self.close_connection = True
+                    break
+                self.wfile.write(chunk)
+                remaining -= len(chunk)
+
+    def _not_modified(self, mtime: float) -> bool:
+        """`If-Modified-Since` couvre la version du fichier (reponse 304) ?"""
+        raw = self.headers.get("If-Modified-Since")
+        if not raw:
+            return False
+        try:
+            since = parsedate_to_datetime(raw).timestamp()
+        except (TypeError, ValueError, AttributeError, OverflowError):
+            return False
+        return int(mtime) <= int(since)
+
+    def _redirect(self, location: str, status: int = 302) -> None:
+        self.send_response(status)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        self.send_header("Cache-Control", "no-store")
+        self._security_headers()
         self.end_headers()
-        self.wfile.write(body)
+
+    def send_error(self, code, message=None, explain=None):
+        """Erreur du handler de base : statut toujours ecrit + en-tetes."""
+        # send_response_only() n'ecrit rien quand request_version vaut HTTP/0.9
+        # (cas d'un echec de parsing) : on retablit une version avant l'envoi.
+        if getattr(self, "request_version", "HTTP/0.9") == "HTTP/0.9":
+            self.request_version = "HTTP/1.1"
+        # un echec de parsing laisse `command` a None : on relit la ligne brute
+        # pour ne jamais renvoyer de corps a un HEAD
+        line = getattr(self, "raw_requestline", b"") or b""
+        if line[:5].upper() == b"HEAD ":
+            self.command = "HEAD"
+            self._head_only = True
+        self._error_response = True
+        try:
+            super().send_error(code, message, explain)
+        finally:
+            self._error_response = False
+
+    def end_headers(self) -> None:
+        # apres un echec de parsing (505/414), la classe de base laisse
+        # request_version a HTTP/0.9 et n'ecrit alors NI statut NI en-tetes :
+        # on force l'ecriture pour que le client recoive une vraie reponse.
+        if self.request_version == "HTTP/0.9" and getattr(self, "_headers_buffer", None):
+            self.request_version = "HTTP/1.1"
+        if self._error_response:
+            try:
+                self._security_headers()
+            except Exception:  # noqa: BLE001 - requete trop malformee
+                pass
+        buffer = getattr(self, "_headers_buffer", None)
+        if buffer is not None and self.close_connection and not any(
+            b"connection:" in line.lower() for line in buffer
+        ):
+            # on annonce la fermeture : un client HTTP/1.1 ne doit pas reutiliser
+            # une connexion que le serveur va fermer (413, 400, 408, 405...)
+            self.send_header("Connection", "close")
+        super().end_headers()
+
+    def version_string(self) -> str:
+        """`Server:` sans version de Python."""
+        return self.server_version
+
+    def log_request(self, code="-", size="-"):
+        """Journal sans query string ni caractere de controle.
+
+        Les recherches ne finissent pas dans le journal ; une requete malformee
+        (pas de `self.path`) ne doit pas lever d'exception.
+        """
+        raw = getattr(self, "path", "") or "/"
+        try:
+            path = urlparse(raw).path or "/"
+        except ValueError:
+            path = "/"
+        path = "".join(ch for ch in path if 32 <= ord(ch) < 127)[:200]
+        command = getattr(self, "command", None) or "-"
+        command = "".join(ch for ch in str(command) if 32 <= ord(ch) < 127)[:40]
+        sys.stderr.write(f'[web] "{command} {path}" {code} {size}\n')
 
     def log_message(self, fmt, *args):  # noqa: A003
         sys.stderr.write("[web] %s\n" % (fmt % args))
 
+    # -- authentification ------------------------------------------------------
+
+    def _client_key(self) -> str:
+        """Cle de limitation des tentatives (IP reelle derriere le proxy).
+
+        `X-Forwarded-For` n'est cru que si la connexion vient d'un proxy de
+        confiance (la boucle locale, ici Tailscale) ; on prend le **dernier**
+        saut, celui ajoute par le proxy, jamais la valeur fournie par le client.
+        """
+        peer = self.client_address[0] if self.client_address else "?"
+        if peer in TRUSTED_PROXIES:
+            hops = [
+                hop.strip()
+                for hop in (self.headers.get("X-Forwarded-For") or "").split(",")
+                if hop.strip()
+            ]
+            if hops:
+                return hops[-1]
+        return peer
+
+    def _cookie_secure(self) -> bool:
+        mode = self.auth.cookie_secure if self.auth else "never"
+        if mode == "always":
+            return True
+        if mode == "never":
+            return False
+        return self._is_https()
+
+    def _session_cookie(self, token: str, max_age: int) -> str:
+        parts = [
+            f"{SESSION_COOKIE}={token}",
+            "Path=/",
+            "HttpOnly",
+            "SameSite=Strict",
+            f"Max-Age={max_age}",
+        ]
+        if self._cookie_secure():
+            parts.append("Secure")
+        return "; ".join(parts)
+
+    def _session_token(self) -> str | None:
+        raw = self.headers.get("Cookie")
+        if not raw:
+            return None
+        for chunk in raw.split(";"):
+            name, _, value = chunk.strip().partition("=")
+            if name == SESSION_COOKIE:
+                return value
+        return None
+
+    def _authenticated(self) -> bool:
+        """Session valide (ou authentification desactivee) ?"""
+        if self.auth is None:
+            return True
+        return self.auth.valid(self._session_token())
+
+    def _require_auth(self, path: str, *, page: bool = False) -> bool:
+        """Verifie la session ; repond et renvoie False si l'acces est refuse."""
+        if self._authenticated():
+            return True
+        if page:
+            self._redirect(f"/login?next={quote(safe_next(path))}")
+        else:
+            self._send_json({"error": "authentification requise", "login": "/login"}, 401)
+        return False
+
+    def _check_origin(self) -> bool:
+        """Refuse un POST venu d'un autre site (anti-CSRF, en plus de SameSite)."""
+        origin = self.headers.get("Origin")
+        if not origin:
+            return True  # client non navigateur (curl, tests)
+        host = self.headers.get("Host") or ""
+        try:
+            parsed = urlparse(origin)
+        except ValueError:
+            self._send_json({"error": "origine refusee"}, 403)
+            return False
+        if parsed.netloc.lower() != host.lower():
+            self._send_json({"error": "origine refusee"}, 403)
+            return False
+        # derriere le proxy HTTPS, une origine http:// est refusee aussi
+        if self._is_https() and parsed.scheme != "https":
+            self._send_json({"error": "origine refusee"}, 403)
+            return False
+        return True
+
+    def _login(self, body) -> None:
+        """Connexion : mot de passe -> cookie de session signe."""
+        if self.auth is None:
+            self._send_json({"ok": True, "auth": False})
+            return
+        key = self._client_key()
+        wait = self.auth.throttle.retry_after(key)
+        if wait:
+            self._send_json(
+                {"error": f"trop de tentatives, reessayer dans {wait} s"}, 429
+            )
+            return
+        password = body.get("password")
+        if not isinstance(password, str) or not password:
+            self._send_json({"error": "mot de passe requis"}, 400)
+            return
+        if not self.auth.check_password(password):
+            locked = self.auth.throttle.fail(key)
+            message = "mot de passe incorrect"
+            if locked:
+                message = f"mot de passe incorrect — bloque {locked} s"
+            self._send_json({"error": message}, 401)
+            return
+        self.auth.throttle.reset(key)
+        token = self.auth.token()
+        payload = json.dumps(
+            {"ok": True, "ttl": self.auth.ttl_seconds, "secure": self._cookie_secure()}
+        ).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Set-Cookie", self._session_cookie(token, self.auth.ttl_seconds))
+        self._security_headers()
+        self.end_headers()
+        if not self._head_only:
+            self.wfile.write(payload)
+
+    def _logout(self) -> None:
+        """Deconnexion : revoque le jeton et efface le cookie."""
+        if self.auth is not None:
+            # le jeton reste signe valable jusqu'a expiration : on le revoque
+            self.auth.revoke(self._session_token())
+        self.send_response(200)
+        payload = b'{"ok": true}'
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Set-Cookie", self._session_cookie("", 0))
+        self._security_headers()
+        self.end_headers()
+        if not self._head_only:
+            self.wfile.write(payload)
+
     # -- routes ----------------------------------------------------------------
 
     def do_GET(self) -> None:  # noqa: N802
-        parsed = urlparse(self.path)
-        path = parsed.path
         try:
+            parsed = urlparse(self.path)
+            path = parsed.path
+            # tout corps annonce est consomme (ou la connexion fermee) AVANT
+            # toute reponse : jamais de bytes laisses pour la requete suivante
+            if not self._claim_client():
+                self.close_connection = True
+                self._send_json({"error": "trop de connexions simultanees"}, 503)
+                return
+            self._read_request_body()
+            if path in OPEN_PATHS:
+                # page de connexion et ses scripts : servis sans session
+                if path == "/login" and self.auth is not None and self._authenticated():
+                    self._redirect("/")
+                    return
+                name = "login.html" if path == "/login" else path.lstrip("/")
+                self._send_file(WEB_DIR / name)
+                return
+            if not self._require_auth(path, page=not path.startswith(("/api/", "/media/"))):
+                return
             if path.startswith("/api/"):
                 self._handle_api(path, parse_qs(parsed.query))
             elif path.startswith("/media/"):
@@ -392,17 +1026,81 @@ class Handler(BaseHTTPRequestHandler):
                 self._serve_static(path)
         except BrokenPipeError:
             pass
+        except ConnectionResetError:
+            pass
+        except ValueError:
+            # cible de requete illisible (URI absolue, IPv6 invalide...)
+            self._send_json({"error": "requete invalide"}, 400)
         except ApiError as exc:
             self._send_json({"error": exc.message}, exc.status)
-        except Exception as exc:  # noqa: BLE001
-            self._send_json({"error": str(exc)}, 500)
+        except Exception:  # noqa: BLE001
+            # jamais de detail interne au client (chemins, versions, modeles)
+            traceback.print_exc()
+            self._send_json({"error": "erreur interne"}, 500)
+
+    def do_HEAD(self) -> None:  # noqa: N802
+        """Repond aux en-tetes sans corps (pages et fichiers uniquement)."""
+        self._head_only = True  # avant toute lecture : une erreur n'aura pas de corps
+        try:
+            # quota par client AVANT la lecture du corps : un HEAD avec un corps
+            # lent ne doit pas contourner le plafond de connexions
+            if not self._claim_client():
+                self.close_connection = True
+                self._send_json({"error": "trop de connexions simultanees"}, 503)
+                return
+            self._read_request_body()
+            if urlparse(self.path).path.startswith("/api/"):
+                # un HEAD sur /api lancerait la requete complete pour rien
+                self._send_json({"error": "HEAD non supporte sur /api"}, 405)
+                return
+            self.do_GET()
+        except BrokenPipeError:
+            pass
+        except ConnectionResetError:
+            pass
+        except ValueError:
+            self._send_json({"error": "requete invalide"}, 400)
+        except ApiError as exc:
+            self._send_json({"error": exc.message}, exc.status)
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()
+            self._send_json({"error": "erreur interne"}, 500)
+        finally:
+            self._head_only = False
+
+    def _method_not_allowed(self) -> None:
+        """Methodes non servies : 405 propre, sans laisser de corps dans le socket."""
+        self.close_connection = True
+        self._send_json({"error": "methode non supportee"}, 405)
+
+    do_OPTIONS = _method_not_allowed
+    do_PUT = _method_not_allowed
+    do_DELETE = _method_not_allowed
+    do_PATCH = _method_not_allowed
+    do_TRACE = _method_not_allowed
 
     def do_POST(self) -> None:  # noqa: N802
-        """Endpoints d'action (lancement du controle de parseur)."""
-        path = urlparse(self.path).path
+        """Endpoints d'action (connexion, scrape, controle des parseurs)."""
         try:
+            path = urlparse(self.path).path
+            if not self._claim_client():
+                self.close_connection = True
+                self._send_json({"error": "trop de connexions simultanees"}, 503)
+                return
+            self._read_request_body()
+            if path == "/api/login":
+                if self._check_origin():
+                    self._login(self._read_json_body())
+                return
             if not path.startswith("/api/"):
                 self._send_json({"error": "not found"}, 404)
+                return
+            if not self._require_auth(path):
+                return
+            if not self._check_origin():
+                return
+            if path == "/api/logout":
+                self._logout()
                 return
             body = self._read_json_body()
             if path == "/api/recheck":
@@ -413,23 +1111,170 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json({"error": "unknown endpoint"}, 404)
         except BrokenPipeError:
             pass
+        except ConnectionResetError:
+            pass
+        except ValueError:
+            self._send_json({"error": "requete invalide"}, 400)
         except ApiError as exc:
             self._send_json({"error": exc.message}, exc.status)
-        except Exception as exc:  # noqa: BLE001
-            self._send_json({"error": str(exc)}, 500)
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()
+            self._send_json({"error": "erreur interne"}, 500)
+
+    def handle_one_request(self) -> None:
+        """Traite une requete : remet l'etat par requete a zero.
+
+        L'instance de handler est **reutilisee** pour toutes les requetes d'une
+        connexion persistante : sans cette remise a zero, le corps de la
+        premiere requete serait rejoue (login casse) ou ignore (corps laisse
+        dans le socket -> desynchronisation).
+        """
+        self._raw_body = None
+        self._head_only = False
+        try:
+            super().handle_one_request()
+        except (ConnectionResetError, BrokenPipeError):
+            # client parti pendant la lecture des en-tetes : pas de traceback
+            self.close_connection = True
+
+    def log_error(self, fmt, *args):  # noqa: A003
+        """Journal d'erreur tronque (une ligne de requete peut faire 64 Kio)."""
+        try:
+            text = fmt % args
+        except Exception:  # noqa: BLE001
+            text = str(fmt)
+        sys.stderr.write("[web] %s\n" % text[:300])
+
+    def _claim_client(self) -> bool:
+        """Quota de connexions simultanees par client reel (une fois par connexion).
+
+        La cle est `_client_key()` (derniere adresse reelle derriere le proxy) et
+        non l'adresse du pair : sinon, derriere Tailscale Serve, tous les clients
+        partageraient le meme compteur et huit connexions suffiraient a fermer
+        l'interface.
+        """
+        if getattr(self, "_client_claimed_key", None) is not None:
+            return True
+        if getattr(self, "_client_claim_refused", False):
+            return False
+        claim = getattr(self.server, "claim_client", None)
+        if claim is None:  # serveur sans quota (tests)
+            return True
+        key = self._client_key()
+        if claim(key):
+            self._client_claimed_key = key
+            return True
+        self._client_claim_refused = True
+        return False
+
+    def finish(self) -> None:
+        """Fin de connexion : relache le quota client et les connexions SQLite."""
+        key = getattr(self, "_client_claimed_key", None)
+        try:
+            if key is not None:
+                release = getattr(self.server, "release_client", None)
+                if release is not None:
+                    release(key)
+            state = self.state
+            if state is not None:
+                try:
+                    state.close_thread_dbs()
+                except Exception:  # noqa: BLE001 - fermeture best effort
+                    pass
+        finally:
+            super().finish()
+
+    def _body_length(self) -> int:
+        """Longueur annoncee du corps (0 si absent), refus si non supporte."""
+        if (self.headers.get("Transfer-Encoding") or "").strip():
+            # on ne decode pas le chunked : jamais de bytes non comprimes laisses
+            self.close_connection = True
+            raise ApiError("transfer-encoding non supporte", 400)
+        values = self.headers.get_all("Content-Length") or []
+        if len(values) > 1:
+            # deux longueurs = desynchronisation possible selon l'intermediaire
+            self.close_connection = True
+            raise ApiError("content-length duplique", 400)
+        raw = (values[0] if values else "").strip()
+        if not raw:
+            return 0
+        if not raw.isascii() or not raw.isdigit() or len(raw) > 10:
+            # chiffres non decimaux, valeur absurde ou plus longue que MAX_BODY
+            self.close_connection = True
+            raise ApiError("content-length invalide", 400)
+        try:
+            return int(raw)
+        except ValueError as exc:  # limite CPython d'entiers
+            self.close_connection = True
+            raise ApiError("content-length invalide", 400) from exc
+
+    def _read_exact(self, length: int) -> bytes:
+        """Lit exactement `length` octets, avec une echeance **totale**.
+
+        Le timeout du handler est un timeout par `recv` : un octet toutes les
+        5 s maintiendrait la connexion indefiniment. Ici la duree totale est
+        bornee (anti-slowloris sur le corps, qui traverse le proxy).
+        """
+        deadline = time.monotonic() + BODY_DEADLINE
+        chunks: list[bytes] = []
+        remaining = length
+        try:
+            while remaining > 0:
+                left = deadline - time.monotonic()
+                if left <= 0:
+                    self.close_connection = True
+                    raise ApiError("corps trop lent", 408)
+                self.connection.settimeout(min(left, 5.0))
+                try:
+                    chunk = self.rfile.read(min(remaining, 64 * 1024))
+                except (TimeoutError, OSError) as exc:
+                    # silence du client : echeance par recv atteinte
+                    self.close_connection = True
+                    raise ApiError("corps trop lent", 408) from exc
+                if not chunk:
+                    self.close_connection = True
+                    raise ApiError("corps incomplet", 400)
+                chunks.append(chunk)
+                remaining -= len(chunk)
+        finally:
+            try:
+                self.connection.settimeout(self.timeout)
+            except OSError:
+                pass
+        return b"".join(chunks)
+
+    def _read_request_body(self) -> bytes:
+        """Corps de la requete, lu **une seule fois** (memoise).
+
+        Tout corps annonce est consomme ou la connexion est fermee : sinon les
+        octets restants seraient interpretes comme la requete suivante
+        (desynchronisation de file derriere un proxy mutualisant).
+        """
+        raw = getattr(self, "_raw_body", None)
+        if raw is not None:
+            return raw
+        length = self._body_length()
+        if length <= 0:
+            self._raw_body = b""
+            return self._raw_body
+        if length > MAX_BODY:
+            self.close_connection = True
+            self._raw_body = b""
+            raise ApiError("corps trop volumineux", 413)
+        self._raw_body = self._read_exact(length)
+        return self._raw_body
 
     def _read_json_body(self) -> dict:
         """Corps JSON de la requete (objet vide si absent)."""
-        try:
-            length = int(self.headers.get("Content-Length") or 0)
-        except ValueError:
-            length = 0
-        if length <= 0:
+        raw = self._read_request_body()
+        if not raw:
             return {}
-        raw = self.rfile.read(min(length, 64 * 1024))
         try:
             payload = json.loads(raw.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        except (ValueError, RecursionError) as exc:
+            # ValueError couvre JSONDecodeError, les octets non UTF-8 ET la
+            # limite CPython d'entiers (4300 chiffres) ; RecursionError le
+            # JSON trop profond
             raise ApiError("corps JSON invalide") from exc
         if not isinstance(payload, dict):
             raise ApiError("objet JSON attendu")
@@ -445,61 +1290,96 @@ class Handler(BaseHTTPRequestHandler):
         if platform not in PLATFORMS:
             self._send_json({"error": "forbidden"}, 403)
             return
-        base = self.state.exports_dir / platform
+        base = self.state.platform_dir(platform)
+        if base is None:
+            self._send_json({"error": "not found"}, 404)
+            return
         for subdir in ("images", "files"):
-            root = (base / subdir).resolve()
-            candidate = (root / filename).resolve()
-            if root in candidate.parents and candidate.is_file():
-                self._send_file(candidate)
+            try:
+                sub = base / subdir
+                # un sous-dossier symlinke (images -> ../../secrets) ferait
+                # de `root` la cible : il doit etre un vrai dossier enfant
+                if sub.is_symlink() or not sub.is_dir():
+                    continue
+                root = sub.resolve()
+                if root.parent != base:
+                    continue
+                candidate = (root / filename).resolve()
+                inside = root in candidate.parents and candidate.is_file()
+                # un lien dur peut pointer vers un fichier hors archive :
+                # seuls les fichiers ecrits par le scrapeur (nlink=1) sont servis
+                hardlink = inside and candidate.stat().st_nlink > 1
+            except (OSError, ValueError, RecursionError):
+                # nom de fichier absurde (NUL, composant trop long...)
+                continue
+            if inside and not hardlink:
+                # noms de fichiers adresses par leur hash : cache long
+                # `sandbox` : SVG/HTML directement ouverts ne peuvent rien executer
+                suffix = candidate.suffix.lower()
+                download = subdir == "files" and suffix not in INLINE_FILE_EXT
+                self._send_file(
+                    candidate, cache="private, max-age=86400", sandbox=True,
+                    attachment=download,
+                    content_type=(
+                        "text/plain; charset=utf-8"
+                        if suffix in FORCE_TEXT_EXT else None
+                    ),
+                )
                 return
         self._send_json({"error": "not found"}, 404)
 
     def _serve_static(self, path: str) -> None:
-        relative = path.lstrip("/")
-        candidate = (WEB_DIR / relative).resolve()
+        try:
+            relative = path.lstrip("/")
+            candidate = (WEB_DIR / relative).resolve()
+            exists = candidate.is_file()
+        except (OSError, ValueError, RecursionError):
+            self._send_json({"error": "not found"}, 404)
+            return
         if WEB_DIR not in candidate.parents and candidate != WEB_DIR:
             self._send_json({"error": "forbidden"}, 403)
             return
-        if not candidate.is_file():
+        if not exists:
             self._send_json({"error": "not found"}, 404)
             return
         self._send_file(candidate)
 
     def _handle_api(self, path: str, params) -> None:
-        with self.state.api_lock:
-            if path == "/api/stats":
-                self._send_json(self._stats())
-            elif path == "/api/filters":
-                self._send_json(self._filters())
-            elif path == "/api/activity":
-                self._send_json(self._activity())
-            elif path == "/api/timeline":
-                self._send_json(self._timeline())
-            elif path == "/api/similar":
-                self._send_json(self._similar(params))
-            elif path == "/api/media":
-                self._send_json(self._media(params))
-            elif path == "/api/status":
-                self._send_json(self._status())
-            elif path == "/api/recheck":
-                self._send_json(self._recheck_status())
-            elif path == "/api/scrape":
-                self._send_json(self._scrape_status())
-            elif path == "/api/day":
-                self._send_json(self._day(params))
-            elif path == "/api/search":
-                self._send_json(self._search(params))
-            elif path == "/api/conversations":
-                platform = (params.get("platform") or [""])[0]
-                self._send_json(self._conversations(platform))
-            elif path == "/api/conversation":
-                platform = (params.get("platform") or [""])[0]
-                cid = (params.get("id") or [""])[0]
-                self._send_json(self._conversation(platform, cid))
-            elif path == "/api/random":
-                self._send_json(self._random(params))
-            else:
-                self._send_json({"error": "unknown endpoint"}, 404)
+        # pas de verrou global : SQLite est serialise et l'inference a le sien,
+        # sinon une recherche lente bloquerait /api/stats et toute l'interface
+        if path == "/api/stats":
+            self._send_json(self._stats())
+        elif path == "/api/filters":
+            self._send_json(self._filters())
+        elif path == "/api/activity":
+            self._send_json(self._activity())
+        elif path == "/api/timeline":
+            self._send_json(self._timeline())
+        elif path == "/api/similar":
+            self._send_json(self._similar(params))
+        elif path == "/api/media":
+            self._send_json(self._media(params))
+        elif path == "/api/status":
+            self._send_json(self._status())
+        elif path == "/api/recheck":
+            self._send_json(self._recheck_status())
+        elif path == "/api/scrape":
+            self._send_json(self._scrape_status())
+        elif path == "/api/day":
+            self._send_json(self._day(params))
+        elif path == "/api/search":
+            self._send_json(self._search(params))
+        elif path == "/api/conversations":
+            platform = (params.get("platform") or [""])[0]
+            self._send_json(self._conversations(platform))
+        elif path == "/api/conversation":
+            platform = (params.get("platform") or [""])[0]
+            cid = (params.get("id") or [""])[0]
+            self._send_json(self._conversation(platform, cid))
+        elif path == "/api/random":
+            self._send_json(self._random(params))
+        else:
+            self._send_json({"error": "unknown endpoint"}, 404)
 
     # -- endpoints -------------------------------------------------------------
 
@@ -510,12 +1390,14 @@ class Handler(BaseHTTPRequestHandler):
             for row in store.db.execute(
                 "SELECT platform, COUNT(*) AS n FROM messages GROUP BY platform"
             ).fetchall()
+            if row["platform"] in PLATFORMS
         }
         convs = {
             row["platform"]: row["n"]
             for row in store.db.execute(
                 "SELECT platform, COUNT(*) AS n FROM conversations GROUP BY platform"
             ).fetchall()
+            if row["platform"] in PLATFORMS
         }
         for platform, data in counts.items():
             data["conversations"] = convs.get(platform, 0)
@@ -599,6 +1481,8 @@ class Handler(BaseHTTPRequestHandler):
 
         platforms: dict = {}
         for row in platform_rows:
+            if row["platform"] not in PLATFORMS:
+                continue
             platforms.setdefault(row["platform"], {})[row["mois"]] = row["n"]
         models: dict = {}
         for row in model_rows:
@@ -621,7 +1505,9 @@ class Handler(BaseHTTPRequestHandler):
         platform_series.sort(key=lambda item: (-item["total"], item["platform"]))
         model_series = [entry("model", name, counts)
                         for name, counts in models.items()]
-        model_series.sort(key=lambda item: (-item["total"], item["model"]))
+        model_series.sort(
+            key=lambda item: (-item["total"], str(item["model"]))
+        )
         all_counts: dict = {}
         for counts in platforms.values():
             for month, n in counts.items():
@@ -667,6 +1553,8 @@ class Handler(BaseHTTPRequestHandler):
         else:
             try:
                 offset = int((params.get("i") or ["0"])[0])
+                if not 0 <= offset <= 10**9:
+                    raise ApiError("i doit etre entre 0 et 1000000000")
             except ValueError as exc:
                 raise ApiError("parametre i invalide (entier attendu)") from exc
             row = store.db.execute(
@@ -724,10 +1612,15 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError("offset/limit invalides (entiers attendus)") from exc
         if offset < 0:
             raise ApiError("offset doit etre positif")
+        if offset > 10**9:
+            raise ApiError("offset doit etre inferieur a 1000000000")
         if not 1 <= limit <= MEDIA_PAGE_MAX:
             raise ApiError(f"limit doit etre entre 1 et {MEDIA_PAGE_MAX}")
         store = self.state.media_store()
-        clauses, args = [], []
+        # liste blanche de plateformes : une base piegee ne fait pas remonter
+        # des lignes hors perimetre dans la galerie
+        clauses = [f"platform IN ({','.join('?' for _ in PLATFORMS)})"]
+        args = list(PLATFORMS)
         if platform:
             clauses.append("platform = ?")
             args.append(platform)
@@ -761,6 +1654,21 @@ class Handler(BaseHTTPRequestHandler):
         """Etat du chantier : index RAG, scrape par plateforme, sante, backups."""
         store = self.state.store()
         index = dict(store.stats())
+        per_platform = {
+            name: _as_int(count)
+            for name, count in (index.get("per_platform") or {}).items()
+            if name in PLATFORMS
+        }
+        index["per_platform"] = per_platform
+        index["messages"] = sum(per_platform.values())
+        index["conversations"] = sum(
+            _as_int(row["n"])
+            for row in store.db.execute(
+                "SELECT platform, COUNT(*) AS n FROM conversations "
+                "GROUP BY platform"
+            ).fetchall()
+            if row["platform"] in PLATFORMS
+        )
         index["media"] = self.state.media_store().stats()
         row = store.db.execute(
             "SELECT MAX(indexed_at) AS last FROM conversations"
@@ -773,7 +1681,10 @@ class Handler(BaseHTTPRequestHandler):
             d.name for d in self.state.exports_dir.iterdir()
             if d.is_dir() and (d / "conversation_list.json").exists()
         ):
-            path = self.state.exports_dir / name / "conversation_list.json"
+            base = self.state.platform_dir(name)
+            if base is None:
+                continue
+            path = base / "conversation_list.json"
             entry = {
                 "platform": name,
                 "conversations": 0,
@@ -782,20 +1693,27 @@ class Handler(BaseHTTPRequestHandler):
                 "health": self._api_health(name),
                 "recheck": self._recheck(name),
             }
-            try:
-                data = json.loads(path.read_text(encoding="utf-8"))
-                entries = data.get("conversations") or []
+            data = read_archive_json(path)
+            if data is not None:
+                entries = [
+                    item for item in (
+                        data.get("conversations") if isinstance(data, dict) else []
+                    ) or []
+                    if isinstance(item, dict)
+                ]
                 entry["conversations"] = len(entries)
                 stamps = [
                     item.get("last_message_at") for item in entries
-                    if item.get("last_message_at")
+                    if isinstance(item.get("last_message_at"), str)
+                    and item.get("last_message_at")
                 ]
                 entry["last_message_at"] = max(stamps) if stamps else None
-                entry["scraped_at"] = datetime.fromtimestamp(
-                    path.stat().st_mtime, timezone.utc
-                ).strftime("%Y-%m-%dT%H:%M:%SZ")
-            except (OSError, json.JSONDecodeError):
-                pass
+                try:
+                    entry["scraped_at"] = datetime.fromtimestamp(
+                        path.stat().st_mtime, timezone.utc
+                    ).strftime("%Y-%m-%dT%H:%M:%SZ")
+                except (OSError, ValueError, OverflowError):
+                    entry["scraped_at"] = None
             scrape.append(entry)
         # verdict de controle de parseur le plus grave, pour le marquage du
         # tableau de bord (une plateforme critique suffit a alerter)
@@ -818,23 +1736,22 @@ class Handler(BaseHTTPRequestHandler):
 
     def _api_health(self, platform: str):
         """Sante de la forme des payloads API (`api_health.json`)."""
-        path = self.state.exports_dir / platform / "api_health.json"
-        if not path.is_file():
+        base = self.state.platform_dir(platform)
+        if base is None:
             return None
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        data = read_archive_json(base / "api_health.json")
+        if not isinstance(data, dict):
             return None
-        n = data.get("n") or 0
-        matches = data.get("matches") or 0
+        n = _as_int(data.get("n"))
+        matches = _as_int(data.get("matches"))
         return {
             "n": n,
             "matches": matches,
             "rate": round(matches / n * 100, 1) if n else None,
-            "breaks": data.get("breaks") or 0,
-            "drifts": data.get("drifts") or 0,
-            "mean_score": data.get("mean_score"),
-            "threshold": data.get("threshold"),
+            "breaks": _as_int(data.get("breaks")),
+            "drifts": _as_int(data.get("drifts")),
+            "mean_score": _as_float(data.get("mean_score")),
+            "threshold": _as_float(data.get("threshold")),
             "updated_at": data.get("updated_at"),
         }
 
@@ -854,7 +1771,11 @@ class Handler(BaseHTTPRequestHandler):
         if raw is None:
             platforms = list(PLATFORMS)
         elif isinstance(raw, list):
-            platforms = [check_platform(str(name)) for name in raw]
+            # dedoublonne : un corps borne peut contenir des milliers de
+            # fois la meme plateforme (amplification des jobs)
+            platforms = list(
+                dict.fromkeys(check_platform(str(name)) for name in raw)
+            )
         else:
             raise ApiError("platforms doit etre une liste")
         if not platforms:
@@ -863,7 +1784,7 @@ class Handler(BaseHTTPRequestHandler):
             per_platform = int(body.get("per_platform", PER_PLATFORM))
             min_messages = int(body.get("min_messages", MIN_MESSAGES))
             seed = int(body.get("seed", 0))
-        except (TypeError, ValueError) as exc:
+        except (TypeError, ValueError, OverflowError) as exc:
             raise ApiError(
                 "per_platform/min_messages/seed doivent etre des entiers"
             ) from exc
@@ -889,7 +1810,11 @@ class Handler(BaseHTTPRequestHandler):
         if raw is None:
             platforms = list(PLATFORMS)
         elif isinstance(raw, list):
-            platforms = [check_platform(str(name)) for name in raw]
+            # dedoublonne : un corps borne peut contenir des milliers de
+            # fois la meme plateforme (amplification des jobs)
+            platforms = list(
+                dict.fromkeys(check_platform(str(name)) for name in raw)
+            )
         else:
             raise ApiError("platforms doit etre une liste")
         if not platforms:
@@ -901,7 +1826,7 @@ class Handler(BaseHTTPRequestHandler):
         if limit is not None:
             try:
                 limit = int(limit)
-            except (TypeError, ValueError) as exc:
+            except (TypeError, ValueError, OverflowError) as exc:
                 raise ApiError("limit doit etre un entier") from exc
             if not 1 <= limit <= 2000:
                 raise ApiError("limit doit etre entre 1 et 2000")
@@ -939,7 +1864,8 @@ class Handler(BaseHTTPRequestHandler):
         store = self.state.store()
         rows = store.db.execute(
             """
-            SELECT message_id, conversation_id, platform, role, model, timestamp, texte
+            SELECT message_id, conversation_id, platform, role, model, timestamp,
+                   CASE WHEN typeof(texte) = 'text' THEN texte ELSE '' END AS texte
             FROM messages WHERE date(timestamp) = ?
             ORDER BY timestamp, rowid
             """,
@@ -948,6 +1874,8 @@ class Handler(BaseHTTPRequestHandler):
         groups: dict = {}
         order: list = []
         for row in rows:
+            if row["platform"] not in PLATFORMS:
+                continue
             key = (row["platform"], row["conversation_id"])
             group = groups.get(key)
             if group is None:
@@ -978,7 +1906,9 @@ class Handler(BaseHTTPRequestHandler):
             info = meta.get(key) or {}
             group = groups[key]
             group["title"] = info.get("title") or ""
-            if info.get("url"):
+            if isinstance(info.get("url"), str) and info["url"].lower().startswith(
+                ("http://", "https://")
+            ):
                 group["url"] = info["url"]
         conversations = [groups[key] for key in order]
         return {
@@ -991,9 +1921,8 @@ class Handler(BaseHTTPRequestHandler):
     def _filters(self):
         store = self.state.store()
         platforms = sorted(
-            d.name
-            for d in self.state.exports_dir.iterdir()
-            if d.is_dir() and (d / "conversation_list.json").exists()
+            name for name in PLATFORMS
+            if self.state.platform_dir(name) is not None
         )
         lo, hi = store.date_bounds()
         return {
@@ -1005,6 +1934,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def _search(self, params):
         query = (params.get("q") or [""])[0].strip()
+        # borne AVANT l'encodage : une requete de plusieurs Ko coute des dizaines
+        # de secondes d'inference et bloque les recherches concurrentes
+        query = query[:MAX_QUERY_CHARS]
         try:
             k = int((params.get("k") or ["30"])[0])
         except ValueError as exc:
@@ -1013,8 +1945,8 @@ class Handler(BaseHTTPRequestHandler):
             alpha = float((params.get("alpha") or ["0.6"])[0])
         except ValueError as exc:
             raise ApiError("parametre alpha invalide (nombre attendu)") from exc
-        if not 1 <= k <= 500:
-            raise ApiError("k doit etre entre 1 et 500")
+        if not 1 <= k <= K_MAX:
+            raise ApiError(f"k doit etre entre 1 et {K_MAX}")
         if not 0.0 <= alpha <= 1.0:
             raise ApiError("alpha doit etre entre 0 et 1")
         platforms_raw = (params.get("platforms") or [""])[0]
@@ -1050,6 +1982,14 @@ class Handler(BaseHTTPRequestHandler):
             date_from=date_from,
             date_to=date_to,
         )
+        # une base/copie d'archive peut contenir une plateforme inconnue : on
+        # ne la renvoie jamais (liste blanche, comme les autres routes).
+        # `rowid` (identifiant interne de la base) n'est pas expose par l'API web.
+        results = [
+            {key: value for key, value in item.items() if key != "rowid"}
+            for item in results
+            if item.get("platform") in PLATFORMS
+        ]
         payload = self._group_results(query, results)
         media = self._search_media(vector, platforms, media_k)
         # un media = un message a part entiere de sa conversation : il compte
@@ -1197,6 +2137,8 @@ class Handler(BaseHTTPRequestHandler):
         ).fetchall()
         groups: dict = {}
         for row in rows:
+            if row["platform"] not in PLATFORMS:
+                continue
             key = (row["platform"], row["conversation_id"])
             group = groups.get(key)
             if group is None:
@@ -1226,7 +2168,9 @@ class Handler(BaseHTTPRequestHandler):
         for key, group in groups.items():
             info = meta.get(key) or {}
             group["title"] = info.get("title") or ""
-            if info.get("url"):
+            if isinstance(info.get("url"), str) and info["url"].lower().startswith(
+                ("http://", "https://")
+            ):
                 group["url"] = info["url"]
             group["hit_count"] = len(group["messages"])
             ordered.append(group)
@@ -1262,7 +2206,9 @@ class Handler(BaseHTTPRequestHandler):
         for key, group in groups.items():
             info = meta.get(key) or {}
             group["title"] = info.get("title") or ""
-            if info.get("url"):
+            if isinstance(info.get("url"), str) and info["url"].lower().startswith(
+                ("http://", "https://")
+            ):
                 group["url"] = info["url"]
             group["messages"].sort(key=lambda m: m["score"], reverse=True)
             group["hit_count"] = len(group["messages"])
@@ -1300,12 +2246,15 @@ class Handler(BaseHTTPRequestHandler):
             row = store.random_conversation()
             if not row:
                 break
+            if row.get("platform") not in PLATFORMS:
+                continue
             key = (row.get("platform"), row.get("conversation_id"))
             if key in seen:
                 continue
             seen.add(key)
-            if not row.get("url"):
-                row["url"] = conversation_url(row["platform"], row["conversation_id"])
+            row["url"] = safe_url(
+                row.get("url"), row["platform"], row["conversation_id"]
+            )
             picked.append(row)
         self._enrich_random(picked)
         if n == 1:
@@ -1358,24 +2307,32 @@ class Handler(BaseHTTPRequestHandler):
         )
         items = []
         for name in platforms:
-            path = self.state.exports_dir / name / "conversation_list.json"
+            base = self.state.platform_dir(name)
+            if base is None:
+                continue
+            path = base / "conversation_list.json"
             if not path.exists():
                 continue
-            try:
-                data = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
+            data = read_archive_json(path)
+            if data is None:
                 continue
-            for entry in data.get("conversations") or []:
+            entries = (
+                data.get("conversations") if isinstance(data, dict) else []
+            ) or []
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
                 conversation_id = entry.get("conversation_id")
                 items.append(
                     {
                         "platform": name,
                         "conversation_id": conversation_id,
                         "title": entry.get("title") or "",
-                        "url": entry.get("url")
-                        or conversation_url(name, conversation_id),
-                        "message_count": entry.get("message_count"),
-                        "last_message_at": entry.get("last_message_at"),
+                        "url": safe_url(entry.get("url"), name, conversation_id),
+                        "message_count": _as_int(entry.get("message_count"), None),
+                        "last_message_at": entry.get("last_message_at")
+                        if isinstance(entry.get("last_message_at"), str)
+                        else None,
                         "has_code": entry.get("has_code"),
                         "scraped": entry.get("scraped"),
                     }
@@ -1391,15 +2348,25 @@ class Handler(BaseHTTPRequestHandler):
         path = self.state.conversation_file(platform, conversation_id)
         if path is None:
             return {"error": "conversation introuvable"}
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            return {"error": str(exc)}
+        data = read_archive_json(path)
+        if not isinstance(data, dict):
+            # absent, trop volumineux, non-objet ou illisible
+            return {"error": "conversation illisible"}
+        if isinstance(data.get("messages"), list):
+            # une archive piegee peut contenir des tours non-objet ou des
+            # champs de mauvais type : le front ferait `.map` dessus
+            data = {
+                **data,
+                "messages": [_normalize_message(m)
+                             for m in data["messages"] if isinstance(m, dict)],
+            }
+        # le champ `platform` du fichier n'est jamais cru (il vient de
+        # l'archive) : la valeur validee de la requete fait foi
+        data = {**data, "platform": platform}
         return {
             "platform": platform,
             "conversation_id": conversation_id,
-            "file": str(path),
-            "url": data.get("url") or conversation_url(platform, conversation_id),
+            "url": safe_url(data.get("url"), platform, conversation_id),
             "conversation": data,
         }
 
@@ -1440,6 +2407,20 @@ def main() -> int:
     parser.add_argument("--db", type=Path)
     parser.add_argument("--exports", type=Path)
     parser.add_argument("--model")
+    parser.add_argument("--no-auth", action="store_true",
+                        help="desactiver l'authentification (local uniquement)")
+    parser.add_argument("--password-file", type=Path,
+                        default=SECRETS_DIR / "web_password.txt",
+                        help="fichier du hash scrypt du mot de passe")
+    parser.add_argument("--session-secret", type=Path,
+                        default=SECRETS_DIR / "web_session_secret",
+                        help="fichier du secret de signature des sessions")
+    parser.add_argument("--session-ttl", type=float,
+                        default=SESSION_TTL_SECONDS / 3600,
+                        help="duree de vie d'une session, en heures (defaut : 720)")
+    parser.add_argument("--secure-cookies", choices=("auto", "always", "never"),
+                        default="auto",
+                        help="attribut Secure du cookie (defaut : auto = si HTTPS)")
     args = parser.parse_args()
 
     config = load_config(ROOT / "config.yaml")
@@ -1448,17 +2429,59 @@ def main() -> int:
         path = Path(value)
         return path if path.is_absolute() else ROOT / path
 
+    exports_dir = resolve(args.exports or config["output_dir"])
+    db_path = resolve(args.db or config["rag_db"])
+    # les jobs (scrape / controle) heritent des chemins **resolus de cette
+    # instance** : une instance de test ne doit jamais ecrire dans l'archive
+    job_config = {
+        **config,
+        "output_dir": str(exports_dir),
+        "rag_db": str(db_path),
+    }
     Handler.state = AppState(
-        resolve(args.db or config["rag_db"]),
-        resolve(args.exports or config["output_dir"]),
+        db_path,
+        exports_dir,
         args.model or config.get("rag_model"),
         config.get("rag_dim") or 0,
-        config=config,
+        config=job_config,
     )
-    server = ThreadingHTTPServer((args.host, args.port), Handler)
+    if args.no_auth and args.host not in ("127.0.0.1", "::1", "localhost"):
+        parser.error("--no-auth exige une ecoute sur la boucle locale (--host 127.0.0.1)")
+    if args.no_auth:
+        Handler.auth = None
+        print("[web] ATTENTION : authentification desactivee (--no-auth)")
+    else:
+        password_file = resolve(args.password_file)
+        password_hash = read_password_file(password_file)
+        if not password_hash:
+            print(
+                "[web] aucun mot de passe defini :\n"
+                "      .venv/bin/python scripts/web_password.py --generate",
+                file=sys.stderr,
+            )
+            return 2
+        secret_path = resolve(args.session_secret)
+        try:
+            secret = load_or_create_secret(secret_path)
+        except OSError as exc:
+            print(
+                f"[web] secret de session inaccessible ({secret_path}) : {exc}\n"
+                "      creer les secrets avant de demarrer :\n"
+                "      .venv/bin/python scripts/web_password.py --generate",
+                file=sys.stderr,
+            )
+            return 2
+        Handler.auth = AuthConfig(
+            password_hash=password_hash,
+            secret=secret,
+            ttl_seconds=int(args.session_ttl * 3600),
+            cookie_secure=args.secure_cookies,
+        )
+    server = WebServer((args.host, args.port), Handler)
     display_host = "127.0.0.1" if args.host in ("0.0.0.0", "::") else args.host
     url = f"http://{display_host}:{args.port}"
-    print(f"[web] {url}  (Ctrl+C pour arreter)")
+    etat = "mot de passe" if Handler.auth else "SANS authentification"
+    print(f"[web] {url}  ({etat} ; Ctrl+C pour arreter)")
     if not args.no_open:
         threading.Timer(1.0, _open_browser, args=(url,)).start()
     try:

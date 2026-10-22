@@ -17,6 +17,10 @@ from sqlite_vec import serialize_float32
 from .store import VectorStore
 
 TOKEN_RE = re.compile(r"[\w\-]+", re.UNICODE)
+#: bornes anti-abus : une requete courte et un nombre de termes plafonne
+#: (chaque terme ajoute un OR ... LIKE cote SQLite)
+MAX_QUERY_LEN = 512
+MAX_TERMS = 32
 
 
 def tokenize(text: str, min_len: int = 2) -> List[str]:
@@ -30,6 +34,13 @@ def tokenize(text: str, min_len: int = 2) -> List[str]:
         if len(token) >= min_len and token not in seen:
             seen.append(token)
     return seen
+
+
+def _text_row(row: Dict[str, Any]) -> Dict[str, Any]:
+    """`texte` sur : une base piegee peut y stocker un BLOB."""
+    if not isinstance(row.get("texte"), str):
+        row["texte"] = ""
+    return row
 
 
 def _fold(text: str) -> str:
@@ -96,7 +107,7 @@ def semantic_rows(
     sql = f"""
         SELECT m.rowid AS rowid, v.distance AS distance,
                m.message_id, m.conversation_id, m.platform, m.role, m.model,
-               m.timestamp, m.texte, m.conversation_file
+               m.timestamp, m.texte
         FROM vec_messages v JOIN messages m ON m.rowid = v.rowid
         WHERE {where}
         ORDER BY v.distance
@@ -104,7 +115,7 @@ def semantic_rows(
     rows = store.db.execute(
         sql, [serialize_float32(query_vector), int(k)] + params
     ).fetchall()
-    return [dict(row) for row in rows]
+    return [_text_row(dict(row)) for row in rows]
 
 
 def keyword_rows(
@@ -127,14 +138,14 @@ def keyword_rows(
     rows = store.db.execute(
         f"""
         SELECT m.rowid AS rowid, m.message_id, m.conversation_id, m.platform,
-               m.role, m.model, m.timestamp, m.texte, m.conversation_file
+               m.role, m.model, m.timestamp, m.texte
         FROM messages m
         WHERE {where}
         LIMIT ?
         """,
         params + [int(limit)],
     ).fetchall()
-    return [dict(row) for row in rows]
+    return [_text_row(dict(row)) for row in rows]
 
 
 def combined_search(
@@ -150,7 +161,8 @@ def combined_search(
     candidate_limit: int = 2000,
 ) -> List[Dict[str, Any]]:
     alpha = max(0.0, min(1.0, float(alpha)))
-    terms = tokenize(query_text)
+    query_text = (query_text or "")[:MAX_QUERY_LEN]
+    terms = tokenize(query_text)[:MAX_TERMS]
     query_vector = np.asarray(query_vector, dtype=np.float32)
 
     sem_k = min(max(k * 4, 200), 2000)
@@ -190,7 +202,6 @@ def combined_search(
                 "model": info.get("model"),
                 "timestamp": info.get("timestamp"),
                 "texte": info.get("texte") or "",
-                "conversation_file": info.get("conversation_file"),
                 "semantic_score": round(sem_score, 4),
                 "keyword_score": round(kw_score, 4),
                 "score": round(score, 4),

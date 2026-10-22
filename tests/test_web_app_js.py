@@ -87,10 +87,15 @@ def test_repli_fail_closed_sans_dompurify():
     assert data["out2"] == "SANE"
 
 
-def test_sri_sur_les_scripts_cdn():
-    """Les scripts CDN portent integrity + crossorigin (SRI)."""
+def test_libs_front_vendorisees():
+    """Les bibliotheques front sont servies localement (aucun CDN tiers)."""
     html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
-    for name in ("marked@12.0.2", "dompurify@3.1.6", "katex@0.16.11"):
-        assert name in html
-    assert html.count('integrity="sha384-') == 5  # 4 scripts + css KaTeX
-    assert html.count('crossorigin="anonymous"') == 5
+    assert "cdn.jsdelivr" not in html
+    for name in ("marked.min.js", "purify.min.js", "katex.min.js",
+                 "auto-render.min.js", "katex.min.css"):
+        assert f"vendor/{name}" in html, name
+        assert (ROOT / "web" / "vendor" / name).is_file(), name
+    # la version de DOMPurify doit etre a jour (CVE mXSS des 3.1.x)
+    purify = (ROOT / "web" / "vendor" / "purify.min.js").read_text(encoding="utf-8")
+    assert "DOMPurify 3.4" in purify or "DOMPurify 3.5" in purify
+    assert (ROOT / "web" / "vendor" / "fonts").is_dir()

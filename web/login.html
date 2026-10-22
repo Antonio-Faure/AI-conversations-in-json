@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Connexion — Conversations IA</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e94560' stroke-width='2' stroke-linecap='round'><circle cx='11' cy='11' r='7'/><path d='M20 20l-3.4-3.4'/></svg>">
+<script src="theme-boot.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font-display:'Crimson Pro','Iowan Old Style',Georgia,serif;
+  --font-body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html[data-theme="dark"]:not([data-force-chrome]){
+  --primary:#0b0f14;--text:#e8edf3;--text-muted:#9fb0c0;
+  --accent:#6cc3ee;--accent-strong:#3497cc;--accent-ink:#04121a;
+  --bg-card:#121922;--border:rgba(255,255,255,.09);--border-strong:rgba(255,255,255,.17);
+  --shadow:0 16px 34px -18px rgba(0,0,0,.75);--focus-ring:rgba(108,195,238,.35);
+  --danger:#f2777a;
+}
+html[data-theme="light"]:not([data-force-chrome]){
+  --primary:#f6f8fb;--text:#111a24;--text-muted:#5b6774;
+  --accent:#0f766e;--accent-strong:#0f766e;--accent-ink:#ffffff;
+  --bg-card:#ffffff;--border:rgba(17,26,36,.12);--border-strong:rgba(17,26,36,.2);
+  --shadow:0 18px 40px -22px rgba(17,26,36,.4);--focus-ring:rgba(13,148,136,.3);
+  --danger:#b42318;
+}
+html[data-force-chrome]{
+  --primary:#2b161b;--text:#f7eeeb;--text-muted:#caacb2;
+  --accent:#f0728c;--accent-strong:#c81e3e;--accent-ink:#ffffff;
+  --bg-card:#3a2126;--border:rgba(255,255,255,.12);--border-strong:rgba(255,255,255,.22);
+  --shadow:0 16px 34px -16px rgba(0,0,0,.7);--focus-ring:rgba(240,114,140,.42);
+  --danger:#ffb4bd;
+}
+body{
+  min-height:100dvh;display:grid;place-items:center;padding:24px;
+  background:var(--primary);color:var(--text);font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+.card{
+  width:100%;max-width:400px;background:var(--bg-card);border:1px solid var(--border);
+  border-radius:18px;padding:34px 30px 28px;box-shadow:var(--shadow);
+  animation:rise .4s var(--ease) both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.card{animation:none}}
+.mark{
+  width:46px;height:46px;border-radius:14px;display:grid;place-items:center;margin-bottom:18px;
+  background:color-mix(in srgb,var(--accent) 16%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);
+}
+.mark svg{width:22px;height:22px;stroke:var(--accent)}
+h1{font-family:var(--font-display);font-size:1.7rem;font-weight:600;letter-spacing:-.01em;line-height:1.15}
+.sub{margin-top:6px;color:var(--text-muted);font-size:.9rem;line-height:1.5}
+form{margin-top:26px;display:flex;flex-direction:column;gap:14px}
+label{font-size:.78rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted)}
+.field{position:relative}
+input[type=password],input[type=text]{
+  width:100%;padding:13px 46px 13px 14px;font:inherit;font-size:1rem;color:var(--text);
+  background:color-mix(in srgb,var(--text) 5%,transparent);
+  border:1px solid var(--border-strong);border-radius:12px;
+  transition:border-color .18s var(--ease),box-shadow .18s var(--ease);
+}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--focus-ring)}
+.reveal{
+  position:absolute;top:50%;right:6px;transform:translateY(-50%);
+  width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:9px;
+  background:none;color:var(--text-muted);cursor:pointer;
+}
+.reveal:hover{background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text)}
+.reveal svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+button[type=submit]{
+  margin-top:4px;padding:13px 16px;font:inherit;font-size:.98rem;font-weight:500;
+  color:var(--accent-ink);background:var(--accent);border:0;border-radius:12px;cursor:pointer;
+  transition:background .18s var(--ease),transform .18s var(--ease),opacity .18s var(--ease);
+}
+button[type=submit]:hover{background:var(--accent-strong)}
+button[type=submit]:active{transform:translateY(1px)}
+button[type=submit][disabled]{opacity:.6;cursor:progress}
+.error{
+  min-height:1.2em;color:var(--danger);font-size:.86rem;line-height:1.4;
+}
+.error:empty::before{content:""}
+.note{margin-top:22px;padding-top:16px;border-top:1px solid var(--border);color:var(--text-muted);font-size:.78rem;line-height:1.5}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="mark" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+  </div>
+  <h1>Conversations IA</h1>
+  <p class="sub">Archive personnelle de ChatGPT, Claude, Gemini, Perplexity, Grok et Mistral. Accès protégé par mot de passe.</p>
+  <form id="loginForm" novalidate>
+    <div>
+      <label for="password">Mot de passe</label>
+      <div class="field">
+        <input type="password" id="password" name="password" autocomplete="current-password"
+          autofocus required aria-describedby="error">
+        <button type="button" class="reveal" id="reveal" aria-label="Afficher le mot de passe" aria-pressed="false">
+          <svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3.2"/></svg>
+        </button>
+      </div>
+    </div>
+    <p class="error" id="error" role="alert" aria-live="polite"></p>
+    <button type="submit" id="submit">Se connecter</button>
+  </form>
+  <p class="note">Session valable 30 jours sur cet appareil. La connexion se fait via Tailscale&nbsp;: rien n'est exposé sur Internet.</p>
+</main>
+<script src="login.js"></script>
+</body>
+</html>

@@ -428,12 +428,36 @@ Interface locale (dark theme, responsive, Crimson Pro + DM Sans) pour explorer
 les conversations des 6 chatbots.
 
 ```bash
-.venv/bin/python scripts/serve_web.py          # ouvre Chrome sur http://127.0.0.1:8765
+.venv/bin/python scripts/serve_web.py          # http://127.0.0.1:8765 (connexion requise)
+.venv/bin/python scripts/serve_web.py --no-auth  # sans mot de passe (local uniquement)
 .venv/bin/python scripts/serve_web.py --host 0.0.0.0 --port 9000 --no-open
 ```
 
 Au démarrage, le serveur **ouvre le navigateur** (Chrome si installé, sinon le
 navigateur par défaut) sur la bonne page (`--no-open` pour désactiver).
+
+**Authentification** (activée par défaut) : mot de passe unique, page de
+connexion, cookie de session signé (HMAC-SHA256, `HttpOnly`, `SameSite=Strict`,
+`Secure` forcé en production) valable 30 jours, bouton de déconnexion **qui
+révoque le jeton** (pas seulement le cookie) et limitation des tentatives
+(5 essais par client, plus un plafond global pour arrêter la force brute
+distribuée). Le mot de passe n'est jamais stocké en clair : seul son hash
+**scrypt** est lu dans `secrets/web_password.txt` (fichier local en 600,
+gitignoré) ; le secret de signature est dans `secrets/web_session_secret`.
+
+La clé de signature est dérivée **du hash du mot de passe** : changer le mot de
+passe invalide immédiatement toutes les sessions en cours, sans état serveur.
+
+```bash
+.venv/bin/python scripts/web_password.py --generate   # crée le hash + le secret de session
+.venv/bin/python scripts/web_password.py --check      # vérifie un mot de passe
+.venv/bin/python scripts/web_password.py --show       # fichier + empreinte du hash
+```
+
+> Les deux fichiers doivent exister **avant** le premier démarrage : le service
+> systemd monte `secrets/` en lecture seule (une faille du serveur ne peut pas
+> réécrire le mot de passe). `--no-auth` désactive la vérification (développement
+> local seulement).
 
 - **Double recherche combinée** : mots-clés exacts (LIKE + bonus phrase) **et**
   similarité cosinus (EmbeddingGemma + sqlite-vec), exécutées ensemble puis fusionnées
@@ -496,6 +520,76 @@ L'API locale (même serveur) : `/api/search`, `/api/conversation`,
 `/api/day`, plus `GET`/`POST /api/recheck` (contrôle de parseur) et
 `GET`/`POST /api/scrape` (scrape à la demande). Le modèle d'embeddings se charge
 au premier appel (quelques secondes).
+
+### Mise en production (service + accès distant)
+
+Le serveur reste **sur la boucle locale** : un service systemd utilisateur le
+maintient en vie (redémarrage automatique, démarrage au boot via `linger`), et
+**Tailscale Serve** publie l'accès en HTTPS aux seuls appareils du tailnet —
+aucun port ouvert sur le réseau local ou Internet, aucun certificat à gérer.
+
+```bash
+# 1. mot de passe (une fois ; le fichier doit exister avant le démarrage)
+.venv/bin/python scripts/web_password.py --generate
+
+# 2. service utilisateur
+mkdir -p ~/.config/systemd/user
+cp deploy/aicv-web.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now aicv-web
+
+# 3. accès HTTPS sur le tailnet (port 8443 ; le 443 reste au dashboard hermes)
+tailscale serve --bg --https=8443 http://127.0.0.1:8766
+tailscale serve status
+```
+
+L'interface est alors sur `https://<machine>.<tailnet>.ts.net:8443/`. Depuis un
+autre appareil du tailnet : ouvrir l'URL, saisir le mot de passe ; la session
+dure 30 jours sur cet appareil.
+
+| Commande | Rôle |
+|---|---|
+| `systemctl --user status aicv-web` | état du service |
+| `journalctl --user -u aicv-web -f` | journaux en direct |
+| `systemctl --user restart aicv-web` | redémarrer après une mise à jour |
+| `tailscale serve status` | routes publiées |
+| `tailscale serve --https=8443 off` | couper l'accès distant |
+
+Sécurité : hash scrypt et secret de session locaux (gitignorés, 600) ; le
+service systemd monte `secrets/` en **lecture seule** ; cookie `Secure` forcé
+(`--secure-cookies always`) ; POST vérifiés par l'origine (anti-CSRF) en plus de
+`SameSite=Strict` ; tentatives de connexion limitées par client **et**
+globalement ; en-têtes `X-Frame-Options: DENY`, `nosniff`,
+`Referrer-Policy: no-referrer`, `Permissions-Policy` et **CSP stricte** (aucun
+script inline ; les médias sont servis avec `CSP: sandbox`, donc un SVG ou un
+HTML joint ne peut rien exécuter) ; erreurs 500 génériques (aucun chemin ni
+détail interne) ; requêtes journalisées sans query string (les recherches ne
+finissent pas dans le journal).
+
+**Sandbox systemd** (défense en profondeur, score `systemd-analyze security`
+4.0) : `NoNewPrivileges`, `ProtectSystem=strict`, `ProtectHome=read-only`,
+`PrivateDevices`, `PrivateTmp`, `ProtectProc=invisible`, capabilities vides,
+`RestrictAddressFamilies`, `UMask=0077`, `TasksMax=1024`, `MemoryMax=8G`.
+L'écriture est confinée à `exports/`, `rag/`, `logs/`, `cookies/`, `profiles/`,
+`.state/` et aux caches du modèle ; `~/.ssh`, `~/.gnupg`, `~/.Xauthority`,
+`~/.docker`, les profils des navigateurs personnels, `/run/docker.sock` et le
+bus de session sont **inaccessibles** au service ; `secrets/` est en lecture
+seule. Le serveur borne ses threads (32), ses connexions **par client** (8) et
+la durée de réception d'un corps (10 s), et consomme toujours le corps annoncé
+avant de répondre (pas de désynchronisation HTTP derrière le proxy).
+
+> **Reste à faire côté machine** : `kernel.yama.ptrace_scope=1`
+> (`echo 'kernel.yama.ptrace_scope = 1' | sudo tee /etc/sysctl.d/90-aicv-ptrace.conf && sudo sysctl --system`).
+> Sans lui, un processus compromis du service peut lire `/proc/<pid>/root` d'un
+> autre processus du même utilisateur, ce qui contourne **tous** les masques
+> ci-dessus. `ProtectProc=invisible` n'a aucun effet dans une unité
+> **utilisateur** (impossible de remonter procfs sans privilège) : c'est le
+> `ptrace_scope` qui ferme cette porte. Le verrou de scrape vit dans `.state/`
+> (et non `/tmp`, privé pour le service), partagé avec le cron.
+
+Changer le mot de passe : `scripts/web_password.py --generate --force` puis
+`systemctl --user restart aicv-web` — les sessions en cours sont invalidées
+automatiquement.
 
 ## Optimisations écriture & compute
 

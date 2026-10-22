@@ -16,6 +16,7 @@ import hashlib
 import json
 import re
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 
@@ -126,14 +127,35 @@ class MediaStore:
     def __init__(self, db_path: Path | str, dim: int):
         self.db_path = Path(db_path)
         ensure_dir(self.db_path.parent)
-        self.db = sqlite3.connect(str(self.db_path), check_same_thread=False)
-        self.db.row_factory = sqlite3.Row
-        self.db.enable_load_extension(True)
-        sqlite_vec.load(self.db)
-        self.db.enable_load_extension(False)
+        # une connexion par thread (meme raison que VectorStore)
+        self._local = threading.local()
         existing = self._existing_vec_dim()
         self.dim = existing if existing is not None else int(dim)
         self._create_schema()
+
+    @property
+    def db(self) -> sqlite3.Connection:
+        """Connexion du thread courant (creee a la demande)."""
+        conn = getattr(self._local, "db", None)
+        if conn is None:
+            conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            conn.enable_load_extension(True)
+            sqlite_vec.load(conn)
+            conn.enable_load_extension(False)
+            conn.execute("PRAGMA busy_timeout=5000")
+            self._local.db = conn
+        return conn
+
+    def close_thread_db(self) -> None:
+        """Ferme la connexion du thread courant (fin de connexion HTTP)."""
+        conn = getattr(self._local, "db", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except sqlite3.Error:
+                pass
+            self._local.db = None
 
     def _existing_vec_dim(self) -> Optional[int]:
         row = self.db.execute(

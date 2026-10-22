@@ -20,6 +20,7 @@ from .etalon import conversation_metrics, regressions
 from .file_utils import (
     CONVERSATION_LIST_NAME,
     RECHECK_NAME,
+    VERDICTS,
     find_export_by_id,
     now_iso_z,
     write_json_atomic,
@@ -143,44 +144,80 @@ def summarize(
     }
 
 
+def _int(value: Any, default: Any = 0) -> Any:
+    """Entier force (les rapports sont relus depuis un JSON non fiable)."""
+    try:
+        return int(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
+def _reason(item: Dict[str, Any]) -> Optional[str]:
+    """Raison d'une defaillance, robuste a un `lost` non iterable."""
+    error = item.get("error")
+    if isinstance(error, str) and error:
+        return error
+    lost = item.get("lost")
+    if isinstance(lost, list) and lost:
+        return ", ".join(str(x) for x in lost)
+    return None
+
+
 def read_report(exports_dir: Any, platform: str) -> Optional[Dict[str, Any]]:
     """Rapport `recheck.json` d'une plateforme, en forme stable pour l'API/MCP.
 
-    Rend None si le rapport n'existe pas (ou est illisible).
+    Rend None si le rapport n'existe pas (ou est illisible). Les valeurs sont
+    **coercees** : un rapport piege ne doit pas injecter de chaine dans l'API.
     """
-    path = Path(exports_dir) / platform / RECHECK_NAME
-    if not path.is_file():
+    base = Path(exports_dir) / platform
+    path = base / RECHECK_NAME
+    # un dossier de plateforme ou un rapport symlinke peut pointer hors de
+    # l'archive : jamais suivi
+    if base.is_symlink() or path.is_symlink() or not path.is_file():
+        return None
+    try:
+        if path.stat().st_size > 64 * 1024 * 1024:
+            return None
+    except OSError:
         return None
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, ValueError, RecursionError):
         return None
+    if not isinstance(data, dict):
+        return None
+    import math
+    retention = data.get("retention")
+    try:
+        retention = float(retention) if retention is not None else None
+    except (TypeError, ValueError, OverflowError):
+        retention = None
+    if retention is not None and not math.isfinite(retention):
+        retention = None
     return {
         "platform": platform,
-        "verdict": data.get("verdict") or "inconnu",
-        "checked": data.get("checked") or 0,
-        "compared": data.get("compared", data.get("checked") or 0),
-        "ignored": data.get("ignored") or 0,
-        "ok": data.get("ok") or 0,
-        "degraded": data.get("degraded") or 0,
-        "failed": data.get("failed") or 0,
-        "retention": data.get("retention"),
-        "checked_at": data.get("checked_at"),
+        "verdict": data.get("verdict") if data.get("verdict") in VERDICTS else "inconnu",
+        "checked": _int(data.get("checked")),
+        "compared": _int(data.get("compared", data.get("checked"))),
+        "ignored": _int(data.get("ignored")),
+        "ok": _int(data.get("ok")),
+        "degraded": _int(data.get("degraded")),
+        "failed": _int(data.get("failed")),
+        "retention": retention,
+        "checked_at": data.get("checked_at") if isinstance(data.get("checked_at"), str) else None,
         "seed": data.get("seed"),
         "issues": [
             {
                 "title": item.get("title") or item.get("conversation_id"),
                 "conversation_id": item.get("conversation_id"),
                 "status": item.get("status"),
-                "reason": item.get("error")
-                or ", ".join(item.get("lost") or [])
-                or None,
+                "reason": _reason(item),
                 "retention": item.get("retention"),
-                "old_messages": item.get("old_messages"),
-                "new_messages": item.get("new_messages"),
+                "old_messages": _int(item.get("old_messages"), None),
+                "new_messages": _int(item.get("new_messages"), None),
             }
             for item in (data.get("conversations") or [])
-            if item.get("status") != "ok"
+            if isinstance(item, dict) and item.get("status") != "ok"
         ],
     }
 

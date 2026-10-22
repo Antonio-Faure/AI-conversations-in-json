@@ -50,7 +50,10 @@ plus un RAG et une page web de recherche. Le détail complet est dans
 # RAG + web
 .venv/bin/python scripts/rag_index.py [--platform grok] [--force]
 .venv/bin/python scripts/rag_search.py "requête" -k 10
-.venv/bin/python scripts/serve_web.py            # http://127.0.0.1:8765
+.venv/bin/python scripts/serve_web.py            # http://127.0.0.1:8765 (connexion requise)
+.venv/bin/python scripts/web_password.py --generate   # mot de passe de l'interface (hash scrypt)
+systemctl --user status aicv-web                  # service de prod (deploy/aicv-web.service)
+tailscale serve status                            # accès distant HTTPS (port 8443)
 .venv/bin/python scripts/backup_rag.py [--keep 7] [--list]   # copie la base avant reindex
 
 # Medias EmbeddingGemma (meme index) : texte puis medias
@@ -111,7 +114,17 @@ indisponibles).
   doivent pas accéder à `session.page`.
 - **RAG** : `src/rag/` (EmbeddingGemma 2 768 dims — `rag_model`/`rag_dim`
   configurables — + SQLite/sqlite-vec, médias via `src/rag/media.py`), page web
-  `web/`, serveur `scripts/serve_web.py`.
+  `web/` (page de connexion `web/login.html`), serveur `scripts/serve_web.py`.
+- **Authentification web** : `src/utils/webauth.py` (hash scrypt, session
+  signée HMAC dont la clé dérive du hash du mot de passe — changer le mot de
+  passe invalide les sessions —, révocation à la déconnexion, limitation des
+  tentatives par client + plafond global) ; secrets locaux dans `secrets/`
+  (gitignoré, `scripts/web_password.py`, montés en **lecture seule** dans le
+  service) ; CSP stricte (aucun script inline dans `web/`, `theme-boot.js` et
+  `login.js` séparés), médias en `CSP: sandbox`, cookie `Secure` forcé ; service
+  systemd utilisateur `deploy/aicv-web.service` (127.0.0.1:8766, sandbox
+  `ProtectSystem`/`ProtectHome`/`InaccessiblePaths`, score 4.0) publié par
+  **Tailscale Serve** (`--https=8443`) — jamais de port exposé directement.
 - **Jobs à la demande** : `src/utils/background_job.py` (job en tâche de fond,
   verrou partagé `src/utils/runlock.py`), `src/utils/scrape_job.py` (scrape
   `daily`/`monthly` par plateforme) et `src/utils/recheck.py` (contrôle de
@@ -233,6 +246,14 @@ indisponibles).
 
 ## Pièges connus
 
+- **Interface web** : le service n'écrit pas dans `secrets/` (lecture seule) →
+  créer hash + secret avec `scripts/web_password.py --generate` **avant** le
+  premier démarrage. Les pages n'ont aucun script inline (CSP stricte) : tout
+  comportement va dans `web/*.js`, jamais dans un `<script>` inline. Toute
+  nouvelle page servie sans session doit être ajoutée à `OPEN_PATHS`.
+  `--no-auth` exige la boucle locale. Le corps de toute requête est consommé
+  avant la réponse (jamais de bytes laissés dans un keep-alive) et le verrou de
+  scrape vit dans `.state/` (le `/tmp` du service est privé).
 - DOM des plateformes volatil → chaînes de sélecteurs de repli ; mettre à jour
   `message_selectors` + parser en cas de rupture.
 - Cloudflare : Claude/Perplexity/Mistral forcent `engine: botasaurus` ; login et

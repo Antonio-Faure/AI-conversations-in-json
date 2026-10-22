@@ -36,6 +36,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.orchestrator import PATH_KEYS, load_config  # noqa: E402
+from src.utils.file_utils import MAX_JSON_BYTES  # noqa: E402
 from src.rag.embeddings import model_dim  # noqa: E402
 from src.rag.search import combined_search  # noqa: E402
 from src.schema import parse_iso, to_iso_z  # noqa: E402
@@ -100,6 +101,14 @@ def load_server_config(path: Optional[Path | str]) -> Dict[str, Any]:
 
 
 # -- helpers de texte -------------------------------------------------------------
+
+
+def _as_int(value: Any, default: Any = 0) -> Any:
+    """Entier force (les listes relues d'un fichier ne sont pas fiables)."""
+    try:
+        return int(value)
+    except (TypeError, ValueError, OverflowError):
+        return default
 
 
 def _collapse(text: str) -> str:
@@ -221,7 +230,7 @@ class ConversationTools:
         if self._store is None:
             if not self.db_path.exists():
                 raise ConversationToolError(
-                    f"index RAG introuvable: {self.db_path} "
+                    f"index RAG introuvable: {self.db_path.name} "
                     "(lancez `.venv/bin/python scripts/rag_index.py`)"
                 )
             from src.rag.store import VectorStore
@@ -245,7 +254,9 @@ class ConversationTools:
         return sorted(
             d.name
             for d in self.exports_dir.iterdir()
-            if d.is_dir() and (d / CONVERSATION_LIST_NAME).exists()
+            if d.is_dir()
+            and not d.is_symlink()
+            and (d / CONVERSATION_LIST_NAME).exists()
         )
 
     def _check_platform(self, platform: Optional[str]) -> Optional[str]:
@@ -392,27 +403,77 @@ class ConversationTools:
         return self._scrape().snapshot()
 
     def _list_index(self, platform: str) -> Dict[str, Dict[str, Any]]:
-        return load_conversation_list(
-            self.exports_dir / platform / CONVERSATION_LIST_NAME
-        )
+        path = self.exports_dir / platform / CONVERSATION_LIST_NAME
+        if path.is_symlink() or (self.exports_dir / platform).is_symlink():
+            return {}
+        return load_conversation_list(path)
+
+    def _confined_file(self, platform_dir: Path, stem: Any) -> Optional[Path]:
+        """Fichier `exports/<plateforme>/<stem>.json`, confine a la plateforme.
+
+        Le stem vient de l'archive (`conversation_list.json`) : il ne doit
+        jamais permettre de sortir du dossier (ni par `..`, ni par symlink).
+        """
+        if not isinstance(stem, str) or not stem:
+            return None
+        try:
+            base = platform_dir.resolve()
+            candidate = (platform_dir / f"{stem}.json").resolve()
+        except (OSError, ValueError):
+            return None
+        if base not in candidate.parents or candidate.is_symlink():
+            return None
+        try:
+            if candidate.stat().st_nlink > 1:
+                return None
+        except OSError:
+            return None
+        return candidate if candidate.is_file() else None
 
     def _conversation_files(self, platform: Optional[str] = None):
         for name in self.platforms():
             if platform and name != platform:
                 continue
+            base = (self.exports_dir / name).resolve()
             for path in sorted((self.exports_dir / name).glob("*.json")):
                 if path.name == CONVERSATION_LIST_NAME:
                     continue
-                yield name, path
+                # un lien symbolique peut pointer hors de l'archive : jamais suivi
+                if path.is_symlink():
+                    continue
+                try:
+                    resolved = path.resolve()
+                except (OSError, ValueError):
+                    continue
+                if base not in resolved.parents:
+                    continue
+                try:
+                    if resolved.stat().st_nlink > 1 or not resolved.is_file():
+                        continue
+                except OSError:
+                    continue
+                yield name, resolved
 
     def _read_conversation_file(self, path: Path) -> Dict[str, Any]:
         """Charge un JSON de conversation ; erreur claire si illisible."""
         try:
+            if path.is_symlink() or not path.is_file():
+                raise ConversationToolError(f"fichier non regulier: {path.name}")
+            if path.stat().st_size > MAX_JSON_BYTES:
+                raise ConversationToolError(f"fichier trop volumineux: {path.name}")
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            raise ConversationToolError(f"fichier illisible: {path} ({exc})") from exc
+        except (OSError, ValueError, RecursionError) as exc:
+            raise ConversationToolError(
+                f"fichier illisible: {path.name} ({exc})"
+            ) from exc
         if not isinstance(data, dict):
-            raise ConversationToolError(f"fichier invalide (objet JSON attendu): {path}")
+            raise ConversationToolError(
+                f"fichier invalide (objet JSON attendu): {path.name}"
+            )
+        if not isinstance(data.get("messages"), list):
+            raise ConversationToolError(
+                f"messages invalides (liste attendue): {path.name}"
+            )
         return data
 
     def _load_conversation(
@@ -429,8 +490,8 @@ class ConversationTools:
         if conversation_id in index:
             entry = index[conversation_id]
             if entry.get("file"):
-                candidate = platform_dir / f"{entry['file']}.json"
-                if candidate.exists():
+                candidate = self._confined_file(platform_dir, entry["file"])
+                if candidate is not None:
                     return self._read_conversation_file(candidate), candidate
             if not entry.get("scraped"):
                 raise ConversationToolError(
@@ -445,8 +506,8 @@ class ConversationTools:
         if len(prefix_entries) == 1:
             cid, entry = prefix_entries[0]
             if entry.get("file"):
-                candidate = platform_dir / f"{entry['file']}.json"
-                if candidate.exists():
+                candidate = self._confined_file(platform_dir, entry["file"])
+                if candidate is not None:
                     return self._read_conversation_file(candidate), candidate
         elif len(prefix_entries) > 1:
             ids = ", ".join(sorted(cid for cid, _ in prefix_entries)[:5])
@@ -458,12 +519,17 @@ class ConversationTools:
         prefix_matches: List[Tuple[str, Path]] = []
         for name, path in self._conversation_files(platform):
             try:
+                if path.stat().st_size > MAX_JSON_BYTES:
+                    continue
                 data = json.loads(path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
+            except (OSError, ValueError, RecursionError):
+                continue
+            if not isinstance(data, dict):
                 continue
             cid = str(data.get("conversation_id") or "")
             if cid == conversation_id:
-                return data, path
+                # meme validation que le chemin principal (messages = liste)
+                return self._read_conversation_file(path), path
             if cid.startswith(conversation_id):
                 prefix_matches.append((cid, path))
         if len(prefix_matches) == 1:
@@ -653,6 +719,12 @@ class ConversationTools:
         budget: int,
     ) -> List[Dict[str, Any]]:
         try:
+            # jamais un lien/FIFO, et taille bornee (un export geant ne doit
+            # pas faire exploser la memoire du serveur MCP)
+            if path.is_symlink() or not path.is_file():
+                return []
+            if path.stat().st_size > MAX_JSON_BYTES:
+                return []
             raw = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             return []
@@ -665,7 +737,9 @@ class ConversationTools:
             return []
         try:
             data = json.loads(raw)
-        except json.JSONDecodeError:
+        except (ValueError, RecursionError):
+            return []
+        if not isinstance(data, dict):
             return []
 
         found: List[Dict[str, Any]] = []
@@ -789,7 +863,7 @@ class ConversationTools:
         if truncated:
             payload["messages"] = messages[:max_messages]
         return {
-            "file": str(path),
+            "file": path.stem,
             "total_messages": len(messages),
             "truncated": truncated,
             "conversation": payload,
@@ -820,12 +894,12 @@ class ConversationTools:
             matched_by = "message_id"
             exact = [
                 i for i, m in enumerate(messages, 1)
-                if str((m or {}).get("message_id") or "") == target
+                if str((m if isinstance(m, dict) else {}).get("message_id") or "") == target
             ]
             if not exact:
                 exact = [
                     i for i, m in enumerate(messages, 1)
-                    if str((m or {}).get("message_id") or "").startswith(target)
+                    if str((m if isinstance(m, dict) else {}).get("message_id") or "").startswith(target)
                 ]
             if not exact:
                 raise ConversationToolError(
@@ -838,7 +912,7 @@ class ConversationTools:
                 )
             index = exact[0]
         return {
-            "file": str(path),
+            "file": path.stem,
             "platform": platform,
             "conversation_id": str(data.get("conversation_id") or ""),
             "title": data.get("title") or "",
@@ -871,16 +945,24 @@ class ConversationTools:
                     {
                         "platform": name,
                         "conversation_id": str(cid),
-                        "title": entry.get("title") or "",
+                        "title": entry.get("title")
+                        if isinstance(entry.get("title"), str) else "",
                         "url": entry.get("url")
-                        or conversation_url(name, str(cid)),
-                        "message_count": entry.get("message_count"),
-                        "last_message_at": entry.get("last_message_at"),
+                        if isinstance(entry.get("url"), str)
+                        and entry.get("url").lower().startswith(("http://", "https://"))
+                        else conversation_url(name, str(cid)),
+                        "message_count": _as_int(entry.get("message_count"), None),
+                        "last_message_at": (
+                            entry.get("last_message_at")
+                            if isinstance(entry.get("last_message_at"), str)
+                            else None
+                        ),
                         "has_code": entry.get("has_code"),
                         "scraped": bool(entry.get("scraped")),
                         "unavailable": bool(entry.get("unavailable")),
                         "file": entry.get("file"),
-                        "scraped_at": entry.get("scraped_at"),
+                        "scraped_at": entry.get("scraped_at")
+                        if isinstance(entry.get("scraped_at"), str) else None,
                     }
                 )
         key = {
@@ -920,8 +1002,9 @@ class ConversationTools:
                 "files": len(files),
             }
         payload: Dict[str, Any] = {
-            "exports_dir": str(self.exports_dir),
-            "rag_db": str(self.db_path),
+            # noms de base : pas de chemin absolu expose par un outil
+            "exports_dir": self.exports_dir.name,
+            "rag_db": self.db_path.name,
             "rag_model": self.model_name,
             "rag_dim": self.model_dim,
             "exports": {
@@ -934,7 +1017,7 @@ class ConversationTools:
             payload["rag"] = {
                 "available": False,
                 "error": (
-                    f"index RAG introuvable: {self.db_path} "
+                    f"index RAG introuvable: {self.db_path.name} "
                     "(lancez `.venv/bin/python scripts/rag_index.py`)"
                 ),
             }
@@ -1052,7 +1135,7 @@ SCRAPE_STATUS_DESCRIPTION = (
 
 
 def _dump(payload: Any) -> str:
-    return json.dumps(payload, ensure_ascii=False, indent=1, default=str)
+    return json.dumps(payload, ensure_ascii=True, indent=1, default=str)
 
 
 def build_server(tools: ConversationTools):

@@ -33,6 +33,9 @@ Thumbs.db
 cookies/*.json
 !cookies/README.md
 
+# Secrets de l'interface web (hash du mot de passe, cle de session)
+secrets/
+
 # Runtime (donnees locales, jamais versionnees)
 exports/*
 !exports/.gitkeep
