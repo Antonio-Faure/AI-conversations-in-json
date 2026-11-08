@@ -358,3 +358,40 @@ def test_texte_fautif_est_saute_sans_tuer_le_run(tmp_path):
     assert stats["messages"] == 2
     assert store.stats()["messages"] == 2
     store.close()
+
+
+class FailingEmbedder:
+    model_name = "fake-model"
+
+    def encode(self, texts):
+        raise RuntimeError("panne du modele")
+
+
+def test_recherche_mots_cles_avec_filtre(tmp_path):
+    """Les parametres LIKE et les filtres doivent etre lies dans l'ordre du SQL."""
+    from src.rag.search import keyword_rows
+
+    store = VectorStore(tmp_path / "rag.db", dim=4)
+    store.replace_conversation(
+        "alpha", "c1", "T", "v1",
+        [_msg("m1", texte="bonjour le monde")],
+        [np.ones(4, dtype="float32")],
+    )
+    assert len(keyword_rows(store, ["bonjour"], platforms=["alpha"])) == 1
+    assert keyword_rows(store, ["bonjour"], platforms=["beta"]) == []
+
+
+def test_echec_encodage_ne_vide_pas_l_index(tmp_path):
+    """Un echec d'encodage ne doit pas supprimer la conversation de l'index."""
+    base = [_msg("m1", texte="bonjour")]
+    root = tmp_path / "exports"
+    _write_export(root, base)
+    store = VectorStore(tmp_path / "rag.db", dim=4)
+    index_exports(store, FakeEmbedder(), root, force=True)
+    assert store.stats()["messages"] == 1
+
+    # texte modifie : le vecteur n'est plus en cache, l'encodage est tente
+    _write_export(root, [_msg("m1", texte="bonjour modifie")], exported_at="v2")
+    stats = index_exports(store, FailingEmbedder(), root, force=True)
+    assert stats["conversations_skipped"] == 1
+    assert store.stats()["messages"] == 1  # l'index survit a la panne

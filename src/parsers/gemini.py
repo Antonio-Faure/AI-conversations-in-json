@@ -214,6 +214,18 @@ def _api_find_attachments(node: Any) -> List[list]:
     return found
 
 
+def _markdown_label(text: str) -> str:
+    """Libelle sur pour du markdown : ni crochet, ni retour a la ligne.
+
+    Le nom d'une piece jointe vient d'une metadonnee distante : un `]` ou un
+    saut de ligne y casserait la syntaxe du lien et pourrait injecter une URL.
+    """
+    flat = " ".join(str(text or "").split())
+    for char in ("\\", "[", "]"):
+        flat = flat.replace(char, "\\" + char)
+    return flat
+
+
 def _api_attachment_name(node: list) -> str:
     return str(node[2]) if len(node) > 2 and isinstance(node[2], str) else ""
 
@@ -253,7 +265,7 @@ def _api_attachment_markdown(node: list) -> str:
     if mime.startswith("image/"):
         url = node[3] if len(node) > 3 and isinstance(node[3], str) else ""
         if url.startswith("http"):
-            alt = name or "image"
+            alt = _markdown_label(name) or "image"
             return f"![{alt}]({url})"
         return ""
     blocks: List[str] = []
@@ -262,13 +274,13 @@ def _api_attachment_markdown(node: list) -> str:
         "",
     )
     if thumb and name:
-        blocks.append(f"![{name}]({thumb})")
+        blocks.append(f"![{_markdown_label(name)}]({thumb})")
     download = _api_download_url(node)
     if name and download:
-        blocks.append(f"[{name}]({download})")
+        blocks.append(f"[{_markdown_label(name)}]({download})")
     if blocks:
         return "\n\n".join(blocks)
-    return name
+    return _markdown_label(name)
 
 
 def _api_message_attachments(part: list) -> List[list]:

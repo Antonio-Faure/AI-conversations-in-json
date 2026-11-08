@@ -37,6 +37,12 @@ DRIFTED = {
     "extra": {"nouveau": 1},
     "messages": [{"role": "user", "text": "bonjour"}],
 }
+#: rupture : `messages` change de type (liste -> chaine) et un champ
+#: de premier niveau disparait
+BROKEN = {
+    "conversation_id": "c01",
+    "messages": "pas-une-liste",
+}
 
 
 def write_reference(directory: Path, platform: str, payload) -> None:
@@ -63,13 +69,22 @@ class TestShapeMonitor:
         monitor = self._monitor()
         report = monitor.record(PAYLOAD)
         assert report["score"] == 100.0 and report["level"] == "OK"
-        drifted = monitor.record(DRIFTED)
+        # extension additive : compatible, mais tracee dans new_keys
+        added = monitor.record(DRIFTED)
+        assert added["additive_only"] is True
         assert monitor.n == 2
-        assert monitor.matches == 1
-        assert monitor.drifts == 1
+        assert monitor.matches == 2
+        assert monitor.drifts == 0
+        assert monitor.additions == 1
+        assert "$.extra" in monitor.new_keys
         assert monitor.mean_score < 100
-        assert monitor.min_score == drifted["score"]
-        assert "$.extra" in monitor.drift_keys
+        # rupture : type change -> derive puis break
+        broken = monitor.record(BROKEN)
+        assert broken["additive_only"] is False
+        assert monitor.drifts == 1
+        assert monitor.breaks == 1
+        assert monitor.min_score == broken["score"]
+        assert "$.messages" in monitor.drift_keys
 
     def test_resume(self):
         monitor = self._monitor()
@@ -209,11 +224,11 @@ class TestOrchestratorApiHealth:
         assert health["signature"] == signature_of(PAYLOAD)
 
     def test_drift_accumule_les_cles(self, tmp_path):
-        _MonitorService.payload = DRIFTED
+        _MonitorService.payload = BROKEN
         orch = make_orchestrator(tmp_path, _MonitorService)
         result = orch.run(mode="monthly").services["shapefake"]
         assert result.api_health["drifts"] == 3
-        assert "$.extra" in result.api_health["drift_keys"]
+        assert "$.messages" in result.api_health["drift_keys"]
 
     def test_desactive_aucun_fichier(self, tmp_path):
         orch = make_orchestrator(tmp_path, _MonitorService, {"enabled": False})

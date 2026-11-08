@@ -38,3 +38,15 @@ def _quiet_logging():
     logging.getLogger("aicv").setLevel(logging.CRITICAL)
     yield
     logging.getLogger("aicv").setLevel(logging.NOTSET)
+
+
+@pytest.fixture(autouse=True)
+def _isolated_run_state(tmp_path, monkeypatch):
+    """Isole `.state/aicv-run.json` : les tests ne touchent pas un vrai scrape.
+
+    `run.py` publie son etat dans le depot ; sans cette redirection un test du
+    CLI ecraserait l'indicateur d'un cron en cours (et inversement).
+    """
+    from src.utils import runstate
+
+    monkeypatch.setattr(runstate, "RUN_STATE_PATH", tmp_path / "aicv-run.json")

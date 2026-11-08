@@ -45,6 +45,7 @@ from src.utils.file_utils import (  # noqa: E402
     RESERVED_JSON_NAMES,
     load_conversation_list,
 )
+from src.utils.runstate import external_scrape_state  # noqa: E402
 from src.utils.urls import conversation_url  # noqa: E402
 
 SERVER_NAME = "aicv"
@@ -399,8 +400,12 @@ class ConversationTools:
         return state
 
     def scrape_state(self) -> Dict[str, Any]:
-        """Etat du scrape a la demande (journal + bilan par plateforme)."""
-        return self._scrape().snapshot()
+        """Etat du scrape a la demande (journal + bilan par plateforme).
+
+        Un run du cron (ou un `run.py` manuel) est annonce comme en cours
+        (`source: "cli"`) meme s'il n'a pas ete lance par cet outil.
+        """
+        return external_scrape_state(self._scrape().snapshot())
 
     def _list_index(self, platform: str) -> Dict[str, Dict[str, Any]]:
         path = self.exports_dir / platform / CONVERSATION_LIST_NAME
@@ -710,6 +715,11 @@ class ConversationTools:
             "matches": matches,
         }
 
+    @staticmethod
+    def _regex_literal(pattern: str) -> bool:
+        """Le motif regex est-il un litteral (aucun metacaractere) ?"""
+        return not any(c in pattern for c in "\\^$.|?*+()[]{}")
+
     def _grep_file(
         self,
         platform: str,
@@ -729,11 +739,17 @@ class ConversationTools:
         except OSError:
             return []
         # pre-filtre rapide sur le brut ; un motif non-ASCII n'est PAS pre-filtre
-        # (le brut peut contenir des echappements \uXXXX que le parseur decode)
+        # (le brut peut contenir des echappements \uXXXX que le parseur decode).
+        # Le JSON echappe aussi les guillemets et barres obliques : on teste la
+        # forme echappee, sinon `dit "bonjour"` serait declare absent.
+        escaped = json.dumps(pattern)[1:-1]
         if compiled is not None:
-            if not compiled.search(raw):
+            if self._regex_literal(pattern) and not compiled.search(raw):
                 return []
-        elif pattern.isascii() and pattern.lower() not in raw.lower():
+        elif pattern.isascii() and (
+            pattern.lower() not in raw.lower()
+            and escaped.lower() not in raw.lower()
+        ):
             return []
         try:
             data = json.loads(raw)

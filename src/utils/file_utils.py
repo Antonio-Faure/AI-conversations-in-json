@@ -166,6 +166,22 @@ def json_content_equal(existing: Dict[str, Any], new: Dict[str, Any]) -> bool:
     return _content_only(existing) == _content_only(new)
 
 
+def _message_identity(message: Any) -> Any:
+    """Cle stable d'un message pour comparer deux scrapes.
+
+    Un parseur peut enrichir ses messages entre deux versions (champ
+    `reasoning`, `variants`...) : comparer les dictionnaires entiers ferait
+    passer une fenetre partielle pour un contenu different, et l'archive
+    complete serait remplacee par cette fenetre (perte definitive).
+    """
+    if not isinstance(message, dict):
+        return message
+    message_id = message.get("message_id")
+    if message_id:
+        return ("id", str(message_id))
+    return ("text", message.get("role"), message.get("texte"))
+
+
 def merge_conversation_json(
     existing: Any, new: Dict[str, Any]
 ) -> tuple[Dict[str, Any], str, int]:
@@ -184,10 +200,12 @@ def merge_conversation_json(
         return existing, "unchanged", 0
     old_messages = existing.get("messages") or []
     new_messages = new.get("messages") or []
+    old_keys = [_message_identity(m) for m in old_messages]
+    new_keys = [_message_identity(m) for m in new_messages]
     if (
         old_messages
         and len(new_messages) > len(old_messages)
-        and new_messages[: len(old_messages)] == old_messages
+        and new_keys[: len(old_messages)] == old_keys
     ):
         merged = dict(new)
         merged["messages"] = old_messages + new_messages[len(old_messages):]
@@ -197,8 +215,8 @@ def merge_conversation_json(
         and len(new_messages) < len(old_messages)
         and new_messages
         and (
-            old_messages[: len(new_messages)] == new_messages
-            or old_messages[-len(new_messages):] == new_messages
+            old_keys[: len(new_messages)] == new_keys
+            or old_keys[-len(new_messages):] == new_keys
         )
     ):
         # fenetre partielle (debut ou fin) : ne pas degrader l'archive

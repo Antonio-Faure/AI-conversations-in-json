@@ -7,6 +7,7 @@ Les sauvegardes vivent dans un sous-dossier `backups/` a cote de la base.
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -53,8 +54,12 @@ def backup_database(
         return None
     target_dir = Path(backup_dir) if backup_dir else db_path.parent / BACKUP_DIR
     target_dir.mkdir(parents=True, exist_ok=True)
+    os.chmod(target_dir, 0o700)
     stamp = (now or datetime.now(timezone.utc)).strftime("%Y%m%d-%H%M%S")
     target = target_dir / f"{db_path.stem}-{stamp}.db"
+    # la copie contient tout l'historique : jamais lisible par un autre compte
+    os.close(os.open(target, os.O_CREAT | os.O_WRONLY, 0o600))
+    os.chmod(target, 0o600)
     source = sqlite3.connect(str(db_path))
     try:
         destination = sqlite3.connect(str(target))

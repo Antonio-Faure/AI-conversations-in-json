@@ -67,3 +67,13 @@ def test_prune_garde_toujours_la_derniere(tmp_path):
     # keep=0 est ramene a 1 : la derniere n'est jamais supprimee
     assert prune_backups(backup_dir, "rag", keep=0) == 0
     assert len(backup_paths(backup_dir, "rag")) == 1
+
+
+def test_sauvegarde_est_privee(tmp_path):
+    """La copie contient tout l'historique : fichier 0600, dossier 0700."""
+    import stat
+
+    db_path = _make_db(tmp_path / "rag.db")
+    target = backup_database(db_path, log=lambda *_: None)
+    assert stat.S_IMODE(target.stat().st_mode) == 0o600
+    assert stat.S_IMODE(target.parent.stat().st_mode) == 0o700

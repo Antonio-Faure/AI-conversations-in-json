@@ -81,3 +81,39 @@ def test_find_export_by_id_ignore_un_json_illisible(tmp_path, capsys):
     export.write_text(json.dumps({"conversation_id": "g1"}), encoding="utf-8")
     assert find_export_by_id(tmp_path, "grok", "g1") == export
     assert "JSON illisible" in capsys.readouterr().err
+
+
+def test_fusion_fenetre_partielle_avec_champ_ajoute():
+    """Un parseur qui ajoute un champ ne doit pas faire perdre l'archive.
+
+    La fenetre relue est un sous-ensemble : sans identite stable, la
+    comparaison des dictionnaires entiers la faisait passer pour un contenu
+    different et l'archive complete etait remplacee.
+    """
+    from src.utils.file_utils import merge_conversation_json
+
+    existing = {"conversation_id": "c", "messages": [
+        {"message_id": f"m{i}", "role": "user", "texte": f"t{i}"} for i in range(10)
+    ]}
+    window = {"conversation_id": "c", "messages": [
+        {"message_id": "m9", "role": "user", "texte": "t9", "reasoning": ""}
+    ]}
+    merged, status, appended = merge_conversation_json(existing, window)
+    assert status == "kept" and appended == 0
+    assert len(merged["messages"]) == 10
+
+
+def test_fusion_prefixe_avec_champ_ajoute():
+    """Un champ nouveau sur les messages deja connus ne bloque pas l'ajout."""
+    from src.utils.file_utils import merge_conversation_json
+
+    existing = {"messages": [
+        {"message_id": "m1", "role": "user", "texte": "a"}
+    ]}
+    new = {"messages": [
+        {"message_id": "m1", "role": "user", "texte": "a", "reasoning": ""},
+        {"message_id": "m2", "role": "assistant", "texte": "b"},
+    ]}
+    merged, status, appended = merge_conversation_json(existing, new)
+    assert status == "patched" and appended == 1
+    assert len(merged["messages"]) == 2

@@ -106,6 +106,12 @@ def _flush(
                 conv_messages.append(message)
                 conv_vectors.append(cached[fp])
                 kept_fingerprints.append(fp)
+        if conv["messages"] and not conv_messages:
+            # tous les textes ont echoue : remplacer la conversation la
+            # supprimerait de l'index (et masquerait l'echec au prochain run)
+            stats["conversations_skipped"] += 1
+            log(f"[{conv['platform']}] ignoree : aucun texte encodable  ({conv['conversation_id']})")
+            continue
         written = store.replace_conversation(
             conv["platform"],
             conv["conversation_id"],

@@ -120,6 +120,48 @@ class TestMain:
         out = capsys.readouterr().out
         assert "chatgpt" in out and "ecrites=1" in out
 
+    def test_publie_et_puis_efface_letat_du_run(self, monkeypatch):
+        """`run.py` publie son etat (vu par la page web) et le retire a la fin."""
+        calls = []
+
+        class StubOrchestrator:
+            def __init__(self, config, **kwargs):
+                pass
+
+            def run(self, mode, **kwargs):
+                return RunSummary(mode=mode)
+
+        monkeypatch.setattr(run_cli, "Orchestrator", StubOrchestrator)
+        monkeypatch.setattr(
+            run_cli, "write_run_state",
+            lambda mode, services=None, **kw: calls.append(("write", mode, services)),
+        )
+        monkeypatch.setattr(
+            run_cli, "clear_run_state", lambda **kw: calls.append(("clear",)),
+        )
+        assert run_cli.main(["--monthly", "--service", "grok"]) == 0
+        assert calls == [("write", "monthly", ["grok"]), ("clear",)]
+
+    def test_etat_efface_meme_si_le_run_echoue(self, monkeypatch):
+        calls = []
+
+        class StubOrchestrator:
+            def __init__(self, config, **kwargs):
+                pass
+
+            def run(self, mode, **kwargs):
+                raise RuntimeError("boum")
+
+        monkeypatch.setattr(run_cli, "Orchestrator", StubOrchestrator)
+        monkeypatch.setattr(
+            run_cli, "write_run_state", lambda mode, services=None, **kw: calls.append("write"),
+        )
+        monkeypatch.setattr(
+            run_cli, "clear_run_state", lambda **kw: calls.append("clear"),
+        )
+        assert run_cli.main(["--daily"]) == 1
+        assert calls == ["write", "clear"]
+
     def test_match_transmis(self, monkeypatch):
         calls = {}
 

@@ -131,6 +131,20 @@ function mdPlain(text) {
     .trim();
 }
 
+/* Titre affichable : les modeles mettent souvent du markdown dans le
+   premier message ; on n'affiche jamais la syntaxe brute. */
+const plainTitle = (text) => mdPlain(String(text || ""));
+
+/* Sanitisation commune : le contenu des conversations est non fiable. On
+   retire en plus les styles inline (une surcouche plein ecran peut tromper
+   l'utilisateur) et les elements de formulaire (inertes, mais inutiles). */
+const SANITIZE_OPTS = {
+  ADD_ATTR: ["target", "rel"],
+  FORBID_ATTR: ["style"],
+  FORBID_TAGS: ["style", "form", "input", "button", "textarea", "select",
+    "option", "dialog", "marquee"],
+};
+
 function renderMarkdown(text) {
   // titres malformes par les modeles : "**#### Titre**" -> "#### Titre"
   // (sinon CommonMark rend le titre en gras avec les # litteraux)
@@ -145,7 +159,7 @@ function renderMarkdown(text) {
     try {
       html = DOMPurify.sanitize(
         marked.parse(protectedText, { gfm: true, breaks: true }),
-        { ADD_ATTR: ["target", "rel"] }
+        SANITIZE_OPTS
       );
     } catch (err) {
       html = null;
@@ -167,7 +181,7 @@ function resolveLocalImages(html, platform) {
     .replace(/(<a\b[^>]*?\bhref=)["'](?:images|files)\//g, `$1"${media}`);
   // la chaine est modifiee APRES la sanitisation initiale : on la revalide
   // (une plateforme hostile ne doit pas pouvoir injecter du HTML ici)
-  return DOMPurify.sanitize(replaced, { ADD_ATTR: ["target", "rel"] });
+  return DOMPurify.sanitize(replaced, SANITIZE_OPTS);
 }
 
 function highlightDom(root, terms) {
@@ -373,7 +387,9 @@ document.addEventListener("keydown", (e) => {
     if (!$("searchParams").classList.contains("collapsed")) {
       $("searchParams").classList.add("collapsed");
       $("paramsToggle").setAttribute("aria-expanded", "false");
+      return;
     }
+    if (state.conversation) backToResults();
     return;
   }
   if (isTyping(e.target)) return;
@@ -382,7 +398,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "j") { moveResult(1); return; }
   if (e.key === "k") { moveResult(-1); return; }
   if (e.key === "r") { rollDice(); openRandomConversation(); return; }
-  if (e.key === "h" && (location.search || state.view !== "default")) {
+  if (e.key === "h" && (location.search || state.view !== "default" || state.conversation)) {
     if (location.search) history.pushState({}, "", location.pathname);
     loadHome();
   }
@@ -418,6 +434,9 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   loadStats();
   loadStatus();
+  startJobWatch();
+  const follow = $("jobFollow");
+  if (follow) follow.addEventListener("click", () => openDailyPage());
   window.addEventListener("popstate", applyUrlState);
 });
 
@@ -502,6 +521,7 @@ function setHomeSidebar(hidden) {
 function loadHome() {
   state.view = "default";
   state.groups = [];
+  state.terms = [];
   state.conversation = null;
   home.visible = HOME_PAGE_SIZE;
   renderHomeShell();
@@ -542,7 +562,7 @@ function renderResumeBar() {
   bar.hidden = false;
   bar.innerHTML = `
     <span class="resume-label">Reprendre :</span>
-    <span class="resume-title">« ${escapeHtml(last.title || last.conversation_id)} »</span>
+    <span class="resume-title">« ${escapeHtml(plainTitle(last.title || last.conversation_id))} »</span>
     <button class="btn btn-sm" type="button" id="resumeBtn">Rouvrir</button>`;
   $("resumeBtn").addEventListener("click", () =>
     openConversation(last.platform, last.conversation_id, null));
@@ -634,13 +654,14 @@ function renderHomeShell() {
     home.visible += HOME_PAGE_SIZE;
     renderLastConversations();
   });
+  renderJobStatus();
 }
 
 /* -- bouton scindé « Ouvrir / Copier » (URL de conversation) -- */
-function splitOpenCopy(url, label) {
+function splitOpenCopy(url, label, copyLabel = "Copier") {
   if (!url) return "";
   // data-stop : les cartes ouvrent la conversation au clic, sauf sur ces elements
-  return `<span class="conv-split"><a class="conv-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" data-stop="1">${escapeHtml(label)}</a><button class="conv-link conv-copy" type="button" data-stop="1" data-copy-text="${escapeHtml(url)}" title="Copier l'URL de la conversation">Copier</button></span>`;
+  return `<span class="conv-split"><a class="conv-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" data-stop="1">${escapeHtml(label)}</a><button class="conv-link conv-copy" type="button" data-stop="1" data-copy-text="${escapeHtml(url)}" title="Copier l'URL de la conversation">${escapeHtml(copyLabel)}</button></span>`;
 }
 
 /* -- carte de conversation (grilles : récentes, hasard, anniversaire) -- */
@@ -651,7 +672,7 @@ function homeCard(c) {
       <span class="badge small">${escapeHtml(c.message_count ?? "?")} messages</span>
       ${c.has_code ? '<span class="badge small">code</span>' : ""}
     </div>
-    <div class="conv-title">${escapeHtml(c.title || c.conversation_id)}</div>
+    <div class="conv-title">${escapeHtml(plainTitle(c.title || c.conversation_id))}</div>
     <div class="rc-meta">
       <span>${escapeHtml(formatTs(c.last_message_at))}</span>
       ${splitOpenCopy(c.url, `Ouvrir sur ${platformName(c.platform)} ↗`)}
@@ -764,6 +785,11 @@ function heatmapHtml(data) {
 
 /* les cases actives ouvrent la vue « journée » ; le bouton lance un daily */
 function bindHeatmap(root) {
+  // la fenetre montre les 12 derniers mois : on l'ouvre sur la fin (aujourd'hui)
+  const scroller = root.querySelector(".heatmap-scroll");
+  if (scroller && scroller.scrollWidth > scroller.clientWidth) {
+    scroller.scrollLeft = scroller.scrollWidth;
+  }
   root.querySelectorAll(".hm-btn").forEach((btn) =>
     btn.addEventListener("click", () => openDay(btn.dataset.date)));
   const button = root.querySelector("#dailyBtn");
@@ -839,6 +865,10 @@ function renderDay(date, error) {
       const message = group.messages[index] || group.messages[0];
       openConversation(group.platform, group.conversation_id, message && message.message_id);
     }));
+  // liens durcis et surlignage comme ailleurs ; pas de KaTeX ici : dans une vue
+  // de survol, un prix en « $ » serait pris pour une formule
+  highlightDom($("main"), state.terms);
+  hardenLinks($("main"));
 }
 
 /* Quitte la vue « journée » pour l'accueil. Le retour d'une conversation
@@ -871,7 +901,7 @@ function dayCard(group, index) {
       <span class="badge small">${group.message_count} message${group.message_count > 1 ? "s" : ""} ce jour-là</span>
       ${splitOpenCopy(group.url, `Ouvrir sur ${platformName(group.platform)} ↗`)}
     </div>
-    <div class="conv-title group-title" data-open="${index}" role="button" tabindex="0">${escapeHtml(group.title || group.conversation_id)}</div>
+    <div class="conv-title group-title" data-open="${index}" role="button" tabindex="0">${escapeHtml(plainTitle(group.title || group.conversation_id))}</div>
     <div class="group-hits">
       ${group.messages.map((m, mi) => `
         <div class="hit" data-open="${index}" data-m="${mi}" role="button" tabindex="0">
@@ -880,7 +910,7 @@ function dayCard(group, index) {
             <span>${escapeHtml(dayTime(m.timestamp))}</span>
             ${m.model ? `<span>${escapeHtml(m.model)}</span>` : ""}
           </div>
-          <div class="rc-snippet"><div class="clip">${escapeHtml(m.texte)}</div></div>
+          <div class="rc-snippet"><div class="clip">${resolveLocalImages(renderMarkdown(stripFences(m.texte)), group.platform)}</div></div>
         </div>`).join("")}
     </div>
   </div>`;
@@ -897,7 +927,7 @@ function renderDaySidebar() {
   sidebar.innerHTML = `<h2>Conversations (${data.conversation_count})</h2>` +
     data.conversations.map((g, gi) => `
       <div class="side-item" role="button" tabindex="0" data-g="${gi}">
-        <span>${escapeHtml((g.title || g.conversation_id).slice(0, 42))}</span>
+        <span>${escapeHtml(plainTitle(g.title || g.conversation_id).slice(0, 42))}</span>
         <span class="muted">${escapeHtml(platformName(g.platform))} · ${g.message_count} message(s)</span>
       </div>`).join("");
   // la sidebar de la journee deplace vers la carte (pas d'ouverture de page)
@@ -1066,13 +1096,17 @@ function healthHtml(data) {
       : "aucun contrôle de parseur enregistré";
     const parseBadge = `<span class="status-badge parse ${report ? escapeHtml(report.verdict) : "unknown"}"
       title="${escapeHtml(parseTitle)}">${report ? escapeHtml(VERDICT_LABEL[report.verdict] || report.verdict) : "—"}</span>`;
-    return `<div class="status-row">
+    // « dernier message » n'apparait plus (largeur du panneau) : il reste
+    // dans l'infobulle de la ligne, avec le detail des deux badges
+    const rowTitle = `${platformName(item.platform)} · ${item.conversations} conversations`
+      + ` · scrapé ${relativeAge(item.scraped_at)}`
+      + ` · dernier message ${relativeAge(item.last_message_at)}`;
+    return `<div class="status-row" title="${escapeHtml(rowTitle)}">
       <span class="status-platform">${escapeHtml(platformName(item.platform))}</span>
       <span class="status-badge ${cls}" title="${escapeHtml(title)}">${known ? `${health.rate} %` : "—"}</span>
       ${parseBadge}
       <span class="status-meta">${item.conversations} conv.</span>
       <span class="status-meta">scrapé ${escapeHtml(relativeAge(item.scraped_at))}</span>
-      <span class="status-meta">dernier message ${escapeHtml(relativeAge(item.last_message_at))}</span>
     </div>`;
   }).join("");
   return `<div class="health-head">
@@ -1139,6 +1173,11 @@ function monthLabel(key) { // « 2026-01 » -> « janvier 2026 »
   });
 }
 
+function monthAxisShort(key) { // « 2026-01 » -> « jan » (case de ~25 px)
+  const m = Number(String(key || "").slice(5));
+  return m ? MONTHS_FR[m - 1].replace(".", "").slice(0, 3) : "";
+}
+
 function monthAxisLabel(key) { // « 2026-01 » -> « janv. 26 »
   const [y, m] = String(key || "").split("-").map(Number);
   return m ? `${MONTHS_FR[m - 1]} ${String(y).slice(2)}` : "";
@@ -1164,7 +1203,7 @@ function monthChartHtml(entry, months) {
   // repères : premier mois, chaque janvier, dernier mois
   const axis = months.map((month, i) => {
     const show = i === 0 || i === months.length - 1 || month.slice(5) === "01";
-    return `<span>${show ? escapeHtml(monthAxisLabel(month)) : ""}</span>`;
+    return `<span>${show ? escapeHtml(monthAxisShort(month)) : ""}</span>`;
   }).join("");
   return `
     <div class="mc-head">
@@ -1414,6 +1453,8 @@ function hasSearchFilters() {
     || !!$("dateFrom").value || !!$("dateTo").value;
 }
 
+let searchSeq = 0;
+
 async function search(options) {
   const query = $("q").value.trim();
   // sans texte : il faut au moins un critere actif (chatbots, modèle, dates)
@@ -1421,16 +1462,26 @@ async function search(options) {
   state.terms = query ? tokenize(query) : [];
   state.conversation = null;
   state.view = "groups";
+  const seq = ++searchSeq;
   syncUrl(options && options.push);
   $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Recherche…</p></div>`;
   try {
-    const data = await (await fetch("/api/search?" + buildQuery().toString())).json();
+    const response = await fetch("/api/search?" + buildQuery().toString());
+    const data = await response.json();
+    if (seq !== searchSeq) return; // une recherche plus recente est en cours
+    if (!response.ok || data.error) {
+      throw new Error(data.error || `recherche impossible (${response.status})`);
+    }
     state.groups = data.groups || [];
     state.searchFiltered = !!data.filtered;
     state.searchMedia = data.media || [];
     renderGroups();
     renderSidebar();
   } catch (err) {
+    if (seq !== searchSeq) return;
+    state.groups = [];
+    state.searchMedia = [];
+    renderSidebar(); // la sidebar ne doit pas garder des resultats perimes
     renderError(err.message, search);
   }
 }
@@ -1495,14 +1546,16 @@ function groupCard(g, gi) {
   const media = g.media || [];
   const count = messages.length + media.length;
   return `<div class="group-card ${count > 1 ? "multi" : "single"}" data-g="${gi}">
+    <div class="group-top">
+      <div class="conv-title group-title" data-open="${gi}" role="button" tabindex="0">${escapeHtml(plainTitle(g.title || g.conversation_id))}</div>
+      ${splitOpenCopy(g.url, "Ouvrir ↗")}
+    </div>
     <div class="rc-head">
       <span class="badge platform">${escapeHtml(platformName(g.platform))}</span>
       ${messages.length ? `<span class="badge score">${messages.length > 1 ? messages.length + " extraits" : "1 extrait"}</span>` : ""}
       ${media.length ? `<span class="badge score">${media.length} média${media.length > 1 ? "s" : ""}</span>` : ""}
       ${g.best_score != null ? `<span class="badge small">meilleur score ${scorePct(g.best_score)}</span>` : ""}
-      ${splitOpenCopy(g.url, "Ouvrir ↗")}
     </div>
-    <div class="conv-title group-title" data-open="${gi}" role="button" tabindex="0">${escapeHtml(g.title || g.conversation_id)}</div>
     <div class="group-hits">
       ${messages.map((r, mi) => `
         <div class="hit" data-open="${gi}" data-m="${mi}" role="button" tabindex="0">
@@ -1511,7 +1564,7 @@ function groupCard(g, gi) {
             <span>${escapeHtml(formatTs(r.timestamp))}</span>
             ${r.score != null ? `<span>score ${scorePct(r.score)} · sém ${scorePct(r.semantic_score)} · mots ${scorePct(r.keyword_score)}</span>` : ""}
           </div>
-          <div class="rc-snippet"><div class="clip">${resolveLocalImages(renderMarkdown(stripFences(r.texte)), r.platform)}</div></div>
+          <div class="rc-snippet"><div class="clip">${resolveLocalImages(renderMarkdown(stripFences(r.texte)), r.platform || g.platform)}</div></div>
         </div>`).join("")}
       ${media.map((m) => mediaHit(m)).join("")}
     </div>
@@ -1521,7 +1574,8 @@ function groupCard(g, gi) {
 /* -- média rattaché à une conversation (hit des résultats) -- */
 function mediaHit(m) {
   const filename = String(m.path || "").split("/").pop();
-  const url = m.url || (m.platform && filename ? `/media/${m.platform}/${filename}` : "");
+  const url = m.url || (m.platform && filename
+    ? `/media/${encodeURIComponent(m.platform)}/${encodeURIComponent(filename)}` : "");
   let body = "";
   if (m.kind === "audio") {
     body = `<audio controls preload="none" src="${escapeHtml(url)}"></audio>`;
@@ -1543,7 +1597,8 @@ function mediaHit(m) {
 /* -- carte média (résultats de recherche) -- */
 function mediaCard(m) {
   const filename = String(m.path || "").split("/").pop();
-  const url = m.url || (m.platform && filename ? `/media/${m.platform}/${filename}` : "");
+  const url = m.url || (m.platform && filename
+    ? `/media/${encodeURIComponent(m.platform)}/${encodeURIComponent(filename)}` : "");
   const label = m.title || m.texte || m.conversation_id || filename || "média";
   const badge = `<span class="badge small">${escapeHtml(m.kind || "média")}</span>`;
   const platform = m.platform
@@ -1579,7 +1634,7 @@ function renderSidebar() {
   if (state.conversation) {
     const conv = state.conversation;
     const dayIds = dayMessageIds(conv.platform, conv.conversation_id);
-    sidebar.innerHTML = `<h2>${escapeHtml(conv.title || conv.conversation_id)}</h2>
+    sidebar.innerHTML = `<h2>${escapeHtml(plainTitle(conv.title || conv.conversation_id))}</h2>
       <div class="side-item" id="backToResults" role="button" tabindex="0">← Retour</div>
       <div class="side-sep"></div>
       <input type="search" id="convSearch" class="conv-search" autocomplete="off"
@@ -1600,7 +1655,7 @@ function renderSidebar() {
   }
   sidebar.innerHTML = `<h2>Conversations (${state.groups.length})</h2>` + state.groups.map((g, gi) => `
     <div class="side-item" role="button" tabindex="0" data-g="${gi}">
-      <span>${escapeHtml((g.title || g.conversation_id).slice(0, 42))}</span>
+      <span>${escapeHtml(plainTitle(g.title || g.conversation_id).slice(0, 42))}</span>
       <span class="muted">${escapeHtml(platformName(g.platform))} · ${g.hit_count} message(s)</span>
     </div>`).join("");
   sidebar.querySelectorAll(".side-item[data-g]").forEach((item) =>
@@ -1627,11 +1682,15 @@ function backToResults() {
   }
 }
 
+let conversationSeq = 0;
+
 async function openConversation(platform, conversationId, matchedMid) {
+  const seq = ++conversationSeq;
   $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Chargement de la conversation…</p></div>`;
   try {
     const params = new URLSearchParams({ platform, id: conversationId });
     const data = await (await fetch("/api/conversation?" + params.toString())).json();
+    if (seq !== conversationSeq) return; // une autre conversation a ete demandee
     if (data.error) throw new Error(data.error);
     state.conversation = data.conversation;
     state.conversationUrl = data.url || data.conversation.url || null;
@@ -1645,6 +1704,7 @@ async function openConversation(platform, conversationId, matchedMid) {
       if (target) target.scrollIntoView({ block: "center" });
     }, 60);
   } catch (err) {
+    if (seq !== conversationSeq) return;
     renderError(err.message, () => openConversation(platform, conversationId, matchedMid));
   }
 }
@@ -1656,19 +1716,19 @@ function renderConversation() {
   $("main").innerHTML = `<div class="conv-view">
     <div class="conv-head">
       <div>
-        <h2>${escapeHtml(conv.title || conv.conversation_id)}</h2>
+        <h2>${escapeHtml(plainTitle(conv.title || conv.conversation_id))}</h2>
         <div class="rc-meta"><span>${escapeHtml(platformName(conv.platform))}</span>
           ${conv.model ? `<span>${escapeHtml(conv.model)}</span>` : ""}
           <span>${messages.length} messages</span>
           <span>${escapeHtml(formatTs(conv.started_at))} → ${escapeHtml(formatTs(conv.last_message_at))}</span>
-          ${splitOpenCopy(state.conversationUrl, `Ouvrir sur ${platformName(conv.platform)} ↗`)}
+          ${splitOpenCopy(state.conversationUrl, `Ouvrir sur ${platformName(conv.platform)} ↗`, "Copier l'URL")}
         </div>
       </div>
       <div class="conv-actions">
         <button class="btn ghost btn-sm" type="button" id="copyConv"
           title="Copier la conversation en markdown">Copier</button>
         <button class="btn ghost btn-sm" type="button" id="downloadConv"
-          title="Télécharger la conversation en markdown (.md)">Markdown</button>
+          title="Télécharger la conversation en markdown (.md)">Télécharger .md</button>
         <button class="btn ghost" id="backTop">← Retour</button>
       </div>
     </div>
@@ -1994,6 +2054,7 @@ function openDailyPage() {
   }
   renderDailyPage();
   loadDailyState();
+  renderJobStatus();
 }
 
 function stopDailyPolling() {
@@ -2067,7 +2128,8 @@ async function startDaily() {
   } catch (err) {
     renderDailyState({ error: err.message });
   } finally {
-    if (button) button.disabled = false;
+    // un job lance garde le bouton inactif jusqu'a la fin du run
+    if (button && !dailyRun.running) button.disabled = false;
   }
 }
 
@@ -2081,6 +2143,18 @@ async function loadDailyState() {
   } catch (err) { /* silencieux : la page reste utilisable */ }
 }
 
+/* Un seul scrape a la fois : le bouton de lancement reste inactif pendant
+   un run (y compris declenche par le cron) et reprend son libelle ensuite. */
+function renderDailyStart(data) {
+  const start = $("dailyStart");
+  if (!start) return;
+  const running = !!data.running;
+  const mode = JOB_MODE_LABEL[data.mode] || "Scrape";
+  start.disabled = running;
+  start.textContent = running ? `${mode} en cours…` : "Lancer le daily";
+  start.classList.toggle("running", running);
+}
+
 /* Badges par chatbot : « en cours… » tant que le scrape tourne, puis
    OK / partiel / ignoré selon le bilan du run. */
 function renderDailyState(data) {
@@ -2092,9 +2166,11 @@ function renderDailyState(data) {
   }
   if (!data.started_at) {
     box.innerHTML = `<p class="section-note">Aucun scrape lancé pour l'instant.</p>`;
+    renderDailyStart(data);
     return;
   }
-  const steps = (data.platforms || []).map((platform) => {
+  const external = data.running && data.source === "cli";
+  const steps = external ? "" : (data.platforms || []).map((platform) => {
     const done = (data.done || []).find((item) => item.platform === platform);
     let cls = "unknown";
     let label = "—";
@@ -2128,15 +2204,119 @@ function renderDailyState(data) {
   }).join("");
   const log = (data.log || []).slice(-16)
     .map((line) => `<div class="test-log-line">${escapeHtml(line)}</div>`).join("");
+  const modeLabel = JOB_MODE_LABEL[data.mode] || "Scrape";
+  const progress = external ? "" : jobProgress(data);
   const status = data.running
-    ? `Scrape en cours depuis ${escapeHtml(relativeAge(data.started_at))}…`
-    : `Terminé ${escapeHtml(relativeAge(data.finished_at))}.`;
-  box.innerHTML = `<div class="test-steps">${steps}</div>
+    ? `${modeLabel} en cours depuis ${escapeHtml(elapsedLabel(data.started_at) || "…")}`
+      + (progress ? ` · ${escapeHtml(progress.trim())} chatbots traités` : "")
+      + (external ? " · lancé par le cron ou la ligne de commande"
+        + " (progression détaillée indisponible)" : "")
+    : `${modeLabel} terminé ${escapeHtml(relativeAge(data.finished_at))}.`;
+  renderDailyStart(data);
+  box.innerHTML = `${steps ? `<div class="test-steps">${steps}</div>` : ""}
     <p class="section-note">${status}</p>
     ${rows ? `<div class="status-list">${rows}</div>` : ""}
     <details class="test-log"${data.running ? " open" : ""}>
       <summary>Journal</summary><div class="test-log-body">${log || "<em>—</em>"}</div>
     </details>`;
+}
+
+/* ---------- indicateur « scrape en cours » (page, cron ou CLI) ----------
+   Le state du job vient de `/api/scrape` : lancé depuis la page (mémoire du
+   serveur) ou par le cron/CLI (fichier `.state/aicv-run.json`). Le même état
+   alimente la barre d'état globale et le bouton du tableau de bord. */
+const jobWatch = { timer: null, data: null };
+const JOB_MODE_LABEL = { daily: "Daily", monthly: "Monthly" };
+
+/* Durée lisible : « 12 s », « 3 min 05 s », « 1 h 20 ». */
+function elapsedLabel(iso) {
+  const then = Date.parse(iso || "");
+  if (Number.isNaN(then)) return "";
+  const seconds = Math.max(0, Math.round((Date.now() - then) / 1000));
+  if (seconds < 60) return `${seconds} s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return seconds % 60 ? `${minutes} min ${seconds % 60} s` : `${minutes} min`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} h ${String(rest).padStart(2, "0")}` : `${hours} h`;
+}
+
+/* Avancement « 2/6 chatbots » (vide si les plateformes sont inconnues). */
+function jobProgress(data) {
+  const total = (data.platforms || []).length;
+  const done = (data.done || []).length;
+  return total ? `${done}/${total} ` : "";
+}
+
+/* Libelle annonce par le lecteur d'ecran : il change rarement (mode,
+   avancement), contrairement a la duree. */
+function jobLabelText(data) {
+  const mode = JOB_MODE_LABEL[data.mode] || "Scrape";
+  const total = (data.platforms || []).length;
+  // la progression par chatbot n'est connue que pour un job de la page
+  const progress = data.source === "cli" ? "" : jobProgress(data);
+  const parts = [`${mode} en cours`];
+  if (progress) parts.push(`${progress}chatbot${total > 1 ? "s" : ""}`);
+  return parts.join(" · ");
+}
+
+/* Duree et origine : information visuelle, mise a jour a chaque sondage. */
+function jobMetaText(data) {
+  const elapsed = elapsedLabel(data.started_at);
+  return [
+    elapsed ? `depuis ${elapsed}` : "",
+    data.source === "cli" ? "lancé par le cron" : "",
+  ].filter(Boolean).join(" · ");
+}
+
+function renderJobStatus() {
+  const data = jobWatch.data;
+  const running = !!(data && data.running);
+  const mode = JOB_MODE_LABEL[(data && data.mode) || ""] || "Scrape";
+  const bar = $("jobBar");
+  if (bar) {
+    // sur la page « Scrape quotidien », son propre panneau suffit
+    const show = running && state.view !== "daily";
+    bar.hidden = !show;
+    if (show) {
+      const label = $("jobLabel");
+      const meta = $("jobElapsed");
+      if (label) label.textContent = jobLabelText(data);
+      if (meta) meta.textContent = jobMetaText(data);
+    }
+  }
+  const dailyBtn = $("dailyBtn");
+  if (dailyBtn) {
+    const label = running ? `${mode} en cours…` : "Lancer un daily";
+    if (dailyBtn.textContent !== label) dailyBtn.textContent = label;
+    dailyBtn.classList.toggle("running", running);
+    dailyBtn.title = running
+      ? `${jobLabelText(data)} · ${jobMetaText(data)} — voir la progression`
+      : "Ouvrir la page « Scrape quotidien »";
+    if (running) dailyBtn.setAttribute("aria-label", `${label} — voir la progression`);
+    else dailyBtn.removeAttribute("aria-label");
+  }
+}
+
+async function pollJobStatus() {
+  if (document.hidden) return; // onglet en arrière-plan : on reprend au retour
+  try {
+    const response = await fetch("/api/scrape");
+    if (!response.ok) return;
+    jobWatch.data = await response.json();
+    renderJobStatus();
+  } catch (err) { /* silencieux : l'indicateur n'est pas critique */ }
+}
+
+function startJobWatch() {
+  pollJobStatus();
+  if (jobWatch.timer) clearInterval(jobWatch.timer);
+  jobWatch.timer = setInterval(pollJobStatus, 4000);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) pollJobStatus();
+  });
 }
 
 /* ---------- page « Test des parseurs » (re-scrape + rapport) ---------- */
@@ -2293,28 +2473,38 @@ function renderParseTestReport(reports) {
   const box = $("testReport");
   if (!box) return;
   if (!reports.length) { box.innerHTML = ""; return; }
-  box.innerHTML = `<h2 class="section-title">Rapport des défaillances</h2>` +
-    reports.map((report) => {
-      const issues = (report.issues || []).map((issue) => {
-        const reason = issue.reason ? ` — ${escapeHtml(issue.reason)}` : "";
-        const counts = issue.old_messages != null
-          ? ` (${escapeHtml(issue.new_messages ?? "?")}/${escapeHtml(issue.old_messages)} messages)` : "";
-        return `<li><strong>${escapeHtml(issue.title || issue.conversation_id || "?")}</strong>${reason}${counts}</li>`;
-      }).join("");
-      const compared = escapeHtml(report.compared ?? report.checked ?? 0);
-      return `<div class="panel test-report-panel ${escapeHtml(report.verdict)}">
-        <div class="panel-head">
-          <h3 class="panel-title">${escapeHtml(platformName(report.platform))}</h3>
-          <span class="parse-badge ${escapeHtml(report.verdict)}">${escapeHtml(VERDICT_LABEL[report.verdict] || report.verdict)}</span>
-        </div>
-        <p class="section-note">${compared} comparée${compared > 1 ? "s" : ""} ·
-          rétention ${pctText(report.retention)} · ${escapeHtml(report.failed || 0)} échec(s)${report.ignored ? ` · ${escapeHtml(report.ignored)} ignorée(s) (limite)` : ""} ·
-          ${escapeHtml(relativeAge(report.checked_at))}</p>
-        ${issues
-          ? `<ul class="test-issues">${issues}</ul>`
-          : `<p class="section-note">Aucune défaillance détectée.</p>`}
-      </div>`;
+  const lines = reports.map((report) => {
+    const issues = (report.issues || []).map((issue) => {
+      const reason = issue.reason ? ` — ${escapeHtml(issue.reason)}` : "";
+      const counts = issue.old_messages != null
+        ? ` (${escapeHtml(issue.new_messages ?? "?")}/${escapeHtml(issue.old_messages)} messages)` : "";
+      return `<li><strong>${escapeHtml(issue.title || issue.conversation_id || "?")}</strong>${reason}${counts}</li>`;
     }).join("");
+    const compared = escapeHtml(report.compared ?? report.checked ?? 0);
+    const row = `<tr>
+      <td class="report-platform">${escapeHtml(platformName(report.platform))}</td>
+      <td><span class="parse-badge ${escapeHtml(report.verdict)}">${escapeHtml(VERDICT_LABEL[report.verdict] || report.verdict)}</span></td>
+      <td class="num col-compare">${compared}</td>
+      <td class="num">${pctText(report.retention)}</td>
+      <td class="num col-fail">${escapeHtml(report.failed || 0)}</td>
+      <td class="report-age">${escapeHtml(relativeAge(report.checked_at))}</td>
+    </tr>`;
+    return issues ? `${row}<tr class="report-issues"><td colspan="6"><ul class="test-issues">${issues}</ul></td></tr>` : row;
+  }).join("");
+  box.innerHTML = `<h2 class="section-title">Rapport des défaillances</h2>
+    <div class="panel report-panel"><div class="report-scroll">
+      <table class="report-table" aria-label="Dernier contrôle par plateforme">
+        <thead><tr>
+          <th scope="col">Plateforme</th>
+          <th scope="col">Verdict</th>
+          <th scope="col" class="num col-compare">Comparées</th>
+          <th scope="col" class="num">Rétention</th>
+          <th scope="col" class="num col-fail">Échecs</th>
+          <th scope="col">Vérifié</th>
+        </tr></thead>
+        <tbody>${lines}</tbody>
+      </table></div>
+    </div>`;
 }
 
 /* ---------- statut : santé des scrapers, index, sauvegardes ---------- */
@@ -2341,6 +2531,8 @@ function pctText(value) {
   return value == null ? "?" : `${Math.round(value * 100)} %`;
 }
 
+const ALERT_ICON = '<svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.6 21 19.4H3z"/><path d="M12 10.2v4.1"/><circle cx="12" cy="17.1" r=".95" fill="currentColor" stroke="none"/></svg>';
+
 /* Contrôle des parseurs : bandeau d'alerte en haut de l'accueil quand une
    plateforme est critique (le détail vit dans la partie « Santé des scrapers »). */
 function renderParseAlert(data) {
@@ -2354,14 +2546,14 @@ function renderParseAlert(data) {
   if (critical.length) {
     banner.hidden = false;
     banner.className = "alert-banner critical";
-    banner.innerHTML = `<span class="alert-icon" aria-hidden="true">⚠</span>
+    banner.innerHTML = `${ALERT_ICON}
       <span><strong>Contrôle des parseurs : ${critical.length} plateforme${critical.length > 1 ? "s" : ""} en échec</strong>
       — ${escapeHtml(names(critical))}. Un re-scrape aléatoire ne retrouve plus ce que
       l'archive contient : voir la partie « Santé des scrapers ».</span>`;
   } else if (worried.length) {
     banner.hidden = false;
     banner.className = "alert-banner warn";
-    banner.innerHTML = `<span class="alert-icon" aria-hidden="true">!</span>
+    banner.innerHTML = `${ALERT_ICON}
       <span><strong>Contrôle des parseurs : à surveiller</strong>
       — ${escapeHtml(names(worried))}.</span>`;
   } else {
@@ -2446,9 +2638,10 @@ document.addEventListener("click", (e) => {
   if (!btn) return;
   let text = btn.dataset.copyText;
   if (text === undefined) {
-    const i = Number(btn.dataset.copy);
-    const block = state.conversation.messages[i].code_blocks;
-    text = (block && block[0] && block[0].code) || "";
+    // le bouton vit dans son bloc : un message peut en contenir plusieurs
+    const block = btn.closest(".code-block");
+    const code = block ? block.querySelector("code") : null;
+    text = (code && code.textContent) || "";
   }
   // libelle d'origine memorise : un 2e clic pendant le ✓ ne doit pas l'ecraser
   if (!btn.dataset.copyLabel) btn.dataset.copyLabel = btn.textContent;

@@ -36,6 +36,7 @@ from src.orchestrator import (  # noqa: E402
 )
 from src.services import ACTIVE_SERVICES, SERVICE_CLASSES  # noqa: E402
 from src.utils.logging import setup_logging  # noqa: E402
+from src.utils.runstate import clear_run_state, write_run_state  # noqa: E402
 
 LOGIN_CHOICES = sorted(set(ACTIVE_SERVICES) | set(COOKIE_SERVICES))
 
@@ -187,6 +188,8 @@ def main(argv=None) -> int:
 
     orchestrator = Orchestrator(config)
     parallel = args.parallel if args.parallel is not None else int(config.get("parallel", 1))
+    # etat publie pour la page web (« daily en cours », cron compris)
+    write_run_state(mode, args.service)
     try:
         summary = orchestrator.run(
             mode=mode, limit=args.limit, services=args.service,
@@ -202,6 +205,8 @@ def main(argv=None) -> int:
     except Exception as exc:  # noqa: BLE001
         log.error(f"echec critique: {exc}", exc_info=True)
         return 1
+    finally:
+        clear_run_state()
 
     _print_summary(summary, config)
     return 1 if summary.has_failures else 0

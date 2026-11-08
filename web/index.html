@@ -57,6 +57,13 @@
     </div>
   </header>
 
+  <div class="job-bar" id="jobBar" hidden>
+    <span class="job-dot" aria-hidden="true"></span>
+    <span class="job-label" id="jobLabel" role="status"></span>
+    <span class="job-elapsed" id="jobElapsed" aria-hidden="true"></span>
+    <button class="btn ghost btn-sm" type="button" id="jobFollow">Suivre</button>
+  </div>
+
   <section class="search-panel" aria-label="Recherche">
     <div class="search-row">
       <div class="field">
@@ -69,7 +76,7 @@
         Aléatoire
       </button>
       <button id="paramsToggle" class="params-toggle" type="button" aria-expanded="false" aria-controls="searchParams">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h8M18 7h2M4 17h4M12 17h8"/><circle cx="15" cy="7" r="2.4"/><circle cx="9" cy="17" r="2.4"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="15" cy="7" r="2.4"/><circle cx="9" cy="17" r="2.4"/></svg>
         Paramètres
       </button>
     </div>

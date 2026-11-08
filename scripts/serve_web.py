@@ -85,6 +85,7 @@ from src.utils.recheck import (  # noqa: E402
     RecheckJob,
     read_report,
 )
+from src.utils.runstate import external_scrape_state  # noqa: E402
 from src.utils.scrape_job import DEFAULT_MODE, ScrapeJob  # noqa: E402
 from src.utils.urls import conversation_url  # noqa: E402
 from src.utils.webauth import (  # noqa: E402
@@ -1138,11 +1139,17 @@ class Handler(BaseHTTPRequestHandler):
             self.close_connection = True
 
     def log_error(self, fmt, *args):  # noqa: A003
-        """Journal d'erreur tronque (une ligne de requete peut faire 64 Kio)."""
+        """Journal d'erreur tronque et sans caracteres de controle.
+
+        `send_error` y passe la ligne de requete brute : un client hostile ne
+        doit pas pouvoir ecrire de sequence ANSI (ou un faux retour ligne) dans
+        le journal de l'administrateur.
+        """
         try:
             text = fmt % args
         except Exception:  # noqa: BLE001
             text = str(fmt)
+        text = "".join(c for c in text if c >= " " and c != "\x7f")
         sys.stderr.write("[web] %s\n" % text[:300])
 
     def _claim_client(self) -> bool:
@@ -1752,6 +1759,8 @@ class Handler(BaseHTTPRequestHandler):
             "drifts": _as_int(data.get("drifts")),
             "mean_score": _as_float(data.get("mean_score")),
             "threshold": _as_float(data.get("threshold")),
+            # extensions additives (champs nouveaux, rien de perdu)
+            "additions": _as_int(data.get("additions")),
             "updated_at": data.get("updated_at"),
         }
 
@@ -1801,8 +1810,14 @@ class Handler(BaseHTTPRequestHandler):
         return {"started": True, **state}
 
     def _scrape_status(self):
-        """Etat du scrape a la demande (page « Scrape quotidien »)."""
-        return self.state.scrape_job.snapshot()
+        """Etat du scrape en cours (page web, cron ou ligne de commande).
+
+        Le job lance depuis la page a son etat en memoire ; un run externe
+        (`run.py` du cron) publie le sien dans `.state/aicv-run.json`. Les deux
+        sont presentes sous la meme forme : `running`, `mode`, `platforms`,
+        `started_at`, `done`, `log`, plus `source` (`job` ou `cli`).
+        """
+        return external_scrape_state(self.state.scrape_job.snapshot())
 
     def _start_scrape(self, body):
         """Lance un scrape (daily/monthly) en tache de fond."""
@@ -1830,6 +1845,9 @@ class Handler(BaseHTTPRequestHandler):
                 raise ApiError("limit doit etre un entier") from exc
             if not 1 <= limit <= 2000:
                 raise ApiError("limit doit etre entre 1 et 2000")
+        if external_scrape_state().get("running"):
+            # un cron (ou un run.py manuel) tient deja le verrou de scrape
+            raise ApiError("un scrape est deja en cours (cron ou CLI)", 409)
         try:
             state = self.state.scrape_job.start(
                 self.state.config, platforms, mode=mode, limit=limit,

@@ -846,3 +846,53 @@ class TestTransportNavigateur:
             "timeout_ms": 45000,
             "method": None,
         }
+
+
+def test_api_genui_images_inline():
+    """Les images des composants `genui` (async_image) sont archivees.
+
+    ChatGPT insere des cartes riches dans un tour : leurs images vivent dans
+    `metadata.genui_components[].safe_urls` (pleine resolution `fullsize`).
+    Sans remappage, le texte ne les reference pas et elles sont perdues.
+    """
+    payload = {
+        "conversation_id": "conv-genui",
+        "title": "Genui",
+        "create_time": 1700000000,
+        "messages": [
+            {
+                "id": "u1",
+                "author": {"role": "user"},
+                "content": {"content_type": "text", "parts": ["montre moi"]},
+                "create_time": 1700000000,
+            },
+            {
+                "id": "a1",
+                "author": {"role": "assistant"},
+                "content": {"content_type": "text", "parts": ["voici"]},
+                "create_time": 1700000001,
+                "metadata": {
+                    "genui_components": [
+                        {
+                            "type": "async_image",
+                            "safe_urls": [
+                                {"url": "https://exemple.fr/article"},
+                                {"url": "https://images.exemple.fr/x.png?purpose=fullsize"},
+                                {"url": "https://images.exemple.fr/x.png?purpose=inline"},
+                            ],
+                        },
+                        {
+                            "type": "chart",
+                            "safe_urls": [{"url": "https://exemple.fr/pas-une-image"}],
+                        },
+                    ]
+                },
+            },
+        ],
+    }
+    conv = ChatGPTParser().parse("", extra={"api": payload})
+    text = conv.messages[1].texte
+    assert "https://images.exemple.fr/x.png?purpose=fullsize" in text
+    assert "purpose=inline" not in text
+    assert "pas-une-image" not in text
+    assert "voici" in text

@@ -331,6 +331,13 @@ def run_platform_recheck(
                 )
                 lost = ", ".join(comparison["lost"]) or "-"
                 log(f"  [{comparison['status']:7}] {label} {counts} | perdu: {lost}")
+            except ConversationUnavailableError as exc:
+                # supprimee/privee : ce n'est pas une regression de parseur
+                results.append(_failure(
+                    conversation_id, entry, "ignore",
+                    f"{type(exc).__name__}: {exc}"[:200],
+                ))
+                log(f"  [ignore ] {label} conversation indisponible")
             except EmptyConversationError as exc:
                 results.append(_failure(
                     conversation_id, entry, "vide",

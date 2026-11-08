@@ -24,7 +24,7 @@ import numpy as np
 import pytest
 import sqlite_vec
 
-from src.utils import webauth
+from src.utils import runstate, webauth
 
 ROOT = Path(__file__).resolve().parent.parent
 spec = importlib.util.spec_from_file_location(
@@ -1088,6 +1088,48 @@ class TestScrapeJobWeb:
         assert "deja en cours" in body["error"]
         release.set()
         job._thread.join(timeout=5)
+
+    def test_run_externe_visible(self, web, monkeypatch):
+        """Un scrape du cron (`run.py`) est annonce comme en cours."""
+        monkeypatch.setattr(runstate, "read_run_state", lambda: {
+            "pid": 4242,
+            "mode": "monthly",
+            "services": ["claude", "grok"],
+            "started_at": "2026-11-01T12:00:00Z",
+        })
+        status, body = _get_json(web, "/api/scrape")
+        assert status == 200
+        assert body["running"] is True
+        assert body["source"] == "cli"
+        assert body["mode"] == "monthly"
+        assert body["platforms"] == ["claude", "grok"]
+        assert body["started_at"] == "2026-11-01T12:00:00Z"
+
+    def test_job_page_a_la_priorite(self, web, monkeypatch):
+        """Un job de la page en cours n'est pas masque par l'etat cron."""
+        def pas_appele():  # noqa: D401 - doit rester intact
+            raise AssertionError("read_run_state ne doit pas etre lu")
+
+        js = serve_web.Handler.state.scrape_job
+        js._state.update({"running": True, "source": None})
+        monkeypatch.setattr(runstate, "read_run_state", pas_appele)
+        status, body = _get_json(web, "/api/scrape")
+        assert status == 200
+        assert body["running"] is True
+        assert body["source"] == "job"
+        js._state.update({"running": False})
+
+    def test_post_refuse_pendant_un_run_cron(self, web, monkeypatch):
+        """Inutile de lancer un job : le verrou du cron est deja tenu."""
+        monkeypatch.setattr(runstate, "read_run_state", lambda: {
+            "pid": 4242,
+            "mode": "daily",
+            "services": [],
+            "started_at": "2026-11-01T12:00:00Z",
+        })
+        status, body = _post_json(web, "/api/scrape", {"platforms": ["grok"]})
+        assert status == 409
+        assert "deja en cours" in body["error"]
 
 
 # -- authentification (page de connexion + session signee) --------------------

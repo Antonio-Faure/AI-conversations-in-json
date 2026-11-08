@@ -3,7 +3,7 @@
   "scope": "corpus",
   "etalon": null,
   "sources": 175,
-  "signature": "8b587a0fd81d84214304a31fdee3b54bfa2e52a4afe77abcb52e42211850a284",
+  "signature": "681bbf224f66c5c22487bd221724d867b8e38ad20848934a7d77fb4e19f3124e",
   "shape": {
     "t": "object",
     "c": {
@@ -5669,6 +5669,63 @@
                 "followups_v2_followup_clicked": {
                   "t": "bool"
                 },
+                "genui_components": {
+                  "t": "list",
+                  "n": "2-5",
+                  "i": {
+                    "t": "object",
+                    "c": {
+                      "component_resolution_id": {
+                        "t": "str",
+                        "fmt": [
+                          "uuid"
+                        ]
+                      },
+                      "end_index": {
+                        "t": "int"
+                      },
+                      "genui_attributes": {
+                        "t": "object",
+                        "c": {
+                          "aspectRatio": {
+                            "t": "str"
+                          },
+                          "width": {
+                            "t": "str"
+                          }
+                        }
+                      },
+                      "safe_urls": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "object",
+                          "c": {
+                            "url": {
+                              "t": "str",
+                              "fmt": [
+                                "url"
+                              ]
+                            }
+                          }
+                        }
+                      },
+                      "start_index": {
+                        "t": "int"
+                      },
+                      "tree_range": {
+                        "t": "list",
+                        "n": "2-5",
+                        "i": {
+                          "t": "int"
+                        }
+                      },
+                      "type": {
+                        "t": "str"
+                      }
+                    }
+                  }
+                },
                 "gizmo_id": {
                   "t": "null"
                 },
@@ -5853,6 +5910,466 @@
                   "n": "1",
                   "i": {
                     "t": "str"
+                  }
+                },
+                "model_dil_v2": {
+                  "t": "object",
+                  "c": {
+                    "appData": {
+                      "t": "object",
+                      "c": {
+                        "opGenui": {
+                          "t": "object",
+                          "c": {
+                            "componentResults": {
+                              "t": "object",
+                              "c": {
+                                "<uuid>": {
+                                  "t": "object",
+                                  "c": {
+                                    "componentName": {
+                                      "t": "str"
+                                    },
+                                    "safe_urls": {
+                                      "t": "list",
+                                      "n": "2-5",
+                                      "i": {
+                                        "t": "str",
+                                        "fmt": [
+                                          "url"
+                                        ]
+                                      }
+                                    },
+                                    "state": {
+                                      "t": "object",
+                                      "c": {
+                                        "default_on_click_action": {
+                                          "t": "null"
+                                        },
+                                        "frame_aspect_ratio": {
+                                          "t": "str"
+                                        },
+                                        "frame_height": {
+                                          "t": "str"
+                                        },
+                                        "frame_max_width": {
+                                          "t": "str"
+                                        },
+                                        "frame_width": {
+                                          "t": "str"
+                                        },
+                                        "has_fallback": {
+                                          "t": "bool"
+                                        },
+                                        "image_fit": {
+                                          "t": "str"
+                                        },
+                                        "images": {
+                                          "t": "list",
+                                          "n": "1",
+                                          "i": {
+                                            "t": "object",
+                                            "c": {
+                                              "content_size": {
+                                                "t": "object",
+                                                "c": {},
+                                                "cut": true
+                                              },
+                                              "content_url": {
+                                                "t": "str",
+                                                "fmt": [
+                                                  "url"
+                                                ]
+                                              },
+                                              "original_content_url": {
+                                                "t": "str",
+                                                "fmt": [
+                                                  "url"
+                                                ]
+                                              },
+                                              "save_target": {
+                                                "t": "str"
+                                              },
+                                              "shop_eligible": {
+                                                "t": "bool"
+                                              },
+                                              "show_url": {
+                                                "t": "bool"
+                                              },
+                                              "thumbnail_crop_info": {
+                                                "t": "object",
+                                                "c": {},
+                                                "cut": true
+                                              },
+                                              "thumbnail_size": {
+                                                "t": "object",
+                                                "c": {},
+                                                "cut": true
+                                              },
+                                              "thumbnail_url": {
+                                                "t": "str",
+                                                "fmt": [
+                                                  "url"
+                                                ]
+                                              },
+                                              "title": {
+                                                "t": "str"
+                                              },
+                                              "url": {
+                                                "t": "str",
+                                                "fmt": [
+                                                  "url"
+                                                ]
+                                              }
+                                            }
+                                          }
+                                        },
+                                        "is_loading": {
+                                          "t": "bool"
+                                        },
+                                        "max_height": {
+                                          "t": "null"
+                                        },
+                                        "presentation": {
+                                          "t": "object",
+                                          "c": {
+                                            "frame": {
+                                              "t": "bool"
+                                            },
+                                            "min_height": {
+                                              "t": "null"
+                                            },
+                                            "min_width": {
+                                              "t": "str"
+                                            },
+                                            "radius": {
+                                              "t": "str"
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "status": {
+                                      "t": "str"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "interactionSurface": {
+                              "t": "str"
+                            },
+                            "modelDataBindings": {
+                              "t": "object",
+                              "c": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "code": {
+                      "t": "str"
+                    },
+                    "constants": {
+                      "t": "object",
+                      "c": {
+                        "0": {
+                          "t": "str"
+                        },
+                        "1": {
+                          "t": "str"
+                        },
+                        "10": {
+                          "t": "str"
+                        },
+                        "11": {
+                          "t": "str"
+                        },
+                        "12": {
+                          "t": "str"
+                        },
+                        "13": {
+                          "t": "str"
+                        },
+                        "14": {
+                          "t": "str"
+                        },
+                        "15": {
+                          "t": "str"
+                        },
+                        "16": {
+                          "t": "str"
+                        },
+                        "17": {
+                          "t": "str"
+                        },
+                        "18": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        },
+                        "19": {
+                          "t": "str"
+                        },
+                        "2": {
+                          "t": "str"
+                        },
+                        "20": {
+                          "t": "str"
+                        },
+                        "21": {
+                          "t": "str"
+                        },
+                        "22": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        },
+                        "23": {
+                          "t": "str"
+                        },
+                        "24": {
+                          "t": "str"
+                        },
+                        "25": {
+                          "t": "str"
+                        },
+                        "26": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        },
+                        "27": {
+                          "t": "str"
+                        },
+                        "28": {
+                          "t": "str"
+                        },
+                        "29": {
+                          "t": "str"
+                        },
+                        "3": {
+                          "t": "str"
+                        },
+                        "30": {
+                          "t": "str",
+                          "fmt": [
+                            "uuid"
+                          ]
+                        },
+                        "31": {
+                          "t": "str"
+                        },
+                        "32": {
+                          "t": "str"
+                        },
+                        "33": {
+                          "t": "str"
+                        },
+                        "34": {
+                          "t": "str"
+                        },
+                        "35": {
+                          "t": "str"
+                        },
+                        "36": {
+                          "t": "str"
+                        },
+                        "37": {
+                          "t": "str"
+                        },
+                        "38": {
+                          "t": "str"
+                        },
+                        "39": {
+                          "t": "str"
+                        },
+                        "4": {
+                          "t": "str"
+                        },
+                        "40": {
+                          "t": "str"
+                        },
+                        "41": {
+                          "t": "str"
+                        },
+                        "42": {
+                          "t": "str"
+                        },
+                        "43": {
+                          "t": "str"
+                        },
+                        "44": {
+                          "t": "str"
+                        },
+                        "45": {
+                          "t": "str"
+                        },
+                        "46": {
+                          "t": "str"
+                        },
+                        "47": {
+                          "t": "str"
+                        },
+                        "48": {
+                          "t": "str"
+                        },
+                        "49": {
+                          "t": "str"
+                        },
+                        "5": {
+                          "t": "str"
+                        },
+                        "50": {
+                          "t": "str"
+                        },
+                        "51": {
+                          "t": "str"
+                        },
+                        "52": {
+                          "t": "str"
+                        },
+                        "53": {
+                          "t": "str"
+                        },
+                        "54": {
+                          "t": "str"
+                        },
+                        "55": {
+                          "t": "str"
+                        },
+                        "56": {
+                          "t": "str"
+                        },
+                        "57": {
+                          "t": "str"
+                        },
+                        "58": {
+                          "t": "str"
+                        },
+                        "59": {
+                          "t": "str"
+                        },
+                        "6": {
+                          "t": "str"
+                        },
+                        "60": {
+                          "t": "str"
+                        },
+                        "61": {
+                          "t": "list+str",
+                          "n": "2-5",
+                          "i": {
+                            "t": "object",
+                            "c": {
+                              "label": {
+                                "t": "str"
+                              },
+                              "value": {
+                                "t": "int"
+                              }
+                            }
+                          }
+                        },
+                        "62": {
+                          "t": "str"
+                        },
+                        "63": {
+                          "t": "str"
+                        },
+                        "64": {
+                          "t": "str"
+                        },
+                        "65": {
+                          "t": "str"
+                        },
+                        "66": {
+                          "t": "str"
+                        },
+                        "67": {
+                          "t": "str"
+                        },
+                        "68": {
+                          "t": "str"
+                        },
+                        "69": {
+                          "t": "str"
+                        },
+                        "7": {
+                          "t": "str"
+                        },
+                        "70": {
+                          "t": "str"
+                        },
+                        "71": {
+                          "t": "str"
+                        },
+                        "72": {
+                          "t": "str"
+                        },
+                        "73": {
+                          "t": "str"
+                        },
+                        "74": {
+                          "t": "str"
+                        },
+                        "75": {
+                          "t": "str"
+                        },
+                        "76": {
+                          "t": "str"
+                        },
+                        "77": {
+                          "t": "str"
+                        },
+                        "78": {
+                          "t": "str"
+                        },
+                        "79": {
+                          "t": "str"
+                        },
+                        "8": {
+                          "t": "str"
+                        },
+                        "80": {
+                          "t": "str"
+                        },
+                        "81": {
+                          "t": "str"
+                        },
+                        "82": {
+                          "t": "str"
+                        },
+                        "83": {
+                          "t": "str"
+                        },
+                        "84": {
+                          "t": "str"
+                        },
+                        "85": {
+                          "t": "str"
+                        },
+                        "9": {
+                          "t": "str"
+                        }
+                      }
+                    },
+                    "fallbackMarkdown": {
+                      "t": "str"
+                    },
+                    "fallbackMarkdownVersion": {
+                      "t": "int"
+                    },
+                    "requiredComponents": {
+                      "t": "list",
+                      "n": "1",
+                      "i": {
+                        "t": "str"
+                      }
+                    }
                   }
                 },
                 "model_slug": {
@@ -6202,9 +6719,6 @@
                     "custom_symbol_offsets": {
                       "t": "list",
                       "n": "0"
-                    },
-                    "render_format": {
-                      "t": "str"
                     }
                   }
                 },
@@ -6294,6 +6808,29 @@
                 "view_state": {
                   "t": "object",
                   "c": {
+                    "root": {
+                      "t": "object",
+                      "c": {
+                        "difficulty": {
+                          "t": "str"
+                        },
+                        "duration": {
+                          "t": "str"
+                        },
+                        "minutes": {
+                          "t": "int"
+                        },
+                        "progress": {
+                          "t": "str"
+                        },
+                        "returns": {
+                          "t": "str"
+                        },
+                        "thoughts": {
+                          "t": "str"
+                        }
+                      }
+                    },
                     "widgets": {
                       "t": "object",
                       "c": {

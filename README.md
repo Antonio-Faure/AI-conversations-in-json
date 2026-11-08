@@ -492,6 +492,10 @@ passe invalide immédiatement toutes les sessions en cours, sans état serveur.
   « Activité » ouvre la page *Scrape quotidien* — choix des chatbots, badges
   **en cours…** / **OK · N écrite(s)** par plateforme, journal en direct et bilan
   du run (mêmes règles que `run.py --daily`, même verrou que le cron).
+  Pendant un scrape, une **barre d'état** visible sur toutes les pages (et le
+  bouton du tableau de bord, qui devient « Daily/Monthly en cours… ») rappelle
+  le mode, l'avancement et la durée — y compris pour un run lancé par le cron
+  ou en ligne de commande (`run.py` publie `.state/aicv-run.json`).
 - **Accueil (tableau de bord)** : trois panneaux rotatifs (une partie toutes les
   5 minutes, flèches et pastilles) — **Activité** (heatmap 365 jours, clic sur un
   jour → vue « journée », qui alterne avec la **santé des scrapers**),

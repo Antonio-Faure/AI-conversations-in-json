@@ -706,6 +706,22 @@ def test_scrape_start_et_etat(env):
     assert seen == [("alpha", "daily", None)]
 
 
+def test_scrape_state_voit_le_run_du_cron(env, monkeypatch):
+    """Un `run.py` du cron est annonce comme en cours (source cli)."""
+    from src.utils import runstate
+
+    _install_fake_scrape_job(env, lambda *a, **k: None)
+    monkeypatch.setattr(runstate, "read_run_state", lambda: {
+        "pid": 4242, "mode": "monthly", "services": ["alpha", "beta"],
+        "started_at": "2026-11-01T12:00:00Z",
+    })
+    snapshot = env.tools.scrape_state()
+    assert snapshot["running"] is True
+    assert snapshot["source"] == "cli"
+    assert snapshot["mode"] == "monthly"
+    assert snapshot["platforms"] == ["alpha", "beta"]
+
+
 def test_scrape_mode_invalide(env):
     with pytest.raises(mcp_conversations.ConversationToolError):
         env.tools.scrape_start(["alpha"], mode="hebdo")
@@ -721,3 +737,22 @@ def test_scrape_wait_attend_la_fin(env):
     state = env.tools.scrape_wait(["alpha"], timeout=10)
     assert state["running"] is False
     assert state["timed_out"] is False
+
+
+def test_grep_motif_avec_guillemets(env, tmp_path):
+    """Le JSON echappe les guillemets : le pre-filtre doit tester la forme
+    echappee, sinon `dit "bonjour"` est declare absent."""
+    import json as _json
+
+    path = tmp_path / "quote.json"
+    path.write_text(_json.dumps({
+        "conversation_id": "c-quote",
+        "platform": "alpha",
+        "title": 'Il a dit "bonjour"',
+        "messages": [{
+            "message_id": "m1", "role": "user", "texte": 'il a dit "bonjour"',
+            "code_blocks": [],
+        }],
+    }), encoding="utf-8")
+    hits = env.tools._grep_file("alpha", path, 'dit "bonjour"', None, 10)
+    assert hits, "le motif avec guillemets doit etre trouve"

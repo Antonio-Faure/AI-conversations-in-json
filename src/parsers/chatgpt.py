@@ -87,6 +87,8 @@ API_FILE_DOWNLOAD_URL = "https://chatgpt.com/backend-api/files/{fid}/download"
 #: voix (`audio_asset_pointer`, `real_time_user_audio_video_asset_pointer`)
 #: ne sont pas telechargeables via l'API : ils sont signales comme non geres
 API_IMAGE_PART = "image_asset_pointer"
+#: composants d'interface (`metadata.genui_components`) portant des images
+API_GENUI_IMAGE_TYPES = ("async_image", "image", "generated_image")
 
 #: delimiteurs LaTeX bruts de l'API -> convention `$`/`$$` des parseurs
 API_DISPLAY_MATH_RE = re.compile(r"\\\[(.+?)\\\]", re.DOTALL)
@@ -269,6 +271,39 @@ def _api_sources(metadata: Dict[str, Any]) -> List[str]:
             )
         )
     return _dedupe([entry for entry in sources if entry])
+
+
+def _api_genui_images(metadata: Dict[str, Any]) -> List[str]:
+    """Images inline des composants d'interface (`metadata.genui_components`).
+
+    ChatGPT insere des cartes riches dans la reponse d'un tour (resultats de
+    recherche, apercus) : les composants `async_image` portent leurs images
+    dans `safe_urls`, avec une URL `purpose=fullsize` et une `purpose=inline`.
+    Le texte ne les reference pas : sans ce remappage, elles sont perdues a
+    l'archivage. On garde la pleine resolution (les autres URLs ne sont pas
+    des images).
+    """
+    images: List[str] = []
+    for component in metadata.get("genui_components") or []:
+        if not isinstance(component, dict):
+            continue
+        if str(component.get("type") or "") not in API_GENUI_IMAGE_TYPES:
+            continue
+        urls: List[str] = []
+        for item in component.get("safe_urls") or []:
+            if not isinstance(item, dict):
+                continue
+            url = str(item.get("url") or "").strip()
+            if url.startswith(("http://", "https://")):
+                urls.append(url)
+        full = [url for url in urls if "purpose=fullsize" in url]
+        url = (full or urls or [""])[0]
+        if not url:
+            continue
+        markdown = f"![image]({url})"
+        if markdown not in images:
+            images.append(markdown)
+    return images
 
 
 def _api_reference_images(text: str, metadata: Dict[str, Any]) -> str:
@@ -727,6 +762,10 @@ class ChatGPTParser(BaseParser):
                 _api_parts_text(content, metadata, unsupported=unsupported)
             )
             text = _api_reference_images(text, metadata)
+            genui_images = _api_genui_images(metadata)
+            if genui_images:
+                block = "\n\n".join(genui_images)
+                text = f"{text}\n\n{block}".strip() if text else block
             message_id = str(raw.get("id") or "")
             role = str((raw.get("author") or {}).get("role") or "").lower()
             if role == "user":

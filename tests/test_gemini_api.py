@@ -816,3 +816,17 @@ def test_rpc_rafraichit_les_jetons_sur_401():
     assert first.calls == 1 and second.calls == 1
     assert len(refreshes) == 2  # client initial + rafraichissement
     assert service._http is None  # l'ancien client est invalide
+
+
+def test_markdown_label_echappe_les_crochets():
+    """Le nom d'une piece jointe (metadonnee distante) ne doit pas casser le
+    lien markdown ni injecter d'URL."""
+    from src.parsers.gemini import _markdown_label
+
+    assert _markdown_label("photo [1].png") == "photo \\[1\\].png"
+    # un crochet ferme ne ferme pas le libelle : pas de lien forge
+    assert _markdown_label("x](https://exemple.invalid/p.png)") == (
+        "x\\](https://exemple.invalid/p.png)"
+    )
+    # retour a la ligne et espaces multiples aplatis
+    assert _markdown_label("a\nb   c") == "a b c"

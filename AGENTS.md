@@ -40,6 +40,8 @@ plus un RAG et une page web de recherche. Le détail complet est dans
 .venv/bin/python scripts/rag_index.py --force
 
 # Moniteur de similarité des API internes (forme value-free des payloads)
+# Une extension additive (champs nouveaux, aucun type change, couverture
+# intacte) n'est PAS une rupture : compatibilite + cles dans `new_keys`.
 .venv/bin/python scripts/api_bench.py shape --platform chatgpt        # diff vs référence
 .venv/bin/python scripts/api_bench.py shape --platform grok --live    # fetch étalon live
 .venv/bin/python scripts/api_bench.py update-ref --platform claude    # réf. = étalons
@@ -105,6 +107,7 @@ indisponibles).
   `src/parsers/<bot>.py`, helpers dans `src/parsers/base.py`.
 - **Schéma** : `src/schema.py` (`Conversation`, `Message`, `normalize_messages`).
 - **Moniteur de forme API** : `src/utils/api_shape.py` (arbre value-free +
+  `additive_only` : une extension de surface n'est pas comptee en rupture,
   `compare_shapes`), `ShapeMonitor` dans `src/services/base.py` (hook
   `record_api_shape` après chaque fetch API des 6 services), références
   versionnées `tests/fixtures/api_shapes/<bot>.shape.json`, CLI
@@ -131,6 +134,13 @@ indisponibles).
   parseur). Exposés par `GET`/`POST /api/scrape` et `/api/recheck` (pages web
   « Scrape quotidien » et « Test des parseurs ») et par les outils MCP
   `recheck_parsers` / `recheck_status`.
+- **Scrape en cours visible** : `run.py` publie `.state/aicv-run.json`
+  (`src/utils/runstate.py` : pid, mode, plateformes, démarrage) tant qu'un
+  run tourne — cron compris — et le retire dans un `finally` ; `GET
+  /api/scrape` fusionne cet état (`source: "cli"`) avec celui du job de la
+  page (`source: "job"`). La barre d'état globale et le bouton « Lancer un
+  daily » du tableau de bord affichent le mode et la durée ; un `POST
+  /api/scrape` pendant un run externe répond 409.
 - **Serveur MCP** : `scripts/mcp_conversations.py` (SDK `mcp` v2, transport
   stdio ; outils `search`, `grep`, `get_conversation`, `get_message`,
   `list_conversations`, `stats`, `recheck_parsers`, `recheck_status`,
@@ -281,6 +291,13 @@ indisponibles).
   page (`artifacts` vide), modèle absent du DOM (`null`). Timestamps de
   conversation : script bootstrap `create_time`/`update_time` (retiré à
   l'hydratation → repli fetch SSR).
+- ChatGPT (API, 2026) : le payload peut avoir un `mapping` **vide** ; les
+  tours sont alors dans le tableau `messages[]` (meme forme). Les images
+  inline des cartes riches vivent dans `metadata.genui_components`
+  (`async_image` → `safe_urls` en `purpose=fullsize`) et sont remappees en
+  markdown, comme les `image_group` de `content_references`. Les messages
+  `tether_*` (affichage de navigation, citations) sont volontairement
+  ignores : leurs liens sont deja dans `sources`.
 - ChatGPT (API) : Cloudflare challenge les clients HTTP bruts sur
   `/backend-api/*` (`Cf-Mitigated: challenge`, captcha géré) — urllib reçoit un
   403 HTML même avec cookies + Client Hints. Les lectures passent par le réseau

@@ -440,3 +440,21 @@ class TestAntiFuite:
         assert item["checksum"] == {"t": "str", "fmt": ["hash"]}
         assert item["text"] == {"t": "str"}
         assert item["path"] == {"t": "str"}
+
+
+def test_additive_only_distingue_extension_et_perte():
+    """Une extension de surface n'est pas une rupture (rien n'est perdu)."""
+    ref = shape_of({"messages": [{"role": "user", "texte": "x"}], "title": "t"})
+    # champ nouveau : structure inconnue, mais couverture et types intacts
+    added = shape_of({
+        "messages": [{"role": "user", "texte": "x", "nouveau": {"a": 1}}],
+        "title": "t",
+        "extra": [1, 2],
+    })
+    report = compare_shapes(ref, added)
+    assert report["added"]
+    assert report["additive_only"] is True
+    assert report["score"] < 100  # la nouveaute reste visible dans le score
+    # changement de type : ce n'est plus une simple extension
+    changed = shape_of({"messages": "pas-une-liste", "title": "t"})
+    assert compare_shapes(ref, changed)["additive_only"] is False

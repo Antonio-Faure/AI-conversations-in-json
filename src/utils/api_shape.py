@@ -312,6 +312,11 @@ def compare_shapes(ref: Dict[str, Any], live: Dict[str, Any]) -> Dict[str, Any]:
     score *= COVERAGE_FLOOR + (1.0 - COVERAGE_FLOOR) * coverage / 100.0
     score -= EMPTIED_LIST_PENALTY * len(emptied_lists)
     score = max(0.0, min(100.0, score))
+    # evolution additive : seuls des champs nouveaux (aucun type change,
+    # aucune liste videe, couverture intacte) -> rien n'est perdu
+    additive_only = (
+        not type_changes and not emptied_lists and coverage >= 99.0
+    )
     return {
         "score": round(score, 2),
         "level": level_for(score),
@@ -325,6 +330,7 @@ def compare_shapes(ref: Dict[str, Any], live: Dict[str, Any]) -> Dict[str, Any]:
         "cardinality_changes": cardinality_changes,
         "format_changes": format_changes,
         "emptied_lists": emptied_lists,
+        "additive_only": additive_only,
         "counts": {
             "ref_paths": len(ref_paths),
             "live_paths": len(live_paths),

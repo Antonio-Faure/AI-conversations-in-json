@@ -87,6 +87,9 @@ class ShapeMonitor:
     min_score: Optional[float] = None
     sum_score: float = 0.0
     drift_keys: Dict[str, int] = field(default_factory=dict)
+    #: champs nouveaux (surface additive) et nombre de payloads concernes
+    additions: int = 0
+    new_keys: Dict[str, int] = field(default_factory=dict)
 
     @classmethod
     def for_service(
@@ -140,6 +143,13 @@ class ShapeMonitor:
         self.min_score = score if self.min_score is None else min(self.min_score, score)
         if score >= self.threshold:
             self.matches += 1
+        elif report.get("additive_only"):
+            # que des champs nouveaux : rien n'est perdu, la forme reste
+            # compatible (on garde la trace des cles pour information)
+            self.matches += 1
+            self.additions += 1
+            for key in report["added"][:50]:
+                self.new_keys[key] = self.new_keys.get(key, 0) + 1
         else:
             self.drifts += 1
             keys = (
@@ -151,7 +161,7 @@ class ShapeMonitor:
             )
             for key in keys[:50]:
                 self.drift_keys[key] = self.drift_keys.get(key, 0) + 1
-        if report["level"] == "BREAK":
+        if report["level"] == "BREAK" and not report.get("additive_only"):
             self.breaks += 1
         return report
 
@@ -169,6 +179,10 @@ class ShapeMonitor:
             "on_break": self.on_break,
             "drift_keys": dict(
                 sorted(self.drift_keys.items(), key=lambda kv: (-kv[1], kv[0]))
+            ),
+            "additions": self.additions,
+            "new_keys": dict(
+                sorted(self.new_keys.items(), key=lambda kv: (-kv[1], kv[0]))
             ),
         }
 
@@ -279,6 +293,19 @@ class BaseService(ABC):
         monitor = self.shape_monitor
         report = monitor.record(payload)
         if report is None or report["level"] == "OK":
+            return report
+        if report.get("additive_only"):
+            # seuls des champs nouveaux : rien n'est perdu, on l'informe
+            log_fields(
+                log, 20,
+                f"{self.name}: forme API etendue ({report['score']:.1f}%, "
+                f"{len(report['added'])} chemin(s) nouveau(x))",
+                extra={
+                    "service": self.name,
+                    "score": report["score"],
+                    "added": report["added"][:10],
+                },
+            )
             return report
         log_fields(
             log,

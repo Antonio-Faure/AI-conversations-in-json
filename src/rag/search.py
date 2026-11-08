@@ -129,11 +129,14 @@ def keyword_rows(
 ) -> List[Dict[str, Any]]:
     if not terms:
         return []
-    clauses, params = _filters(platforms, model, date_from, date_to)
+    clauses, filter_params = _filters(platforms, model, date_from, date_to)
     like_clauses = []
+    params: List[Any] = []
     for term in terms:
         like_clauses.append("m.texte LIKE ? ESCAPE '\\'")
         params.append(_like(term))
+    # les motifs LIKE sont en tete de requete : leurs parametres d'abord
+    params.extend(filter_params)
     where = " AND ".join([f"({' OR '.join(like_clauses)})"] + clauses)
     rows = store.db.execute(
         f"""
