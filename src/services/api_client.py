@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 from ..http_client import DEFAULT_USER_AGENT
 from ..utils.logging import get_logger
+from ..utils.net_guard import open_url, read_capped
 from .base import RateLimitedError, ServiceNotLoggedIn
 
 log = get_logger("services.api_client")
@@ -137,9 +138,9 @@ class CookieHttpClient:
         if self._transport is not None:
             return self._transport(url, headers, data, method, self.timeout_s)
         request = urllib.request.Request(url, data=data, method=method, headers=headers)
-        with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+        with open_url(request, self.timeout_s) as response:
             ctype = (response.headers.get("Content-Type") or "").split(";")[0]
-            return response.status, response.read(), (ctype.strip() or None)
+            return response.status, read_capped(response), (ctype.strip() or None)
 
     def _send(
         self,
@@ -209,7 +210,7 @@ class CookieHttpClient:
         for attempt in range(self.retry_attempts):
             request = urllib.request.Request(url, headers=self._headers(accept, url=url))
             try:
-                with urllib.request.urlopen(request, timeout=self.timeout_s) as response:
+                with open_url(request, self.timeout_s) as response:
                     ctype = (response.headers.get("Content-Type") or "").split(";")[0]
                     return response.read(), (ctype.strip() or None)
             except urllib.error.HTTPError as exc:

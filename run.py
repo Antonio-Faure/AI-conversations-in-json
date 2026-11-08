@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -36,6 +37,7 @@ from src.orchestrator import (  # noqa: E402
 )
 from src.services import ACTIVE_SERVICES, SERVICE_CLASSES  # noqa: E402
 from src.utils.logging import setup_logging  # noqa: E402
+from src.utils.runlock import RUN_LOCK_PATH, acquire_run_lock, release_run_lock  # noqa: E402
 from src.utils.runstate import clear_run_state, write_run_state  # noqa: E402
 
 LOGIN_CHOICES = sorted(set(ACTIVE_SERVICES) | set(COOKIE_SERVICES))
@@ -170,6 +172,26 @@ def _print_summary(summary, config: dict) -> None:
     print(f"Sortie: {Path(config['output_dir'])}")
 
 
+def _lock_held_by_self() -> bool:
+    """Le verrou de scrape est-il deja tenu par ce processus (cron) ?
+
+    `flock -n .state/aicv-run.lock run.py` passe le descripteur au processus
+    fils : reprendre le verrou depuis run.py echouerait alors qu'il est a nous.
+    """
+    target = os.path.realpath(RUN_LOCK_PATH)
+    try:
+        fds = os.listdir("/proc/self/fd")
+    except OSError:
+        return False  # pas de /proc : on laisse le verrou decider
+    for fd in fds:
+        try:
+            if os.path.realpath(f"/proc/self/fd/{fd}") == target:
+                return True
+        except OSError:
+            continue
+    return False
+
+
 def main(argv=None) -> int:
     args = build_arg_parser().parse_args(argv)
     config = resolve_config_paths(_apply_cli_overrides(load_config(args.config), args))
@@ -188,6 +210,14 @@ def main(argv=None) -> int:
 
     orchestrator = Orchestrator(config)
     parallel = args.parallel if args.parallel is not None else int(config.get("parallel", 1))
+    # meme verrou que le cron et la page web : deux runs ne partagent pas les
+    # profils navigateur. Le cron le tient deja (flock) : on ne le reprend pas.
+    lock = None
+    if not _lock_held_by_self():
+        lock = acquire_run_lock()
+        if lock is None:
+            log.error("un scrape est deja en cours (verrou occupe)")
+            return 2
     # etat publie pour la page web (« daily en cours », cron compris)
     write_run_state(mode, args.service)
     try:
@@ -207,6 +237,7 @@ def main(argv=None) -> int:
         return 1
     finally:
         clear_run_state()
+        release_run_lock(lock)
 
     _print_summary(summary, config)
     return 1 if summary.has_failures else 0

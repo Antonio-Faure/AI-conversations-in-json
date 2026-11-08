@@ -32,6 +32,7 @@ from ..parsers.chatgpt import (
 )
 from ..schema import ConversationRef, normalize_timestamp
 from ..utils.logging import get_logger
+from ..utils.net_guard import fetch_capped, is_public_url
 from .api_client import CookieHttpClient, Transport
 from .base import BaseService, ScrapedPage, ServiceNotLoggedIn
 
@@ -658,7 +659,12 @@ class ChatGPTService(BaseService):
         download_url = str(data.get("download_url") or "")
         if not download_url:
             return None
-        return client.fetch(download_url)
+        # l'URL signee est servie par un CDN : pas de cookie de session, et
+        # jamais un hote non public (la reponse JSON pourrait la forger)
+        if not is_public_url(download_url):
+            log.warning("chatgpt: URL de telechargement refusee (%s)", download_url)
+            return None
+        return fetch_capped(download_url, timeout=getattr(client, "timeout_s", 30))
 
     def _list_conversations_api(
         self, limit: Optional[int] = None

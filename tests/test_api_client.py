@@ -14,6 +14,7 @@ import urllib.request
 import pytest
 
 from src.http_client import DEFAULT_USER_AGENT
+from src.services import api_client
 from src.services.api_client import CookieHttpClient, retry_after_s
 from src.services.base import RateLimitedError, ServiceNotLoggedIn
 
@@ -26,8 +27,8 @@ class FakeResponse:
         self._body = body
         self.headers = {"Content-Type": content_type}
 
-    def read(self) -> bytes:
-        return self._body
+    def read(self, size: int = -1) -> bytes:
+        return self._body if size is None or size < 0 else self._body[:size]
 
     def __enter__(self) -> "FakeResponse":
         return self
@@ -82,7 +83,7 @@ def test_get_json_401_leve_service_not_logged_in(monkeypatch):
     def fake_urlopen(request, timeout=None):
         raise urllib.error.HTTPError(request.full_url, 401, "Unauthorized", {}, None)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(api_client, "open_url", fake_urlopen)
     with pytest.raises(ServiceNotLoggedIn):
         CookieHttpClient("a=b").get_json("https://exemple/x")
 
@@ -91,7 +92,7 @@ def test_get_json_429_persistant_leve_rate_limited(monkeypatch):
     def fake_urlopen(request, timeout=None):
         raise urllib.error.HTTPError(request.full_url, 429, "Too Many Requests", {}, None)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(api_client, "open_url", fake_urlopen)
     monkeypatch.setattr(time, "sleep", lambda s: None)
     with pytest.raises(RateLimitedError):
         CookieHttpClient("a=b").get_json("https://exemple/x")
@@ -99,8 +100,8 @@ def test_get_json_429_persistant_leve_rate_limited(monkeypatch):
 
 def test_get_json_reponse_non_json(monkeypatch):
     monkeypatch.setattr(
-        urllib.request,
-        "urlopen",
+        api_client,
+        "open_url",
         lambda request, timeout=None: FakeResponse(body=b"<html>"),
     )
     with pytest.raises(RuntimeError, match="reponse non-JSON"):
@@ -116,7 +117,7 @@ def test_send_post_transmet_corps_et_en_tetes(monkeypatch):
         seen["content_type"] = request.headers.get("Content-type")
         return FakeResponse(body=b'{"ok": 1}')
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(api_client, "open_url", fake_urlopen)
     status, raw = _Client("a=b")._send(
         "https://exemple/x", data=b"{}", method="POST", content_type="application/json"
     )
@@ -128,8 +129,8 @@ def test_send_post_transmet_corps_et_en_tetes(monkeypatch):
 
 def test_fetch_rend_octets_et_content_type(monkeypatch):
     monkeypatch.setattr(
-        urllib.request,
-        "urlopen",
+        api_client,
+        "open_url",
         lambda request, timeout=None: FakeResponse(
             body=b"png", content_type="image/png; charset=binary"
         ),
@@ -141,7 +142,7 @@ def test_fetch_erreur_http_rend_none(monkeypatch):
     def fake_urlopen(request, timeout=None):
         raise urllib.error.HTTPError(request.full_url, 404, "Not Found", {}, None)
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(api_client, "open_url", fake_urlopen)
     assert CookieHttpClient("a=b").fetch("https://exemple/x") is None
 
 
@@ -149,7 +150,7 @@ def test_send_erreur_reseau_leve_runtime_error(monkeypatch):
     def fake_urlopen(request, timeout=None):
         raise urllib.error.URLError("dns")
 
-    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(api_client, "open_url", fake_urlopen)
     with pytest.raises(RuntimeError, match="requete echouee"):
         CookieHttpClient("a=b").get("https://exemple/x")
 
@@ -192,7 +193,7 @@ class TestTransportNavigateur:
         def boom(*args, **kwargs):
             raise AssertionError("urllib ne doit pas etre appele avec un transport")
 
-        monkeypatch.setattr(urllib.request, "urlopen", boom)
+        monkeypatch.setattr(api_client, "open_url", boom)
         client = CookieHttpClient(
             "sid=1",
             transport=lambda url, headers, data, method, timeout_s: (200, b"{}", None),

@@ -221,6 +221,7 @@ input[type="range"]{width:100%;accent-color:var(--accent)}
   border:1px solid transparent;transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease);line-height:1.35}
 .sidebar .side-item:hover{background:var(--bg-hover);border-color:var(--border)}
 .sidebar .side-item.active{background:var(--accent-strong);color:var(--accent-ink)}
+.sidebar .side-item > span:first-child{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sidebar .side-item .muted{display:block;color:var(--text-muted);font-size:.72rem;margin-top:3px}
 .sidebar .side-item.active .muted{color:color-mix(in srgb,var(--accent-ink) 80%,transparent)}
 .sidebar .side-sep{border-top:1px solid var(--border);margin:14px 0}
@@ -642,7 +643,11 @@ mark{background:var(--highlight);color:inherit;border-radius:3px;padding:0 2px}
 .alert-banner.critical{border-color:color-mix(in srgb,#e0483f 60%,var(--border));
   background:color-mix(in srgb,#e0483f 12%,var(--bg-card))}
 .alert-banner.critical .alert-icon{color:#e0483f}
-.health-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.health-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+@media(max-width:560px){
+  /* la partie sante doit tenir dans la carte, sans scroll horizontal */
+  .heat-body .status-meta{white-space:normal}
+}
 .heat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
 .status-list{display:flex;flex-direction:column}
 .status-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0;

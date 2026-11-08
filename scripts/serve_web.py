@@ -1974,6 +1974,9 @@ class Handler(BaseHTTPRequestHandler):
         model = (params.get("model") or [""])[0] or None
         date_from = (params.get("date_from") or [""])[0] or None
         date_to = (params.get("date_to") or [""])[0] or None
+        if date_to and len(date_to) == 10:
+            # « 2026-06-08 » doit inclure la journee entiere
+            date_to += "T23:59:59Z"
         try:
             media_k = int((params.get("media_k") or [str(MEDIA_K_DEFAULT)])[0])
         except ValueError as exc:

@@ -19,6 +19,7 @@ import pytest
 from src.parsers.chatgpt import API_FILE_DOWNLOAD_URL, ChatGPTParser
 from src.schema import ConversationRef
 from src.services.base import RateLimitedError, ServiceNotLoggedIn
+from src.services import chatgpt as chatgpt_module
 from src.services.chatgpt import (
     API_PAGE_SIZE,
     ChatGPTService,
@@ -683,14 +684,20 @@ class FakeAssetClient:
         return PNG_BYTES, "image/png"
 
 
-def test_download_api_asset_resout_et_telecharge():
+def test_download_api_asset_resout_et_telecharge(monkeypatch):
     service = ChatGPTService(FakeSession(), {"services": {"chatgpt": {"api": True}}})
     client = FakeAssetClient()
     service._http = client
+    fetched = []
+    monkeypatch.setattr(chatgpt_module, "is_public_url", lambda url: True)
+    monkeypatch.setattr(
+        chatgpt_module, "fetch_capped",
+        lambda url, timeout=None: (fetched.append(url), (PNG_BYTES, "image/png"))[1],
+    )
     url = API_FILE_DOWNLOAD_URL.format(fid="file-abc")
     assert service.download_api_asset(url) == (PNG_BYTES, "image/png")
     assert client.gets == [url]
-    assert client.fetches == [ASSET_SIGNED_URL]
+    assert fetched == [ASSET_SIGNED_URL]  # sans cookie de session
 
 
 def test_download_api_asset_absent_retourne_none():
@@ -759,12 +766,18 @@ def test_http_client_429_persistant_leve_rate_limited(monkeypatch):
         client.get_json("https://chatgpt.com/backend-api/x")
 
 
-def test_session_api_intercepte_les_assets():
+def test_session_api_intercepte_les_assets(monkeypatch):
     """En mode API, `session.fetch` des assets passe par le client HTTP."""
     inner = FakeSession(session_body=b"{}")
     service = ChatGPTService(inner, {"services": {"chatgpt": {"api": True}}})
     client = FakeAssetClient()
     service._http = client
+    # l'URL signee est telechargee sans cookie (hote public verifie)
+    monkeypatch.setattr(chatgpt_module, "is_public_url", lambda url: True)
+    monkeypatch.setattr(
+        chatgpt_module, "fetch_capped",
+        lambda url, timeout=None: (PNG_BYTES, "image/png"),
+    )
     url = API_FILE_DOWNLOAD_URL.format(fid="file-abc")
     assert service.session.fetch(url) == (PNG_BYTES, "image/png")
     assert inner.fetched == []  # le navigateur n'est pas sollicite
@@ -773,8 +786,15 @@ def test_session_api_intercepte_les_assets():
     assert inner.fetched == ["https://chatgpt.com/backend-api/estuary/content?id=z"]
 
 
-def test_download_service_images_reecrit_le_markdown(tmp_path, multimodal_payload):
+def test_download_service_images_reecrit_le_markdown(
+    tmp_path, multimodal_payload, monkeypatch
+):
     """Bout en bout : parser -> service -> markdown `images/<hash>.png` local."""
+    monkeypatch.setattr(chatgpt_module, "is_public_url", lambda url: True)
+    monkeypatch.setattr(
+        chatgpt_module, "fetch_capped",
+        lambda url, timeout=None: (PNG_BYTES, "image/png"),
+    )
     conv = ChatGPTParser().parse(
         "",
         conversation_id=multimodal_payload["conversation_id"],

@@ -1,5 +1,17 @@
 "use strict";
 
+/* Titre d'onglet : la vue courante, pour l'historique et les lecteurs d'ecran. */
+/* « 1 message » / « 2 messages » (jamais « 1 messages »). */
+function plural(n, word) {
+  const value = Number(n) || 0;
+  return `${value} ${word}${value > 1 ? "s" : ""}`;
+}
+
+function setTitle(label) {
+  const clean = String(label || "").trim();
+  document.title = clean ? `${clean} — Conversations IA` : "Recherche — Conversations IA";
+}
+
 /* ---------- session ---------- */
 /* Toute reponse 401 (session expiree ou revoquee) ramene a la connexion. */
 (function guardSession() {
@@ -519,6 +531,7 @@ function setHomeSidebar(hidden) {
 }
 
 function loadHome() {
+  setTitle("");
   state.view = "default";
   state.groups = [];
   state.terms = [];
@@ -747,7 +760,7 @@ function heatmapHtml(data) {
       const label = date.toLocaleDateString("fr-FR", {
         day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
       });
-      const text = count === 0 ? "aucun message" : `${count} message${count > 1 ? "s" : ""}`;
+      const text = count === 0 ? "aucun message" : plural(count, "message");
       if (count > 0) {
         // jour actif : case cliquable -> vue « journée »
         const aria = date.toLocaleDateString("fr-FR", {
@@ -898,7 +911,7 @@ function dayCard(group, index) {
   return `<div class="group-card" id="day-card-${index}">
     <div class="rc-head">
       <span class="badge platform">${escapeHtml(platformName(group.platform))}</span>
-      <span class="badge small">${group.message_count} message${group.message_count > 1 ? "s" : ""} ce jour-là</span>
+      <span class="badge small">${plural(group.message_count, "message")} ce jour-là</span>
       ${splitOpenCopy(group.url, `Ouvrir sur ${platformName(group.platform)} ↗`)}
     </div>
     <div class="conv-title group-title" data-open="${index}" role="button" tabindex="0">${escapeHtml(plainTitle(group.title || group.conversation_id))}</div>
@@ -917,6 +930,7 @@ function dayCard(group, index) {
 }
 
 function renderDaySidebar() {
+  setTitle(state.day ? `Activité du ${formatDayLong(state.day.date)}` : "Journée");
   const sidebar = $("sidebar");
   setHomeSidebar(false);
   const data = state.day;
@@ -927,8 +941,8 @@ function renderDaySidebar() {
   sidebar.innerHTML = `<h2>Conversations (${data.conversation_count})</h2>` +
     data.conversations.map((g, gi) => `
       <div class="side-item" role="button" tabindex="0" data-g="${gi}">
-        <span>${escapeHtml(plainTitle(g.title || g.conversation_id).slice(0, 42))}</span>
-        <span class="muted">${escapeHtml(platformName(g.platform))} · ${g.message_count} message(s)</span>
+        <span title="${escapeHtml(plainTitle(g.title || g.conversation_id))}">${escapeHtml(plainTitle(g.title || g.conversation_id))}</span>
+        <span class="muted">${escapeHtml(platformName(g.platform))} · ${plural(g.message_count, "message")}</span>
       </div>`).join("");
   // la sidebar de la journee deplace vers la carte (pas d'ouverture de page)
   sidebar.querySelectorAll(".side-item[data-g]").forEach((item) =>
@@ -1477,6 +1491,8 @@ async function search(options) {
     state.searchMedia = data.media || [];
     renderGroups();
     renderSidebar();
+    const query = $("q").value.trim();
+    setTitle(query ? `Recherche « ${query} »` : "Recherche filtrée");
   } catch (err) {
     if (seq !== searchSeq) return;
     state.groups = [];
@@ -1501,7 +1517,7 @@ function renderGroups() {
   const hits = state.groups.reduce((a, g) => a + (g.messages || []).length, 0);
   const mediaTotal = state.groups.reduce((a, g) => a + (g.media || []).length, 0) + media.length;
   const suffix = state.searchFiltered ? " (filtre)" : "";
-  const mediaSuffix = mediaTotal ? ` · ${mediaTotal} média${mediaTotal > 1 ? "s" : ""}` : "";
+  const mediaSuffix = mediaTotal ? ` · ${plural(mediaTotal, "média")}` : "";
   // un média est un hit à part entière de sa conversation (rattaché par le
   // serveur, il compte dans le score et les extraits du groupe) ; seuls les
   // médias sans conversation restent des cartes autonomes en fin de flux
@@ -1518,7 +1534,7 @@ function renderGroups() {
         </div>
         <button class="btn ghost btn-sm" type="button" id="backToConv">← Retour à la conversation</button>
       </div>`
-    : `<h2 class="section-title">${state.groups.length} conversation${state.groups.length > 1 ? "s" : ""} · ${hits} message${hits > 1 ? "s" : ""}${mediaSuffix}${suffix}</h2>`;
+    : `<h2 class="section-title">${plural(state.groups.length, "conversation")} · ${plural(hits, "message")}${mediaSuffix}${suffix}</h2>`;
   main.innerHTML = header +
     `<div class="results-grid">` + cards.join("") + `</div>`;
   const backConv = $("backToConv");
@@ -1553,7 +1569,7 @@ function groupCard(g, gi) {
     <div class="rc-head">
       <span class="badge platform">${escapeHtml(platformName(g.platform))}</span>
       ${messages.length ? `<span class="badge score">${messages.length > 1 ? messages.length + " extraits" : "1 extrait"}</span>` : ""}
-      ${media.length ? `<span class="badge score">${media.length} média${media.length > 1 ? "s" : ""}</span>` : ""}
+      ${media.length ? `<span class="badge score">${plural(media.length, "média")}</span>` : ""}
       ${g.best_score != null ? `<span class="badge small">meilleur score ${scorePct(g.best_score)}</span>` : ""}
     </div>
     <div class="group-hits">
@@ -1655,8 +1671,8 @@ function renderSidebar() {
   }
   sidebar.innerHTML = `<h2>Conversations (${state.groups.length})</h2>` + state.groups.map((g, gi) => `
     <div class="side-item" role="button" tabindex="0" data-g="${gi}">
-      <span>${escapeHtml(plainTitle(g.title || g.conversation_id).slice(0, 42))}</span>
-      <span class="muted">${escapeHtml(platformName(g.platform))} · ${g.hit_count} message(s)</span>
+      <span title="${escapeHtml(plainTitle(g.title || g.conversation_id))}">${escapeHtml(plainTitle(g.title || g.conversation_id))}</span>
+      <span class="muted">${escapeHtml(platformName(g.platform))} · ${plural(g.hit_count, "message")}</span>
     </div>`).join("");
   sidebar.querySelectorAll(".side-item[data-g]").forEach((item) =>
     item.addEventListener("click", () => {
@@ -1668,8 +1684,10 @@ function renderSidebar() {
 
 function backToResults() {
   if (state.view === "similar" && state.similar) { backToConversation(); return; }
+  const restoreScroll = state.returnScroll;
   state.conversation = null;
   state.matchedMid = null;
+  state.returnScroll = null;
   if (state.view === "groups" && state.groups.length) {
     renderGroups();
     renderSidebar();
@@ -1680,12 +1698,15 @@ function backToResults() {
   } else {
     loadHome();
   }
+  if (restoreScroll != null) window.scrollTo(0, restoreScroll);
+  focusMain();
 }
 
 let conversationSeq = 0;
 
 async function openConversation(platform, conversationId, matchedMid) {
   const seq = ++conversationSeq;
+  state.returnScroll = window.scrollY;
   $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Chargement de la conversation…</p></div>`;
   try {
     const params = new URLSearchParams({ platform, id: conversationId });
@@ -1698,15 +1719,23 @@ async function openConversation(platform, conversationId, matchedMid) {
     saveLastVisited(platform, conversationId, data.conversation);
     renderConversation();
     renderSidebar();
+    setTitle(plainTitle(data.conversation.title));
     setTimeout(() => {
       const target = document.querySelector(".msg.matched") ||
         document.querySelector(".msg");
       if (target) target.scrollIntoView({ block: "center" });
+      focusMain();
     }, 60);
   } catch (err) {
     if (seq !== conversationSeq) return;
     renderError(err.message, () => openConversation(platform, conversationId, matchedMid));
   }
+}
+
+/* Le rendu remplace #main : sans cela le focus retombe sur <body>. */
+function focusMain() {
+  const main = $("main");
+  if (main) main.focus({ preventScroll: true });
 }
 
 function renderConversation() {
@@ -1951,7 +1980,7 @@ function filterConversation(query) {
   const count = $("convCount");
   if (count) {
     count.hidden = !query;
-    count.textContent = `${total} message${total > 1 ? "s" : ""} trouvé${total > 1 ? "s" : ""}`;
+    count.textContent = `${plural(total, "message")} trouvé${total > 1 ? "s" : ""}`;
   }
 }
 
@@ -1965,12 +1994,15 @@ const GALLERY_PAGE = 60;
 const gallery = { platform: null, kind: null, offset: 0, total: 0, items: [] };
 
 async function openGallery(reset = true) {
+  const fromGallery = !reset && state.view === "gallery";
   state.view = "gallery";
   state.conversation = null;
   state.groups = [];
   setHomeSidebar(true);
   if (reset) { gallery.offset = 0; gallery.items = []; }
-  $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Chargement de la galerie…</p></div>`;
+  if (!fromGallery) {
+    $("main").innerHTML = `<div class="loading"><div class="loading-spinner"></div><p>Chargement de la galerie…</p></div>`;
+  }
   const params = new URLSearchParams({
     limit: String(GALLERY_PAGE), offset: String(gallery.offset),
   });
@@ -1982,13 +2014,31 @@ async function openGallery(reset = true) {
     gallery.total = data.total || 0;
     gallery.items = gallery.items.concat(data.items || []);
     gallery.offset = gallery.items.length;
+    // « charger plus » ajoute les cartes a la vue existante : la position
+    // de defilement et le focus sont conserves
+    if (fromGallery && appendGallery(data.items || [])) return;
     renderGallery();
   } catch (err) {
     renderError(err.message, () => openGallery(reset));
   }
 }
 
+/* Ajoute les cartes a la grille existante ; false si la vue a change. */
+function appendGallery(items) {
+  const grid = document.querySelector("#main .results-grid");
+  if (!grid) return false;
+  grid.insertAdjacentHTML("beforeend", items.map(mediaCard).join(""));
+  const more = document.getElementById("galleryMore");
+  const rest = gallery.total - gallery.items.length;
+  if (more) {
+    if (rest > 0) more.textContent = `Charger plus (${rest} restants)`;
+    else more.closest(".more-wrap")?.remove();
+  }
+  return true;
+}
+
 function renderGallery() {
+  setTitle("Galerie des médias");
   const platformChips = Object.keys(PLATFORM_LABEL).map((platform) => `
     <button class="chip${gallery.platform === platform ? " active" : ""}" type="button"
       data-gallery-platform="${platform}">${escapeHtml(platformName(platform))}</button>`).join("");
@@ -2006,7 +2056,7 @@ function renderGallery() {
     <div class="conv-head">
       <div>
         <h2>Galerie des médias</h2>
-        <p class="section-note">${gallery.total} média${gallery.total > 1 ? "s" : ""} indexé${gallery.total > 1 ? "s" : ""}</p>
+        <p class="section-note">${plural(gallery.total, "média")} indexé${gallery.total > 1 ? "s" : ""}</p>
       </div>
       <button class="btn ghost" type="button" id="galleryBack">← Retour</button>
     </div>
@@ -2071,6 +2121,7 @@ function startDailyPolling() {
 }
 
 function renderDailyPage() {
+  setTitle("Scrape quotidien");
   const chips = Object.keys(PLATFORM_LABEL).map((platform) => `
     <button class="chip${dailyRun.platforms.has(platform) ? " active" : ""}" type="button"
       data-daily-platform="${platform}">${escapeHtml(platformName(platform))}</button>`).join("");
@@ -2353,6 +2404,7 @@ function startParsePolling() {
 }
 
 function renderParseTest() {
+  setTitle("Test des parseurs");
   const chips = Object.keys(PLATFORM_LABEL).map((platform) => `
     <button class="chip${parseTest.platforms.has(platform) ? " active" : ""}" type="button"
       data-test-platform="${platform}">${escapeHtml(platformName(platform))}</button>`).join("");

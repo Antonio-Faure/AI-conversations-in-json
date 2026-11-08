@@ -91,6 +91,20 @@ PATH_KEYS = (
     "screenshot_dir",
 )
 
+def _safe_stem(stem: Any) -> bool:
+    """Nom de fichier simple : pas de separateur, pas de `..`, taille bornee."""
+    text = str(stem or "")
+    return (
+        bool(text)
+        and len(text) <= 120
+        and text == Path(text).name
+        and "/" not in text
+        and "\\" not in text
+        and ".." not in text
+        and "\x00" not in text
+    )
+
+
 DEFAULT_CONFIG: Dict[str, Any] = {
     # chemins relatifs a la racine du depot (voir PATH_KEYS)
     "output_dir": "exports",
@@ -435,6 +449,11 @@ class Orchestrator:
             except Exception:  # noqa: BLE001
                 conv.url = ref.url
         entry = index.get(ref.id) or {}
+        # `file` vient de l'inventaire : un inventaire altere ne doit pas
+        # faire ecrire/effacer hors du dossier de la plateforme
+        if entry.get("file") and not _safe_stem(entry["file"]):
+            log.warning("nom de fichier invalide dans l'inventaire : %r", entry["file"])
+            entry = {k: v for k, v in entry.items() if k != "file"}
         title = conv.title or entry.get("title") or ref.title or ""
         stem = entry.get("file") or unique_filename(title, ref.id, used)
         if stem in RESERVED_STEMS:

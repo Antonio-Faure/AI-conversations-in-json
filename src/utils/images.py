@@ -17,7 +17,8 @@ import json
 import re
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
-from urllib.request import Request, urlopen
+from urllib.request import Request
+from .net_guard import MAX_REMOTE_BYTES, open_url, read_capped
 
 from .logging import get_logger, log_fields
 
@@ -64,12 +65,16 @@ def extract_image_urls(text: str) -> List[str]:
 
 
 def http_loader(url: str, timeout: int = 20) -> Optional[Tuple[bytes, Optional[str]]]:
-    """Telechargement non authentifie (URL publiques : gemini, S3 pre-signe)."""
+    """Telechargement non authentifie (URL publiques : gemini, S3 pre-signe).
+
+    Hote public exige (pas de SSRF vers la machine ou le LAN) et corps
+    plafonne : le contenu vient d'une conversation, donc non fiable.
+    """
     try:
         request = Request(url, headers={"User-Agent": _UA, "Accept": "image/*,*/*"})
-        with urlopen(request, timeout=timeout) as response:
+        with open_url(request, timeout) as response:
             ctype = response.headers.get("Content-Type")
-            return response.read(), ctype
+            return read_capped(response), ctype
     except Exception as exc:  # noqa: BLE001
         log.debug("http_loader echec %s: %s", url, exc)
         return None
@@ -318,6 +323,10 @@ def download_service_files(conv, service, files_dir: Path) -> Dict[str, int]:
         if callable(fetch):
             result = fetch(url)
             if result:
+                data = result[0]
+                if len(data) > MAX_REMOTE_BYTES:
+                    log.warning("image ignoree (trop volumineuse) : %s", url)
+                    return None
                 return result
         return http_loader(url)
 
@@ -396,6 +405,10 @@ def download_service_images(conv, service, images_dir: Path) -> Dict[str, int]:
         if callable(fetch):
             result = fetch(url)
             if result:
+                data = result[0]
+                if len(data) > MAX_REMOTE_BYTES:
+                    log.warning("image ignoree (trop volumineuse) : %s", url)
+                    return None
                 return result
         return http_loader(url)
 

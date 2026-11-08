@@ -144,10 +144,19 @@ def write_text_atomic(path: Path, text: str, *, mode: Optional[int] = None) -> P
     path = Path(path)
     ensure_dir(path.parent)
     tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
-    tmp.write_text(text, encoding="utf-8")
-    if mode is not None:
-        os.chmod(tmp, mode)
-    os.replace(tmp, path)
+    try:
+        tmp.write_text(text, encoding="utf-8")
+    except UnicodeEncodeError:
+        # un surrogate isole (payload tronque) ne doit pas faire echouer le run
+        text = text.encode("utf-8", "replace").decode("utf-8")
+        tmp.write_text(text, encoding="utf-8")
+    try:
+        if mode is not None:
+            os.chmod(tmp, mode)
+        os.replace(tmp, path)
+    finally:
+        if tmp.exists():
+            tmp.unlink(missing_ok=True)
     return path
 
 

@@ -151,7 +151,8 @@ def index_exports(
     chunk: List[Dict[str, Any]] = []
 
     for platform, json_file in iter_conversation_files(exports_dir, platforms):
-        if limit is not None and stats["conversations_indexed"] >= limit:
+        # le chunk n'est ecrit qu'a 64 : compter aussi les conversations en attente
+        if limit is not None and stats["conversations_indexed"] + len(chunk) >= limit:
             break
         try:
             data = json.loads(json_file.read_text(encoding="utf-8"))
