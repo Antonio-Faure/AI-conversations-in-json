@@ -58,6 +58,41 @@ def find_chrome_binary() -> Optional[str]:
     return None
 
 
+def _pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except (OSError, OverflowError):
+        return True
+    return True
+
+
+def clear_stale_profile_lock(profile_dir: Path) -> None:
+    """Supprime les verrous de profil laisses par un Chrome tue.
+
+    `SingletonLock` est un lien `hote-PID` : si le processus n'existe plus,
+    Chrome attend indefiniment son socket et le demarrage expire (CDP
+    « Response not received »). On ne touche a rien si le PID est vivant.
+    """
+    lock = Path(profile_dir) / "SingletonLock"
+    try:
+        target = os.readlink(lock)
+    except OSError:
+        return
+    pid = str(target).rsplit("-", 1)[-1]
+    if not pid.isdigit() or _pid_alive(int(pid)):
+        return
+    # profil orphelin : le port de debogage memorise est perime lui aussi
+    for name in (
+        "SingletonLock", "SingletonCookie", "SingletonSocket", "DevToolsActivePort"
+    ):
+        try:
+            (Path(profile_dir) / name).unlink()
+        except OSError:
+            pass
+
+
 class BotasaurusSession:
     """Facade navigateur basee sur botasaurus_driver (anti-Cloudflare)."""
 
@@ -86,6 +121,7 @@ class BotasaurusSession:
         from botasaurus_driver import Driver
 
         self.profile_dir.mkdir(parents=True, exist_ok=True)
+        clear_stale_profile_lock(self.profile_dir)
         chrome = self.chrome_path or find_chrome_binary()
         fp = self.fingerprint or {}
         window_size = (

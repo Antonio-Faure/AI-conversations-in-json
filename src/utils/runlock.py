@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Optional
 
 #: chemin du verrou partage avec le cron (voir la crontab)
 RUN_LOCK_PATH = str(
@@ -21,8 +22,13 @@ RUN_LOCK_PATH = str(
 )
 
 
-def acquire_run_lock(path: str = RUN_LOCK_PATH):
-    """Verrou exclusif non bloquant ; rend le descripteur, ou None si occupe."""
+def acquire_run_lock(path: Optional[str] = None):
+    """Verrou exclusif non bloquant ; rend le descripteur, ou None si occupe.
+
+    Le chemin est lu a l'appel (et non fige dans la valeur par defaut) :
+    les tests peuvent le rediriger vers un dossier temporaire.
+    """
+    path = path or RUN_LOCK_PATH
     handle = None
     try:
         import fcntl

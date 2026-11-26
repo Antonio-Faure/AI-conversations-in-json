@@ -42,11 +42,13 @@ def _quiet_logging():
 
 @pytest.fixture(autouse=True)
 def _isolated_run_state(tmp_path, monkeypatch):
-    """Isole `.state/aicv-run.json` : les tests ne touchent pas un vrai scrape.
+    """Isole `.state/` (etat et verrou) : les tests ne touchent pas un vrai scrape.
 
-    `run.py` publie son etat dans le depot ; sans cette redirection un test du
-    CLI ecraserait l'indicateur d'un cron en cours (et inversement).
+    `run.py` publie son etat et prend le verrou partage ; sans cette
+    redirection, un test du CLI ecraserait l'indicateur d'un cron en cours, et
+    echouerait si un scrape tourne pendant la suite.
     """
-    from src.utils import runstate
+    from src.utils import runlock, runstate
 
     monkeypatch.setattr(runstate, "RUN_STATE_PATH", tmp_path / "aicv-run.json")
+    monkeypatch.setattr(runlock, "RUN_LOCK_PATH", str(tmp_path / "aicv-run.lock"))

@@ -37,7 +37,7 @@ from src.orchestrator import (  # noqa: E402
 )
 from src.services import ACTIVE_SERVICES, SERVICE_CLASSES  # noqa: E402
 from src.utils.logging import setup_logging  # noqa: E402
-from src.utils.runlock import RUN_LOCK_PATH, acquire_run_lock, release_run_lock  # noqa: E402
+from src.utils import runlock  # noqa: E402
 from src.utils.runstate import clear_run_state, write_run_state  # noqa: E402
 
 LOGIN_CHOICES = sorted(set(ACTIVE_SERVICES) | set(COOKIE_SERVICES))
@@ -178,7 +178,7 @@ def _lock_held_by_self() -> bool:
     `flock -n .state/aicv-run.lock run.py` passe le descripteur au processus
     fils : reprendre le verrou depuis run.py echouerait alors qu'il est a nous.
     """
-    target = os.path.realpath(RUN_LOCK_PATH)
+    target = os.path.realpath(runlock.RUN_LOCK_PATH)
     try:
         fds = os.listdir("/proc/self/fd")
     except OSError:
@@ -214,7 +214,7 @@ def main(argv=None) -> int:
     # profils navigateur. Le cron le tient deja (flock) : on ne le reprend pas.
     lock = None
     if not _lock_held_by_self():
-        lock = acquire_run_lock()
+        lock = runlock.acquire_run_lock()
         if lock is None:
             log.error("un scrape est deja en cours (verrou occupe)")
             return 2
@@ -237,7 +237,7 @@ def main(argv=None) -> int:
         return 1
     finally:
         clear_run_state()
-        release_run_lock(lock)
+        runlock.release_run_lock(lock)
 
     _print_summary(summary, config)
     return 1 if summary.has_failures else 0
