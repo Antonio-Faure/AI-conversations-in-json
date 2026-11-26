@@ -7,6 +7,8 @@ sessions conservees entre les executions dans `<profile_dir>/<service>/`).
 from __future__ import annotations
 
 import json
+import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -21,6 +23,20 @@ from playwright.sync_api import (
 
 from .selectors import wrap_playwright_body
 from .utils.logging import get_logger, log_fields
+
+#: duree maximale d'une connexion interactive (puis fermeture propre)
+LOGIN_TIMEOUT_S = 15 * 60
+
+
+def _enter_pressed(stop: "threading.Event") -> None:
+    """Ecoute Entree dans le terminal (thread de fond) : termine la connexion."""
+    try:
+        input()
+    except (EOFError, KeyboardInterrupt):
+        pass
+    stop.set()
+
+
 
 log = get_logger("browser")
 
@@ -562,8 +578,8 @@ class BrowserSession:
         if login_url:
             page.goto(login_url, wait_until="domcontentloaded")
         log.info(
-            "Navigateur ouvert pour connexion %s — connectez-vous puis "
-            "fermez le navigateur quand termine.",
+            "Navigateur ouvert pour connexion %s — connectez-vous puis appuyez "
+            "sur Entree (ou fermez le navigateur) quand termine.",
             service_name,
         )
         login_selectors = [
@@ -572,9 +588,15 @@ class BrowserSession:
             "button:has-text('Sign in')",
             "input[type='password']",
         ]
+        stop = threading.Event()
+        threading.Thread(target=_enter_pressed, args=(stop,), daemon=True).start()
+        deadline = time.monotonic() + LOGIN_TIMEOUT_S
         try:
             while True:
                 page.wait_for_timeout(3000)
+                if stop.is_set() or time.monotonic() > deadline:
+                    log.info("connexion %s terminee (Entree ou delai)", service_name)
+                    break
                 if page.is_closed():
                     break
                 url = page.url.lower()

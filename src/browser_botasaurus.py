@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
@@ -29,6 +30,20 @@ from .selectors import (
     translate_selector,
 )
 from .utils.logging import get_logger, log_fields
+
+#: duree maximale d'une connexion interactive (puis fermeture propre)
+LOGIN_TIMEOUT_S = 15 * 60
+
+
+def _enter_pressed(stop: "threading.Event") -> None:
+    """Ecoute Entree dans le terminal (thread de fond) : termine la connexion."""
+    try:
+        input()
+    except (EOFError, KeyboardInterrupt):
+        pass
+    stop.set()
+
+
 
 log = get_logger("browser_bota")
 
@@ -540,8 +555,8 @@ class BotasaurusSession:
         if login_url:
             self.goto(login_url)
         log.info(
-            "Navigateur ouvert pour connexion %s — connectez-vous puis "
-            "fermez le processus quand termine (Ctrl+C).",
+            "Navigateur ouvert pour connexion %s — connectez-vous puis appuyez "
+            "sur Entree (ou fermez le navigateur) quand termine.",
             service_name,
         )
         login_selectors = [
@@ -550,9 +565,15 @@ class BotasaurusSession:
             "button:has-text('Sign in')",
             "input[type='password']",
         ]
+        stop = threading.Event()
+        threading.Thread(target=_enter_pressed, args=(stop,), daemon=True).start()
+        deadline = time.monotonic() + LOGIN_TIMEOUT_S
         try:
             while True:
                 self.wait_ms(3000)
+                if stop.is_set() or time.monotonic() > deadline:
+                    log.info("connexion %s terminee (Entree ou delai)", service_name)
+                    break
                 try:
                     url = self.url().lower()
                 except Exception as exc:  # noqa: BLE001
