@@ -52,9 +52,19 @@ def find_chrome_binary() -> Optional[str]:
         "chromium_headless_shell-*/chrome-linux/headless_shell",
     )
     for pattern in patterns:
-        for p in sorted(home.glob(pattern)):
-            if p.is_file():
-                return str(p)
+        found = [p for p in home.glob(pattern) if p.is_file()]
+        if not found:
+            continue
+        # le Chromium le plus recent : un profil ouvert par une version plus
+        # recente que le binaire refuse de demarrer (CDP « Response not
+        # received ») — trier les chemins a l'envers choisissait l'ancien
+        def revision(path: Path) -> int:
+            import re
+
+            match = re.search(r"-(\d+)/", str(path))
+            return int(match.group(1)) if match else 0
+
+        return str(max(found, key=revision))
     return None
 
 
